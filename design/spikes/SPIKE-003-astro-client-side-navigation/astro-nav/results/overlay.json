@@ -1,0 +1,142 @@
+[
+  {
+    "mode": "overlay",
+    "total": 1000,
+    "indexed": true,
+    "addMs": 3.96,
+    "dropMs": 0.92,
+    "before": {
+      "pages": 1000,
+      "links": 5000
+    },
+    "during": {
+      "notes": 50,
+      "about": 50
+    },
+    "after": {
+      "pages": 1000,
+      "links": 5000,
+      "notes": 0,
+      "about": 0
+    },
+    "churn": {
+      "cycles": 100,
+      "avgAddMs": 5.06,
+      "avgDropMs": 0.68,
+      "memBeforeMB": 31.1,
+      "memAfterMB": 35.6,
+      "pagesAfter": 1000,
+      "notesAfter": 0
+    }
+  },
+  {
+    "mode": "overlay",
+    "total": 1000,
+    "indexed": false,
+    "addMs": 31.84,
+    "dropMs": 0.36,
+    "before": {
+      "pages": 1000,
+      "links": 5000
+    },
+    "during": {
+      "notes": 50,
+      "about": 50
+    },
+    "after": {
+      "pages": 1000,
+      "links": 5000,
+      "notes": 0,
+      "about": 0
+    },
+    "churn": {
+      "cycles": 100,
+      "avgAddMs": 33.78,
+      "avgDropMs": 0.71,
+      "memBeforeMB": 35.6,
+      "memAfterMB": 35.6,
+      "pagesAfter": 1000,
+      "notesAfter": 0
+    }
+  },
+  {
+    "mode": "separate",
+    "total": 1000,
+    "cycles": 100,
+    "avgConstructMs": 0.01,
+    "avgLoadMs": 0.51,
+    "avgFreeMs": 0.03,
+    "memBeforeMB": 35.6,
+    "memAfterMB": 35.6
+  },
+  {
+    "mode": "overlay",
+    "total": 5000,
+    "indexed": true,
+    "addMs": 2.87,
+    "dropMs": 0.35,
+    "before": {
+      "pages": 5000,
+      "links": 25000
+    },
+    "during": {
+      "notes": 50,
+      "about": 50
+    },
+    "after": {
+      "pages": 5000,
+      "links": 25000,
+      "notes": 0,
+      "about": 0
+    },
+    "churn": {
+      "cycles": 100,
+      "avgAddMs": 5.35,
+      "avgDropMs": 0.73,
+      "memBeforeMB": 86.3,
+      "memAfterMB": 86.3,
+      "pagesAfter": 5000,
+      "notesAfter": 0
+    }
+  },
+  {
+    "mode": "overlay",
+    "total": 5000,
+    "indexed": false,
+    "addMs": 161.46,
+    "dropMs": 0.41,
+    "before": {
+      "pages": 5000,
+      "links": 25000
+    },
+    "during": {
+      "notes": 50,
+      "about": 50
+    },
+    "after": {
+      "pages": 5000,
+      "links": 25000,
+      "notes": 0,
+      "about": 0
+    },
+    "churn": {
+      "cycles": 100,
+      "avgAddMs": 159.59,
+      "avgDropMs": 0.81,
+      "memBeforeMB": 86.3,
+      "memAfterMB": 86.3,
+      "pagesAfter": 5000,
+      "notesAfter": 0
+    }
+  },
+  {
+    "mode": "separate",
+    "total": 5000,
+    "cycles": 100,
+    "avgConstructMs": 0.01,
+    "avgLoadMs": 0.51,
+    "avgFreeMs": 0.03,
+    "memBeforeMB": 86.3,
+    "memAfterMB": 86.3
+  }
+]
