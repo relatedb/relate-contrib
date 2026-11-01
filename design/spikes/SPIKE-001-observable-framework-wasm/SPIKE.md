@@ -12,7 +12,7 @@ The spike was first done in a separate, throwaway local project (`observable-gra
 
 ## 1. Question
 
-RFC-001 §7.7 and §7.10: what does it take to run the WASM build inside a framework's bundler and dev server, and what does the WASM result shape require of a shared core?
+RFC-001 §7.7 and §7.9: what does it take to run the WASM build inside a framework's bundler and dev server, and what does the WASM result shape require of a shared core?
 
 The two open questions are answered together here because they were encountered together in one integration. A later spike on another framework should treat them separately.
 
@@ -78,7 +78,7 @@ Findings 4.1–4.5 are sourced from the original project's `CLAUDE.md` ("Gotchas
 
 **§7.7 (bundler handling of the `.wasm` asset).** In this framework the core cannot locate the file itself: the bundler emits the glue but not the binary, so the adapter must put the binary into the framework's static assets and hand its URL to the core, which should accept the location as an explicit input (4.2, reproduced). The out-of-tree dependency failure is reproduced and narrowed to a symlink whose real path is outside the project (4.1, 4.6). It comes from consuming an unpublished checkout, and a published package should install as an ordinary directory, but that is unverified.
 
-**§7.10 (WASM vs native API shape).** The WASM envelope needs normalizing before anything else can consume it: column order (still unfixed upstream in 0.14.0), entity tagging, path shape, and a reduced error envelope (4.3, 4.6). The normalization module in `observable-graph/` and its Node tests are a concrete starting point for the core's layer. With normalization in place, a tagged-template client returning plain row arrays is enough for Plot, Inputs, d3 and DuckDB to consume results without adapters (4.7), so that shape is a reasonable target for the core's query interface. The `columnTypes` field offers a way to drive normalization from declared types instead of sniffing value shapes. The spike did not look at the native package, so whether it yields the same shapes is still open.
+**§7.9 (WASM vs native API shape).** The WASM envelope needs normalizing before anything else can consume it: column order (still unfixed upstream in 0.14.0), entity tagging, path shape, and a reduced error envelope (4.3, 4.6). The normalization module in `observable-graph/` and its Node tests are a concrete starting point for the core's layer. With normalization in place, a tagged-template client returning plain row arrays is enough for Plot, Inputs, d3 and DuckDB to consume results without adapters (4.7), so that shape is a reasonable target for the core's query interface. The `columnTypes` field offers a way to drive normalization from declared types instead of sniffing value shapes. The spike did not look at the native package, so whether it yields the same shapes is still open.
 
 **Text for the RFC.** Suggested wording for RFC-001's open questions, applied manually:
 
@@ -86,6 +86,6 @@ Findings 4.1–4.5 are sourced from the original project's `CLAUDE.md` ("Gotchas
 >
 > 7.7 (partial answer, SPIKE-001): under Observable Framework the bundler does not emit the `.wasm` file, so the adapter supplied a static-asset URL through the framework's file-attachment mechanism and passed it to the initializer explicitly; the default relative lookup returned a 404. A core input for the asset location is sufficient for this framework; other bundlers remain untested.
 >
-> 7.10 (partial answer, SPIKE-001): the WASM result envelope required client-side normalization of column order (still alphabetical in 0.14.0), entity kind tags, path shape, and a reduced error envelope; `columnTypes` could drive this. The native package's result shape was not examined.
+> 7.9 (partial answer, SPIKE-001): the WASM result envelope required client-side normalization of column order (still alphabetical in 0.14.0), entity kind tags, path shape, and a reduced error envelope; `columnTypes` could drive this. The native package's result shape was not examined.
 
 **Gaps for follow-up spikes.** Measure cold-network start-up (7.1); run in a worker and exercise trap recovery (7.2, 7.6); recheck bundler behavior with the published package; compare the native package's result shapes (7.10); repeat the bundler questions on a second framework.

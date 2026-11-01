@@ -1,4 +1,4 @@
-// SPIKE-002 step 1, RFC-001 §7.9: what does the native Node library write when
+// SPIKE-002 step 1, RFC-001 §7.8: what does the native Node library write when
 // it checkpoints a content graph, and does it read back?
 //
 // Needs the native C library and the Node client (neither is on npm; build the

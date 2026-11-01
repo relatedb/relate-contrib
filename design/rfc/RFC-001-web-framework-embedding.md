@@ -123,11 +123,9 @@ These apply regardless of which axis values are chosen:
 
 7.8. Which upstream capabilities would change the answers to 7.3 and 7.4, and should they be requested from the database's maintainers? Candidates are scoping and dropping a subset of data, and a direct snapshot load in the browser build. The browser build cannot open a native checkpoint and a content site does not need one, since replayed JSON works, so a snapshot load needs a use case such as a server-built graph too large to replay, or a graph shared with a server instance.
 
-7.9. Folded into 7.8; the number is kept so that earlier citations still resolve.
+7.9. WASM results needed reshaping before other components could use them: column order, entity tagging, path shape, and a reduced error envelope. The Node package follows a different, driver-style session and result API. Does it produce the same shapes, and what must the core's query interface normalize across both distributions?
 
-7.10. WASM results needed reshaping before other components could use them: column order, entity tagging, path shape, and a reduced error envelope. The Node package follows a different, driver-style session and result API. Does it produce the same shapes, and what must the core's query interface normalize across both distributions?
-
-7.11. When a component renders on a server and again in the browser, what does an adapter need so that both outputs agree and the page works before the database is ready or when it fails to load? No measured integration has exercised a framework component island that renders in both places.
+7.10. When a component renders on a server and again in the browser, what does an adapter need so that both outputs agree and the page works before the database is ready or when it fails to load? No measured integration has exercised a framework component island that renders in both places.
 
 ## 8. ADRs
 

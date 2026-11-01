@@ -14,7 +14,7 @@ In an Astro site, can a site's pages and links be turned into a graph at build t
 
 This answers, for a second framework:
 - RFC-001 §7.3: how a graph reaches the instance, and what each way costs for a site-sized graph.
-- RFC-001 §7.9: whether a checkpoint written by the native Node library can be used by the WASM build, or whether the graph has to be built with the WASM build itself.
+- RFC-001 §7.8 (asked as §7.9 before it was merged into 7.8): whether a checkpoint written by the native Node library can be used by the WASM build, or whether the graph has to be built with the WASM build itself.
 - RFC-001 §7.7: bundler handling of the `.wasm` asset in a Vite-based framework (SPIKE-001 covered Observable Framework).
 
 It also observes §7.1 (module size and start-up) in this setting.
@@ -60,7 +60,7 @@ One working day. If step 1 shows no workable route to a snapshot, stop that thre
   | 5,000 | 2,469.7 | 215.4 | 87.6 | 879.5 | 139.9 | 67.5 |
 
   (The two graphs differ in which pages link where, but have the same node and link counts.)
-- 2026-11-01, step 1, conclusion for §7.9. No public API of the WASM build opens a native checkpoint. The only conceivable route is to write the browser's origin-private store by hand: a catalog file in CypherLite's internal binary format (magic `MDBOPF01`, a CRC, and a path-to-slot map) plus 64 slot files, created from inside a dedicated worker at runtime, because a build step cannot write to a visitor's origin-private storage. That depends on an internal format and was not attempted. The route that works is replay: ship the graph as data and load it with fixed `UNWIND` statements. That also means the build step does not need CypherLite at all (it emits JSON for pages and links), and native is only needed when the graph is built or queried on a server.
+- 2026-11-01, step 1, conclusion for §7.8. No public API of the WASM build opens a native checkpoint. The only conceivable route is to write the browser's origin-private store by hand: a catalog file in CypherLite's internal binary format (magic `MDBOPF01`, a CRC, and a path-to-slot map) plus 64 slot files, created from inside a dedicated worker at runtime, because a build step cannot write to a visitor's origin-private storage. That depends on an internal format and was not attempted. The route that works is replay: ship the graph as data and load it with fixed `UNWIND` statements. That also means the build step does not need CypherLite at all (it emits JSON for pages and links), and native is only needed when the graph is built or queried on a server.
 
 ## 5. Findings
 
@@ -99,7 +99,7 @@ Environment: Astro 7.4.4 (Vite-based), Node 24.14.1, CypherLite 0.14.0 built fro
 ## 6. Conclusion
 
 - **§7.3 (how a graph reaches the instance).** For a content site, ship the graph as JSON and load it with fixed `UNWIND` statements. It is small (about 0.9 MB raw and 143 KB gzipped for 5,000 pages), needs no CypherLite at build time, and loads in about 0.2 s for 1,000 pages and 0.5 s for 5,000 on the main thread. The index on the lookup property matters (step 1: without it, 1,000 pages took about 6 s). Whether a worker removes the main-thread block is the next thing to measure.
-- **§7.9 (native checkpoint into WASM).** Not workable through any public API (step 1). The build does not need native CypherLite; native matters only where a graph is built or queried on a server.
+- **§7.8 (native checkpoint into WASM).** Not workable through any public API (step 1). The build does not need native CypherLite; native matters only where a graph is built or queried on a server.
 - **§7.7 (bundler handling).** In a Vite-based framework the adapter needed nothing beyond importing the package: the default lookup and the explicit URL both work, and an out-of-tree symlink does not break the build. This contrasts with Observable Framework, where the adapter had to place the binary and pass its URL. The core's asset-location input is still worth keeping for frameworks that do not rewrite the lookup. Other Vite-based frameworks are likely similar, but only Astro was tested.
 - **§7.1 (size and start-up).** 5.97 MB uncompressed, 1.46 MB brotli; initialization took 16–37 ms with the binary already local. A cold network fetch was not measured.
 
@@ -107,7 +107,7 @@ Suggested wording for RFC-001's open questions, to apply manually:
 
 > 7.3 (partial answer, SPIKE-002): replaying the graph as JSON through two fixed `UNWIND` statements, with an index on the lookup property, loaded 1,000 pages and 5,000 links in about 190 ms and 5,000 pages and 25,000 links in about 530 ms in a browser on the main thread, from a 143 KB gzipped payload. Without the index, 1,000 pages took about 6 s in Node. Worker use was not tested.
 >
-> 7.9 (answer, SPIKE-002): no public API of the WASM build opens a checkpoint written by the native library. A content site does not need one, because the build step emits JSON and the browser replays it; the native library is relevant only to server-side graphs.
+> 7.8 (answer, SPIKE-002): no public API of the WASM build opens a checkpoint written by the native library. A content site does not need one, because the build step emits JSON and the browser replays it; the native library is relevant only to server-side graphs.
 >
 > 7.7 (partial answer, SPIKE-002): under Astro (Vite) the adapter needed no step for the `.wasm` asset: the bundler rewrote the default lookup and emitted one hashed binary, and an out-of-tree symlinked package built and served in dev. Under Observable Framework the adapter had to place the binary and pass its URL. Frameworks outside the Vite family remain untested.
 
