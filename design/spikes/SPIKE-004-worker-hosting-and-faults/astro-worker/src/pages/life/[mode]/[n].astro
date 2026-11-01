@@ -1,0 +1,38 @@
+---
+import Lifetime from "../../../layouts/Lifetime.astro";
+import GraphPanel from "../../../components/GraphPanel.tsx";
+
+export function getStaticPaths() {
+  const modes = {
+    reload: {router: false, persist: false},
+    baseline: {router: true, persist: false},
+    singleton: {router: true, persist: false},
+    persist: {router: true, persist: true},
+    naive: {router: true, persist: false, variant: "naive"},
+    dedicated: {router: true, persist: false},
+    worker: {router: false, persist: false},
+    "worker-router": {router: true, persist: false}
+  };
+  return Object.entries(modes).flatMap(([mode, opts]) =>
+    [1, 2, 3, 4, 5].map((n) => ({params: {mode, n: String(n)}, props: {...opts, mode, n}}))
+  );
+}
+
+const {mode, n, router, persist, variant} = Astro.props;
+const siblings = [1, 2, 3, 4, 5];
+---
+
+<Lifetime title={`Page ${n} (${mode})`} router={router}>
+  <nav>
+    <a href="/">Home</a>
+    {siblings.map((s) => <a href={`/life/${mode}/${s}/`}>Page {s}</a>)}
+  </nav>
+  <h1>Page {n} <small>({mode})</small></h1>
+  <p>
+    Links on this page work without the database:
+    <a href="/pages/overview/">overview</a>, <a href="/pages/snapshots/">snapshots</a>.
+  </p>
+  {persist
+    ? <GraphPanel client:load transition:persist="graph-panel" mode={mode} n={n} />
+    : <GraphPanel client:load mode={mode} n={n} variant={variant} />}
+</Lifetime>

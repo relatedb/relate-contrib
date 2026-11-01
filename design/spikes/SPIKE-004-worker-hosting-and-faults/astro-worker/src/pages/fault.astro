@@ -1,0 +1,72 @@
+---
+// SPIKE-004 step 3: trap, runaway query, and what registered queries see.
+// Driven from the console: window.__fault.start(graph), .trap(), .runaway(ms)
+---
+
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Faults</title></head>
+  <body>
+    <h1>Faults</h1>
+    <pre id="out">idle</pre>
+    <script>
+      import {WorkerDb} from "../lib/worker/workerDb.js";
+
+      const round = (v: number) => Math.round(v * 10) / 10;
+      const nested = "RETURN " + "(".repeat(1000) + "1" + ")".repeat(1000) + " AS x";
+      const RUNAWAY = "MATCH (a:Page), (b:Page), (c:Page) RETURN count(*) AS c";
+      let db: WorkerDb;
+      const components: Record<string, any[]> = {A: [], B: []};
+      const out = document.getElementById("out")!;
+
+      const api = {
+        async start(graph: string, store: string | null = null) {
+          db = new WorkerDb({graph, store});
+          const t0 = db.t0;
+          const note = (name: string) => (e: any) => components[name].push({t: round(performance.now() - t0), ...e});
+          db.subscribe("MATCH (p:Page) RETURN count(p) AS c", null, note("A"));
+          db.subscribe("MATCH (a:Page {id: 3})-[:LINKS_TO]->(b:Page) RETURN count(b) AS c", null, note("B"));
+          await db.ready;
+          await new Promise((r) => setTimeout(r, 300));
+          return {timings: db.timings, events: db.events, components};
+        },
+        async trap() {
+          const mark = db.events.length;
+          const s = performance.now();
+          let outcome: any;
+          try {
+            await db.query(nested);
+            outcome = {resolved: true};
+          } catch (e: any) {
+            outcome = {trap: e.trap, lost: e.lost, message: String(e.message).slice(0, 80), afterMs: round(performance.now() - s)};
+          }
+          await db.ready;
+          await new Promise((r) => setTimeout(r, 400));
+          return {outcome, generation: db.generation, status: db.status, events: db.events.slice(mark), components};
+        },
+        async runaway(timeoutMs: number) {
+          const mark = db.events.length;
+          const s = performance.now();
+          let outcome: any;
+          try {
+            await db.query(RUNAWAY, null, {timeoutMs});
+            outcome = {resolved: true};
+          } catch (e: any) {
+            outcome = {timeout: e.timeout, message: String(e.message).slice(0, 60), afterMs: round(performance.now() - s)};
+          }
+          await db.ready;
+          await new Promise((r) => setTimeout(r, 400));
+          return {outcome, generation: db.generation, status: db.status, events: db.events.slice(mark), components};
+        },
+        async ping() {
+          const s = performance.now();
+          const {result} = await db.query("RETURN 1 AS x");
+          return {rows: result.rows, ms: round(performance.now() - s), generation: db.generation};
+        },
+        db: () => db,
+        components
+      };
+      (window as any).__fault = api;
+      out.textContent = "ready";
+    </script>
+  </body>
+</html>

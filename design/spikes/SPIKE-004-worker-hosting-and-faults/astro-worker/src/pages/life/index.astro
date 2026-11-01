@@ -1,0 +1,11 @@
+---
+import Lifetime from "../../layouts/Lifetime.astro";
+const modes = ["reload", "baseline", "singleton", "persist", "naive", "worker", "worker-router"];
+---
+
+<Lifetime title="Lifetimes" router={false}>
+  <h1>Instance lifetimes</h1>
+  <ul>
+    {modes.map((m) => <li><a href={`/life/${m}/1/`}>{m}</a></li>)}
+  </ul>
+</Lifetime>

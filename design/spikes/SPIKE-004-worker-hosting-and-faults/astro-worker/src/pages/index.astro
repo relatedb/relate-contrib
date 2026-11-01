@@ -1,0 +1,17 @@
+---
+import {getCollection} from "astro:content";
+import Base from "../layouts/Base.astro";
+
+const pages = (await getCollection("pages")).sort((a, b) => a.id.localeCompare(b.id));
+---
+
+<Base title="CypherLite in an Astro site">
+  <h1>CypherLite in an Astro site</h1>
+  <p>
+    {pages.length} content pages. Their links become a graph at build time (<a href="/graph.json">/graph.json</a>),
+    which the <a href="/explore/">explore page</a> loads into a browser CypherLite instance.
+  </p>
+  <ul>
+    {pages.map((p) => <li><a href={`/pages/${p.id}/`}>{p.data.title}</a> <small>({p.data.section})</small></li>)}
+  </ul>
+</Base>

@@ -1,0 +1,23 @@
+{
+  "name": "astro-worker",
+  "private": true,
+  "type": "module",
+  "description": "SPIKE-004: worker hosting and fault recovery in an Astro site",
+  "scripts": {
+    "build:wasm": "bash scripts/build-wasm.sh",
+    "delivery": "node scripts/delivery.mjs",
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/react": "^7.1.2",
+    "@neo4j-labs/cypherlite-wasm": "file:./.wasm-build/pkg",
+    "astro": "^7.4.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

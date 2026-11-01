@@ -1,0 +1,24 @@
+{
+  "note": "Embedded browser, production build, one run per cell. Query medians over 30 runs (10 at 20,000 pages). Heartbeat gap = largest gap in a 4 ms timer while loading; frames were not available because the page was not being rendered.",
+  "hostComparison": [
+    {"pages": 1000, "links": 5000, "host": "main", "readyMs": 203.1, "replayMs": 160.5, "maxHeartbeatGapMs": 162.1, "firstQueryMs": 0.9, "smallMedianMs": 0.1, "largeMedianMs": 31.9},
+    {"pages": 1000, "links": 5000, "host": "worker", "readyMs": 323.9, "replayMs": 288.0, "maxHeartbeatGapMs": 5.3, "firstQueryMs": 1.0, "smallMedianMs": 0.2, "largeMedianMs": 34.0, "largeRawMedianMs": 32.3},
+    {"pages": 5000, "links": 25000, "host": "main", "readyMs": 641.5, "replayMs": 593.4, "maxHeartbeatGapMs": 602.0, "firstQueryMs": 5.7, "smallMedianMs": 0.1, "largeMedianMs": 48.7},
+    {"pages": 5000, "links": 25000, "host": "worker", "readyMs": 1415.3, "replayMs": 1396.1, "maxHeartbeatGapMs": 7.5, "firstQueryMs": 1.2, "smallMedianMs": 0.1, "largeMedianMs": 50.0, "largeRawMedianMs": 49.3},
+    {"pages": 20000, "links": 100000, "host": "main", "readyMs": 2319.8, "replayMs": 2213.3, "maxHeartbeatGapMs": 2246.6, "firstQueryMs": 6.3, "smallMedianMs": 0.2, "largeMedianMs": 69.8},
+    {"pages": 20000, "links": 100000, "host": "worker", "readyMs": 6252.4, "replayMs": 6211.7, "maxHeartbeatGapMs": 6.9, "firstQueryMs": 1.4, "smallMedianMs": 0.3, "largeMedianMs": 71.2, "largeRawMedianMs": 69.1}
+  ],
+  "persistentStore": [
+    {"pages": 5000, "visit": "first", "readyMs": 1489.5, "openMs": 92.0, "replayMs": 1370.8},
+    {"pages": 5000, "visit": "second", "readyMs": 345.4, "openMs": 328.3, "restored": true, "counts": {"pages": 5000, "links": 25000}},
+    {"pages": 5000, "visit": "third", "readyMs": 358.3, "openMs": 333.4, "restored": true, "counts": {"pages": 5000, "links": 25000}},
+    {"pages": 20000, "visit": "first", "readyMs": 6892.3, "openMs": 69.6, "replayMs": 6691.5},
+    {"pages": 20000, "visit": "second", "readyMs": 1322.1, "openMs": 1300.7, "restored": true, "counts": {"pages": 20000, "links": 100000}, "maxHeartbeatGapMs": 9.4}
+  ],
+  "faults": [
+    {"pages": 1000, "trapDetectedMs": 1.9, "trapReplacementReadyMs": 300.0, "runaway": {"timeoutMs": 1500, "terminatedAtMs": 1502.7, "replacementReadyMs": 293.0}},
+    {"pages": 5000, "trapDetectedMs": 2.6, "trapReplacementReadyMs": 1477.5, "runaway": {"timeoutMs": 1500, "terminatedAtMs": 1501.8, "replacementReadyMs": 1447.9}},
+    {"pages": 20000, "trapDetectedMs": 3.2, "trapReplacementReadyMs": 6834.8, "runaway": {"timeoutMs": 1500, "terminatedAtMs": 1501.7, "replacementReadyMs": 7096.0}},
+    {"pages": 5000, "store": true, "trapDetectedMs": 2.6, "trapReplacementReadyMs": 360.6, "runawayReplacement": "failed: storage locked, store free again about 2.3 s after termination"}
+  ]
+}
