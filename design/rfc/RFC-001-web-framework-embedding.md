@@ -23,10 +23,12 @@ The facts of the distributions shape every option. Browser constraints come from
 - **In-memory by default in the browser.** A new WASM database instance is empty and lives only as long as the page or worker that created it. Anything it should contain on first load has to be delivered to it.
 - **Browser persistence is narrow.** It exists only inside a dedicated worker, using the browser's origin-private file storage, and stores JSON snapshots (serialized copies of the graph) because the browser build has no columnar file codec. There is no persistence on the main thread. The native Node library persists to local files (Parquet or JSON, depending on the build and configuration), so a build-time or server instance can hold more data, and in more formats, than the browser build.
 - **A fault kills the instance.** A Rust panic traps the WASM module and leaves the instance unusable. The documented remedies are replacing the worker or reloading the page, which makes isolation a design input, not an afterthought.
-- **Bundlers disturb asset loading.** The WASM module fetches its `.wasm` file relative to itself. Bundlers that relocate or hash assets break that assumption, so the file's location has to be passed explicitly, differently in each toolchain.
+- **Bundlers disturb asset loading.** The WASM module fetches its `.wasm` file relative to itself. Bundlers that relocate or hash assets break that assumption, so the file's location has to be passed explicitly, differently in each toolchain. In one static-site framework the bundler emitted the module's JavaScript but not the binary, so the default lookup returned a 404 page; the integration worked once the binary was placed among the site's static assets and its URL was handed to the initializer. The same framework's bundler also failed to resolve a package installed as a symlink to a directory outside the project (`Could not resolve entry module`), while the same package copied in, or symlinked from inside the project, built normally.
+- **The module is large for a content page.** The release WASM module of CypherLite 0.14.0 is 5,973,771 bytes raw, about 2.1 MB gzipped and 1.5 MB brotli-compressed. It initialized in tens of milliseconds on localhost, which says nothing about a cold fetch over a real network.
+- **Results need reshaping.** In the same integration the statement result could not be handed to other components as is: row keys arrived alphabetical, not in column order (an open upstream issue); graph entities arrive tagged and paths as alternating node and relationship arrays; and an engine error arrives in-band as a reduced result with no column types. After normalizing those, the results were consumed unchanged by charting, input, table, aggregation and SQL components.
 - **Runtimes differ in what each distribution can do.** A static build step, a Node server, a serverless function, and an edge runtime each constrain module size, startup time, available threads, filesystem access, and whether platform-specific native binaries can be loaded at all. A website built on a framework that spans several of these runtimes cannot assume one environment or one distribution.
 
-These facts are documented in CypherLite's WASM API contract (`docs/api/wasm/spec.md`), its decisions on the browser file store (ADR-0145) and the size-optimized build (ADR-0100), and the description of the Node package (`docs/api/javascript/description.md`).
+The facts about how each distribution behaves are documented in CypherLite's WASM API contract (`docs/api/wasm/spec.md`), its decisions on the browser file store (ADR-0145) and the size-optimized build (ADR-0100), and the description of the Node package (`docs/api/javascript/description.md`). The observed bundler failures, the size figures and the result-shape findings come from an integration with Observable Framework, recorded in SPIKE-001 (`design/spikes/SPIKE-001-observable-framework-wasm/SPIKE.md`).
 
 Each framework layers its own behavior on top. A static site generator has a build step where data can be prepared but no server at request time. A full-stack framework can render on a server and then hydrate in the browser, so the same component may run in two runtimes. Client-side navigation keeps one page alive across route changes, while a multi-page site reloads and re-instantiates everything on each navigation.
 
@@ -57,7 +59,7 @@ The approach has three parts: a shared core, a set of axes along which hosting c
 
 ### 5.1 A shared core with thin adapters
 
-A core package owns everything that does not depend on a framework: loading whichever distribution applies, creating and disposing instances, running queries, handling faults, and receiving initial data. A framework adapter owns only what is framework-specific: wiring the core into the framework's build and render lifecycle, locating the `.wasm` asset under that framework's bundler, and exposing the result through the framework's idioms for pages and components.
+A core package owns everything that does not depend on a framework: loading whichever distribution applies, creating and disposing instances, running queries, handling faults, and receiving initial data. A framework adapter owns only what is framework-specific: wiring the core into the framework's build and render lifecycle, locating the `.wasm` asset under that framework's bundler, and exposing the result through the framework's idioms for pages and components. Two responsibilities of the core have evidence behind them: it takes the binary's location as an input that the adapter supplies, and it reshapes statement results into plain row arrays with column metadata, which charting, input, table and SQL components consumed directly.
 
 Success for this split is that adding a framework requires no new decisions about instance lifetime, fault handling, or data delivery, and that every adapter can be checked against the same sample site.
 
@@ -101,7 +103,7 @@ These apply regardless of which axis values are chosen:
 
 ## 7. Open Questions
 
-7.1. What are the measured module size and cold-start time in the browser, and what budget does a content-focused website tolerate for them?
+7.1. The release module measures about 6.0 MB raw and 1.5 MB compressed, and initializes in tens of milliseconds on localhost. What is the cold start over a real network, and what budget does a content-focused website tolerate for download plus start-up?
 
 7.2. Can a trapped instance be replaced transparently for components that hold query state, and what do adapters need to expose so that components recover cleanly?
 
@@ -113,13 +115,13 @@ These apply regardless of which axis values are chosen:
 
 7.6. Does a browser shared worker, or an equivalent mechanism, give a practical single instance across the pages of a multi-page site, and how widely is it supported?
 
-7.7. How much of the bundler-specific handling of the `.wasm` asset can the core absorb, and how much must each adapter carry?
+7.7. One framework required its adapter to place the binary among static assets and pass its location to the core. Does the same hold for the other target frameworks, and does a published package, unlike a local checkout, avoid the dependency-resolution failure seen with a symlinked package outside the project?
 
 7.8. Which upstream capabilities would change the answers to 7.3 and 7.4 (for example loading a snapshot directly, or scoping and dropping a subset of data), and should they be requested from the database's maintainers?
 
 7.9. The native library can write Parquet or JSON checkpoints, and the browser build currently loads JSON snapshots. Does a JSON checkpoint written by the native library load in the WASM build as is, and at what size and load cost for a site-sized graph?
 
-7.10. The WASM and native JavaScript APIs differ in shape: the WASM build returns a JSON result envelope from each statement, while the Node package follows a driver-style session and result API. Do they differ enough that the core needs its own query interface, and what behavior (result shape, error handling, parameters) must that interface normalize?
+7.10. WASM results needed reshaping before other components could use them: column order, entity tagging, path shape, and a reduced error envelope. The Node package follows a different, driver-style session and result API. Does it produce the same shapes, and what must the core's query interface normalize across both distributions?
 
 ## 8. ADRs
 
