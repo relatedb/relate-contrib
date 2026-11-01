@@ -71,3 +71,4 @@ into the RFC rather than copied verbatim.
 
 | Spike | Title | Status | RFCs |
 |---|---|---|---|
+| [SPIKE-001](SPIKE-001-observable-framework-wasm/SPIKE.md) | CypherLite WASM in Observable Framework | done | RFC-001 |
