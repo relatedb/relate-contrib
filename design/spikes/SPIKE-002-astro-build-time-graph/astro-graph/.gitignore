@@ -3,3 +3,5 @@ dist/
 .astro/
 .wasm-build/
 public/cypherlite_bg.wasm
+public/graph.json
+public/synthetic/

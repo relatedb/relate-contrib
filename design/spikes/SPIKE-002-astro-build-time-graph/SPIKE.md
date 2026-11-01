@@ -1,7 +1,7 @@
 ---
 id: SPIKE-002
 title: Build-Time Content Graph in Astro
-status: in-progress
+status: done
 rfcs: [RFC-001]
 created: 2026-11-01
 ---
@@ -64,8 +64,51 @@ One working day. If step 1 shows no workable route to a snapshot, stop that thre
 
 ## 5. Findings
 
-_(filled in once the spike concludes)_
+Environment: Astro 7.4.4 (Vite-based), Node 24.14.1, CypherLite 0.14.0 built from a local checkout, macOS arm64. Browser measurements are from the production build served by `astro preview` on localhost, with the instance on the main thread.
+
+**5.1 The build-time step is a static endpoint over the content collection.** `src/pages/graph.json.ts` reads the `pages` collection (`getCollection`), pulls internal links out of each entry's raw Markdown body, and returns `{pages, links}`. Astro writes it to `dist/graph.json` at build time, and the dev server serves it from the same code. For the 11 sample pages it produced 27 links, which matches the links in the Markdown by hand count; the file is 1,237 bytes. The whole site (13 pages including the endpoint) built in about 570 ms. This step uses no CypherLite.
+
+**5.2 Delivery is replay.** The island opens a fresh instance, creates an index on `Page.id`, and runs two fixed `UNWIND` statements over the JSON (the best route from step 1). Everything needed to query the graph is the module binary plus that JSON.
+
+**5.3 Bundler handling needed no workaround (RFC-001 §7.7).**
+- A `<script>` that imports the package bundled to a single 15.9 KB JavaScript file, and the `.wasm` was emitted once as `_astro/cypherlite_bg.<hash>.wasm` (5,973,771 bytes).
+- Vite rewrote the glue's default `new URL(…, import.meta.url)` lookup to that hashed path. So `init()` with no argument works, in dev and in production, and so does passing the URL from the package's documented `?url` import. Both resolve to the same single binary. Under Observable Framework the default lookup returned a 404 (SPIKE-001).
+- An out-of-tree symlinked package, which broke Observable's build, builds in Astro, and the dev server serves the binary from outside the project (HTTP 200, `application/wasm`). The page was not run in a browser in that configuration.
+
+**5.4 Measurements (browser, production build).**
+
+| graph | graph JSON bytes | JSON gzip (on the wire) | init ms | load ms | first query ms |
+|---|---|---|---|---|---|
+| 11 pages, 27 links (site) | 1,237 | 363 | 36.6 | 6.6 | 1.6 |
+| 100 pages, 500 links | 15,788 | not measured | 16.4 | 41.3 | 3.1 |
+| 1,000 pages, 5,000 links | 170,561 | 27,620 | 16.6 | 191.0 | 7.2 |
+| 5,000 pages, 25,000 links | 910,609 | 142,631 | 19.0 | 533.1 | 30.2 |
+
+- Module: 5,974,071 bytes transferred. `astro preview` served it uncompressed even when the request accepted gzip and brotli, while JSON was compressed, so compression of the binary is a hosting concern. The earlier brotli figure for the same file is 1.46 MB.
+- `init` (fetching, compiling and instantiating the module, binary already on localhost) took 16–37 ms, the first load being the slowest; `new CypherliteDb()` took 0.2–0.5 ms.
+- Load time with the index is about 2–3 times the Node figure at 100 and 1,000 pages (13 ms and 99 ms in Node) and about equal at 5,000 (510 ms). The first query looks up pages by an unindexed property (`slug`), and its time grows linearly with the graph.
+- Loading and querying are synchronous, so at 5,000 pages the load blocks the page for about half a second. A worker would avoid that; it was not tested.
+- In dev, with the 11-page site, `init` took 14 ms and loading 14 ms.
+
+**5.5 Queries returned correct answers over the site's own content.** Pages linking to "snapshots" (5, matching the links in the Markdown), most linked-to pages (workers 6, snapshots 5, bundlers 3, overview 3, faults 2), pages within two hops of the overview, and the one page nothing links to (the changelog).
+
+**5.6 Astro notes.** In Astro 7.4.4 the collection config imports `defineCollection` from `astro:content`, `glob` from `astro/loaders` and `z` from `astro/zod`, and `render(entry)` is a function. The glob loader exposes the raw Markdown as `entry.body`. The package requires Node 22.23.4 or later.
+
+**5.7 Not covered.** A worker; a framework component island (the island is a plain script, so server-render and hydration consistency, RFC-001 §5.4, was not exercised); navigation between pages (Astro's client-side router was not tried, so §7.6 is untouched); cold-network load time; and any Astro integration beyond a static endpoint.
 
 ## 6. Conclusion
 
-_(filled in once the spike concludes)_
+- **§7.3 (how a graph reaches the instance).** For a content site, ship the graph as JSON and load it with fixed `UNWIND` statements. It is small (about 0.9 MB raw and 143 KB gzipped for 5,000 pages), needs no CypherLite at build time, and loads in about 0.2 s for 1,000 pages and 0.5 s for 5,000 on the main thread. The index on the lookup property matters (step 1: without it, 1,000 pages took about 6 s). Whether a worker removes the main-thread block is the next thing to measure.
+- **§7.9 (native checkpoint into WASM).** Not workable through any public API (step 1). The build does not need native CypherLite; native matters only where a graph is built or queried on a server.
+- **§7.7 (bundler handling).** In a Vite-based framework the adapter needed nothing beyond importing the package: the default lookup and the explicit URL both work, and an out-of-tree symlink does not break the build. This contrasts with Observable Framework, where the adapter had to place the binary and pass its URL. The core's asset-location input is still worth keeping for frameworks that do not rewrite the lookup. Other Vite-based frameworks are likely similar, but only Astro was tested.
+- **§7.1 (size and start-up).** 5.97 MB uncompressed, 1.46 MB brotli; initialization took 16–37 ms with the binary already local. A cold network fetch was not measured.
+
+Suggested wording for RFC-001's open questions, to apply manually:
+
+> 7.3 (partial answer, SPIKE-002): replaying the graph as JSON through two fixed `UNWIND` statements, with an index on the lookup property, loaded 1,000 pages and 5,000 links in about 190 ms and 5,000 pages and 25,000 links in about 530 ms in a browser on the main thread, from a 143 KB gzipped payload. Without the index, 1,000 pages took about 6 s in Node. Worker use was not tested.
+>
+> 7.9 (answer, SPIKE-002): no public API of the WASM build opens a checkpoint written by the native library. A content site does not need one, because the build step emits JSON and the browser replays it; the native library is relevant only to server-side graphs.
+>
+> 7.7 (partial answer, SPIKE-002): under Astro (Vite) the adapter needed no step for the `.wasm` asset: the bundler rewrote the default lookup and emitted one hashed binary, and an out-of-tree symlinked package built and served in dev. Under Observable Framework the adapter had to place the binary and pass its URL. Frameworks outside the Vite family remain untested.
+
+**Gaps for follow-up.** Run the instance in a worker and measure main-thread blocking (RFC-001 §7.2, §7.6); try Astro's client-side navigation to see whether one instance can survive page changes; exercise server-render and hydration with a framework component island; measure a cold network fetch with the binary compressed.

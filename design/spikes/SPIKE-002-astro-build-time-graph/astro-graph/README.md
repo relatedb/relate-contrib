@@ -1,6 +1,11 @@
 # astro-graph
 
-SPIKE-002 code. See `../SPIKE.md` for the question, method and findings. Step 1 (delivery routes) is in `scripts/`; the Astro site is not built yet.
+SPIKE-002 code. See `../SPIKE.md` for the question, method and findings. It holds the step 1 experiments (`scripts/`) and a small Astro site whose pages and links become a graph at build time and are loaded into a browser CypherLite instance.
+
+- `src/content/pages/*.md`: eleven content pages with links between them.
+- `src/pages/graph.json.ts`: the build-time step, a static endpoint that turns the content collection into `{pages, links}`.
+- `src/pages/explore.astro` and `src/lib/graphClient.js`: the island that loads the WASM module and `/graph.json` and runs Cypher. `?graph=/synthetic/graph-1000.json`, `&variant=default` (call `init()` with no argument) and `&indexed=0` change what it loads.
+- `src/lib/normalize.js`, `src/lib/cypherTag.js`: copies of SPIKE-001's result normalization and tagged template.
 
 ## Setup
 
@@ -10,6 +15,16 @@ The WASM package is not on npm, so it is built from a local CypherLite checkout 
 CYPHERLITE_DIR=/path/to/cypherlite npm run build:wasm
 npm install
 ```
+
+## Run the site
+
+```bash
+node scripts/synthesize.mjs 100,1000,5000   # optional: synthetic graphs for the scale checks
+npm run dev                                 # http://localhost:4321/explore/
+npm run build && npm run preview            # production build, http://localhost:4321/
+```
+
+Set `ASTRO_TELEMETRY_DISABLED=1` (or run `npx astro telemetry disable`) to turn off Astro's telemetry.
 
 ## Step 1 scripts
 

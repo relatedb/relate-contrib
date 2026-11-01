@@ -1,0 +1,89 @@
+---
+import Base from "../layouts/Base.astro";
+
+const samples = [
+  {label: "Pages linking to snapshots", query: "MATCH (a:Page)-[:LINKS_TO]->(b:Page {slug: 'snapshots'}) RETURN a.slug AS page, a.title AS title ORDER BY page"},
+  {label: "Most linked-to pages", query: "MATCH (:Page)-[r:LINKS_TO]->(b:Page) RETURN b.slug AS page, count(r) AS inbound ORDER BY inbound DESC, page LIMIT 5"},
+  {label: "Within two hops of the overview", query: "MATCH (a:Page {slug: 'overview'})-[:LINKS_TO*1..2]->(b:Page) RETURN DISTINCT b.slug AS page ORDER BY page"},
+  {label: "Pages nothing links to", query: "MATCH (p:Page) OPTIONAL MATCH (q:Page)-[r:LINKS_TO]->(p) WITH p, count(r) AS inbound WHERE inbound = 0 RETURN p.slug AS orphan ORDER BY orphan"}
+];
+---
+
+<Base title="Explore the content graph">
+  <h1>Explore the content graph</h1>
+  <p>
+    The site's pages and links were turned into <code>/graph.json</code> at build time. This page loads that into a
+    CypherLite instance running in your browser as WebAssembly, then runs Cypher against it.
+  </p>
+  <p>
+    Options in the address: <code>?graph=/synthetic/graph-1000.json</code>, <code>&amp;variant=default</code> (call
+    <code>init()</code> with no argument), <code>&amp;indexed=0</code>.
+  </p>
+  <label>Sample
+    <select id="sample">
+      {samples.map((s, i) => <option value={i}>{s.label}</option>)}
+    </select>
+  </label>
+  <textarea id="cypher" rows="3"></textarea>
+  <button id="run" type="button">Run</button>
+  <p id="status">Loading…</p>
+  <div id="result"></div>
+  <h2>Load timings</h2>
+  <pre id="timings"></pre>
+  <script is:inline id="samples" type="application/json" set:html={JSON.stringify(samples)} />
+  <script>
+    import {openGraph} from "../lib/graphClient.js";
+
+    const $ = (id: string) => document.getElementById(id)!;
+    const samples: {label: string; query: string}[] = JSON.parse($("samples").textContent!);
+    const params = new URLSearchParams(location.search);
+    const select = $("sample") as HTMLSelectElement;
+    const cypher = $("cypher") as HTMLTextAreaElement;
+
+    const render = (result: any) => {
+      const out = $("result");
+      if (result.error) {
+        out.innerHTML = `<pre class="error"></pre>`;
+        out.firstElementChild!.textContent = result.error;
+        return;
+      }
+      const table = document.createElement("table");
+      const head = table.createTHead().insertRow();
+      for (const c of result.columns) head.appendChild(Object.assign(document.createElement("th"), {textContent: c}));
+      const body = table.createTBody();
+      for (const row of result.tableRows) {
+        const tr = body.insertRow();
+        for (const c of result.columns) tr.insertCell().textContent = String(row[c]);
+      }
+      out.replaceChildren(table);
+    };
+
+    try {
+      const {run, timings} = await openGraph({
+        graphUrl: params.get("graph") ?? "/graph.json",
+        variant: (params.get("variant") as "url" | "default") ?? "url",
+        indexed: params.get("indexed") !== "0"
+      });
+      $("timings").textContent = JSON.stringify(timings, null, 2);
+      const exec = () => {
+        const result = run(cypher.value);
+        $("status").textContent = result.error ? "Error" : `${result.rows.length} row(s), ${result.wallMs} ms`;
+        render(result);
+        timings.lastQueryMs = result.wallMs;
+        $("timings").textContent = JSON.stringify(timings, null, 2);
+      };
+      select.addEventListener("change", () => {
+        cypher.value = samples[Number(select.value)].query;
+        exec();
+      });
+      $("run").addEventListener("click", exec);
+      cypher.value = samples[0].query;
+      exec();
+      document.body.dataset.ready = "true";
+    } catch (e) {
+      $("status").textContent = `Failed: ${e instanceof Error ? e.message : e}`;
+      $("status").className = "error";
+      document.body.dataset.ready = "failed";
+    }
+  </script>
+</Base>
