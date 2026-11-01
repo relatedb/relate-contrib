@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "observable-graph",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "design/spikes/SPIKE-001-observable-framework-wasm/observable-graph",
+        "run",
+        "dev"
+      ],
+      "port": 3000
+    }
+  ]
+}

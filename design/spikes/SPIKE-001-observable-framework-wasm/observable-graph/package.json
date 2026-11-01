@@ -1,0 +1,22 @@
+{
+  "name": "observable-graph",
+  "private": true,
+  "type": "module",
+  "description": "SPIKE-001: CypherLite WASM embedded in an Observable Framework app",
+  "scripts": {
+    "build:wasm": "bash scripts/build-wasm.sh",
+    "sync-wasm": "node scripts/sync-wasm.js",
+    "dev": "npm run sync-wasm && observable preview --port 3000",
+    "build": "npm run sync-wasm && observable build",
+    "clean": "observable clean",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@neo4j-labs/cypherlite-wasm": "file:./.wasm-build/pkg",
+    "@observablehq/framework": "^1.13.4",
+    "d3": "^7.9.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
