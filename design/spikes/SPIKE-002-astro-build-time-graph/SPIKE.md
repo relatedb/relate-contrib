@@ -1,7 +1,7 @@
 ---
 id: SPIKE-002
 title: Build-Time Content Graph in Astro
-status: planned
+status: in-progress
 rfcs: [RFC-001]
 created: 2026-11-01
 ---
@@ -37,6 +37,30 @@ One working day. If step 1 shows no workable route to a snapshot, stop that thre
 ## 4. Notes
 
 - 2026-11-01: The WASM type declarations (`cypherlite.d.ts`, CypherLite 0.14.0) expose only `execute`, `executeScript`, `reset`, `new CypherliteDb()` and the OPFS-backed `open`. There is no snapshot import call, so "load a snapshot" in the browser means either replaying statements or getting the snapshot into OPFS first. This shaped the method above.
+- 2026-11-01, step 1, replay routes (WASM engine in Node, `scripts/delivery.mjs`, synthetic sites with 5 links per page; results in `astro-graph/results/`). Three ways to load the same graph into a fresh instance: **A1** one `CREATE` statement with a variable per page and link; **A2** a script with one `CREATE` per page and one `MATCH … CREATE` per link; **B** two fixed `UNWIND` statements over JSON parameters. With an index on `Page.id`:
+
+  | pages | route | payload KB | gzip KB | brotli KB | load ms |
+  |---|---|---|---|---|---|
+  | 100 | A1 | 23.3 | 2.8 | 1.4 | 15.5 |
+  | 100 | A2 | 42.1 | 3.0 | 1.5 | 38.9 |
+  | 100 | B | 15.2 | 2.3 | 1.3 | 13.2 |
+  | 1,000 | A1 | 246.5 | 30.5 | 14.9 | 142.4 |
+  | 1,000 | A2 | 433.2 | 31.2 | 15.4 | 287.5 |
+  | 1,000 | B | 164.6 | 26.7 | 13.3 | 98.8 |
+  | 5,000 | A1 | 1,293.4 | 164.4 | 82.3 | 2,224.0 |
+  | 5,000 | A2 | 2,222.3 | 158.4 | 82.0 | 1,318.4 |
+  | 5,000 | B | 879.5 | 139.9 | 67.5 | 509.9 |
+
+  Route B is the smallest and fastest at every size: 5,000 pages and 25,000 links load in about 0.5 s from a 67.5 KB brotli-compressed payload. Without the index, every link lookup scans the pages: at 1,000 pages A2 took 6.3 s and B 5.9 s, while A1 (which looks nothing up) took 138 ms. So the index, or a route that avoids lookups, matters more than the route. Queries over the loaded graph took under 1 ms for one hop and two hops at 1,000 pages (about 4 ms for A1 at 5,000, which had no index). Node timings only indicate the engine's cost; a browser adds its own overhead.
+- 2026-11-01, step 1, native checkpoint (`scripts/native-checkpoint.mjs`). The native C library built from the checkout in 32 s (output kept outside the checkout), and the Node client ran against it with `CYPHERLITE_LIB` set and koffi installed in a scratch copy of the client. A writable `Database.open` of a missing path created the store. With `CYPHERLITE_SNAPSHOT_FORMAT=json` a checkpoint is an ordinary directory: `graph.json` (nodes and relationships with full properties), `manifest.json` (`{"codec": "json", "checkpoint_lsn": …, "commit_ts": …}`) and a `wal/` directory, and it reopens read-only in native with the right counts. Its `graph.json` is larger than the route B payload for the same graph:
+
+  | pages | `graph.json` raw KB | gzip KB | brotli KB | route B raw KB | gzip KB | brotli KB |
+  |---|---|---|---|---|---|---|
+  | 1,000 | 478.5 | 45.2 | 19.6 | 164.6 | 26.7 | 13.3 |
+  | 5,000 | 2,469.7 | 215.4 | 87.6 | 879.5 | 139.9 | 67.5 |
+
+  (The two graphs differ in which pages link where, but have the same node and link counts.)
+- 2026-11-01, step 1, conclusion for §7.9. No public API of the WASM build opens a native checkpoint. The only conceivable route is to write the browser's origin-private store by hand: a catalog file in CypherLite's internal binary format (magic `MDBOPF01`, a CRC, and a path-to-slot map) plus 64 slot files, created from inside a dedicated worker at runtime, because a build step cannot write to a visitor's origin-private storage. That depends on an internal format and was not attempted. The route that works is replay: ship the graph as data and load it with fixed `UNWIND` statements. That also means the build step does not need CypherLite at all (it emits JSON for pages and links), and native is only needed when the graph is built or queried on a server.
 
 ## 5. Findings
 

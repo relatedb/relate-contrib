@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.astro/
+.wasm-build/
+public/cypherlite_bg.wasm

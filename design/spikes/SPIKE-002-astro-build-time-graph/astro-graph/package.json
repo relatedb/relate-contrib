@@ -1,0 +1,16 @@
+{
+  "name": "astro-graph",
+  "private": true,
+  "type": "module",
+  "description": "SPIKE-002: a build-time content graph handed to a browser CypherLite instance in an Astro site",
+  "scripts": {
+    "build:wasm": "bash scripts/build-wasm.sh",
+    "delivery": "node scripts/delivery.mjs"
+  },
+  "dependencies": {
+    "@neo4j-labs/cypherlite-wasm": "file:./.wasm-build/pkg"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

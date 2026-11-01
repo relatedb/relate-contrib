@@ -72,4 +72,4 @@ into the RFC rather than copied verbatim.
 | Spike | Title | Status | RFCs |
 |---|---|---|---|
 | [SPIKE-001](SPIKE-001-observable-framework-wasm/SPIKE.md) | CypherLite WASM in Observable Framework | done | RFC-001 |
-| [SPIKE-002](SPIKE-002-astro-build-time-graph/SPIKE.md) | Build-Time Content Graph in Astro | planned | RFC-001 |
+| [SPIKE-002](SPIKE-002-astro-build-time-graph/SPIKE.md) | Build-Time Content Graph in Astro | in-progress | RFC-001 |
