@@ -1,8 +1,17 @@
 // The worker entry: owns one engine instance and answers the client's messages (contracts/worker-protocol.md).
 import { validateDescriptor } from "../data/descriptor.js";
 import { Engine, TrapError } from "./engine.js";
-import { EngineError, LoadError, loadDocument } from "./loader.js";
-import type { ClientMessage, InitFailedMessage, InitMessage, QueryMessage, Timings, WorkerMessage } from "./protocol.js";
+import { dropScope, EngineError, LoadError, loadDocument, loadGraph, prepare } from "./loader.js";
+import type {
+  ClientMessage,
+  InitFailedMessage,
+  InitMessage,
+  QueryMessage,
+  ScopedAddMessage,
+  ScopedDropMessage,
+  Timings,
+  WorkerMessage,
+} from "./protocol.js";
 
 const scope = self as unknown as {
   onmessage: ((e: MessageEvent<ClientMessage>) => void) | null;
@@ -65,8 +74,31 @@ function query(msg: QueryMessage): void {
   }
 }
 
+function scopedAdd(msg: ScopedAddMessage): void {
+  try {
+    if (!engine) throw new TrapError("no instance");
+    loadGraph(engine, prepare(msg.document, { scope: msg.scope }), { scope: msg.scope });
+    send({ type: "done", id: msg.id });
+  } catch (e) {
+    if (e instanceof LoadError) send({ type: "error", id: msg.id, reason: "invalid-document", message: e.message });
+    else send({ type: "error", id: msg.id, reason: "trap", message: messageOf(e) });
+  }
+}
+
+function scopedDrop(msg: ScopedDropMessage): void {
+  try {
+    if (!engine) throw new TrapError("no instance");
+    dropScope(engine, msg.scope);
+    send({ type: "done", id: msg.id });
+  } catch (e) {
+    send({ type: "error", id: msg.id, reason: "trap", message: messageOf(e) });
+  }
+}
+
 scope.onmessage = (e) => {
   const msg = e.data;
   if (msg.type === "init") void init(msg);
   else if (msg.type === "query") query(msg);
+  else if (msg.type === "scoped-add") scopedAdd(msg);
+  else if (msg.type === "scoped-drop") scopedDrop(msg);
 };

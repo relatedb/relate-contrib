@@ -1,4 +1,4 @@
-export type Reason = "trap" | "timeout" | "lost" | "stopped" | "failed" | "unsupported" | "worker-error";
+export type Reason = "trap" | "timeout" | "lost" | "stopped" | "failed" | "unsupported" | "worker-error" | "invalid-document";
 
 /** Why a call to the client did not produce a result. Engine errors are not GraphErrors: they arrive in the envelope. */
 export class GraphError extends Error {

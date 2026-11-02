@@ -142,11 +142,11 @@ description: "Task list for the graph-web core package"
 
 ### Implementation for User Story 4
 
-- [ ] T054 [P] [US4] Implement view scopes and `addScoped` and `dropScope` in `packages/core/src/client/scope.ts` and the `scoped-add` and `scoped-drop` handling in `packages/core/src/worker/worker.ts` (a scope identifies a page view, not a page; dropping is a detach-delete of the nodes with that `scope`)
-- [ ] T055 [US4] Implement the `persistent` profile in `packages/core/src/profiles/persistent.ts`: one client in module state, created on first call, surviving route changes
-- [ ] T056 [US4] Implement `createSiteClient` in `packages/core/src/profiles/index.ts` choosing the profile from the `navigation` option (`client-routing` or `multi-page`; the configured value decides) and defaulting `store` per profile
-- [ ] T057 [P] [US4] Create the minimal navigation script for the harness site in `packages/core/tests/browser/harness/router.ts` (history API, link interception, programmatic navigation) used by the persistent tests and the example site
-- [ ] T058 [US4] Make the US4 tests pass in Chromium, Firefox and WebKit
+- [X] T054 [P] [US4] Implement view scopes and `addScoped` and `dropScope` in `packages/core/src/client/scope.ts` and the `scoped-add` and `scoped-drop` handling in `packages/core/src/worker/worker.ts` (a scope identifies a page view, not a page; dropping is a detach-delete of the nodes with that `scope`)
+- [X] T055 [US4] Implement the `persistent` profile in `packages/core/src/profiles/persistent.ts`: one client in module state, created on first call, surviving route changes
+- [X] T056 [US4] Implement `createSiteClient` in `packages/core/src/profiles/index.ts` choosing the profile from the `navigation` option (`client-routing` or `multi-page`; the configured value decides) and defaulting `store` per profile
+- [X] T057 [P] [US4] Create the minimal navigation script for the harness site in `packages/core/tests/browser/harness/router.ts` (history API, link interception, programmatic navigation) used by the persistent tests and the example site
+- [X] T058 [US4] Make the US4 tests pass in Chromium, Firefox and WebKit
 
 ---
 

@@ -46,6 +46,7 @@ class GraphClient implements Client {
   private readonly failures = new FailureCounter();
   /** Why the instance now starting replaces a ready one; reported when the replacement is ready. */
   private replacing: Events["replaced"]["reason"] | null = null;
+  private readonly scopes = new Set<string>();
   private destroyed = false;
   private waiters: Array<{ resolve: () => void; reject: (e: GraphError) => void }> = [];
 
@@ -90,12 +91,23 @@ class GraphClient implements Client {
     return this.emitter.on(event, listener);
   }
 
-  addScoped(_document: GraphDocument, _scope: string): Promise<void> {
-    return Promise.reject(new Error("addScoped() is added with user story 4"));
+  async addScoped(document: GraphDocument, scope: string): Promise<void> {
+    await this.whenReady();
+    this.scopes.add(scope);
+    await this.request((id) => ({ type: "scoped-add", id, scope, document }), undefined);
   }
 
-  dropScope(_scope: string): Promise<void> {
-    return Promise.reject(new Error("dropScope() is added with user story 4"));
+  async dropScope(scope: string): Promise<void> {
+    try {
+      await this.whenReady();
+      await this.request((id) => ({ type: "scoped-drop", id, scope }), undefined);
+    } finally {
+      this.scopes.delete(scope);
+    }
+  }
+
+  async dropAllScopes(): Promise<void> {
+    await Promise.all([...this.scopes].map((scope) => this.dropScope(scope).catch(() => undefined)));
   }
 
   retry(): void {
@@ -191,8 +203,12 @@ class GraphClient implements Client {
         break;
       }
       case "error": {
-        this.take(msg.id)?.reject(new GraphError("trap", msg.message));
-        this.fault("trap");
+        if (msg.reason === "trap") {
+          this.take(msg.id)?.reject(new GraphError("trap", msg.message));
+          this.fault("trap");
+        } else {
+          this.take(msg.id)?.reject(new GraphError("invalid-document", msg.message));
+        }
         break;
       }
       case "store-retry":
@@ -251,10 +267,15 @@ class GraphClient implements Client {
   }
 
   private execute(statement: string, params: object | null, timeoutMs: number | undefined): Promise<Envelope> {
+    const paramsJson = params ? encodeParams(params) : null;
+    return this.request((id) => ({ type: "query", id, statement, paramsJson }), timeoutMs);
+  }
+
+  /** Send one message that is answered by a result or a done message, with an optional timeout. */
+  private request(build: (id: number) => ClientMessage, timeoutMs: number | undefined): Promise<Envelope> {
     const worker = this.worker;
     if (!worker || this.status !== "ready") return Promise.reject(new GraphError("lost", "the instance is not ready"));
     const id = ++this.nextId;
-    const paramsJson = params ? encodeParams(params) : null;
     return new Promise<Envelope>((resolve, reject) => {
       const entry: Pending = { resolve, reject, timer: undefined };
       if (timeoutMs !== undefined) {
@@ -264,7 +285,7 @@ class GraphClient implements Client {
         }, timeoutMs);
       }
       this.pending.set(id, entry);
-      worker.postMessage({ type: "query", id, statement, paramsJson } satisfies ClientMessage);
+      worker.postMessage(build(id));
     });
   }
 

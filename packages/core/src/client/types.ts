@@ -50,6 +50,8 @@ export interface Client {
   onGeneration(listener: (generation: number) => void | Promise<void>): Unsubscribe;
   addScoped(document: GraphDocument, scope: string): Promise<void>;
   dropScope(scope: string): Promise<void>;
+  /** Drop every scope this client added (a page leaving). */
+  dropAllScopes(): Promise<void>;
   on<E extends keyof Events>(event: E, listener: (payload: Events[E]) => void): Unsubscribe;
   retry(): void;
   failureMessage(): string;
