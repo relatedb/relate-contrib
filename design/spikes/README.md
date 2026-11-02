@@ -75,3 +75,4 @@ into the RFC rather than copied verbatim.
 | [SPIKE-002](SPIKE-002-astro-build-time-graph/SPIKE.md) | Build-Time Content Graph in Astro | done | RFC-001 |
 | [SPIKE-003](SPIKE-003-astro-client-side-navigation/SPIKE.md) | Instance Lifetime Across Navigation in Astro | done | RFC-001 |
 | [SPIKE-004](SPIKE-004-worker-hosting-and-faults/SPIKE.md) | Worker Hosting and Fault Recovery in Astro | done | RFC-001 |
+| [SPIKE-005](SPIKE-005-worker-survival-across-navigation/SPIKE.md) | Worker Survival Across Route Changes in Astro | in-progress | RFC-001 |
