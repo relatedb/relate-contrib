@@ -18,7 +18,7 @@ Three kinds of people depend on it:
 - **Site authors** use an adapter to put a graph in a site and need it to load, stay available and fail safely.
 - **Visitors** read the pages. They never see the package, but they feel a frozen page, a lost graph or a broken link.
 
-The package implements two accepted decisions: ADR-001 (a dedicated background worker per instance, two navigation profiles) and ADR-002 (the node-link JSON graph data format). Terms used below: an *instance* is one running database; a *generation* is a counter that increases each time an instance is replaced; a *store* is the browser's per-site private file storage, which can keep a graph between visits; a *scope* marks data that belongs to one page view so it can be removed when the visitor leaves.
+The package implements three accepted decisions: ADR-001 (a dedicated background worker per instance, two navigation profiles), ADR-002 (the node-link JSON graph data format) and ADR-003 (the graph descriptor). Terms used below: an *instance* is one running database; a *generation* is a counter that increases each time an instance is replaced; a *store* is the browser's per-site private file storage, which can keep a graph between visits; a *scope* marks data that belongs to one page view so it can be removed when the visitor leaves; a *descriptor* is a small document beside the graph data that gives the graph a name, a revision, the data's location and the indexes to create (ADR-003).
 
 ## Clarifications
 
@@ -63,8 +63,10 @@ An author, or a build step, produces a graph as a node-link JSON document (ADR-0
 1. **Given** a valid document, **When** it is loaded, **Then** every node exists with its labels, its properties and an `id` property, and every link exists as a relationship of the given type from source to target with its properties.
 2. **Given** a document with a duplicate node id, a link to a missing node, an unknown key, a nested object as a property value, or an unknown format version, **When** it is validated, **Then** it is rejected with the path of the first problem, for example `nodes[3].properties.id`.
 3. **Given** a rejected document, **When** the loader is given it, **Then** no statement runs and the instance stays empty.
-4. **Given** a caller that names labels to index, **When** the document loads, **Then** those indexes exist before the nodes are created and no other index is created.
+4. **Given** indexes named by the descriptor (or by the caller when there is no descriptor), **When** the graph loads, **Then** those indexes exist before the nodes are created and no other index is created.
 5. **Given** a load with a scope value, **When** it completes, **Then** every created node carries that scope, and a `scope` key in a node's properties is rejected.
+6. **Given** a descriptor and a data document whose `revision` differs from the descriptor's, or whose node or link counts differ from the descriptor's, **When** the graph loads, **Then** it is rejected and nothing is loaded.
+7. **Given** an invalid descriptor, **When** it is validated, **Then** it is rejected with the path of the first problem, for example `data.nodes`, and no store is opened.
 
 ---
 
@@ -104,7 +106,7 @@ On a site whose router swaps pages without a full reload, the package keeps one 
 3. **Given** an instance replaced while a page's scoped data is present, **When** the new instance is ready, **Then** the page's data is added again before subscriptions re-run.
 4. **Given** a navigation while a query is in flight or while the graph is still loading, **When** the new page arrives, **Then** the new page's queries run once the instance is ready and results for the departed page are ignored.
 5. **Given** a full reload or a link that forces one, **When** the page reloads, **Then** a new worker starts, as expected.
-6. **Given** the `persistent` profile with a store configured and a matching revision, **When** the visit starts, **Then** the graph is restored from the store instead of replayed.
+6. **Given** the `persistent` profile with a descriptor and a store configured, and a matching revision, **When** the visit starts, **Then** the graph is restored from the store instead of replayed.
 7. **Given** a configuration that names `multi-page` on a site that has a client-side router, **When** the page starts, **Then** the configured profile is used.
 
 ---
@@ -115,17 +117,18 @@ On a site where every navigation loads a new page, each page starts its own work
 
 **Why this priority**: many sites cannot adopt a client-side router, and this is the only way the same package serves them. It follows the P1 slices.
 
-**Independent Test**: in the example site as separate pages, visit pages in sequence, change the document's revision, hold the store from a second tab, and leave pages while scoped data exists.
+**Independent Test**: in the example site as separate pages, visit pages in sequence, change the descriptor's revision, hold the store from a second tab, and leave pages while scoped data exists.
 
 **Acceptance Scenarios**:
 
-1. **Given** the `per-page` profile and a populated store with a matching revision, **When** a page loads, **Then** the graph is restored from the store without replaying the document.
-2. **Given** a store whose revision differs from the document's, **When** a page loads, **Then** the store is reset, the document is replayed, and queries return the new data.
-3. **Given** a document without a revision, **When** a page loads, **Then** the store is neither read nor written.
+1. **Given** the `per-page` profile and a populated store whose stored descriptor has the same revision as the page's descriptor, **When** a page loads, **Then** the graph is restored from the store, without fetching or replaying the data document.
+2. **Given** a store whose stored descriptor has a different revision from the page's descriptor, **When** a page loads, **Then** the store is reset, the data is fetched and replayed, and queries return the new data.
+3. **Given** a graph with no descriptor, **When** a page loads, **Then** no store is used and the data is replayed.
 4. **Given** a store held by another tab, **When** a page loads, **Then** opening is retried at increasing intervals for no more than five seconds, and then the page continues with an in-memory instance loaded from the document.
 5. **Given** scoped data left in the store, **When** a worker starts, **Then** all scoped data is removed before the page's own data is added, and a departing page removes its own view's data when it is hidden.
 6. **Given** a worker ended in the middle of a query, **When** the next page opens the store, **Then** the retry covers the short period during which the store stays locked.
-7. **Given** two sites on one origin with different site identifiers, **When** both use a store, **Then** each restores only its own graph.
+7. **Given** two graphs on one origin with different descriptor `id`s, **When** both use a store, **Then** each restores only its own graph.
+8. **Given** a store that holds fewer nodes than its descriptor says (for example, it was wiped while its stored descriptor remained), **When** a page loads, **Then** it is treated as stale and the graph is loaded from the data.
 
 ---
 
@@ -165,6 +168,7 @@ A small example site, with pages, links and a shared graph, ships with the packa
 
 - A store reset cannot complete because another tab holds the store: the page falls back to an in-memory instance.
 - A document is empty: it validates and loads an empty graph.
+- A cached data document from an earlier deploy is served with a new descriptor, or the reverse: the revision or count mismatch is detected and nothing loads.
 - A scoped document is loaded into an instance that also holds the site graph, and some ids repeat: loading succeeds, lookups by id need a label or a scope to be unambiguous.
 - The same page is open in two tabs: each has its own scope, so one tab's departure cannot remove the other's data.
 - A crash happens during the initial load: the page recovers the same way as after any crash, and counts toward the three failures in a row.
@@ -199,21 +203,21 @@ A small example site, with pages, links and a shared graph, ships with the packa
 
 **Graph data**
 
-- **FR-013**: The package MUST provide a validator for the node-link JSON graph data format (ADR-002) that rejects unknown format versions, unknown keys, duplicate node ids, links to missing nodes, disallowed property values and a `properties.id` key, and reports the path of the first problem.
+- **FR-013**: The package MUST provide a validator for the node-link JSON graph data format (ADR-002) that rejects unknown format versions, unknown keys, duplicate node ids, links to missing nodes, disallowed property values and a `properties.id` key. It MUST also validate the graph descriptor (ADR-003). Both report the path of the first problem.
 - **FR-014**: The loader MUST validate a document before running any statement, so a rejected document leaves the instance empty.
 - **FR-015**: The loader MUST create every node with its labels, its properties and an `id` property, and every link as a relationship of the given type with its properties, through a fixed set of statements that does not depend on which labels or types a document uses.
 - **FR-016**: The loader MUST resolve link endpoints without depending on node labels or on an index, so loading cost does not grow with the number of distinct labels.
-- **FR-017**: The loader MUST create only the indexes the caller names, before the nodes are created.
+- **FR-017**: The loader MUST create only the indexes named by the descriptor, or by the caller when there is no descriptor, before the nodes are created.
 - **FR-018**: The loader MUST accept an optional scope value, add it to every node it creates, and reject a `scope` key in node properties when a scope is given.
-- **FR-019**: The package MUST load whole numbers as integers and other numbers as floats, and MUST reject `null`, nested objects, arrays of arrays, empty arrays and mixed-kind arrays.
+- **FR-019**: The package MUST load whole numbers as integers and other numbers as floats, MUST load a number array containing any fractional item as floats throughout, and MUST reject `null`, nested objects, arrays of arrays, empty arrays and mixed-kind arrays.
 
 **Profiles**
 
 - **FR-020**: The package MUST support a `persistent` profile (client-side routing) in which one worker and one instance live for the visit, and the client survives route changes.
 - **FR-021**: The package MUST support a `per-page` profile (multi-page, no router) in which each page starts its own worker.
-- **FR-022**: In the `per-page` profile the worker MUST restore from the store, and MUST replay the document when the store is empty, locked or out of date; staleness MUST be decided by comparing the document's `revision` with the one recorded in the store, and a mismatch MUST reset the store.
-- **FR-023**: A document without a `revision` MUST NOT be read from or written to a store.
-- **FR-024**: The store's name MUST come from a site identifier in the configuration, so sites on one origin do not share a store.
+- **FR-022**: In the `per-page` profile the worker MUST restore from the store, and MUST replay the data when the store is empty, locked or out of date; staleness MUST be decided by comparing the descriptor's `revision` with the one in the stored copy of the descriptor kept beside the store (FR-037), and a mismatch MUST reset the store.
+- **FR-023**: A graph without a descriptor MUST NOT use a store.
+- **FR-024**: The store's name MUST come from the descriptor's `id`, so graphs on one origin do not share a store.
 - **FR-025**: The `persistent` profile MUST support an optional store with the same staleness rule.
 - **FR-026**: Page-scoped data MUST be keyed to the page view, added on arrival, removed on departure, and added again after a replacement before subscriptions re-run.
 - **FR-027**: A worker MUST remove all scoped data when it starts, and in the `per-page` profile a departing page MUST remove its own view's data when it is hidden.
@@ -235,13 +239,20 @@ A small example site, with pages, links and a shared graph, ships with the packa
 
 - **FR-035**: A page MAY create several independent clients, each with its own worker, instance, generation, status and failure count; one client's fault MUST NOT affect another, and the package MUST NOT state a limit or a cost per extra client until one has been measured.
 
+**Descriptor**
+
+- **FR-037**: The package MUST accept a graph descriptor (ADR-003) with a `version`, an `id`, a `revision`, the data's location and counts, and optional indexes; MUST keep a copy of it beside the store, outside the graph, removed before a reset and written last after a complete load; and MUST NOT put any bookkeeping node in the graph.
+- **FR-038**: When the stored copy has the descriptor's revision, the worker MUST restore without fetching the data document, and after the start-up sweep MUST compare the store's node count with the descriptor's node count and treat a difference as stale.
+- **FR-039**: When a data document carries a `revision` that differs from the descriptor's, or its node or link counts differ from the descriptor's, the load MUST be rejected and nothing loaded.
+
 **Observation**
 
 - **FR-036**: The client MUST let a page listen for events covering status changes, instance replacements with their reason, and load and restore times; it MUST do no work for events when nothing listens, MUST keep every event inside the page, and MUST be the source of the times that FR-031 records.
 
 ### Key Entities
 
-- **Graph data document**: the node-link JSON input of ADR-002, with a `version`, an optional `revision`, `nodes` and `links`.
+- **Graph data document**: the node-link JSON input of ADR-002, with a `version`, an optional `revision` (a consistency check against the descriptor), `nodes` and `links`.
+- **Graph descriptor**: a small document beside the data (ADR-003) with a `version`, an `id`, a `revision`, the data's location and counts, and optional indexes.
 - **Instance**: one running database holding one graph.
 - **Client**: the page-side object that owns the worker and exposes generation, status, queries, subscriptions and the new-instance listener. A page may create more than one.
 - **Generation**: an integer that increases each time the instance is replaced.
@@ -249,8 +260,8 @@ A small example site, with pages, links and a shared graph, ships with the packa
 - **Event**: a notice a page can listen for: a status change, an instance replacement with its reason, or a load or restore time.
 - **Subscription**: a registered query and listener that re-run after every replacement.
 - **Scope**: a value that marks data belonging to one page view.
-- **Store**: the browser's per-site private file storage that keeps a graph between visits, available to one tab at a time.
-- **Revision**: a string in the document that changes whenever its data changes; the staleness check compares it with the store's.
+- **Store**: the browser's per-site private file storage that keeps a graph between visits, available to one tab at a time, with a stored copy of the descriptor beside it.
+- **Revision**: a string in the descriptor that changes whenever the data or the descriptor changes; the staleness check compares it with the stored copy's.
 - **Profile**: `persistent` or `per-page`, chosen by the site author.
 - **Example site and conformance check**: the shared fixture and the check every adapter must pass.
 
@@ -263,13 +274,14 @@ A small example site, with pages, links and a shared graph, ships with the packa
 - **SC-003**: A 5,000-page graph is restored from the store and ready within 0.55 seconds (1.5 times the figure in ADR-001), also a target held by the regression rule in FR-031.
 - **SC-004**: After each injected fault (crash, timeout, worker error), every registered query delivers fresh results once the replacement completes, within the load or restore time plus one second, and links and text remain usable throughout with no page reload. This outcome fails the tests when not met.
 - **SC-005**: Every MUST in ADR-001, ADR-002 and this specification maps to at least one passing automated test, shown in a traceability table.
-- **SC-006**: Every invalid document in the test corpus is rejected with the path of its first problem and no partial graph, and every valid one loads exactly the nodes and relationships it describes.
+- **SC-006**: Every invalid document or descriptor in the test corpus is rejected with the path of its first problem and no partial graph, and every valid one loads exactly the nodes and relationships it describes.
 - **SC-007**: When a store is held by another tab, the page continues with an in-memory graph within five seconds plus the replay time.
 - **SC-008**: The conformance check passes for the example site under both profiles, and an adapter author can run it without changing the package.
 - **SC-009**: Across ten navigations in the `persistent` profile, the worker and the generation are unchanged, and no page's scoped data remains after its departure.
 - **SC-010**: A document that crashes the engine on every load ends in the `failed` status after exactly three attempts, with no further replacement and with links and text still usable.
 - **SC-011**: The automated suite, including the conformance check under both profiles, passes in Chromium, Firefox and WebKit, and the package's documentation lists exactly those browsers as measured.
 - **SC-012**: Every status change, replacement (with its reason) and load or restore time in the test suite is observable through the event stream, and with no listener registered the package does no event work and sends nothing out of the page.
+- **SC-013**: With a matching store, the page makes no request for the data document and the graph is ready within the limit in SC-003; with a changed revision the graph shows the new data and none of the old.
 
 ## Assumptions
 
@@ -277,8 +289,8 @@ A small example site, with pages, links and a shared graph, ships with the packa
 - **Reference environment**: the load-time thresholds in SC-001 to SC-003 are measured on one recorded environment. The thresholds are 1.5 times the single-run figures in ADR-001 and may be revised once more runs exist.
 - **Defaults chosen at planning**: the default statement timeout, the batch size and order of loading, and the shape of the configuration are decided in the plan, not here.
 - **Example site**: it is plain pages with a minimal navigation script for the `persistent` profile, so it does not depend on any framework or adapter.
-- **Document delivery**: how a document reaches the page (embedded, fetched or generated) is not part of this feature; the client is given the document as data.
+- **Document delivery**: how a descriptor or document reaches the page (embedded, fetched or generated) is not part of this feature; the client is given a descriptor (as data or a URL), or a document alone, as data.
 - **Engine**: the engine is consumed as `@neo4j-labs/cypherlite-wasm`, from a pinned build vendored into the repository until it is published, and declared by the package as a peer dependency, in a pnpm workspace. The package name `graph-web-core` is a working name.
 - **Not verified yet**: dynamic labels and relationship types in the browser build, and the element-id seek, are documented in the engine but not tested in that build; the first tests of this feature settle them.
 - **Out of scope**: framework adapters, the site-graph schema and embeddings, the navigation element, reshaping query results, server and build-time hosting, page-graph authoring (RFC-002), and sharing or saving a visitor's work.
-- **Governing decisions**: ADR-001 (hosting), ADR-002 (graph data format), and the project constitution (version 1.1.1). ADR-001 lists three statuses; the `failed` status and the three-failure limit are an addition to it, to be recorded as an amendment when the plan is written. The default target of the issue link (this project's tracker or the engine's) is chosen in the plan.
+- **Governing decisions**: ADR-001 (hosting), ADR-002 (graph data format), ADR-003 (graph descriptor) and the project constitution (version 1.1.1). The `failed` status and the three-failure limit are recorded as an amendment to ADR-001. The default target of the issue link (this project's tracker or the engine's) is chosen in the plan.

@@ -58,5 +58,6 @@ Use `/adr-review` before moving a draft to `accepted`.
 
 | ADR | Title | Status | RFCs |
 |---|---|---|---|
-| [ADR-001](ADR-001-worker-hosting-profiles.md) | Dedicated-Worker Hosting with Two Navigation Profiles | accepted | RFC-001 |
-| [ADR-002](ADR-002-graph-data-format.md) | Node-Link JSON as the Graph Data Format | accepted | RFC-001, RFC-002 |
+| [ADR-001](ADR-001-worker-hosting-profiles.md) | Dedicated-Worker Hosting with Two Navigation Profiles | accepted (amended 2026-11-02) | RFC-001 |
+| [ADR-002](ADR-002-graph-data-format.md) | Node-Link JSON as the Graph Data Format | accepted (amended 2026-11-02) | RFC-001, RFC-002 |
+| [ADR-003](ADR-003-graph-descriptor.md) | Graph Descriptor Beside the Graph Data | accepted | RFC-001 |

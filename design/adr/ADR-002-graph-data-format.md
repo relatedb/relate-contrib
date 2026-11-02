@@ -52,18 +52,18 @@ The graph is one JSON document in node-link form. Structure and properties are s
 }
 ```
 
-The labels, relationship types and properties in the example are illustrative; the site graph's schema is set elsewhere.
+The labels, relationship types and properties in the example are illustrative; the site graph's schema is set elsewhere. A `revision` matters only beside a descriptor (ADR-003).
 
 ### 2.2 Document keys
 
 - `version`: required integer, the version of this format. A loader that does not know the version rejects the document. This decision defines version 1.
-- `revision`: optional string that changes whenever the data changes (a build id or a hash of the content). The staleness check for a stored graph (ADR-001 2.4) compares it. A document without a `revision` is never restored from or written to a store.
+- `revision`: optional string. When the graph has a descriptor (ADR-003) a `revision` here must equal the descriptor's; without a descriptor it has no effect.
 - `nodes`: required array. `links`: required array (either may be empty).
 
 ### 2.3 Nodes
 
 - `id`: required string, unique across all nodes in the document, whatever their labels. It names the node as a link endpoint, and the loader stores it on the node as a property called `id` so queries can look nodes up by it.
-- `labels`: optional array of strings, empty when omitted.
+- `labels`: optional array of non-empty strings, empty when omitted.
 - `properties`: optional object. It must not contain a key named `id`.
 
 ### 2.4 Links
@@ -75,7 +75,7 @@ The labels, relationship types and properties in the example are illustrative; t
 
 ### 2.5 Property values
 
-A property value is a string, a finite number, a boolean, or a non-empty array whose items are all strings, all numbers or all booleans. An array of numbers is how an embedding is carried. JSON does not distinguish integers from floats, so a number with no fractional part loads as an integer and any other number as a float; integers beyond ±2^53 cannot be represented. How an embedding must be typed for vector search is decided with the site-graph schema. `null`, nested objects, arrays of arrays and empty arrays are not accepted: a property that has no value is left out. Dates and other richer values are strings.
+A property value is a string, a finite number, a boolean, or a non-empty array whose items are all strings, all numbers or all booleans. An array of numbers is how an embedding is carried. JSON does not distinguish integers from floats, so a number with no fractional part loads as an integer and any other number as a float; integers beyond ±2^53 cannot be represented. An array of numbers in which any item has a fractional part loads as a list of floats, and an array of whole numbers as a list of integers, because the engine rejects a list that mixes the two. A value is fractional when `Number.isInteger` is false; a value written `2.0` parses as `2` and loads as an integer, so a float cannot be forced for a whole number. How an embedding must be typed for vector search is decided with the site-graph schema. `null`, nested objects, arrays of arrays and empty arrays are not accepted: a property that has no value is left out. Dates and other richer values are strings.
 
 ### 2.6 Validation
 
@@ -87,7 +87,7 @@ A node becomes one graph node with its labels, the entries of `properties`, and 
 
 Link endpoints are resolved through the element ids (the engine's internal identifiers for nodes and relationships) that the engine returns for the node batch, the pattern in CypherLite's own bulk loader (ADR-0155). The loader keeps a map from node `id` to element id for the duration of one load, so no label or index takes part in resolving an endpoint.
 
-The loader creates no indexes of its own. A caller that looks nodes up by `id` names the labels to index, and those indexes are created before the nodes are loaded.
+The loader creates only the indexes it is told to: those in the descriptor's `indexes` (ADR-003), or those the caller names when the graph has no descriptor. They are created before the nodes are loaded.
 
 A load may be given a scope value. The loader then adds a `scope` property with that value to every node it creates (ADR-001 2.5 drops page-scoped data by matching that property, and a detach-delete removes the nodes' relationships with them), and a `scope` key in a node's `properties` is then an error. Ids need to be unique only within one document, so a document loaded as an overlay may reuse ids that exist in the site graph; a lookup by `id` in an instance that holds several documents should also name a label or a scope.
 
@@ -112,14 +112,20 @@ The order and size of the loader's batches, chosen at implementation against the
 - Existing D3 data does not load as it is: its properties must move under `properties`, and any simulation keys must be removed. Unknown keys are errors, not ignored, so this fails loudly, and adding a structural key later means a new format version. A small converter from flat D3 data is a possible follow-up.
 - The format is verbose: `properties` adds a level per node and `labels` repeats per node. Compression removes most of that; embeddings, when added, dominate the size.
 - Every node has a property named `id`, and an author cannot use that name for something else.
-- ADR-001 2.1 describes an index on the lookup property created before the links are loaded, which assumed a known label. Resolving endpoints through element ids removes that need for loading, so indexes serve queries only, and which labels get an `id` index is the caller's choice. The loader's first test is that this keeps loading near the figures in ADR-001 (0.6 s at 5,000 pages on the main thread, 1.4 s in the worker).
-- Not verified: loading this shape at the sizes measured so far (the earlier figures used a fixed pages-and-links shape); in the WASM build, dynamic labels and relationship types in `CREATE` and the element-id seek (documented as supported in the engine); the cost of validating a 20,000-node document with embeddings; how CypherLite's vector search expects an embedding to be stored, which the site-graph RFC has to settle.
+- ADR-001 2.1 describes an index on the lookup property created before the links are loaded, which assumed a known label. Resolving endpoints through element ids removes that need for loading, so indexes serve queries only, and which labels get an `id` index is the descriptor's choice, or the caller's when there is no descriptor. The loader's first test is that this keeps loading near the figures in ADR-001 (0.6 s at 5,000 pages on the main thread, 1.4 s in the worker).
+- Verified in Node against the engine build used in the spikes (single runs, main thread): dynamic labels and relationship types and the element-id lookup, loading 1,000 pages in 156 ms, 5,000 in 604 ms and 20,000 in 2,484 ms.
+- Not verified: the same loading in a browser and in a worker; the cost of validating a 20,000-node document with embeddings; how CypherLite's vector search expects an embedding to be stored, which the site-graph RFC has to settle.
 - Follow-up: the site-graph RFC defines its schema as a profile of this format; batch size and order of loading, chosen at implementation once measured; optionally a published JSON Schema for editors and build tools.
 - RFC questions this decision informs: RFC-001 7.3 (the form replay takes as input; it does not answer the replay-cost questions) and RFC-002 7.3 (the form of page graph data; the cookbook's recipe form and whether it should carry the same data stay open).
 
 ## 5. Related
 
 - RFCs: RFC-001, RFC-002
-- ADRs: ADR-001 (the loader runs in its worker host)
+- ADRs: ADR-001 (the loader runs in its worker host), ADR-003 (the descriptor that carries a graph's revision and index list)
 - Evidence: `design/spikes/SPIKE-002-astro-build-time-graph/SPIKE.md` and `design/spikes/SPIKE-004-worker-hosting-and-faults/SPIKE.md` (replay costs for a fixed pages-and-links shape)
 - In the CypherLite repository: ADR-0155 (bulk writes through batched `UNWIND`)
+- Evidence for the amendment: `specs/001-core-package/research.md` (R2 for loading and number arrays)
+
+## 6. Amendments
+
+- 2026-11-02: stated how arrays of numbers load (2.5); made `revision` a consistency check against a descriptor and nothing more (2.2, ADR-003); recorded the loading mechanism as checked against the engine (4). Planning the core package found that the engine rejects an array that mixes whole and fractional numbers, which embedding arrays routinely do.

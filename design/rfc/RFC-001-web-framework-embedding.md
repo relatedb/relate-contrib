@@ -3,7 +3,7 @@ id: RFC-001
 title: Embedding CypherLite in Web Frameworks
 status: accepted
 created: 2026-11-01
-adrs: [ADR-001, ADR-002]
+adrs: [ADR-001, ADR-002, ADR-003]
 ---
 
 # RFC-001: Embedding CypherLite in Web Frameworks
@@ -135,3 +135,4 @@ These apply regardless of which axis values are chosen:
 
 - [ADR-001](../adr/ADR-001-worker-hosting-profiles.md): Dedicated-worker hosting with two navigation profiles (accepted)
 - [ADR-002](../adr/ADR-002-graph-data-format.md): Node-link JSON as the graph data format (accepted)
+- [ADR-003](../adr/ADR-003-graph-descriptor.md): Graph descriptor beside the graph data (accepted)
