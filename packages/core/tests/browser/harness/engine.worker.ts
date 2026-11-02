@@ -1,4 +1,4 @@
-import { Engine } from "../../../src/worker/engine.js";
+import { Engine, TrapError } from "../../../src/worker/engine.js";
 import { LoadError, loadDocument, run, dropScope } from "../../../src/worker/loader.js";
 import type { LoadOptions } from "../../../src/worker/loader.js";
 
@@ -43,6 +43,7 @@ scope.onmessage = async (e) => {
       scope.postMessage({ id, ok: true });
     }
   } catch (err) {
-    scope.postMessage({ id, ok: false, reason: "error", message: String(err) });
+    if (err instanceof TrapError) scope.postMessage({ id, ok: false, reason: "trap", message: err.message });
+    else scope.postMessage({ id, ok: false, reason: "error", message: String(err) });
   }
 };

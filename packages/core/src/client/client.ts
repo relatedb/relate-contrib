@@ -5,7 +5,9 @@ import type { Descriptor, Envelope, GraphDocument, IndexSpec } from "../data/typ
 import { GraphError } from "../errors.js";
 import { encodeParams } from "../worker/encode.js";
 import type { ClientMessage, InitFailReason, InitMessage, Timings, WorkerMessage } from "../worker/protocol.js";
+import { diagnosticMessage } from "./diagnostic.js";
 import { Emitter, type Events } from "./events.js";
+import { FailureCounter } from "./failure.js";
 import { StatusMachine, type Status } from "./status.js";
 import { Registry, type Unsubscribe, type Update } from "./subscriptions.js";
 import type { Client, ClientOptions, Diagnostic, Run } from "./types.js";
@@ -41,7 +43,9 @@ class GraphClient implements Client {
   private worker: Worker | null = null;
   private readonly pending = new Map<number, Pending>();
   private nextId = 0;
-  private attempts = 0;
+  private readonly failures = new FailureCounter();
+  /** Why the instance now starting replaces a ready one; reported when the replacement is ready. */
+  private replacing: Events["replaced"]["reason"] | null = null;
   private destroyed = false;
   private waiters: Array<{ resolve: () => void; reject: (e: GraphError) => void }> = [];
 
@@ -97,12 +101,13 @@ class GraphClient implements Client {
   retry(): void {
     if (this.status !== "failed" || this.destroyed) return;
     this.diagnostic = null;
+    this.failures.reset();
     this.machine.markLoading();
     void this.start();
   }
 
   failureMessage(): string {
-    return this.diagnostic ? `The graph could not be loaded (${this.diagnostic.reason}).` : "";
+    return diagnosticMessage(this.diagnostic, this.options.issueUrl);
   }
 
   destroy(): void {
@@ -145,7 +150,7 @@ class GraphClient implements Client {
 
   private async start(): Promise<void> {
     if (this.destroyed) return;
-    this.attempts++;
+    const attempt = this.failures.failures + 1;
     try {
       const init = await this.prepare();
       if (this.destroyed) return;
@@ -155,9 +160,12 @@ class GraphClient implements Client {
         if (worker === this.worker) this.onMessage(e.data);
       };
       worker.onerror = (e: ErrorEvent) => {
-        if (worker === this.worker) this.attemptFailed("worker-error", e.message || "the worker failed");
+        if (worker !== this.worker) return;
+        const message = e.message || "the worker failed";
+        if (this.status === "ready") this.fault("worker-error");
+        else this.attemptFailed("worker-error", message);
       };
-      worker.postMessage({ type: "init", ...init, attempt: this.attempts } satisfies ClientMessage);
+      worker.postMessage({ type: "init", ...init, attempt } satisfies ClientMessage);
     } catch (e) {
       if (e instanceof StartFailure) this.attemptFailed(e.reason, e.message);
       else this.attemptFailed("worker-error", e instanceof Error ? e.message : String(e));
@@ -183,8 +191,8 @@ class GraphClient implements Client {
         break;
       }
       case "error": {
-        const entry = this.take(msg.id);
-        entry?.reject(new GraphError("trap", msg.message));
+        this.take(msg.id)?.reject(new GraphError("trap", msg.message));
+        this.fault("trap");
         break;
       }
       case "store-retry":
@@ -193,8 +201,15 @@ class GraphClient implements Client {
   }
 
   private onReady(restored: boolean, timings: Timings): void {
+    this.failures.ready();
+    this.diagnostic = null;
     this.machine.markReady();
     const generation = this.generation;
+    if (this.replacing) {
+      const reason = this.replacing;
+      this.replacing = null;
+      this.emitter.emit("replaced", () => ({ reason, generation }));
+    }
     for (const phase of ["init", "open", restored ? "restore" : "load", "total"] as const) {
       const ms = timings[phase];
       if (ms !== undefined) this.emitter.emit("timing", () => ({ phase, ms, restored }));
@@ -203,9 +218,27 @@ class GraphClient implements Client {
     void this.registry.ready(generation, (s, p) => this.execute(s, p, undefined));
   }
 
+  /** The instance that was ready is no longer usable: replace it. Calls in flight are lost. */
+  private fault(reason: Events["replaced"]["reason"]): void {
+    if (this.destroyed || this.status !== "ready") return;
+    this.replacing = reason;
+    this.terminateWorker();
+    this.rejectPending(new GraphError("lost", "the instance was replaced"));
+    this.machine.markRecovering();
+    void this.start();
+  }
+
+  /** An attempt to start an instance ended without reaching `ready`: try again, or stop at the limit. */
   private attemptFailed(reason: InitFailReason, message: string): void {
     this.terminateWorker();
-    this.diagnostic = { reason, failures: this.attempts, engineError: message };
+    if (this.failures.attemptFailed(reason) === "retry") {
+      this.machine.markRecovering();
+      void this.start();
+      return;
+    }
+    this.replacing = null;
+    this.diagnostic = { reason, failures: this.failures.failures, engineError: message };
+    this.rejectPending(new GraphError("lost", "the instance failed"));
     this.machine.markFailed();
     this.rejectWaiters(new GraphError("failed", message));
   }
@@ -224,7 +257,12 @@ class GraphClient implements Client {
     const paramsJson = params ? encodeParams(params) : null;
     return new Promise<Envelope>((resolve, reject) => {
       const entry: Pending = { resolve, reject, timer: undefined };
-      if (timeoutMs !== undefined) entry.timer = setTimeout(() => this.take(id)?.reject(new GraphError("timeout")), timeoutMs);
+      if (timeoutMs !== undefined) {
+        entry.timer = setTimeout(() => {
+          this.take(id)?.reject(new GraphError("timeout"));
+          this.fault("timeout");
+        }, timeoutMs);
+      }
       this.pending.set(id, entry);
       worker.postMessage({ type: "query", id, statement, paramsJson } satisfies ClientMessage);
     });

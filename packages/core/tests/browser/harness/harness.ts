@@ -3,6 +3,7 @@
 import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url";
 import * as core from "../../../dist/index.js";
 import { generateGraph } from "../../fixtures/generate-graph.js";
+import * as faults from "./faults.js";
 
 declare global {
   interface Window {
@@ -10,6 +11,6 @@ declare global {
   }
 }
 
-export const gw = { core, engineUrl, generateGraph };
+export const gw = { core, engineUrl, generateGraph, faults };
 window.gw = gw;
 document.documentElement.dataset.harness = "ready";
