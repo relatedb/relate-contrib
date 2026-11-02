@@ -52,6 +52,8 @@ Skills live in `.agents/skills/` and are symlinked from `.claude/skills/` (same 
 - **Spike** (`design/spikes/SPIKE-NNN-*/SPIKE.md`, via `/spike-create`) — a time-boxed, disposable investigation answering one empirical question left open by an RFC. Code and fixtures live alongside `SPIKE.md` and are kept after the spike concludes. Citing findings back into the RFC is a manual step. The existing ObservableHQ spike should be written up as `SPIKE-001` with a parent RFC. Index and format: [design/spikes/README.md](design/spikes/README.md).
 - **ADR** (`design/adr/ADR-NNN-*.md`, via `/adr-create`; reviewed via `/adr-review`) — one technical decision, concrete enough to implement. Always requires at least one existing parent RFC (`rfcs:` front-matter list, set at creation and only ever grows). `/adr-create` never writes implementation code. Index and format: [design/adr/README.md](design/adr/README.md).
 
+- **Notes** (`design/notes/YYYY-MM-DD-*.md`) — freeform, non-binding notes (explorations, naming) with no process or index. See [design/notes/README.md](design/notes/README.md). The project name is itself open; see the naming note there.
+
 `/rfc-create` and `/adr-create` keep their `design/*/README.md` index tables in sync, and `/spike-create` does the same for spikes, so don't hand-edit those tables. Use the review skills before moving a draft toward `accepted`; they report findings and suggested revisions but don't edit the document themselves.
 
 These skills were copied from `zebra-space` and stripped of its speckit-specific hooks and gates. There is no speckit layer here: an accepted ADR is implemented directly in the core package or the relevant integration module, citing the ADR number in the commit or PR.
