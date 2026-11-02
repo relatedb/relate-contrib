@@ -9,7 +9,7 @@ export default defineConfig({
   expect: { timeout: 30_000 },
   workers: 1,
   fullyParallel: false,
-  reporter: [["list"]],
+  reporter: [["list"], ["json", { outputFile: "reports/playwright.json" }]],
   use: { baseURL: `http://localhost:${PORT}` },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },

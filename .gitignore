@@ -4,6 +4,7 @@ vendor/cypherlite-wasm/
 vendor/.build/
 test-results/
 playwright-report/
+reports/
 *.log
 .env*
 .DS_Store

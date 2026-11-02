@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "n1"
+    }
+  ],
+  "links": [
+    {
+      "source": "nope",
+      "target": "n1",
+      "type": "T"
+    }
+  ]
+}

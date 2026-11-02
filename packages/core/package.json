@@ -30,7 +30,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:unit": "vitest run",
+    "test:unit": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json",
     "test:browsers": "playwright test --grep-invert @conformance",
     "test:conformance": "playwright test --grep @conformance",
     "test:package": "vitest run --config vitest.package.config.ts",

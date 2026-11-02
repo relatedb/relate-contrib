@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "n1",
+      "properties": {
+        "scope": "view-1"
+      }
+    }
+  ],
+  "links": []
+}

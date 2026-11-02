@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "n1"
+    },
+    {
+      "id": "n2"
+    }
+  ],
+  "links": [
+    {
+      "source": "n1",
+      "target": "n2"
+    }
+  ]
+}

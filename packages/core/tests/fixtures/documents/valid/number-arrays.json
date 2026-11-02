@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "n1",
+      "properties": {
+        "ints": [
+          1,
+          2,
+          3
+        ],
+        "floats": [
+          0.5,
+          1.5
+        ],
+        "mixed_whole_fractional": [
+          0,
+          1,
+          0.5
+        ],
+        "strings": [
+          "a",
+          "b"
+        ],
+        "bools": [
+          true,
+          false
+        ],
+        "whole_scalar": 3,
+        "fractional_scalar": 0.25
+      }
+    }
+  ],
+  "links": []
+}
