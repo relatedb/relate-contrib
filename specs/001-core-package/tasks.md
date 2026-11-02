@@ -89,21 +89,21 @@ description: "Task list for the graph-web core package"
 
 ### Tests for User Story 1 (write first)
 
-- [ ] T032 [P] [US1] Unit test `packages/core/tests/unit/status.test.ts` for the status machine: `loading` to `ready`, generation starts at 1 and increases only when a replacement is ready. Tag `// covers: FR-002`
-- [ ] T033 [P] [US1] Unit test `packages/core/tests/unit/subscriptions.test.ts`: a subscription runs when ready and again after a replacement, results after `unsubscribe` are dropped, `onGeneration` listeners run before subscriptions re-run. Tag `// covers: FR-004, FR-005`
-- [ ] T034 [P] [US1] Unit test `packages/core/tests/unit/events.test.ts`: `status`, `replaced` and `timing` events reach a listener, and with no listener no event work is done and nothing leaves the page. Tag `// covers: FR-036, SC-012`
-- [ ] T035 [US1] Browser test `packages/core/tests/browser/client.spec.ts`: the first render completes before the instance is ready and links work; status goes `loading` to `ready`; a query resolves with the engine's envelope unaltered; the `engineUrl` option is used and no vendored path appears in the built package. Tag `// covers: FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, FR-007`
-- [ ] T036 [US1] Browser test `packages/core/tests/browser/timing.spec.ts`: during a 20,000-node load the longest unresponsive interval stays under 50 ms (a hard gate); load times for 5,000 and 20,000 pages are recorded through the `timing` event, compared with `packages/core/tests/baselines/<browser>-<environment>.json`, and the run fails above twice the baseline; the first run on a new environment writes the baseline. Tag `// covers: FR-030, FR-031, SC-001, SC-002`
+- [X] T032 [P] [US1] Unit test `packages/core/tests/unit/status.test.ts` for the status machine: `loading` to `ready`, generation starts at 1 and increases only when a replacement is ready. Tag `// covers: FR-002`
+- [X] T033 [P] [US1] Unit test `packages/core/tests/unit/subscriptions.test.ts`: a subscription runs when ready and again after a replacement, results after `unsubscribe` are dropped, `onGeneration` listeners run before subscriptions re-run. Tag `// covers: FR-004, FR-005`
+- [X] T034 [P] [US1] Unit test `packages/core/tests/unit/events.test.ts`: `status`, `replaced` and `timing` events reach a listener, and with no listener no event work is done and nothing leaves the page. Tag `// covers: FR-036, SC-012`
+- [X] T035 [US1] Browser test `packages/core/tests/browser/client.spec.ts`: the first render completes before the instance is ready and links work; status goes `loading` to `ready`; a query resolves with the engine's envelope unaltered; the `engineUrl` option is used and no vendored path appears in the built package. Tag `// covers: FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, FR-007`
+- [X] T036 [US1] Browser test `packages/core/tests/browser/timing.spec.ts`: during a 20,000-node load the longest unresponsive interval stays under 50 ms (a hard gate); load times for 5,000 and 20,000 pages are recorded through the `timing` event, compared with `packages/core/tests/baselines/<browser>-<environment>.json`, and the run fails above twice the baseline; the first run on a new environment writes the baseline. Tag `// covers: FR-030, FR-031, SC-001, SC-002`
 
 ### Implementation for User Story 1
 
-- [ ] T037 [P] [US1] Implement the status machine in `packages/core/src/client/status.ts` (`loading`, `ready`, `recovering`, `failed` and the generation counter)
-- [ ] T038 [P] [US1] Implement the subscription registry in `packages/core/src/client/subscriptions.ts` and the `onGeneration` listeners
-- [ ] T039 [P] [US1] Implement the typed event emitter in `packages/core/src/client/events.ts` with no work when nothing listens
-- [ ] T040 [US1] Implement the worker entry `packages/core/src/worker/worker.ts`: handle `init` (descriptor or document, no store yet) by calling the loader, post `ready` with `init`, `open`, `load` and `total` timings, and answer `query` with the envelope text
-- [ ] T041 [US1] Implement `createClient` in `packages/core/src/client/client.ts`: start the worker (`workerFactory` or `new Worker(new URL("../worker/worker.js", import.meta.url), {type: "module"})`), resolve `data.url` against the descriptor or page URL, expose `generation`, `status`, `query`, `subscribe`, `onGeneration`, `on` and `destroy`, and send `paramsJson` as text
-- [ ] T042 [US1] Export the public API from `packages/core/src/index.ts` and the worker entry as the `./worker` export in `packages/core/package.json`
-- [ ] T043 [US1] Make the US1 tests pass in Chromium, Firefox and WebKit and write the first baselines into `packages/core/tests/baselines/`
+- [X] T037 [P] [US1] Implement the status machine in `packages/core/src/client/status.ts` (`loading`, `ready`, `recovering`, `failed` and the generation counter)
+- [X] T038 [P] [US1] Implement the subscription registry in `packages/core/src/client/subscriptions.ts` and the `onGeneration` listeners
+- [X] T039 [P] [US1] Implement the typed event emitter in `packages/core/src/client/events.ts` with no work when nothing listens
+- [X] T040 [US1] Implement the worker entry `packages/core/src/worker/worker.ts`: handle `init` (descriptor or document, no store yet) by calling the loader, post `ready` with `init`, `open`, `load` and `total` timings, and answer `query` with the envelope text
+- [X] T041 [US1] Implement `createClient` in `packages/core/src/client/client.ts`: start the worker (`workerFactory` or `new Worker(new URL("../worker/worker.js", import.meta.url), {type: "module"})`), resolve `data.url` against the descriptor or page URL, expose `generation`, `status`, `query`, `subscribe`, `onGeneration`, `on` and `destroy`, and send `paramsJson` as text
+- [X] T042 [US1] Export the public API from `packages/core/src/index.ts` and the worker entry as the `./worker` export in `packages/core/package.json`
+- [X] T043 [US1] Make the US1 tests pass in Chromium, Firefox and WebKit and write the first baselines into `packages/core/tests/baselines/`
 
 ---
 
