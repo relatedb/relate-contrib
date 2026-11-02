@@ -1,5 +1,5 @@
 // covers: FR-035
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.js";
 import { generateGraph, openHarness, serveGraph } from "./helpers.js";
 
 test("two clients on one page have separate workers, generations and status; one client's crash leaves the other alone", async ({ page }) => {

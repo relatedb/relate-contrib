@@ -1,7 +1,7 @@
 // covers: FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, FR-007
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.js";
 import { openHarness, walk } from "./helpers.js";
 
 const ENVELOPE_KEYS = ["columns", "columnTypes", "rows", "stats", "plan", "notifications", "elapsed_ms", "error"];

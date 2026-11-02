@@ -1,5 +1,5 @@
 // covers: FR-001
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.js";
 
 test("the engine initialises in a worker and answers a statement", async ({ page }) => {
   await page.goto("/smoke.html");

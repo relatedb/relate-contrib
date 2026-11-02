@@ -1,7 +1,7 @@
 // covers: FR-015, FR-016, FR-017, FR-018, FR-019, FR-039, SC-006
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures.js";
 
 const fixtures = join(import.meta.dirname, "../fixtures/documents");
 const doc = (name: string): unknown => JSON.parse(readFileSync(join(fixtures, "valid", name), "utf8"));

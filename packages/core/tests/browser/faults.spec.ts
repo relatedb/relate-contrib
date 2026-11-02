@@ -1,5 +1,5 @@
 // covers: FR-008, FR-009, FR-033, FR-034, FR-036, SC-004, SC-010
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures.js";
 import { generateGraph, openHarness, serveGraph } from "./helpers.js";
 
 /** Start a client over a 1,000-page graph (served from a URL) with tracked workers, and wait until it is ready. */

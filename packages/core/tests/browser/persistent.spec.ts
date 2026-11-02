@@ -1,5 +1,6 @@
-// covers: FR-020, FR-026, FR-028, SC-009
-import { expect, test, type Page } from "@playwright/test";
+// covers: FR-020, FR-025, FR-026, FR-028, SC-009
+import { expect, test, type Page } from "./fixtures.js";
+import { query, restored, visitSite } from "./helpers.js";
 
 async function openSite(page: Page, query = ""): Promise<void> {
   await page.goto(`/site.html${query}`);
@@ -130,4 +131,24 @@ test("the configured navigation decides: client-routing returns one client for t
     return out;
   });
   expect(result).toEqual({ routingSame: true, routingIsFirst: true, multiDistinct: true });
+});
+
+test("with a descriptor and a store configured, a matching revision restores instead of replaying", async ({ page, context }) => {
+  await visitSite(page, { id: "persist", pages: 300, revision: "r1", navigation: "client-routing", store: true });
+  expect(await restored(page)).toBe(false);
+  await page.close();
+  const next = await context.newPage();
+  const visit = await visitSite(next, { id: "persist", pages: 300, revision: "r1", navigation: "client-routing", store: true });
+  expect(await restored(next)).toBe(true);
+  expect(visit.dataRequests).toHaveLength(0);
+  expect(await query(next, "MATCH (n:Page) RETURN count(n) AS c")).toEqual([{ c: 300 }]);
+});
+
+test("under client-routing the store is off unless it is configured", async ({ page, context }) => {
+  await visitSite(page, { id: "off", pages: 100, revision: "r1", navigation: "client-routing" });
+  await page.close();
+  const next = await context.newPage();
+  const visit = await visitSite(next, { id: "off", pages: 100, revision: "r1", navigation: "client-routing" });
+  expect(await restored(next)).toBe(false);
+  expect(visit.dataRequests).toHaveLength(1);
 });

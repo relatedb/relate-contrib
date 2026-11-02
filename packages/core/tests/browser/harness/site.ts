@@ -10,7 +10,9 @@ import { startRouter } from "./router.js";
 
 const params = new URLSearchParams(location.search);
 const pages = Number(params.get("pages") ?? 300);
-const graph = generateGraph(pages, { id: "site", dataUrl: `/data/site-${pages}.json` });
+const id = params.get("id") ?? "site";
+const revision = params.get("revision") ?? `rev-${pages}`;
+const graph = generateGraph(pages, { id, revision, dataUrl: `/data/${id}.json` });
 const tracked = faults.trackedWorkers();
 const w = window as any;
 
@@ -25,8 +27,11 @@ const client = core.createSiteClient({
   engineUrl,
   graph: params.get("graph") === "descriptor" ? { descriptor: graph.descriptor } : { document: graph.document },
   navigation: (params.get("navigation") as "client-routing" | "multi-page" | null) ?? "client-routing",
+  ...(params.has("store") ? { store: params.get("store") === "1" } : {}),
   workerFactory: tracked.factory,
 });
+w.timings = [] as unknown[];
+client.on("timing", (t) => w.timings.push(t));
 w.client = client;
 w.clientToken = Math.random().toString(36).slice(2);
 

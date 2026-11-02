@@ -138,7 +138,7 @@ description: "Task list for the graph-web core package"
 
 ### Tests for User Story 4 (write first)
 
-- [ ] T053 [US4] Browser test `packages/core/tests/browser/persistent.spec.ts`: over ten navigations (link click, history back and forward, script) the worker and generation are unchanged; a view's scoped data is removed on departure and other views' data is untouched; data is added again after a replacement before subscriptions re-run; a navigation during a query or during loading ignores the departed page's result; a full reload starts a new worker; a configuration naming `multi-page` on a site with a router uses `multi-page`; with a descriptor and a store a matching revision restores instead of replaying. Tag `// covers: FR-020, FR-025, FR-026, FR-028, SC-009`
+- [X] T053 [US4] Browser test `packages/core/tests/browser/persistent.spec.ts`: over ten navigations (link click, history back and forward, script) the worker and generation are unchanged; a view's scoped data is removed on departure and other views' data is untouched; data is added again after a replacement before subscriptions re-run; a navigation during a query or during loading ignores the departed page's result; a full reload starts a new worker; a configuration naming `multi-page` on a site with a router uses `multi-page`; with a descriptor and a store a matching revision restores instead of replaying. Tag `// covers: FR-020, FR-025, FR-026, FR-028, SC-009`
 
 ### Implementation for User Story 4
 
@@ -158,19 +158,19 @@ description: "Task list for the graph-web core package"
 
 ### Tests for User Story 5 (write first)
 
-- [ ] T059 [P] [US5] Unit test `packages/core/tests/unit/store-retry.test.ts` for the retry schedule: starts at 100 ms, backs off to 500 ms, gives up at 5000 ms in total. Tag `// covers: FR-012`
-- [ ] T060 [US5] Browser test `packages/core/tests/browser/stored-copy.spec.ts`: the stored copy is removed before a reset and written last (an interrupted load leaves none); a matching revision restores with no request for the data document; a store with fewer nodes than `data.nodes` is treated as stale; no bookkeeping node is in the graph; a graph without a descriptor never uses a store. Tag `// covers: FR-023, FR-037, FR-038, SC-013`
-- [ ] T061 [US5] Browser test `packages/core/tests/browser/per-page.spec.ts`: restore from a matching store; a changed revision resets the store and shows only the new data; a store held by a second page falls back to memory within five seconds plus the replay time; a worker ended mid-query is covered by the retry; two graphs with different `id`s keep separate stores; a start-up sweep removes leftover scoped data and a hidden page removes its own view's data. Tag `// covers: FR-021, FR-022, FR-024, FR-027, SC-007`
-- [ ] T062 [P] [US5] Extend `packages/core/tests/browser/timing.spec.ts` with the restore of a 5,000-page graph (target 0.55 s, regression rule of FR-031). Tag `// covers: SC-003`
+- [X] T059 [P] [US5] Unit test `packages/core/tests/unit/store-retry.test.ts` for the retry schedule: starts at 100 ms, backs off to 500 ms, gives up at 5000 ms in total. Tag `// covers: FR-012`
+- [X] T060 [US5] Browser test `packages/core/tests/browser/stored-copy.spec.ts`: the stored copy is removed before a reset and written last (an interrupted load leaves none); a matching revision restores with no request for the data document; a store with fewer nodes than `data.nodes` is treated as stale; no bookkeeping node is in the graph; a graph without a descriptor never uses a store. Tag `// covers: FR-023, FR-037, FR-038, SC-013`
+- [X] T061 [US5] Browser test `packages/core/tests/browser/per-page.spec.ts`: restore from a matching store; a changed revision resets the store and shows only the new data; a store held by a second page falls back to memory within five seconds plus the replay time; a worker ended mid-query is covered by the retry; two graphs with different `id`s keep separate stores; a start-up sweep removes leftover scoped data and a hidden page removes its own view's data. Tag `// covers: FR-021, FR-022, FR-024, FR-027, SC-007`
+- [X] T062 [P] [US5] Extend `packages/core/tests/browser/timing.spec.ts` with the restore of a 5,000-page graph (target 0.55 s, regression rule of FR-031). Tag `// covers: SC-003`
 
 ### Implementation for User Story 5
 
-- [ ] T063 [P] [US5] Implement the store open with the bounded retry in `packages/core/src/worker/store.ts` (`opfs://gw-<id>`; retry from 100 ms to 500 ms for at most 5000 ms, then continue in memory with no stored copy written), posting `store-retry` messages
-- [ ] T064 [P] [US5] Implement the stored copy in `packages/core/src/worker/stored-copy.ts`: read, write and remove a file `graph-web/<id>.json` at the origin-private root with a synchronous access handle, outside the engine's `cypherlite/` directory
-- [ ] T065 [P] [US5] Implement the start-up sweep (remove every node with a `scope` property) in `packages/core/src/worker/sweep.ts`
-- [ ] T066 [US5] Extend the `init` handling in `packages/core/src/worker/worker.ts` with the start-up of `contracts/worker-protocol.md` (open store, read stored copy, restore on equal `revision` without fetching the data, sweep, compare the node count with `data.nodes`, otherwise remove the copy, reset if not empty, fetch, validate, check agreement, create indexes, load, write the copy last)
-- [ ] T067 [US5] Implement the `per-page` profile in `packages/core/src/profiles/per-page.ts`: a new client per page, store on by default when a descriptor is given, and departure from `pagehide` that drops the page view's scoped data
-- [ ] T068 [US5] Make the US5 tests pass in Chromium, Firefox and WebKit (in a browser without the file access the store needs, check the replay fallback instead)
+- [X] T063 [P] [US5] Implement the store open with the bounded retry in `packages/core/src/worker/store.ts` (`opfs://gw-<id>`; retry from 100 ms to 500 ms for at most 5000 ms, then continue in memory with no stored copy written), posting `store-retry` messages
+- [X] T064 [P] [US5] Implement the stored copy in `packages/core/src/worker/stored-copy.ts`: read, write and remove a file `graph-web/<id>.json` at the origin-private root with a synchronous access handle, outside the engine's `cypherlite/` directory
+- [X] T065 [P] [US5] Implement the start-up sweep (remove every node with a `scope` property) in `packages/core/src/worker/sweep.ts`
+- [X] T066 [US5] Extend the `init` handling in `packages/core/src/worker/worker.ts` with the start-up of `contracts/worker-protocol.md` (open store, read stored copy, restore on equal `revision` without fetching the data, sweep, compare the node count with `data.nodes`, otherwise remove the copy, reset if not empty, fetch, validate, check agreement, create indexes, load, write the copy last)
+- [X] T067 [US5] Implement the `per-page` profile in `packages/core/src/profiles/per-page.ts`: a new client per page, store on by default when a descriptor is given, and departure from `pagehide` that drops the page view's scoped data
+- [X] T068 [US5] Make the US5 tests pass in Chromium, Firefox and WebKit (in a browser without the file access the store needs, check the replay fallback instead)
 
 ---
 

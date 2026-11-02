@@ -151,7 +151,7 @@ class GraphClient implements Client {
         dataUrl: absolute(descriptor.data.url, base),
         document: null,
         indexes: [],
-        useStore: false,
+        useStore: this.options.store ?? this.options.navigation === "multi-page",
       };
     }
     const indexes: IndexSpec[] = graph.indexes ?? [];
