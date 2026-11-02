@@ -61,9 +61,11 @@ These skills were copied from `zebra-space` and stripped of its speckit-specific
 RFCs always come first; no ADR is written until a parent RFC exists. Candidate RFCs, in order:
 
 1. RFC-001 (drafted, [design/rfc/RFC-001-web-framework-embedding.md](design/rfc/RFC-001-web-framework-embedding.md)): embedding CypherLite in web frameworks — the shared core plus thin adapters, and which distribution (WASM, native Node, HTTP-served) runs in which runtime (build time, server, browser worker), including what that means for Next's serverless and edge runtimes.
-2. RFC-002: the site graph — per-page and site-wide graphs, how content becomes a graph, and shipping it to the browser with vector embeddings (including how a user's query gets embedded).
-3. RFC-003: the language-driven navigation element — primarily visual, minimal natural-language interface, not a chatbot.
-4. SPIKE-001: the ObservableHQ findings, parented to RFC-001; then an Astro spike.
+2. RFC-002 (drafted, [design/rfc/RFC-002-page-graphs.md](design/rfc/RFC-002-page-graphs.md)): page graphs — per-page graphs unrelated to the site (cookbooks and notebooks, a page encoded as a graph, dashboards): where the data comes from, several graphs on a page, visitor edits and recovery, where small graphs run, and how a page graph relates to the site-wide graph.
+3. RFC-003: the site graph — how content becomes a site-wide graph, and shipping it to the browser with vector embeddings (including how a user's query gets embedded).
+4. RFC-004: the language-driven navigation element — primarily visual, minimal natural-language interface, not a chatbot.
+
+SPIKE-001 to SPIKE-004 (Observable, Astro build time, Astro navigation, worker hosting and faults) are done and feed RFC-001; ADR-001 (the hosting model) is drafted and proposed.
 
 ADRs (snapshot format, embedding model and query-time strategy, runtime targets, and so on) follow once the relevant RFC is accepted.
 

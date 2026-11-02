@@ -58,3 +58,4 @@ Use `/adr-review` before moving a draft to `accepted`.
 
 | ADR | Title | Status | RFCs |
 |---|---|---|---|
+| [ADR-001](ADR-001-worker-hosting-profiles.md) | Dedicated-Worker Hosting with Two Navigation Profiles | proposed | RFC-001 |

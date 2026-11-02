@@ -3,7 +3,7 @@ id: RFC-001
 title: Embedding CypherLite in Web Frameworks
 status: accepted
 created: 2026-11-01
-adrs: []
+adrs: [ADR-001]
 ---
 
 # RFC-001: Embedding CypherLite in Web Frameworks
@@ -133,4 +133,4 @@ These apply regardless of which axis values are chosen:
 
 ## 8. ADRs
 
-_(populated automatically as `/adr-create` links ADRs to this RFC)_
+- [ADR-001](../adr/ADR-001-worker-hosting-profiles.md): Dedicated-worker hosting with two navigation profiles (proposed)
