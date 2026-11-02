@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "id": "docs-site",
+  "revision": "9f2c41e",
+  "data": {
+    "url": "graph.json",
+    "nodes": 2,
+    "links": 1
+  },
+  "indexes": [
+    {
+      "label": "Page",
+      "property": "id"
+    },
+    {
+      "label": "Page",
+      "property": "slug"
+    }
+  ]
+}

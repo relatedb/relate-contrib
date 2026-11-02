@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "id": "docs-site",
+  "revision": "9f2c41e",
+  "data": {
+    "url": "g.json",
+    "nodes": 1.5,
+    "links": 1
+  }
+}

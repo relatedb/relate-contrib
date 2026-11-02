@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "n1",
+      "labels": [
+        "Page"
+      ],
+      "properties": {
+        "title": "A",
+        "words": 812,
+        "draft": false
+      }
+    },
+    {
+      "id": "n2",
+      "labels": [
+        "Page"
+      ],
+      "properties": {
+        "title": "B"
+      }
+    }
+  ],
+  "links": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "type": "LINKS_TO",
+      "properties": {
+        "section": "next"
+      }
+    }
+  ]
+}

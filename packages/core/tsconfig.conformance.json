@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "conformance",
+    "outDir": "dist/conformance",
+    "types": ["node"]
+  },
+  "include": ["conformance/*.ts"],
+  "exclude": ["conformance/make-example.ts"]
+}

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "id": "docs-site",
+  "revision": "",
+  "data": {
+    "url": "graph.json",
+    "nodes": 2,
+    "links": 1
+  }
+}

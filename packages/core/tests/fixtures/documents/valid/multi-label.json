@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "n1",
+      "labels": [
+        "Page",
+        "Doc"
+      ]
+    },
+    {
+      "id": "n2",
+      "labels": [
+        "Other"
+      ]
+    }
+  ],
+  "links": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "type": "CITES"
+    }
+  ]
+}

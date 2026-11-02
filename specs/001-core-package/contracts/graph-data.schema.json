@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Graph data document, version 1",
+  "description": "Node-link JSON for a property graph (ADR-002, as amended). Rules a schema cannot express (unique node ids, link endpoints that exist, finite numbers, scope handling, agreement with a descriptor) are checked by the validator.",
+  "type": "object",
+  "required": [
+    "version",
+    "nodes",
+    "links"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1,
+      "description": "When the graph has a descriptor this must equal the descriptor's revision; otherwise it has no effect (ADR-003)."
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/link"
+      }
+    }
+  },
+  "$defs": {
+    "label": {
+      "type": "string",
+      "minLength": 1
+    },
+    "propertyValue": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "number"
+          }
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "boolean"
+          }
+        }
+      ]
+    },
+    "properties": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/propertyValue"
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "labels": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/label"
+          }
+        },
+        "properties": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/properties"
+            },
+            {
+              "type": "object",
+              "propertyNames": {
+                "not": {
+                  "const": "id"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "link": {
+      "type": "object",
+      "required": [
+        "source",
+        "target",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "properties": {
+          "$ref": "#/$defs/properties"
+        }
+      }
+    }
+  }
+}

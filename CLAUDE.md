@@ -15,7 +15,29 @@ Planned integration order (subject to change as ADRs land): ObservableHQ (spiked
 
 ## Project state
 
-Planning only. There is no code, build, or test tooling yet; `design/` holds the RFC/ADR/spike scaffolding with empty indexes. When adding the first package, establish the directory layout and update the Commands and Architecture sections below.
+The first package, `packages/core` (`graph-web-core`, a working name), is implemented from `specs/001-core-package/`
+(see its `tasks.md`). Design documents are in `design/`. Further packages (framework adapters) come next.
+
+## Commands
+
+Workspace: pnpm. The engine is vendored as a pinned git submodule (`vendor/cypherlite`, read access to
+`neo4j-labs/cypherlite` needed) and built with `pnpm run build:wasm` before `pnpm install`.
+
+```sh
+git submodule update --init vendor/cypherlite
+pnpm run build:wasm            # needs Rust, wasm-bindgen-cli at the engine's pinned version, binaryen
+pnpm install
+pnpm -r build
+pnpm test:unit                 # Vitest (Node)
+pnpm test:browsers             # Playwright: Chromium, Firefox, WebKit
+pnpm test:conformance          # the conformance check over the example site, both profiles
+pnpm test:package              # packs the core, installs it in a clean project, bundles and runs a page
+pnpm test:trace                # every requirement and success criterion has a passing, tagged test
+```
+
+Layout: `packages/core/src` (client, worker, data validators, profiles), `tests/` (unit, browser, package,
+fixtures, load-time baselines), `conformance/` (example site, scenarios, runner). Read
+`packages/core/README.md` for the API.
 
 ## Intended architecture (working assumptions, not yet decided by ADRs)
 
@@ -67,7 +89,7 @@ RFCs always come first; no ADR is written until a parent RFC exists. Candidate R
 3. RFC-003: the site graph — how content becomes a site-wide graph, and shipping it to the browser with vector embeddings (including how a user's query gets embedded).
 4. RFC-004: the language-driven navigation element — primarily visual, minimal natural-language interface, not a chatbot.
 
-SPIKE-001 to SPIKE-005 (Observable, Astro build time, Astro navigation, worker hosting and faults, worker survival across navigation) are done and feed RFC-001; ADR-001 (the hosting model) and ADR-002 (the graph data format) are accepted.
+SPIKE-001 to SPIKE-005 (Observable, Astro build time, Astro navigation, worker hosting and faults, worker survival across navigation) are done and feed RFC-001; ADR-001 (the hosting model), ADR-002 (the graph data format) and ADR-003 (the graph descriptor) are accepted.
 
 ADRs (snapshot format, embedding model and query-time strategy, runtime targets, and so on) follow once the relevant RFC is accepted.
 
