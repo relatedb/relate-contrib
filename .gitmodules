@@ -1,0 +1,3 @@
+[submodule "vendor/cypherlite"]
+	path = vendor/cypherlite
+	url = git@github.com:neo4j-labs/cypherlite.git

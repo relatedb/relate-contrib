@@ -22,16 +22,16 @@ description: "Task list for the graph-web core package"
 
 **Purpose**: Workspace, vendored engine, tooling configuration
 
-- [ ] T001 Create the root `package.json` (private; scripts `build:wasm`, `build`, `test`, `test:unit`, `test:browsers`, `test:conformance`, `test:package`, `test:trace`; `pnpm.overrides` resolving `@neo4j-labs/cypherlite-wasm` to `link:vendor/cypherlite-wasm/pkg`) and `pnpm-workspace.yaml` listing `packages/*`
-- [ ] T002 Add the engine as a git submodule at `vendor/cypherlite` (remote `git@github.com:neo4j-labs/cypherlite.git`, pinned to a commit that builds the browser package) and record the commit, why it was chosen, and the access requirement in `vendor/README.md`
-- [ ] T003 [P] Create `.gitignore` covering `node_modules`, `dist`, `vendor/cypherlite-wasm/pkg`, `test-results` and `playwright-report`
-- [ ] T004 Write `scripts/build-wasm.sh`: build the browser package from `vendor/cypherlite` into `vendor/cypherlite-wasm/pkg` following research R7 (release build, `wasm-bindgen-cli` at the version the checkout's lockfile pins, `wasm-opt`, the `wasm32-unknown-unknown` target), make sure `trap.js` and `opfs.js` sit beside `cypherlite.js`, and stop with a clear message when a tool is missing
-- [ ] T005 Create `packages/core/package.json` (name `graph-web-core`, `type: module`, exports `.`, `./validate`, `./worker`, `./conformance`; `peerDependencies` on `@neo4j-labs/cypherlite-wasm`; `@playwright/test` as an optional peer; no `dependencies`; dev dependencies `typescript`, `vitest`, `@playwright/test`, `vite`, `ajv`) per plan.md
-- [ ] T006 [P] Create `tsconfig.base.json` at the root and `packages/core/tsconfig.json` (strict, ES2022, declaration files, `outDir` `dist`)
-- [ ] T007 [P] Create `packages/core/vitest.config.ts` for `packages/core/tests/unit`
-- [ ] T008 [P] Create `packages/core/playwright.config.ts` with projects `chromium`, `firefox` and `webkit`, serving `packages/core/tests/browser/harness` through Vite
-- [ ] T009 [P] Create `packages/core/conformance/example-site/vite.config.ts` (multi-page build; imports the engine binary with the `?url` pattern from the engine README)
-- [ ] T010 Run `pnpm install` and `pnpm run build:wasm`, confirm `vendor/cypherlite-wasm/pkg` holds `cypherlite.js` and `cypherlite_bg.wasm`, and run `pnpm exec playwright install chromium firefox webkit`
+- [X] T001 Create the root `package.json` (private; scripts `build:wasm`, `build`, `test`, `test:unit`, `test:browsers`, `test:conformance`, `test:package`, `test:trace`; `pnpm.overrides` resolving `@neo4j-labs/cypherlite-wasm` to `link:vendor/cypherlite-wasm/pkg`) and `pnpm-workspace.yaml` listing `packages/*`
+- [X] T002 Add the engine as a git submodule at `vendor/cypherlite` (remote `git@github.com:neo4j-labs/cypherlite.git`, pinned to a commit that builds the browser package) and record the commit, why it was chosen, and the access requirement in `vendor/README.md`
+- [X] T003 [P] Create `.gitignore` covering `node_modules`, `dist`, `vendor/cypherlite-wasm/pkg`, `test-results` and `playwright-report`
+- [X] T004 Write `scripts/build-wasm.sh`: build the browser package from `vendor/cypherlite` into `vendor/cypherlite-wasm/pkg` following research R7 (release build, `wasm-bindgen-cli` at the version the checkout's lockfile pins, `wasm-opt`, the `wasm32-unknown-unknown` target), make sure `trap.js` and `opfs.js` sit beside `cypherlite.js`, and stop with a clear message when a tool is missing
+- [X] T005 Create `packages/core/package.json` (name `graph-web-core`, `type: module`, exports `.`, `./validate`, `./worker`, `./conformance`; `peerDependencies` on `@neo4j-labs/cypherlite-wasm`; `@playwright/test` as an optional peer; no `dependencies`; dev dependencies `typescript`, `vitest`, `@playwright/test`, `vite`, `ajv`) per plan.md
+- [X] T006 [P] Create `tsconfig.base.json` at the root and `packages/core/tsconfig.json` (strict, ES2022, declaration files, `outDir` `dist`)
+- [X] T007 [P] Create `packages/core/vitest.config.ts` for `packages/core/tests/unit`
+- [X] T008 [P] Create `packages/core/playwright.config.ts` with projects `chromium`, `firefox` and `webkit`, serving `packages/core/tests/browser/harness` through Vite
+- [X] T009 [P] Create `packages/core/conformance/example-site/vite.config.ts` (multi-page build; imports the engine binary with the `?url` pattern from the engine README)
+- [X] T010 Run `pnpm install` and `pnpm run build:wasm`, confirm `vendor/cypherlite-wasm/pkg` holds `cypherlite.js` and `cypherlite_bg.wasm`, and run `pnpm exec playwright install chromium firefox webkit`
 
 ---
 

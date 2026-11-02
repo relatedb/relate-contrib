@@ -1,0 +1,6 @@
+packages:
+  - "packages/*"
+allowBuilds:
+  esbuild: true
+overrides:
+  "@neo4j-labs/cypherlite-wasm": "link:vendor/cypherlite-wasm/pkg"

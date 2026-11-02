@@ -1,0 +1,9 @@
+node_modules/
+dist/
+vendor/cypherlite-wasm/
+vendor/.build/
+test-results/
+playwright-report/
+*.log
+.env*
+.DS_Store
