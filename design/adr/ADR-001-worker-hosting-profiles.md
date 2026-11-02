@@ -18,7 +18,7 @@ That store restored a 5,000-page graph in about 0.35 s and a 20,000-page graph i
 
 Two faults can end an instance. A statement with about a thousand nested parentheses traps the engine; the trapped instance is unusable, and the second error it throws is not classified as a trap by the bundle's own check, `isWasmTrap`. A runaway statement (a three-way cartesian `count(*)`) has no limit of its own and can only be stopped by terminating the worker.
 
-RFC-001 sets out these as independent axes (where the instance runs, what it starts with, how long it lives, how faults are contained). The same instance also serves a different use: a graph that belongs to a single page and has nothing to do with the site's content (a notebook of Cypher examples, a page encoded as a graph, a dashboard driven by data in the page). CypherLite's cookbook already runs page graphs this way: its engine lives in a module worker that starts on the first click of Run, and its Stop control terminates that worker. This decision fixes one hosting model that covers sites with and without client-side routing, and the host and fault handling that page graphs share.
+RFC-001 sets out these as independent axes (where the instance runs, what it starts with, how long it lives, how faults are contained). It also proposes a shared core, the package every framework adapter builds on, with a thin adapter per framework that wires the core into that framework's build and rendering. The same instance also serves a different use: a graph that belongs to a single page and has nothing to do with the site's content (a notebook of Cypher examples, a page encoded as a graph, a dashboard driven by data in the page). CypherLite's cookbook already runs page graphs this way: its engine lives in a module worker that starts on the first click of Run, and its Stop control terminates that worker. This decision fixes one hosting model that covers sites with and without client-side routing, and the host and fault handling that page graphs share.
 
 ## 2. Decision
 
@@ -47,7 +47,7 @@ The client is held in module state in the page that persists, so it survives rou
 
 ### 2.4 Profile `per-page` (site-wide graph, multi-page, no router)
 
-Each page starts its own worker; no instance is shared across pages. The origin-private store is on by default: the worker restores the graph from it and replays the data when the store is empty, locked by another tab, or stale. Staleness is detected with a version string (the build id, or a hash of the graph data) that the build writes into the graph data; the worker stores the string with the graph and, on a mismatch, resets the store and replays. The store's name comes from a site identifier in the configuration, so sites on one origin do not share a store.
+Each page starts its own worker; no instance is shared across pages. Departure, which drops the view's page-scoped data (2.5), runs from `pagehide`, since a multi-page navigation fires no router event. The origin-private store is on by default: the worker restores the graph from it and replays the data when the store is empty, locked by another tab, or stale. Staleness is detected with a version string (the build id, or a hash of the graph data) that the build writes into the graph data; the worker stores the string as a property of a single metadata node in the graph and, on a mismatch, resets the store (which wipes and reopens it) and replays. The store's name comes from a site identifier in the configuration, so sites on one origin do not share a store.
 
 The site author chooses the profile in the adapter's configuration (`navigation`, with the values `client-routing` and `multi-page`). An adapter may default to `persistent` where its framework has a client-side router, but the configured value decides.
 
@@ -64,13 +64,14 @@ A graph that belongs to one page uses the same host, client and fault handling. 
 
 ### 2.7 Left to other decisions
 
-Where the `.wasm` binary is served from and how it is handed to the worker, how statement results are reshaped into plain rows for components, and the framework-specific wiring of the client are separate decisions.
+Where the `.wasm` binary is served from and how it is handed to the worker, how statement results are reshaped into plain rows for components, the framework-specific wiring of the client, and hosting in server and build-time runtimes (RFC-001 7.5) are separate decisions.
 
 ## 3. Alternatives Considered
 
 - **A shared worker.** Rejected: it ended between the pages of a one-tab multi-page visit and gave a new instance each time, and it cannot open the origin-private store. It helps only when several tabs are open at once.
 - **An iframe shell that holds the worker, with the site's pages inside a frame.** Rejected for now: it reimplements client-side routing (address bar, history, scroll, focus, search indexing) by hand, a same-origin frame typically shares the page's thread, and it adds nothing to the store or fault handling. It was not tested; it remains a candidate for a follow-up spike for a multi-page site that wants one instance across pages.
 - **A main-thread instance kept in module state.** Rejected as the default: it served navigations at about 20 ms but froze the page for the length of the replay (0.6 s at 5,000 pages). Kept as a fallback for a graph small enough that the measured freeze is acceptable.
+- **A shared worker that starts the dedicated worker holding the store, so several tabs share one store.** Not evaluated. It would not help a one-tab multi-page visit (the shared worker still ends between pages), but it would answer the one-tab-at-a-time limit of the store. A candidate if sharing across tabs matters.
 - **A service worker as the host.** Rejected: the browser stops a service worker when it is idle and restarts it on demand, so it cannot hold an in-memory instance for a visit.
 - **Per-page replay with no store on a multi-page site.** Rejected: every page load pays the full replay, in a worker 0.3 s at 1,000 pages and about 1.4 s at 5,000. The store restored 4–5× faster.
 - **Only the `persistent` profile (require a client-side router).** Rejected: some sites cannot adopt one, and the choice is the site author's.
@@ -82,9 +83,12 @@ Where the `.wasm` binary is served from and how it is handed to the worker, how 
 - The store serves one tab at a time. A second tab replays in memory after the bounded retry, so its startup is the replay time.
 - Replacing a failed instance costs a full load (about 0.3 s at 1,000 pages, 1.5 s at 5,000, 6.8 s at 20,000), or a restore (about 0.36 s at 5,000 pages) when a store is available. A worker terminated mid-query can keep the store locked for about 2.3 s, hence the retry.
 - A statement a visitor types can trap or hang the engine, so a query box must use a timeout and must be built on the replacement path.
+- This ADR moves to `accepted` after a spike observes the worker handle surviving client-side route changes in a browser that renders the page.
+- The shared example site and its conformance check (RFC-001 3) run under both profiles.
 - Not verified:
   - that the worker handle survives client-side route changes (expected from the module-state result, but the embedded browser stalled route swaps);
   - the staleness check, the sweep of leftover scoped data at start-up, and the bounded retry (all specified here, none measured);
+  - the cost of page-scoped writes against an open store (the overlay figures were measured in memory);
   - browser support, including for workers opening the store;
   - the figures, which are single runs in an embedded browser.
 - Follow-up: a spike on route-change survival and staleness; separate decisions for the binary location and result shape (RFC-001 7.7, 7.9).
