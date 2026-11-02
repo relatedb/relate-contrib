@@ -114,4 +114,4 @@ Three candidates: keep them apart, with nothing in common; keep them apart but l
 
 ## 8. ADRs
 
-- [ADR-002](../adr/ADR-002-graph-data-format.md): Node-link JSON as the graph data format (proposed)
+- [ADR-002](../adr/ADR-002-graph-data-format.md): Node-link JSON as the graph data format (accepted)

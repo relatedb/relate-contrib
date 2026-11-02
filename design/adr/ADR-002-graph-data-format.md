@@ -1,7 +1,7 @@
 ---
 id: ADR-002
 title: Node-Link JSON as the Graph Data Format
-status: proposed
+status: accepted
 rfcs: [RFC-001, RFC-002]
 created: 2026-11-02
 ---

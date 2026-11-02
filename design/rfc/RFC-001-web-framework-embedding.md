@@ -134,4 +134,4 @@ These apply regardless of which axis values are chosen:
 ## 8. ADRs
 
 - [ADR-001](../adr/ADR-001-worker-hosting-profiles.md): Dedicated-worker hosting with two navigation profiles (accepted)
-- [ADR-002](../adr/ADR-002-graph-data-format.md): Node-link JSON as the graph data format (proposed)
+- [ADR-002](../adr/ADR-002-graph-data-format.md): Node-link JSON as the graph data format (accepted)

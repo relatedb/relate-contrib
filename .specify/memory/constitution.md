@@ -71,7 +71,7 @@ Rationale: the engine has its own contribution rules, and a rename should stay a
   MUST NOT reference the vendored path.
 - Query results are passed through as the engine's JSON envelope, unaltered, until a decision on
   result shape replaces this.
-- Graph data enters as a node-link JSON document as defined in ADR-002, from its acceptance.
+- Graph data enters as a node-link JSON document as defined in ADR-002.
 - Hosting follows ADR-001: a dedicated worker with two configurable navigation profiles,
   `client-routing` and `multi-page`.
 - Adapters are packages in the same workspace. An adapter moves to its own repository, as a git
@@ -104,4 +104,4 @@ Every plan MUST include a Constitution Check against principles I to VI, and a v
 justified in writing in the plan. Reviewers verify compliance. Runtime guidance for agents is in
 `CLAUDE.md`.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-02
+**Version**: 1.1.1 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-02
