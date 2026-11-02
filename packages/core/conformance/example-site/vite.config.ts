@@ -14,6 +14,8 @@ const input = Object.fromEntries(
 
 export default defineConfig({
   root: here,
+  // Adapters import the package by name; here the name points at the package's own build output.
+  resolve: { alias: { "graph-web-core": fileURLToPath(new URL("../../dist/index.js", import.meta.url)) } },
   server: { fs: { allow: [repoRoot] } },
   worker: { format: "es" },
   build: { target: "es2022", rollupOptions: { input } },

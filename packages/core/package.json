@@ -28,11 +28,11 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.conformance.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:unit": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json",
     "test:browsers": "playwright test --grep-invert @conformance",
-    "test:conformance": "playwright test --grep @conformance",
+    "test:conformance": "GW_REPORT=reports/conformance.json playwright test --grep @conformance",
     "test:package": "vitest run --config vitest.package.config.ts",
     "test:trace": "tsx tests/trace/check-trace.ts"
   },

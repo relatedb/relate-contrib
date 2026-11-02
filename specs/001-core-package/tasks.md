@@ -199,17 +199,17 @@ description: "Task list for the graph-web core package"
 
 ### Tests for User Story 7 (write first)
 
-- [ ] T072 [US7] Browser test `packages/core/tests/browser/conformance.spec.ts`: `runConformance` passes for the example site under `client-routing` and `multi-page`, and a deliberately broken variant (subscriptions not re-run after a replacement) fails scenario C-04 with the behavior named in the report. Tag `// covers: FR-029, SC-008, SC-011`
-- [ ] T073 [P] [US7] Package test `packages/core/tests/package/clean-install.test.ts`: `pnpm pack` the core, install the tarball in a clean temporary project outside the repository with the engine installed beside it, bundle a page with Vite, and check it works with the binary URL passed as an option. Tag `// covers: FR-032`
+- [X] T072 [US7] Browser test `packages/core/tests/browser/conformance.spec.ts`: `runConformance` passes for the example site under `client-routing` and `multi-page`, and a deliberately broken variant (subscriptions not re-run after a replacement) fails scenario C-04 with the behavior named in the report. Tag `// covers: FR-029, SC-008, SC-011`
+- [X] T073 [P] [US7] Package test `packages/core/tests/package/clean-install.test.ts`: `pnpm pack` the core, install the tarball in a clean temporary project outside the repository with the engine installed beside it, bundle a page with Vite, and check it works with the binary URL passed as an option. Tag `// covers: FR-032`
 
 ### Implementation for User Story 7
 
-- [ ] T074 [P] [US7] Create the example data in `packages/core/conformance/example-site/`: `descriptor.json`, `graph.json` (a few hundred pages with links, produced by a script `make-example.ts` using the fixture generator), and `broken-descriptor.json` whose `data.url` is unreachable
-- [ ] T075 [US7] Create the plain example pages in `packages/core/conformance/example-site/`: an index, several content pages that each run a per-page query and show the shared graph's page count, a page that adds and drops scoped data, and a page using the broken descriptor; use `createSiteClient` and the router script for `client-routing`
-- [ ] T076 [US7] Define the scenarios C-01 to C-11 of `contracts/conformance.md` in `packages/core/conformance/scenarios.ts` (framework-neutral, driven by page behavior alone)
-- [ ] T077 [US7] Implement `runConformance`, `exampleDescriptor` and `exampleDocument` in `packages/core/conformance/run.ts` (Playwright as an optional peer) and wire the `./conformance` export and the `test:conformance` script in `packages/core/package.json`
-- [ ] T078 [US7] Update scenario C-03 in `specs/001-core-package/contracts/conformance.md` to use the unreachable data location instead of a crashing document, and update the example-site description there
-- [ ] T079 [US7] Make the US7 tests pass in Chromium, Firefox and WebKit
+- [X] T074 [P] [US7] Create the example data in `packages/core/conformance/example-site/`: `descriptor.json`, `graph.json` (a few hundred pages with links, produced by a script `make-example.ts` using the fixture generator), and `broken-descriptor.json` whose `data.url` is unreachable
+- [X] T075 [US7] Create the plain example pages in `packages/core/conformance/example-site/`: an index, several content pages that each run a per-page query and show the shared graph's page count, a page that adds and drops scoped data, and a page using the broken descriptor; use `createSiteClient` and the router script for `client-routing`
+- [X] T076 [US7] Define the scenarios C-01 to C-11 of `contracts/conformance.md` in `packages/core/conformance/scenarios.ts` (framework-neutral, driven by page behavior alone)
+- [X] T077 [US7] Implement `runConformance`, `exampleDescriptor` and `exampleDocument` in `packages/core/conformance/run.ts` (Playwright as an optional peer) and wire the `./conformance` export and the `test:conformance` script in `packages/core/package.json`
+- [X] T078 [US7] Update scenario C-03 in `specs/001-core-package/contracts/conformance.md` to use the unreachable data location instead of a crashing document, and update the example-site description there
+- [X] T079 [US7] Make the US7 tests pass in Chromium, Firefox and WebKit
 
 ---
 

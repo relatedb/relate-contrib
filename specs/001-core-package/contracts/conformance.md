@@ -17,11 +17,18 @@ export interface RunOptions {
 export function runConformance(options: RunOptions): Promise<Report>;   // Playwright, optional peer
 ```
 
-The example site serves a descriptor and a data document, and has these pages (plain HTML): an index, several content pages that each run a
-per-page query and show the shared graph's page count, a page that adds and drops scoped data, a page
-whose document makes the engine crash on every load, and (for `client-routing`) a minimal navigation script.
-An adapter serves the same pages through its framework; the scenarios drive them by page behavior alone
-and know nothing about the framework.
+The example site serves descriptors and data documents (`/descriptor.json` and `/graph.json` for variant a,
+`/descriptor-b.json` and `/graph-b.json` for variant b, a descriptor whose counts disagree with its data, and a
+descriptor whose data location does not exist) and plain HTML pages: an index, two content pages that each run a
+per-page query and show the shared graph's page count, a notes page that adds two notes of its own and drops them
+when the page is left, a broken page whose graph can never load, and a blank page with no script.
+
+The scenarios drive the pages by what a visitor can see. Every observable thing is a `data-gw-*` element or
+attribute: `data-gw-status`, `data-gw-generation`, `data-gw-count`, `data-gw-updates`, `data-gw-instance`,
+`data-gw-profile`, `data-gw-restored`, `data-gw-failure`, `data-gw-last-error`, `data-gw-notes`, links marked
+`data-gw-link`, and buttons marked `data-gw-action` (`trap`, `timeout`), plus `data-gw-state` on `<html>` for the
+current status. The pages read their profile from a `navigation` query parameter and their graph from a `variant`
+parameter. An adapter serves the same pages through its framework and produces the same markup and behavior.
 
 ## Scenarios (each run under both profiles unless noted)
 
@@ -29,7 +36,7 @@ and know nothing about the framework.
 |---|---|---|
 | C-01 | per-page query returns the rows the document implies; first render and links work before ready | US1, FR-006 |
 | C-02 | shared graph visible from several pages; same worker and generation in `client-routing`; restored without replay in `multi-page` | US4, US5 |
-| C-03 | document that cannot load: status `failed` after three attempts, links and text usable, message shown | US3, FR-033 |
+| C-03 | a graph whose data location does not exist: status `failed` after three attempts, links and text usable, message shown | US3, FR-033 |
 | C-04 | trap during a query: replaced, generation increases, subscriptions re-run, no reload | US3, FR-009 |
 | C-05 | timeout: reason `timeout`, replacement | US3, US6 |
 | C-06 | scoped data added on arrival, dropped on departure, re-added after replacement | US4, FR-026 |
@@ -73,4 +80,5 @@ Success criteria map to: SC-001 and SC-002 and SC-003 (`timing.spec.ts`, baselin
 - runaway: a three-way cartesian `count(*)` on a 1,000-page document;
 - worker error: a `workerFactory` in the test that returns a worker which throws on a marked message;
 - locked store: a second page holding the same store name;
-- stale store: a changed descriptor `revision`; an emptied store with its stored copy left in place.
+- stale store: a changed descriptor `revision`; an emptied store with its stored copy left in place;
+- a deliberately broken variant of the example pages (`__break=no-rerun`, subscriptions not re-run after a replacement), used to show that the check fails and names the broken behavior.
