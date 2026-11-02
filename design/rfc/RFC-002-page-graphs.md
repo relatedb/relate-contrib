@@ -3,7 +3,7 @@ id: RFC-002
 title: Page Graphs
 status: draft
 created: 2026-11-02
-adrs: []
+adrs: [ADR-002]
 ---
 
 # RFC-002: Page Graphs
@@ -114,4 +114,4 @@ Three candidates: keep them apart, with nothing in common; keep them apart but l
 
 ## 8. ADRs
 
-_(populated automatically as `/adr-create` links ADRs to this RFC)_
+- [ADR-002](../adr/ADR-002-graph-data-format.md): Node-link JSON as the graph data format (proposed)
