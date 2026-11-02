@@ -16,7 +16,7 @@ How long an instance can live depends on how the site navigates. With client-sid
 
 That store restored a 5,000-page graph in about 0.35 s and a 20,000-page graph in 1.3 s, against 1.4 s and 6.3 s to replay in the worker. It has two limits: a second tab cannot open a store another tab holds (`storage locked`), and a worker terminated while running a query kept the store locked for about 2.3 s.
 
-Two faults can end an instance. A statement with about a thousand nested parentheses traps the engine; the trapped instance is unusable, and the second error it throws is not classified as a trap by the bundle's own check, `isWasmTrap`. A runaway statement (a three-way cartesian `count(*)`) has no limit of its own and can only be stopped by terminating the worker.
+Two faults can end an instance. A statement with about a thousand nested parentheses traps the engine, and so did a cartesian `count(*)` over 5,000 pages; the trapped instance is unusable, and the second error it throws is not classified as a trap by the bundle's own check, `isWasmTrap`. A runaway statement (a three-way cartesian `count(*)`) has no limit of its own and can only be stopped by terminating the worker.
 
 RFC-001 sets out these as independent axes (where the instance runs, what it starts with, how long it lives, how faults are contained). It also proposes a shared core, the package every framework adapter builds on, with a thin adapter per framework that wires the core into that framework's build and rendering. The same instance also serves a different use: a graph that belongs to a single page and has nothing to do with the site's content (a notebook of Cypher examples, a page encoded as a graph, a dashboard driven by data in the page). CypherLite's cookbook already runs page graphs this way: its engine lives in a module worker that starts on the first click of Run, and its Stop control terminates that worker. This decision fixes one hosting model that covers sites with and without client-side routing, and the host and fault handling that page graphs share.
 
@@ -43,7 +43,7 @@ The graph reaches the worker as plain data (the pages and links as JSON) and is 
 
 ### 2.3 Profile `persistent` (site-wide graph, client-side routing)
 
-The client is held in module state in the page that persists, so it survives route changes. The worker starts once per visit. Arrival at a page (the router's page-load event) and departure (the router's before-swap event, or unmounting of the component) drive the page-scoped data in 2.5. An origin-private store is optional: when configured, the worker restores from it and replays only when the store is empty or stale, which shortens repeat visits.
+The client is held in module state in the page that persists, or inside an island the router keeps across route changes, so it survives them; a client created by an island that remounts is lost on each navigation. The worker starts once per visit. Components unsubscribe their queries when they unmount and register them again on arrival; a kept island registers again on the router's page-load event, which also fires on history back and forward. Work that finishes after a component has gone is ignored. Arrival at a page (the router's page-load event) and departure (the router's before-swap event, or unmounting of the component) drive the page-scoped data in 2.5. An origin-private store is optional: when configured, the worker restores from it and replays only when the store is empty or stale, which shortens repeat visits.
 
 ### 2.4 Profile `per-page` (site-wide graph, multi-page, no router)
 
@@ -83,15 +83,16 @@ Where the `.wasm` binary is served from and how it is handed to the worker, how 
 - The store serves one tab at a time. A second tab replays in memory after the bounded retry, so its startup is the replay time.
 - Replacing a failed instance costs a full load (about 0.3 s at 1,000 pages, 1.5 s at 5,000, 6.8 s at 20,000), or a restore (about 0.36 s at 5,000 pages) when a store is available. A worker terminated mid-query can keep the store locked for about 2.3 s, hence the retry.
 - A statement a visitor types can trap or hang the engine, so a query box must use a timeout and must be built on the replacement path.
-- This ADR moves to `accepted` after a spike observes the worker handle surviving client-side route changes in a browser that renders the page.
+- Acceptance gate: the worker handle survives client-side route changes, observed with the router's simulated swap path or in a browser that renders the page. SPIKE-005 observed it with the simulated path (module state and a kept island, over link clicks, history traversal and programmatic navigation), so the gate is met. An observation with the browser's view transitions in a rendering browser is still open.
+- Page-scoped writes against an open store cost about 14 ms to add and 3 ms to drop for 50 notes and 50 relationships, against 11 ms and 2 ms in memory (SPIKE-005).
+- A worker runs one statement at a time, so a running statement delays the first result of the next page until it finishes.
 - The shared example site and its conformance check (RFC-001 3) run under both profiles.
 - Not verified:
-  - that the worker handle survives client-side route changes (expected from the module-state result, but the embedded browser stalled route swaps);
+  - the worker handle surviving route changes with the browser's view transitions, and under the routers of other frameworks;
   - the staleness check, the sweep of leftover scoped data at start-up, and the bounded retry (all specified here, none measured);
-  - the cost of page-scoped writes against an open store (the overlay figures were measured in memory);
   - browser support, including for workers opening the store;
   - the figures, which are single runs in an embedded browser.
-- Follow-up: a spike on route-change survival and staleness; separate decisions for the binary location and result shape (RFC-001 7.7, 7.9).
+- Follow-up: a run with view transitions in a rendering browser, and a spike on the staleness check; separate decisions for the binary location and result shape (RFC-001 7.7, 7.9).
 - RFC-001 questions this decision settles: the interface half of 7.2 (generation, status, timeout, subscriptions, `onGeneration`), 7.4 (overlay on the shared instance, keyed by view) and the shared-worker question in 7.6 (rejected). It leaves open why replay is slower in a worker and whether the store can serve several tabs (7.3), recovery without a full load (7.2), and hydration in other frameworks (7.10).
 
 ## 5. Related
