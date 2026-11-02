@@ -1,0 +1,31 @@
+---
+import Survival from "../../../layouts/Survival.astro";
+import SurvivalPanel from "../../../components/SurvivalPanel.tsx";
+
+export function getStaticPaths() {
+  const variants = {
+    module: {router: true, panel: "module", persist: false},
+    island: {router: true, panel: "island", persist: false},
+    persist: {router: true, panel: "persist", persist: true},
+    plain: {router: false, panel: "module", persist: false}
+  };
+  return Object.entries(variants).flatMap(([variant, opts]) =>
+    [1, 2, 3, 4, 5].map((n) => ({params: {variant, n: String(n)}, props: {...opts, variant, n}}))
+  );
+}
+
+const {variant, n, router, panel, persist} = Astro.props;
+---
+
+<Survival title={`Page ${n} (${variant})`} router={router}>
+  <nav>
+    {[1, 2, 3, 4, 5].map((s) => <a href={`/surv/${variant}/${s}/`}>Page {s}</a>)}
+    <a href={`/surv/${variant}/${n}/`} data-astro-reload>reload-link</a>
+    <a href="/surv/plain/1/">to-plain</a>
+    <a href="/surv/module/1/">to-module</a>
+  </nav>
+  <h1>Page {n} <small>({variant})</small></h1>
+  {persist
+    ? <SurvivalPanel client:load transition:persist="panel" variant={panel} n={n} />
+    : <SurvivalPanel client:load variant={panel} n={n} />}
+</Survival>

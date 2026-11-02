@@ -1,0 +1,42 @@
+---
+import {ClientRouter} from "astro:transitions";
+
+interface Props {
+  title: string;
+  router: boolean;
+}
+const {title, router} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <!-- Harness for browsers that do not render the page: with ?vt=0 (kept in
+         sessionStorage) document.startViewTransition is removed before the router
+         module loads, so the router takes its simulation path, and fallback="swap"
+         skips animations. Without it the real view-transition path runs. -->
+    <script is:inline>
+      try {
+        const q = new URLSearchParams(location.search).get("vt");
+        if (q !== null) sessionStorage.setItem("survival.vt", q);
+        if (sessionStorage.getItem("survival.vt") === "0") {
+          Object.defineProperty(document, "startViewTransition", {value: undefined, configurable: true});
+        }
+      } catch {}
+      window.__docId = window.__docId || Math.random().toString(36).slice(2, 8);
+    </script>
+    {router && <ClientRouter fallback="swap" />}
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+      nav a { margin-right: 1rem; }
+      .error { color: #b00020; }
+      [data-status] { border: 1px solid #ccc; padding: 0.5rem 0.75rem; }
+    </style>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

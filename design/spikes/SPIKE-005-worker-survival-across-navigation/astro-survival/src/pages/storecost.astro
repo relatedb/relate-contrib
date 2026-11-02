@@ -1,0 +1,55 @@
+---
+// SPIKE-005 step 5: page-scoped writes (add notes about a few pages, then drop them)
+// against an in-memory worker instance and against one with an open store.
+// /storecost/?graph=/synthetic/graph-1000.json[&store=name][&cycles=30]; result in window.__cost.
+---
+
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Store cost</title></head>
+  <body>
+    <pre id="out">running…</pre>
+    <script>
+      import {WorkerDb} from "../lib/worker/workerDb.js";
+
+      const params = new URLSearchParams(location.search);
+      const graph = params.get("graph") ?? "/synthetic/graph-1000.json";
+      const store = params.get("store");
+      const cycles = Number(params.get("cycles") ?? 30);
+      const NOTES = 50;
+      const ADD_NOTES = "UNWIND $notes AS n CREATE (:Note {scope: $scope, n: n.n, text: n.text})";
+      const ADD_ABOUT = "UNWIND $about AS a MATCH (n:Note {scope: $scope, n: a.n}), (p:Page {id: a.page}) CREATE (n)-[:ABOUT]->(p)";
+      const DROP = "MATCH (n:Note {scope: $scope}) DETACH DELETE n";
+      const round = (v: number) => Math.round(v * 100) / 100;
+      const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+      const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+
+      const db = new WorkerDb({graph, store});
+      await db.ready;
+      const result: any = {graph, store, open: db.timings, cycles};
+      try {
+        await db.query("CREATE INDEX note_scope FOR (n:Note) ON (n.scope)");
+      } catch (e: any) {
+        if (!/already exists/.test(e.message)) throw e; // a restored store keeps its indexes
+      }
+      const adds: number[] = [];
+      const drops: number[] = [];
+      for (let k = 0; k < cycles; k++) {
+        const scope = `view-${k}`;
+        const notes = Array.from({length: NOTES}, (_, n) => ({n, text: `note ${n} of ${scope}`}));
+        const about = Array.from({length: NOTES}, (_, n) => ({n, page: (k * 7 + n * 13) % db.timings.pages}));
+        let t = performance.now();
+        await db.query(ADD_NOTES, {notes, scope});
+        await db.query(ADD_ABOUT, {about, scope});
+        adds.push(performance.now() - t);
+        t = performance.now();
+        await db.query(DROP, {scope});
+        drops.push(performance.now() - t);
+      }
+      result.add = {meanMs: round(mean(adds)), medianMs: round(median(adds)), maxMs: round(Math.max(...adds))};
+      result.drop = {meanMs: round(mean(drops)), medianMs: round(median(drops)), maxMs: round(Math.max(...drops))};
+      result.notesLeft = (await db.query("MATCH (n:Note) RETURN count(n) AS c")).result.rows[0].c;
+      (window as any).__cost = result;
+      document.getElementById("out")!.textContent = JSON.stringify(result, null, 1);
+    </script>
+  </body>
+</html>
