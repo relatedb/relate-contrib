@@ -22,7 +22,7 @@ Planning only. There is no code, build, or test tooling yet; `design/` holds the
 - **Framework-agnostic core first, thin adapters second.** The hard, valuable parts are the content → graph ingestion, embedding generation, snapshot format, and the navigation element. Each framework integration should be an adapter over that core plus a conformance check, not a reimplementation.
 - **One model for both graph uses.** A read-only shared *site graph snapshot* (delivered as data and replayed into the instance; see RFC-001 §7.3) plus an ephemeral per-page overlay graph; page cells query both.
 - **Navigation stays deterministic first.** Natural language → embedding search → graph expansion → focused subgraph view. A generative model is an optional layer, never required. Navigation must still expose real `<a>` links, keyboard access, and a no-JS fallback.
-- **Submodules.** Individual integrations are added as git submodules of this repo as they are created. The core package should be a first-class module that adapters depend on, and a shared fixture corpus (a sample site) should be what every adapter is checked against.
+- **Workspace packages.** The core and each integration are packages in the pnpm workspace. An integration moves out to its own repository, as a git submodule, only when it needs its own release cadence; CypherLite itself is the one submodule, vendored until it is published. The core is a first-class module that adapters depend on, and a shared example site is what every adapter is checked against.
 
 Each of these is expected to be pinned down by an ADR before implementation; treat them as direction, and check `design/adr/` for what has actually been decided.
 
@@ -56,7 +56,7 @@ Skills live in `.agents/skills/` and are symlinked from `.claude/skills/` (same 
 
 `/rfc-create` and `/adr-create` keep their `design/*/README.md` index tables in sync, and `/spike-create` does the same for spikes, so don't hand-edit those tables. Use the review skills before moving a draft toward `accepted`; they report findings and suggested revisions but don't edit the document themselves.
 
-These skills were copied from `zebra-space` and stripped of its speckit-specific hooks and gates. There is no speckit layer here: an accepted ADR is implemented directly in the core package or the relevant integration module, citing the ADR number in the commit or PR.
+These skills were copied from `zebra-space`. Implementation runs through Spec Kit (`/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`, installed in `.specify/`). A Spec Kit specification, plan or task implements accepted ADRs, names them, and does not restate them; where they differ, the ADR wins until it is amended. Commits and PRs cite the ADR number. The project constitution is `.specify/memory/constitution.md`; every plan checks itself against it.
 
 ### First documents to write
 
@@ -73,5 +73,5 @@ ADRs (snapshot format, embedding model and query-time strategy, runtime targets,
 
 ## Conventions
 
-- Prefer `npm`/`pnpm` per what each package already uses; no root package manager has been chosen yet. Decide this when the first package lands and record it here.
+- The repository is a pnpm workspace with the core package (`graph-web-core`, a working name) as its first module, independently publishable. Until `@neo4j-labs/cypherlite-wasm` is published, a pinned build is vendored in and the core declares it a peer dependency.
 - Keep documents in `design/` written for a newcomer to this repo: name project artifacts on first use rather than assuming the reader has seen sibling documents (the review skills check this).

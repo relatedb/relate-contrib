@@ -1,14 +1,3 @@
-<!--
-Sync Impact Report (temporary; remove before commit)
-Version change: unfilled template -> 1.0.0 (initial adoption)
-Modified principles: none
-Added sections: Core Principles I-VI, Technical Constraints, Development Workflow, Governance
-Removed sections: none
-Follow-up TODOs (deferred, not placeholders):
-- CLAUDE.md still says the project has no Spec Kit layer; update it separately.
-- Whether adapters live in the pnpm workspace or as git submodules is left to the first adapter.
-- ADR-002 is proposed; the data-format constraint takes effect when it is accepted.
--->
 # graph-web Constitution
 
 ## Core Principles
@@ -85,8 +74,8 @@ Rationale: the engine has its own contribution rules, and a rename should stay a
 - Graph data enters as a node-link JSON document as defined in ADR-002, from its acceptance.
 - Hosting follows ADR-001: a dedicated worker with two configurable navigation profiles,
   `client-routing` and `multi-page`.
-- Whether later adapters live in the workspace or as git submodules is decided when the first
-  adapter is added.
+- Adapters are packages in the same workspace. An adapter moves to its own repository, as a git
+  submodule, only when it needs its own release cadence.
 
 ## Development Workflow
 
@@ -115,4 +104,4 @@ Every plan MUST include a Constitution Check against principles I to VI, and a v
 justified in writing in the plan. Reviewers verify compliance. Runtime guidance for agents is in
 `CLAUDE.md`.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-02
+**Version**: 1.1.0 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-02
