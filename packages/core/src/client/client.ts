@@ -2,6 +2,7 @@
 // subscriptions (specs contracts/client-api.md). Each client is independent; there is no module-level state.
 import { validateDescriptor } from "../data/descriptor.js";
 import type { Descriptor, Envelope, GraphDocument, IndexSpec } from "../data/types.js";
+import { VISITOR_TIMEOUT_MS } from "../config.js";
 import { GraphError } from "../errors.js";
 import { encodeParams } from "../worker/encode.js";
 import type { ClientMessage, InitFailReason, InitMessage, Timings, WorkerMessage } from "../worker/protocol.js";
@@ -69,8 +70,31 @@ class GraphClient implements Client {
     return this.execute(statement, params, opts.timeoutMs);
   }
 
-  run(): Run {
-    throw new Error("run() is added with user story 6");
+  /**
+   * A statement typed by a visitor. It has a timeout (the visitor timeout when none is given) and a stop control;
+   * both end by replacing the instance, since a running statement can only be ended by ending its worker.
+   */
+  run(statement: string, params: object | null = null, opts: { timeoutMs?: number } = {}): Run {
+    const timeoutMs = opts.timeoutMs ?? this.options.visitorTimeoutMs ?? VISITOR_TIMEOUT_MS;
+    const call: { id: number | null; stopped: boolean } = { id: null, stopped: false };
+    const paramsJson = params ? encodeParams(params) : null;
+    const result = this.whenReady().then(() => {
+      if (call.stopped) throw new GraphError("stopped");
+      const started = this.startRequest((id) => ({ type: "query", id, statement, paramsJson }), timeoutMs);
+      call.id = started.id;
+      return started.promise;
+    });
+    return {
+      result,
+      stop: () => {
+        call.stopped = true;
+        if (call.id === null) return;
+        const entry = this.take(call.id);
+        if (!entry) return; // it already finished
+        entry.reject(new GraphError("stopped"));
+        this.fault("stopped");
+      },
+    };
   }
 
   subscribe(statement: string, params: object | null, listener: (update: Update) => void): Unsubscribe {
@@ -273,10 +297,15 @@ class GraphClient implements Client {
 
   /** Send one message that is answered by a result or a done message, with an optional timeout. */
   private request(build: (id: number) => ClientMessage, timeoutMs: number | undefined): Promise<Envelope> {
+    return this.startRequest(build, timeoutMs).promise;
+  }
+
+  /** As `request`, also giving the call's id so that it can be stopped. */
+  private startRequest(build: (id: number) => ClientMessage, timeoutMs: number | undefined): { id: number | null; promise: Promise<Envelope> } {
     const worker = this.worker;
-    if (!worker || this.status !== "ready") return Promise.reject(new GraphError("lost", "the instance is not ready"));
+    if (!worker || this.status !== "ready") return { id: null, promise: Promise.reject(new GraphError("lost", "the instance is not ready")) };
     const id = ++this.nextId;
-    return new Promise<Envelope>((resolve, reject) => {
+    const promise = new Promise<Envelope>((resolve, reject) => {
       const entry: Pending = { resolve, reject, timer: undefined };
       if (timeoutMs !== undefined) {
         entry.timer = setTimeout(() => {
@@ -287,6 +316,7 @@ class GraphClient implements Client {
       this.pending.set(id, entry);
       worker.postMessage(build(id));
     });
+    return { id, promise };
   }
 
   private take(id: number): Pending | undefined {

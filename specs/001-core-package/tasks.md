@@ -182,12 +182,12 @@ description: "Task list for the graph-web core package"
 
 ### Tests for User Story 6 (write first)
 
-- [ ] T069 [US6] Browser test `packages/core/tests/browser/visitor.spec.ts`: `run()` applies the default timeout (configured short in the test) and fails with `timeout`; `stop()` fails the call with `stopped`, replaces the instance and re-runs the page's subscriptions; no statement ever runs on the main thread. Tag `// covers: FR-010, FR-011`
+- [X] T069 [US6] Browser test `packages/core/tests/browser/visitor.spec.ts`: `run()` applies the default timeout (configured short in the test) and fails with `timeout`; `stop()` fails the call with `stopped`, replaces the instance and re-runs the page's subscriptions; no statement ever runs on the main thread. Tag `// covers: FR-010, FR-011`
 
 ### Implementation for User Story 6
 
-- [ ] T070 [US6] Implement `run()` returning `{result, stop}` in `packages/core/src/client/client.ts`, applying `visitorTimeoutMs` (default 10000) when no timeout is given, with `stop()` terminating and replacing the worker and emitting `replaced` with the reason `stopped`
-- [ ] T071 [US6] Make the US6 tests pass in Chromium, Firefox and WebKit
+- [X] T070 [US6] Implement `run()` returning `{result, stop}` in `packages/core/src/client/client.ts`, applying `visitorTimeoutMs` (default 10000) when no timeout is given, with `stop()` terminating and replacing the worker and emitting `replaced` with the reason `stopped`
+- [X] T071 [US6] Make the US6 tests pass in Chromium, Firefox and WebKit
 
 ---
 
