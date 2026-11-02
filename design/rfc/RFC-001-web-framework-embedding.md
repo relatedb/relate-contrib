@@ -133,4 +133,4 @@ These apply regardless of which axis values are chosen:
 
 ## 8. ADRs
 
-- [ADR-001](../adr/ADR-001-worker-hosting-profiles.md): Dedicated-worker hosting with two navigation profiles (proposed)
+- [ADR-001](../adr/ADR-001-worker-hosting-profiles.md): Dedicated-worker hosting with two navigation profiles (accepted)

@@ -1,7 +1,7 @@
 ---
 id: ADR-001
 title: Dedicated-Worker Hosting with Two Navigation Profiles
-status: proposed
+status: accepted
 rfcs: [RFC-001]
 created: 2026-11-01
 ---

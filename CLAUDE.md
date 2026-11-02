@@ -65,7 +65,7 @@ RFCs always come first; no ADR is written until a parent RFC exists. Candidate R
 3. RFC-003: the site graph — how content becomes a site-wide graph, and shipping it to the browser with vector embeddings (including how a user's query gets embedded).
 4. RFC-004: the language-driven navigation element — primarily visual, minimal natural-language interface, not a chatbot.
 
-SPIKE-001 to SPIKE-004 (Observable, Astro build time, Astro navigation, worker hosting and faults) are done and feed RFC-001; ADR-001 (the hosting model) is drafted and proposed.
+SPIKE-001 to SPIKE-004 (Observable, Astro build time, Astro navigation, worker hosting and faults) are done and feed RFC-001; ADR-001 (the hosting model) is accepted.
 
 ADRs (snapshot format, embedding model and query-time strategy, runtime targets, and so on) follow once the relevant RFC is accepted.
 
