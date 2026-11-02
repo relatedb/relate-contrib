@@ -8,3 +8,14 @@ reports/
 *.log
 .env*
 .DS_Store
+
+# Compiled output belongs in dist/ only; never beside the sources
+packages/*/src/**/*.js
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.js.map
+packages/*/tests/**/*.js
+packages/*/tests/**/*.d.ts
+packages/*/tests/**/*.js.map
+packages/*/conformance/*.js
+packages/*/conformance/*.d.ts
+packages/*/conformance/*.js.map
