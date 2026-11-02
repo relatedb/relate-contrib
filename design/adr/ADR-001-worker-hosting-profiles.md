@@ -90,13 +90,14 @@ Where the `.wasm` binary is served from and how it is handed to the worker, how 
 - A statement a visitor types can trap or hang the engine, so a query box must use a timeout and must be built on the replacement path.
 - `failed` is a fourth state that components render. A document that crashes the engine on every load ends in it after three attempts and stays there until the page calls `retry`; the rule is specified here and tested in the core package.
 - Acceptance gate: the worker handle survives client-side route changes, observed with the router's simulated swap path or in a browser that renders the page. SPIKE-005 observed it with the simulated path (module state and a kept island, over link clicks, history traversal and programmatic navigation), so the gate is met. An observation with the browser's view transitions in a rendering browser is still open.
+- With the loader of ADR-002 a worker loads 20,000 pages in 2.3 to 2.7 s in Chromium, Firefox and WebKit (single runs), against 6.3 s for the indexed replay of the spikes; restoring 5,000 pages from a store took 217 to 310 ms (core package tests).
 - Page-scoped writes against an open store cost about 14 ms to add and 3 ms to drop for 50 notes and 50 relationships, against 11 ms and 2 ms in memory (SPIKE-005).
 - A worker runs one statement at a time, so a running statement delays the first result of the next page until it finishes.
 - The shared example site and its conformance check (RFC-001 3) run under both profiles.
 - Not verified:
   - the worker handle surviving route changes with the browser's view transitions, and under the routers of other frameworks;
-  - the staleness check (ADR-003), the sweep of leftover scoped data at start-up, and the bounded retry (all specified, none measured);
-  - browser support, including for workers opening the store;
+  - the staleness check (ADR-003), the sweep of leftover scoped data at start-up, and the bounded retry: each is covered by a test in the core package and none is timed;
+  - browser support beyond Chromium, Firefox and WebKit on desktop, where the store works in all three;
   - the figures, which are single runs in an embedded browser.
 - Follow-up: a run with view transitions in a rendering browser, and a spike on the staleness check; separate decisions for the binary location and result shape (RFC-001 7.7, 7.9).
 - RFC-001 questions this decision settles: the interface half of 7.2 (generation, status, timeout, subscriptions, `onGeneration`), 7.4 (overlay on the shared instance, keyed by view) and the shared-worker question in 7.6 (rejected). It leaves open why replay is slower in a worker and whether the store can serve several tabs (7.3), recovery without a full load (7.2), and hydration in other frameworks (7.10).
@@ -111,3 +112,4 @@ Where the `.wasm` binary is served from and how it is handed to the worker, how 
 
 - 2026-11-02: added the `failed` status, the three-attempt rule, `retry`, and the `stopped` and `failed` rejection reasons (2.1, 2.2, 2.3, 2.4). Without a stopping rule, a document that crashes the engine on every load would replace the worker without end, or leave the status at `recovering` with nothing for the page to show. The core package specification (`specs/001-core-package/spec.md`, FR-002, FR-009, FR-033) defines the behavior and its tests.
 - 2026-11-02: replaced the metadata node and the site identifier with the descriptor of ADR-003 (2.4), and replaced the index on a lookup property with endpoint resolution through element ids (2.1), as ADR-002's loading mechanism and ADR-003 describe.
+- 2026-11-02: recorded the results of the core package's tests in the consequences (4).

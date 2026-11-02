@@ -15,7 +15,29 @@ Planned integration order (subject to change as ADRs land): ObservableHQ (spiked
 
 ## Project state
 
-Planning only. There is no code, build, or test tooling yet; `design/` holds the RFC/ADR/spike scaffolding with empty indexes. When adding the first package, establish the directory layout and update the Commands and Architecture sections below.
+The first package, `packages/core` (`graph-web-core`, a working name), is implemented from `specs/001-core-package/`
+(see its `tasks.md`). Design documents are in `design/`. Further packages (framework adapters) come next.
+
+## Commands
+
+Workspace: pnpm. The engine is vendored as a pinned git submodule (`vendor/cypherlite`, read access to
+`neo4j-labs/cypherlite` needed) and built with `pnpm run build:wasm` before `pnpm install`.
+
+```sh
+git submodule update --init vendor/cypherlite
+pnpm run build:wasm            # needs Rust, wasm-bindgen-cli at the engine's pinned version, binaryen
+pnpm install
+pnpm -r build
+pnpm test:unit                 # Vitest (Node)
+pnpm test:browsers             # Playwright: Chromium, Firefox, WebKit
+pnpm test:conformance          # the conformance check over the example site, both profiles
+pnpm test:package              # packs the core, installs it in a clean project, bundles and runs a page
+pnpm test:trace                # every requirement and success criterion has a passing, tagged test
+```
+
+Layout: `packages/core/src` (client, worker, data validators, profiles), `tests/` (unit, browser, package,
+fixtures, load-time baselines), `conformance/` (example site, scenarios, runner). Read
+`packages/core/README.md` for the API.
 
 ## Intended architecture (working assumptions, not yet decided by ADRs)
 

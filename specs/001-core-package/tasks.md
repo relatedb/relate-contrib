@@ -217,13 +217,13 @@ description: "Task list for the graph-web core package"
 
 **Purpose**: Results, documentation and the checks that span stories
 
-- [ ] T080 [P] Write `packages/core/README.md` (install, the engine peer dependency and binary URL, the two profiles, the descriptor and data formats, the `failed` state, the supported browsers measured)
-- [ ] T081 Update the Commands and Architecture sections of `CLAUDE.md` with the pnpm workspace layout, the scripts of T001 and the `packages/core` structure
-- [ ] T082 Record the browser and worker measurements of loading (1,000, 5,000 and 20,000 pages) and of restore in `design/adr/ADR-002-graph-data-format.md` section 4 and `design/adr/ADR-003-graph-descriptor.md` section 4, replacing the Node-only figures and the unverified items they settle
-- [ ] T083 Decide how continuous integration reaches the private engine submodule (credentials, or a cached engine build) and document the decision in `vendor/README.md`
-- [ ] T084 Run `pnpm test`, `pnpm --filter graph-web-core test:conformance`, `test:package` and `test:trace` and confirm every requirement and success criterion has a passing test (SC-005)
-- [ ] T085 Run the scenarios of `specs/001-core-package/quickstart.md` end to end and correct the quickstart where the commands differ
-- [ ] T086 Check the work against the constitution (principles I to VI) and note the result in `specs/001-core-package/plan.md`
+- [X] T080 [P] Write `packages/core/README.md` (install, the engine peer dependency and binary URL, the two profiles, the descriptor and data formats, the `failed` state, the supported browsers measured)
+- [X] T081 Update the Commands and Architecture sections of `CLAUDE.md` with the pnpm workspace layout, the scripts of T001 and the `packages/core` structure
+- [X] T082 Record the browser and worker measurements of loading (1,000, 5,000 and 20,000 pages) and of restore in `design/adr/ADR-002-graph-data-format.md` section 4 and `design/adr/ADR-003-graph-descriptor.md` section 4, replacing the Node-only figures and the unverified items they settle
+- [X] T083 Decide how continuous integration reaches the private engine submodule (credentials, or a cached engine build) and document the decision in `vendor/README.md`
+- [X] T084 Run `pnpm test`, `pnpm --filter graph-web-core test:conformance`, `test:package` and `test:trace` and confirm every requirement and success criterion has a passing test (SC-005)
+- [X] T085 Run the scenarios of `specs/001-core-package/quickstart.md` end to end and correct the quickstart where the commands differ
+- [X] T086 Check the work against the constitution (principles I to VI) and note the result in `specs/001-core-package/plan.md`
 
 ---
 

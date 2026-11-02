@@ -114,7 +114,8 @@ The order and size of the loader's batches, chosen at implementation against the
 - Every node has a property named `id`, and an author cannot use that name for something else.
 - ADR-001 2.1 describes an index on the lookup property created before the links are loaded, which assumed a known label. Resolving endpoints through element ids removes that need for loading, so indexes serve queries only, and which labels get an `id` index is the descriptor's choice, or the caller's when there is no descriptor. The loader's first test is that this keeps loading near the figures in ADR-001 (0.6 s at 5,000 pages on the main thread, 1.4 s in the worker).
 - Verified in Node against the engine build used in the spikes (single runs, main thread): dynamic labels and relationship types and the element-id lookup, loading 1,000 pages in 156 ms, 5,000 in 604 ms and 20,000 in 2,484 ms.
-- Not verified: the same loading in a browser and in a worker; the cost of validating a 20,000-node document with embeddings; how CypherLite's vector search expects an embedding to be stored, which the site-graph RFC has to settle.
+- Verified in Chromium, Firefox and WebKit through the core package's tests (single runs, headless, in a worker, the data fetched by the worker): 5,000 pages ready in 632, 730 and 659 ms and 20,000 pages in 2,268, 2,745 and 2,265 ms, with the page's longest unresponsive interval during the 20,000-page load at 4.7, 6.0 and 25 ms.
+- Not verified: the cost of validating a 20,000-node document with embeddings; how CypherLite's vector search expects an embedding to be stored, which the site-graph RFC has to settle.
 - Follow-up: the site-graph RFC defines its schema as a profile of this format; batch size and order of loading, chosen at implementation once measured; optionally a published JSON Schema for editors and build tools.
 - RFC questions this decision informs: RFC-001 7.3 (the form replay takes as input; it does not answer the replay-cost questions) and RFC-002 7.3 (the form of page graph data; the cookbook's recipe form and whether it should carry the same data stay open).
 
@@ -129,3 +130,4 @@ The order and size of the loader's batches, chosen at implementation against the
 ## 6. Amendments
 
 - 2026-11-02: stated how arrays of numbers load (2.5); made `revision` a consistency check against a descriptor and nothing more (2.2, ADR-003); recorded the loading mechanism as checked against the engine (4). Planning the core package found that the engine rejects an array that mixes whole and fractional numbers, which embedding arrays routinely do.
+- 2026-11-02: recorded the browser results of the core package's tests (4).

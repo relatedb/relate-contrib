@@ -136,6 +136,19 @@ All six principles still pass. The design adds no adapter code, no runtime depen
 path. The two amendments should still be reviewed with `/adr-review` before the tasks that rely on them
 start.
 
+## Constitution Check after implementation
+
+Checked on 2026-11-02, with all 86 tasks done.
+
+| Principle | Result |
+|---|---|
+| I. Decisions Before Code | Pass for the design: everything implemented follows accepted ADR-001, ADR-002 and ADR-003. One miss: the commit messages name the user story and task numbers but not the ADR numbers, which principle I asks for. The merge commit or pull request for this branch must cite ADR-001, ADR-002 and ADR-003. |
+| II. Core First, Thin Adapters | Pass. All behavior is in `packages/core`; there is no adapter code. `test:package` installs the packed core in a clean project outside the repository and runs it, and the conformance check ships as the `./conformance` export. |
+| III. The Page Works Without the Graph | Pass. Tests show links and the first render working before and while the graph loads, and in the `failed` state. |
+| IV. Faults Are Contained | Pass. Every instance is in a worker; the main thread never instantiates the engine (tested); a trap, a timeout and a worker error each replace the worker; `run()` has a timeout and `stop()`. |
+| V. Specified Behavior Is Tested and Measured | Pass. `test:trace` finds all 52 requirement and success-criterion ids tagged in tests whose results passed, in Chromium, Firefox and WebKit. Load and restore times are recorded against per-browser baselines. Unmeasured and labeled: validation cost on large documents with embeddings, the cost of reading a descriptor on every page, mobile and older browsers. |
+| VI. The Engine Stays Upstream | Pass. The submodule is unmodified (`git -C vendor/cypherlite status` is clean); the engine is a peer dependency; the one engine behavior worked around (mixed number arrays) is handled in the package's own encoding. |
+
 ## Complexity Tracking
 
 No constitution violations to justify.

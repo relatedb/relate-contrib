@@ -41,7 +41,7 @@ array with any fractional value as floats.
 pnpm --filter graph-web-core test:browsers
 ```
 
-Expected: the loader tests pass in Chromium, Firefox and WebKit; the page stays responsive during a
+Expected (WebKit runs in a persistent profile with origin-private data cleared between tests, since Playwright's default WebKit context has no origin-private file system): the loader tests pass in Chromium, Firefox and WebKit; the page stays responsive during a
 20,000-node load (longest stall under 50 ms); timings are recorded and compared with the baselines.
 
 ## Scenario 3: faults and recovery (Story 3, SC-004, SC-010)

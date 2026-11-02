@@ -2,7 +2,7 @@
 // named in a `// covers: FR-n, SC-n` tag in a test file, and those tests must pass.
 //
 // usage: tsx tests/trace/check-trace.ts [--static]
-//   default   also read reports/vitest.json and reports/playwright.json and require the tagged files to pass
+//   default   also read reports/vitest.json, package.json, playwright.json and conformance.json and require the tagged files to pass
 //   --static  only check that every id is tagged
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
@@ -43,23 +43,24 @@ function note(file: string, ok: boolean): void {
   passing.set(key, (passing.get(key) ?? true) && ok);
 }
 let haveReports = false;
-const vitestReport = join(pkg, "reports/vitest.json");
-if (existsSync(vitestReport)) {
+for (const name of ["vitest.json", "package.json"]) {
+  const report = join(pkg, "reports", name);
+  if (!existsSync(report)) continue;
   haveReports = true;
-  const r = JSON.parse(readFileSync(vitestReport, "utf8")) as { testResults?: Array<{ name: string; status: string }> };
+  const r = JSON.parse(readFileSync(report, "utf8")) as { testResults?: Array<{ name: string; status: string }> };
   for (const f of r.testResults ?? []) note(f.name, f.status === "passed");
 }
-const pwReport = join(pkg, "reports/playwright.json");
-if (existsSync(pwReport)) {
+for (const name of ["playwright.json", "conformance.json"]) {
+  const report = join(pkg, "reports", name);
+  if (!existsSync(report)) continue;
   haveReports = true;
   type Spec = { file: string; ok: boolean };
   type Suite = { specs?: Spec[]; suites?: Suite[] };
-  const r = JSON.parse(readFileSync(pwReport, "utf8")) as Suite;
   const visit = (s: Suite): void => {
     for (const sp of s.specs ?? []) note(join("tests/browser", sp.file), sp.ok);
     for (const c of s.suites ?? []) visit(c);
   };
-  visit(r);
+  visit(JSON.parse(readFileSync(report, "utf8")) as Suite);
 }
 
 const untagged = [...required].filter((id) => !tagged.has(id));

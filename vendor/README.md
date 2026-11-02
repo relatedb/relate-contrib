@@ -34,4 +34,15 @@ cargo target in `vendor/.build/target` (both gitignored). It needs Rust (the too
 
 ## Continuous integration
 
-Not decided. CI needs credentials for the private submodule or a cached engine build; see task T083.
+No workflow exists yet (this repository has no remote). When one is added:
+
+- Check out with submodules using a read-only deploy key or fine-grained token for `neo4j-labs/cypherlite`, stored as
+  a secret.
+- Install the Rust toolchain the engine pins, `wasm-bindgen-cli` at the version `pnpm run build:wasm` reports, and
+  binaryen, then run `pnpm run build:wasm`. Cache `vendor/.build/target` and `vendor/cypherlite-wasm/pkg`, keyed by the
+  submodule commit and the lockfile, since the first build takes several minutes.
+- Install the browsers with `pnpm exec playwright install --with-deps chromium firefox webkit`, then run the scripts
+  listed in `packages/core/README.md`. Baselines are per environment: set `GW_ENV` to a name for the runner and commit
+  its baselines after a first run.
+- Once `@neo4j-labs/cypherlite-wasm` is published to npm, delete the submodule, `scripts/build-wasm.sh` and the
+  override in `pnpm-workspace.yaml`, and depend on the published package.
