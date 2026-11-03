@@ -4,7 +4,7 @@ description: "Create or update a time-boxed spike: a small, disposable-scope inv
 argument-hint: "Reference a parent RFC (RFC-NNN) plus the question being spiked, or 'update SPIKE-002 ...' to revise"
 compatibility: "Requires design/spikes/ directory (created automatically on first use) and at least one existing parent RFC in design/rfc/"
 metadata:
-  author: "graph-web"
+  author: "related-web"
 user-invocable: true
 disable-model-invocation: false
 ---

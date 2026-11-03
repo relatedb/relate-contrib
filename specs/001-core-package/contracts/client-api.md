@@ -1,4 +1,4 @@
-# Contract: Public API of `graph-web-core`
+# Contract: Public API of `related-web-core`
 
 **Feature**: [spec.md](../spec.md) | **Plan**: [plan.md](../plan.md)
 
@@ -7,7 +7,7 @@ during implementation if the behavior stays the same. `Envelope` is the engine's
 it arrives (a parsed object with `columns`, `rows`, `stats`, `error`, and the rest); the package does not
 reshape it (FR-003).
 
-## Module `graph-web-core`
+## Module `related-web-core`
 
 ```ts
 export type Status = "loading" | "ready" | "recovering" | "failed";
@@ -109,7 +109,7 @@ export interface Events {
   (FR-021, FR-027).
 - A page may call `createClient` more than once; clients share nothing (FR-035).
 
-## Module `graph-web-core/validate`
+## Module `related-web-core/validate`
 
 ```ts
 export type ValidationResult =
@@ -126,6 +126,6 @@ node properties (FR-018). The first problem is reported with a path such as `nod
 in place of `document`. A separate check, `checkAgreement(descriptor, document)`, reports a `revision` or count
 mismatch between the two (FR-039).
 
-## Module `graph-web-core/conformance`
+## Module `related-web-core/conformance`
 
 See [conformance.md](conformance.md).

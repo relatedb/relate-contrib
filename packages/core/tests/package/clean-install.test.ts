@@ -25,7 +25,7 @@ const run = (command: string, args: string[], cwd: string): string =>
   execFileSync(command, args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, CI: "1" } });
 
 beforeAll(() => {
-  work = mkdtempSync(join(tmpdir(), "graph-web-clean-install-"));
+  work = mkdtempSync(join(tmpdir(), "related-web-clean-install-"));
   expect(work.startsWith(repo)).toBe(false); // the project is outside this repository
   run("pnpm", ["run", "build"], pkg);
   run("pnpm", ["pack", "--pack-destination", work], pkg);
@@ -45,8 +45,8 @@ beforeAll(() => {
   writeFileSync(
     join(consumer, "src/main.js"),
     `import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url";
-import { createClient } from "graph-web-core";
-import { validate } from "graph-web-core/validate";
+import { createClient } from "related-web-core";
+import { validate } from "related-web-core/validate";
 const document = { version: 1, nodes: [{ id: "a", labels: ["Page"] }, { id: "b", labels: ["Page"] }, { id: "c" }], links: [{ source: "a", target: "b", type: "T" }] };
 window.validated = validate(document).ok;
 const client = createClient({ engineUrl, graph: { document }, navigation: "client-routing" });
@@ -70,7 +70,7 @@ describe("the packed core in a clean project", () => {
     expect(listing).toContain("package/dist/conformance/run.js");
     expect(listing.some((f) => f.includes("example-site/public/descriptor.json"))).toBe(true);
     expect(listing.some((f) => /\b(tests|vendor|node_modules)\//.test(f))).toBe(false);
-    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/graph-web-core/package.json"), "utf8"));
+    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/related-web-core/package.json"), "utf8"));
     expect(manifest.dependencies).toBeUndefined();
     expect(Object.keys(manifest.peerDependencies)).toContain("@neo4j-labs/cypherlite-wasm");
   });

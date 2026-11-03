@@ -92,6 +92,6 @@ test("a graph without a descriptor never uses a store", async ({ page }) => {
   expect(await query(page, "MATCH (n:Page) RETURN count(n) AS c")).toEqual([{ c: 100 }]);
   expect(await restored(page)).toBe(false);
   const root = await opfsRoot(page);
-  expect(root).not.toContain("graph-web");
+  expect(root).not.toContain("related-web");
   expect(root).not.toContain("cypherlite");
 });

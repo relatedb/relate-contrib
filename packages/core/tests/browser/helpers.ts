@@ -101,7 +101,7 @@ export const storedCopy = (page: Page, id: string): Promise<any | null> =>
   page.evaluate(async (name) => {
     try {
       const root = await navigator.storage.getDirectory();
-      const dir = await root.getDirectoryHandle("graph-web");
+      const dir = await root.getDirectoryHandle("related-web");
       return JSON.parse(await (await (await dir.getFileHandle(`${name}.json`)).getFile()).text());
     } catch {
       return null;

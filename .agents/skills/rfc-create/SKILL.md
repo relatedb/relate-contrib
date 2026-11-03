@@ -4,7 +4,7 @@ description: "Create or update an RFC: the problem, its motivation, and high-lev
 argument-hint: "Describe the problem/opportunity, or 'update RFC-003 ...' to revise an existing one"
 compatibility: "Requires design/rfc/ directory (created automatically on first use)"
 metadata:
-  author: "graph-web"
+  author: "related-web"
 user-invocable: true
 disable-model-invocation: false
 ---

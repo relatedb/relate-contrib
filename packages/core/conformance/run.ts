@@ -82,7 +82,7 @@ async function withContext<T>(options: RunOptions, shared: { browser: Browser | 
     }
   }
   // WebKit needs a persistent profile for the origin-private file system.
-  const profile = mkdtempSync(join(tmpdir(), "graph-web-conformance-"));
+  const profile = mkdtempSync(join(tmpdir(), "related-web-conformance-"));
   const context = await webkit.launchPersistentContext(profile);
   try {
     await clearOpfs(context, options.baseUrl);

@@ -110,7 +110,7 @@ multiple pages and tabs); Selenium or WebdriverIO (no advantage here).
 
 **Decision** (ADR-003): the page gives the client a descriptor (`id`, `revision`, the data's location and
 counts, optional indexes). The worker keeps a copy of it in a file at the origin-private root, for example
-`graph-web/<id>.json`, outside the `cypherlite/<name>/` directory the engine manages for its store. The file
+`related-web/<id>.json`, outside the `cypherlite/<name>/` directory the engine manages for its store. The file
 is read and written in the worker with a synchronous access handle, the capability the engine's store needs
 too. With a store, start-up is:
 

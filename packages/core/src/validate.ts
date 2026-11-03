@@ -1,4 +1,4 @@
-// The Node-only entry (`graph-web-core/validate`): validators for build steps. No browser APIs.
+// The Node-only entry (`related-web-core/validate`): validators for build steps. No browser APIs.
 export { validate } from "./data/validate.js";
 export type { ValidationResult } from "./data/validate.js";
 export { validateDescriptor, checkAgreement } from "./data/descriptor.js";

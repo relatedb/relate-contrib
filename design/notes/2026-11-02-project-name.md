@@ -80,3 +80,21 @@ Neo4j community posts also show a horticulture knowledge graph (Hortigraph) and 
    names beginning with "graph" need review.
 4. Rename with one global replace, and update the package names (`<name>-core` and
    `<name>-<framework>` were the working pattern), `CLAUDE.md` and the README indexes.
+
+## Update (2026-11-03): `related-web`
+
+CypherLite is to be renamed `relate` upstream; the change has not happened yet. In anticipation, the
+working project name moves from `graph-web` to `related-web` (core package `related-web-core`). It
+echoes the engine's new name and keeps the "web" half of the old one. On npm, `related-web`,
+`related-web-core` and the `@related-web` scope were unregistered when checked on 2026-11-03; GitHub and
+PyPI have not been checked.
+
+Scope of this rename: the long-form name in package names, the stored-copy directory in the
+origin-private store (`related-web/<id>.json`), documents and the constitution. Left alone for now:
+
+- The internal prefix `gw-` (store names `gw-<id>`, `data-gw-*` attributes). It needs a short form.
+  `rw-` reads as read/write and `rel-` as "relationship"; `rew-` and others are still open.
+- The repository directory, and every use of the engine's current name, until upstream settles its
+  package, repository and API names.
+
+The suggested steps above still apply for the final name, the registry checks and a global replace.

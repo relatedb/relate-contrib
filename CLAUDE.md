@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Purpose
 
-`graph-web` is the planning home for **CypherLite integrations with web frameworks**, including static site generators. CypherLite is Neo4j Labs' embedded, in-memory property graph engine (openCypher), shipped for the browser as a WASM library. The integrations showcase the database and are meant to run on the dedicated CypherLite website first.
+`related-web` is the planning home for **CypherLite integrations with web frameworks**, including static site generators. CypherLite is Neo4j Labs' embedded, in-memory property graph engine (openCypher), shipped for the browser as a WASM library. The integrations showcase the database and are meant to run on the dedicated CypherLite website first.
 
 Two uses of the embedded graph drive the work:
 
@@ -15,7 +15,7 @@ Planned integration order (subject to change as ADRs land): ObservableHQ (spiked
 
 ## Project state
 
-The first package, `packages/core` (`graph-web-core`, a working name), is implemented from `specs/001-core-package/`
+The first package, `packages/core` (`related-web-core`, a working name), is implemented from `specs/001-core-package/`
 (see its `tasks.md`). Design documents are in `design/`. Further packages (framework adapters) come next.
 
 ## Commands
@@ -95,5 +95,5 @@ ADRs (snapshot format, embedding model and query-time strategy, runtime targets,
 
 ## Conventions
 
-- The repository is a pnpm workspace with the core package (`graph-web-core`, a working name) as its first module, independently publishable. Until `@neo4j-labs/cypherlite-wasm` is published, a pinned build is vendored in and the core declares it a peer dependency.
+- The repository is a pnpm workspace with the core package (`related-web-core`, a working name) as its first module, independently publishable. Until `@neo4j-labs/cypherlite-wasm` is published, a pinned build is vendored in and the core declares it a peer dependency.
 - Keep documents in `design/` written for a newcomer to this repo: name project artifacts on first use rather than assuming the reader has seen sibling documents (the review skills check this).

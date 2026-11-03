@@ -2,7 +2,7 @@
 
 **Feature**: [spec.md](../spec.md) | **Plan**: [plan.md](../plan.md)
 
-## Module `graph-web-core/conformance`
+## Module `related-web-core/conformance`
 
 ```ts
 export const exampleDescriptor: Descriptor;        // names the graph, its revision and indexes
