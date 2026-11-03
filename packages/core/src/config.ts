@@ -16,7 +16,7 @@ export const VISITOR_TIMEOUT_MS = 10_000;
 export const STORE_PREFIX = "gw-";
 
 /** Directory at the origin-private root that holds the stored copy of each descriptor. */
-export const STORED_COPY_DIR = "graph-web";
+export const STORED_COPY_DIR = "related-web";
 
 /** The descriptor `id`: 1 to 48 characters from A-Z a-z 0-9 _ - (so the store name stays within 64). */
 export const ID_PATTERN = /^[A-Za-z0-9_-]{1,48}$/;

@@ -1,4 +1,4 @@
-# graph-web Constitution
+# related-web Constitution
 
 ## Core Principles
 
@@ -64,8 +64,9 @@ Rationale: the engine has its own contribution rules, and a rename should stay a
 ## Technical Constraints
 
 - The repository is a pnpm workspace; the core package is its first module.
-- `graph-web` and `graph-web-core` are working names, to be settled with the engine's name (see
-  `design/notes/2026-11-02-project-name.md`).
+- `related-web` and `related-web-core` are working names, chosen on 2026-11-03 to match the engine's
+  announced new name, `relate` (see `design/notes/2026-11-02-project-name.md`). The internal `gw-`
+  prefix and `data-gw-*` attributes keep their old form until a short prefix is chosen.
 - The browser engine is consumed as `@neo4j-labs/cypherlite-wasm`. Until it is published, a build
   from a pinned checkout is vendored in; the core declares the package as a peer dependency and
   MUST NOT reference the vendored path.
@@ -105,4 +106,4 @@ Every plan MUST include a Constitution Check against principles I to VI, and a v
 justified in writing in the plan. Reviewers verify compliance. Runtime guidance for agents is in
 `CLAUDE.md`.
 
-**Version**: 1.1.2 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-02
+**Version**: 1.1.3 | **Ratified**: 2026-11-02 | **Last Amended**: 2026-11-03

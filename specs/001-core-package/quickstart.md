@@ -27,7 +27,7 @@ Expected: `vendor/cypherlite-wasm/pkg` contains `cypherlite.js` and `cypherlite_
 ## Scenario 1: data checks (User Story 2, SC-006)
 
 ```bash
-pnpm --filter graph-web-core test:unit
+pnpm --filter related-web-core test:unit
 ```
 
 Expected: every valid document and descriptor in the corpus passes; every invalid one is rejected with the path of
@@ -38,7 +38,7 @@ array with any fractional value as floats.
 ## Scenario 2: loading and querying in three browsers (Stories 1 and 2, SC-011)
 
 ```bash
-pnpm --filter graph-web-core test:browsers
+pnpm --filter related-web-core test:browsers
 ```
 
 Expected (WebKit runs in a persistent profile with origin-private data cleared between tests, since Playwright's default WebKit context has no origin-private file system): the loader tests pass in Chromium, Firefox and WebKit; the page stays responsive during a
@@ -61,8 +61,8 @@ held by a second page falls back to an in-memory graph within five seconds plus 
 ## Scenario 5: conformance and packaging (Story 7, SC-008)
 
 ```bash
-pnpm --filter graph-web-core test:conformance
-pnpm --filter graph-web-core test:package
+pnpm --filter related-web-core test:conformance
+pnpm --filter related-web-core test:package
 ```
 
 Expected: the conformance report passes under both profiles; the packed tarball installs in a clean
@@ -72,7 +72,7 @@ an option.
 ## Traceability (SC-005)
 
 ```bash
-pnpm --filter graph-web-core test:trace
+pnpm --filter related-web-core test:trace
 ```
 
 Expected: every requirement id in `specs/001-core-package/spec.md` has a row in the traceability table

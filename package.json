@@ -1,5 +1,5 @@
 {
-  "name": "graph-web",
+  "name": "related-web",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.7.0",
@@ -7,10 +7,10 @@
     "build:wasm": "bash scripts/build-wasm.sh",
     "build": "pnpm -r build",
     "test": "pnpm run test:unit && pnpm run test:browsers",
-    "test:unit": "pnpm --filter graph-web-core test:unit",
-    "test:browsers": "pnpm --filter graph-web-core test:browsers",
-    "test:conformance": "pnpm --filter graph-web-core test:conformance",
-    "test:package": "pnpm --filter graph-web-core test:package",
-    "test:trace": "pnpm --filter graph-web-core test:trace"
+    "test:unit": "pnpm --filter related-web-core test:unit",
+    "test:browsers": "pnpm --filter related-web-core test:browsers",
+    "test:conformance": "pnpm --filter related-web-core test:conformance",
+    "test:package": "pnpm --filter related-web-core test:package",
+    "test:trace": "pnpm --filter related-web-core test:trace"
   }
 }

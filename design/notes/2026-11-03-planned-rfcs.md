@@ -3,7 +3,7 @@
 This repository plans how to embed a small property-graph database in web pages and sites, for several web
 frameworks. The database is CypherLite, Neo4j Labs' embedded openCypher engine, which runs in the browser as
 WebAssembly. RFC-001 (embedding in web frameworks) and RFC-002 (page graphs) are drafted, and the first
-package, `graph-web-core`, is merged. Three further RFCs are intended and none is started. This note keeps
+package, `related-web-core`, is merged. Three further RFCs are intended and none is started. This note keeps
 the framing of each so it is not lost; it binds no decision, and each RFC may reshape what is written here.
 
 ## RFC-003: the site graph
