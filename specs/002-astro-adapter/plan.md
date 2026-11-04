@@ -8,7 +8,7 @@
 
 Build `related-web-astro` (`packages/astro`): an Astro 7 integration that turns registered graph sources into revision-named static files and descriptors, an `.astro` component that carries a small graph inside a page, and a client module whose page entry ties each page's graph clients to the router's arrival and departure. Everything about instances, faults, loading and profiles stays in `related-web-core`. The adapter is checked by an unpublished conformance site (run with the core's runner in three browsers, both profiles), its own browser and build tests, and a clean-install test.
 
-Planning found two points where ADR-004 and the core's conformance runner do not yet fit Astro (section "Decisions needed"). The plan carries a recommended resolution for each; both need an ADR-004 amendment and a small spec amendment before `tasks.md` is generated.
+Planning found two points where ADR-004 and the core's conformance runner did not fit Astro (section "Decisions needed"). Both were resolved on 2026-11-04 by an ADR-004 amendment and a spec amendment, as recommended there.
 
 ## Technical Context
 
@@ -36,14 +36,14 @@ Planning found two points where ADR-004 and the core's conformance runner do not
 
 | Principle | Check | Result |
 |-----------|-------|--------|
-| I. Decisions Before Code | The plan implements ADR-004 (accepted) and builds on ADR-001, ADR-002, ADR-003. Two needs are not covered by ADR-004: D-1 (conformance against hashed, id-bound descriptors) and D-2 (scoping page setup to its page). | **Gated**: stop for an ADR-004 amendment before `tasks.md`. |
+| I. Decisions Before Code | The plan implements ADR-004 (accepted) and builds on ADR-001, ADR-002, ADR-003. Two needs are not covered by ADR-004: D-1 (conformance against hashed, id-bound descriptors) and D-2 (scoping page setup to its page). Pass after the 2026-11-04 ADR-004 amendment (D-1, D-2). |
 | II. Core First, Thin Adapters | The adapter wires build-time data and router events; instance lifetime, faults, loading and status pass through the core. The `"page"` lifetime composes `createClient` and `destroy()` as ADR-004 records. D-1 would add an additive parameter to the core's conformance runner so the adapter passes the same check. | Pass, subject to D-1 |
 | III. The Page Works Without the Graph | Inline graphs are inert `<script type="application/json">` data; nothing renders from the instance; conformance pages keep links and placeholders; SC-008 tests it. | Pass |
 | IV. Faults Are Contained | All instances run in the core's worker; page-lifetime clients are destroyed on departure; no visitor statements are added by the adapter. | Pass |
 | V. Specified Behavior Is Tested and Measured | Every FR and SC gets a tagged test and the trace check; the inline-size threshold is labeled unmeasured and load figures are recorded as single-run figures. | Pass |
 | VI. The Engine Stays Upstream | The engine is imported through its package interface (`@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url`); no engine internals are copied. | Pass |
 
-## Decisions needed (before tasks)
+## Decisions needed (resolved 2026-11-04 by the ADR-004 amendment)
 
 **D-1. Conformance of an id-bound, hashed-URL adapter against the core's runner.** The runner (`packages/core/conformance/scenarios.ts`) assumes the core's example site: fixed page paths (`/index.html`, `/page-1.html`, `/notes.html`, `/blank.html`), `variant=b|mismatch|broken` query values that select other descriptors, and request checks that look for the substrings `/graph.json` (C-11, positive) and `/graph-b.json` (C-07, positive). Two facts about the adapter break that:
 

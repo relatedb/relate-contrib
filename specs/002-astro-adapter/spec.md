@@ -26,6 +26,7 @@ The adapter implements ADR-004 and builds on ADR-001 (hosting and navigation pro
 
 - Q: Can an inline page graph name indexes to create? → A: Yes. The component takes an optional `config` value that holds a list of indexes, and later per-graph settings go in the same place.
 - Q: Under `multi-page`, does repeated direct lookup of one visit-lifetime graph on a page return the same client? → A: Yes, one client per page and name, as for the page entry.
+- Q: Which pages does a page's setup run on, given that Astro runs a bundled script once per document? → A: The setup runs on the first page and on later page loads where an optional selector matches (default: every page) (ADR-004 amendment).
 - Q: What does the development server do when a registered source throws or returns an invalid document? → A: It keeps serving, prints the error with the path of the first problem, and answers that graph's requests with an error status until the source is fixed.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -88,6 +89,8 @@ A page's setup code runs when the page first loads and again each time the route
 5. **Given** a registered page-lifetime graph with a descriptor, **When** page A is left and page B asks for the same graph, **Then** page B's client does not wait on page A's client for the stored copy and restores from the store when the revision matches.
 6. **Given** a visit-lifetime graph under `client-routing`, **When** the visitor navigates between pages, **Then** the same client, worker and generation persist.
 7. **Given** setup code that creates page-scoped data or subscriptions, **When** the page is left, **Then** they are dropped, and they are created again on the next arrival.
+8. **Given** setup code registered with a selector by a script that only some pages include, **When** the visitor arrives at a page where the selector does not match, **Then** that setup does not run; **and** where it matches, it runs once.
+9. **Given** a page with the router, **When** it first loads, **Then** its setup runs once, not again for the router's first page-load event; **and** without the router it still runs once.
 
 ---
 
@@ -201,14 +204,14 @@ The adapter and the core are packed as they would be published, installed into a
 
 **Client module**
 
-- **FR-016**: The client module MUST provide a page entry that runs the page's setup code on the first page and on every page the router brings in, and runs the cleanup that setup returns before the router swaps the page and when the page is hidden.
+- **FR-016**: The client module MUST provide a page entry that runs the page's setup code once on the first page (when the DOM is ready, with or without the router, and not twice when the router fires its first page-load event) and on every later page the router brings in where an optional selector matches (default: every page), and runs the cleanup that setup returns before the router swaps the page and when the page is hidden.
 - **FR-017**: The page entry MUST give the setup code a lookup that returns the core's client for a graph name, looking first at the current page's inline graphs and then at the registered ones.
 - **FR-018**: For a page-lifetime graph the lookup MUST create a new core client for the page and destroy it when the page is left; for a registered one with a descriptor it MUST ask for the stored copy to be used, whatever the profile.
 - **FR-019**: The departing page's clients MUST be destroyed before the next page's setup runs.
 - **FR-020**: Asking twice for the same name on one page MUST return the same client.
 - **FR-021**: For a visit-lifetime graph the lookup MUST return the core's client for the visit under `client-routing`, and one client for the page under `multi-page` (repeated lookups of a name on one page return that client), so the adapter starts at most one worker per graph name per page.
 - **FR-022**: The client module MUST provide a direct lookup that accepts only visit-lifetime registered graphs and MUST fail, with a message that names the graph, for an inline graph or a page-lifetime graph, and fail, naming the registered names, for an unknown graph.
-- **FR-023**: Both lookups MUST accept an option that overrides the profile, documented as a testing aid; the override MUST change only the profile passed to the core.
+- **FR-023**: Both lookups MUST accept options that override the profile and the descriptor location, documented as testing aids; each override MUST change only the profile, or the descriptor location, passed to the core.
 - **FR-024**: The client module MUST NOT start any client before a page asks for one, and the adapter MUST NOT make a page's first render depend on a client; a page that does not use the module MUST pay nothing for it.
 - **FR-025**: The adapter MUST NOT decide fault handling, status, recovery or data loading; it MUST pass the core's client, status and events through unaltered.
 
@@ -219,7 +222,7 @@ The adapter and the core are packed as they would be published, installed into a
 **Checks and packaging**
 
 - **FR-027**: The repository MUST contain an unpublished conformance site, built once per profile, with the router in the layout only for `client-routing`, that exercises a shared registered graph, an inline page graph, a registered page-lifetime graph, and a page with two graphs.
-- **FR-028**: The core's conformance runner MUST pass against both builds in Chromium, Firefox and WebKit, and a failure MUST block the adapter's release.
+- **FR-028**: The core's conformance runner MUST pass against both builds in Chromium, Firefox and WebKit, with variant `a` served through the integration and variants `b`, `mismatch` and `broken` served from static files through the descriptor override, and a failure MUST block the adapter's release.
 - **FR-029**: The adapter's own tests MUST cover destruction of a page-lifetime client on departure, the store being free for the next page, rejection by the direct lookup, each build failure in FR-005, FR-009 and FR-014, and the development server's handling of a failing source (FR-011).
 - **FR-030**: A package test MUST pack the adapter and the core, install them into a clean Astro 7 project outside the repository, build it and run a page that queries a registered graph.
 - **FR-031**: Every behavior stated here with MUST MUST have an automated test tagged with its requirement or scenario, and the repository's trace check MUST report any untagged requirement.
@@ -249,8 +252,8 @@ The adapter and the core are packed as they would be published, installed into a
 
 - **Environment**: Astro 7, static output, and the same desktop Chromium, Firefox and WebKit browsers as the core's tests. Other Astro versions, server output and mobile browsers are not covered and are labeled unmeasured.
 - **Governing decisions**: ADR-004 (this adapter), ADR-001, ADR-002, ADR-003 and the project constitution (version 1.1.3). Where this specification differs from an ADR, the ADR wins until it is amended.
-- **Core unchanged**: the adapter uses the core's public interface as it is. Moving the page lifetime into the core is follow-up work named in ADR-004. If a need appears that the core cannot meet, the plan stops and proposes an RFC or ADR (constitution principle I).
+- **Core**: the adapter uses the core's public interface as it is. The one exception is additive, optional parameters of the core's conformance runner so a hashed, name-bound adapter can pass the same scenarios (ADR-004, consequences); the runner's default behavior does not change. Moving the page lifetime into the core is follow-up work named in ADR-004. If a need appears that the core cannot meet, the plan stops and proposes an RFC or ADR (constitution principle I).
 - **Not measured**: the size above which an inline graph should be registered instead is not measured here; the conformance site records the load figures that a later decision can use. Dev-server behavior under file watching, and non-root base paths in production, are checked by the tests in this feature and are not otherwise verified.
 - **Graph contents**: the adapter does not decide what a graph contains. The conformance site uses small hand-written graphs, and RFC-003 and RFC-002's decisions will govern real ones.
-- **Out of scope**: output other than static, Astro versions other than 7, components for UI frameworks, a default content extractor or site-graph schema (RFC-003), the navigation element (RFC-004), dashboards that fetch their data at load, main-thread instances, and changes to the core.
+- **Out of scope**: output other than static, Astro versions other than 7, components for UI frameworks, a default content extractor or site-graph schema (RFC-003), the navigation element (RFC-004), dashboards that fetch their data at load, main-thread instances, and changes to the core other than the runner's additive parameters.
 - **Names**: `related-web-astro` is a working name that follows `related-web-core`; the engine's package name is its current one.
