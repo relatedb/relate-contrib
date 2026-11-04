@@ -208,12 +208,12 @@ description: "Task list for the related-web Astro adapter"
 
 ### Verify first
 
-- [ ] T063 [US7] Verify V-6 (research R-7): the dev server in a project that installed the packed packages serves the engine binary and the worker; record under R-7
+- [X] T063 [US7] Verify V-6 (research R-7): the dev server in a project that installed the packed packages serves the engine binary and the worker; record under R-7
 
 ### Tests and implementation for User Story 7
 
-- [ ] T064 [US7] Write `packages/astro/tests/package/clean-install.test.ts` in the style of `packages/core/tests/package/clean-install.test.ts`: build and pack the adapter and the core, create a temporary directory outside the repository (assert it is), install both tarballs, the engine and `astro` there as a user would, add a registered graph and a page that queries it, `astro build`, serve it, and in Chromium check the query returns a result and the binary is placed by the bundler with no workaround; assert no path in the install refers to the repository (covers: FR-030, SC-007)
-- [ ] T065 [US7] Fix anything the test finds in `packages/astro/package.json` (`files`, exports, peer ranges) or the `.astro` component's resolution; run `pnpm test:astro-package`
+- [X] T064 [US7] Write `packages/astro/tests/package/clean-install.test.ts` in the style of `packages/core/tests/package/clean-install.test.ts`: build and pack the adapter and the core, create a temporary directory outside the repository (assert it is), install both tarballs, the engine and `astro` there as a user would, add a registered graph and a page that queries it, `astro build`, serve it, and in Chromium check the query returns a result and the binary is placed by the bundler with no workaround; assert no path in the install refers to the repository (covers: FR-030, SC-007)
+- [X] T065 [US7] Fix anything the test finds in `packages/astro/package.json` (`files`, exports, peer ranges) or the `.astro` component's resolution; run `pnpm test:astro-package`
 
 **Checkpoint**: The package works as published.
 
@@ -221,8 +221,8 @@ description: "Task list for the related-web Astro adapter"
 
 ## Phase 10: Polish & Cross-Cutting Concerns
 
-- [ ] T066 [P] Write `packages/astro/README.md`: install, the integration options, the two ways to declare a graph, lifetimes, `onPage` with `selector`, the direct lookup, the placeholder-first rule for wrappers in UI frameworks, the testing-aid options, and supported Astro and browsers (labeled as tested)
-- [ ] T067 Record the load figures for an inline graph and a registered graph of the same document at 20, 300 and 2,000 nodes in `specs/002-astro-adapter/research.md` (method, environment, single-run figures, labeled as such), as the evidence for the size at which an inline graph should be registered instead (constitution V); do not set a threshold
+- [X] T066 [P] Write `packages/astro/README.md`: install, the integration options, the two ways to declare a graph, lifetimes, `onPage` with `selector`, the direct lookup, the placeholder-first rule for wrappers in UI frameworks, the testing-aid options, and supported Astro and browsers (labeled as tested)
+- [X] T067 Record the load figures for an inline graph and a registered graph of the same document at 20, 300 and 2,000 nodes in `specs/002-astro-adapter/research.md` (method, environment, single-run figures, labeled as such), as the evidence for the size at which an inline graph should be registered instead (constitution V); do not set a threshold
 - [ ] T068 [P] Update `CLAUDE.md` (project state, commands, layout) and `design/adr/README.md` / `RFC-001` ADR lists if the amendment changed them; mention the adapter's package name and commands
 - [ ] T069 Run the full set (`pnpm test:astro`, `test:astro-browsers`, `test:astro-conformance`, `test:astro-package`, `test:astro-trace`, and the core's `test:unit`, `test:browsers`, `test:conformance` after T010) and fix what fails; the trace check must report no untagged FR or SC
 - [ ] T070 Update `specs/002-astro-adapter/spec.md` status to `Implemented` and `checklists/requirements.md` if any item changed; commit with the ADR number (ADR-004) in the message

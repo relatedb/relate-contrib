@@ -69,7 +69,19 @@ Findings that shaped the plan. "Verify" items are unmeasured assumptions; each b
 
 Environment: macOS (Darwin 25.6.0, Apple silicon), Node 24.14.1, Astro 7.4.5, Playwright 1.64 browsers (Chromium, Firefox, WebKit), 2026-11-04.
 
-- Conformance (`pnpm test:astro-conformance`): the core's scenarios C-01 to C-11 passed under `multi-page` (11 of 11) and under `client-routing` (8 of 8 that apply; C-03 to C-05, C-06 and C-09 included) in Chromium, Firefox and WebKit: 6 of 6 runs passed, 1.3 minutes in total.
+- Conformance (`pnpm test:astro-conformance`): the core's scenarios C-01 to C-11 passed under `multi-page` (11 of 11) and under `client-routing` (8 of 8 that apply; C-07, C-08 and C-11 are multi-page scenarios) in Chromium, Firefox and WebKit: 6 of 6 runs passed, 1.3 minutes in total.
 - Browser suite (`pnpm test:astro-browsers`): 81 passed, 6 skipped (the development-check tests run in Chromium only), 1.1 minutes.
 - Unit and build suite (`pnpm test:astro`): 51 passed in 8 files.
 - Core regression after the runner parameters (`pnpm test:conformance` in `related-web-core`): 12 passed in three browsers.
+
+**Load figures** (`pnpm exec playwright test tests/browser/figures.spec.ts`, Chromium and Firefox, not WebKit; median of three cold loads in fresh browser contexts, the core's own `total` timing, milliseconds, one environment, single session):
+
+| Nodes (5 links each) | Chromium inline | Chromium registered | Firefox inline | Firefox registered |
+|---|---|---|---|---|
+| 20 | 38 | 55 | 36 | 198 |
+| 300 | 88 | 104 | 89 | 249 |
+| 2,000 | 299 | 325 | 334 | 504 |
+
+Registered graphs include fetching the descriptor and the data over a local server; inline graphs include neither. The page weight an inline graph adds (the document in the HTML) is not measured here. No threshold is set from these figures.
+
+**Packed install** (`pnpm test:astro-package`, 4 passed in about 8 s): V-1, V-3 and V-6 hold for the packed adapter and core installed in a clean Astro 7 project outside the repository. The registered graph is built from a content collection and an inline graph is on the same page; both answer a query in Chromium from the build and from the dev server, and the bundler placed the engine binary with no workaround.

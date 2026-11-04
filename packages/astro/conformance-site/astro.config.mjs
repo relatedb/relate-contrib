@@ -16,6 +16,10 @@ export default defineConfig({
       graphs: {
         example: { source: "./src/graphs/example.ts", lifetime: "visit", indexes: [{ label: "Page", property: "id" }] },
         small: { source: "./src/graphs/small.ts" },
+        // the load-figure pages
+        fig20: { source: "./src/graphs/fig20.ts" },
+        fig300: { source: "./src/graphs/fig300.ts" },
+        fig2000: { source: "./src/graphs/fig2000.ts" },
       },
     }),
   ],

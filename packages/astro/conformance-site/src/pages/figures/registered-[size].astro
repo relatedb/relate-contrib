@@ -1,0 +1,14 @@
+---
+import Base from "../../layouts/Base.astro";
+
+export function getStaticPaths() {
+  return [20, 300, 2000].map((size) => ({ params: { size: String(size) } }));
+}
+const { size } = Astro.params;
+---
+<Base title={`Figure: registered ${size}`} bare>
+  <div data-figure-page={`fig${size}`}>
+    <p>Total ms: <span data-figure-total>…</span></p>
+  </div>
+  <script>import "../../scripts/figure-page";</script>
+</Base>

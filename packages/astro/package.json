@@ -27,7 +27,7 @@
     "build": "tsc -p tsconfig.json && cp src/types.d.ts dist/types.d.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:astro": "vitest run",
-    "test:astro-browsers": "playwright test --grep-invert @conformance",
+    "test:astro-browsers": "playwright test --grep-invert \"@conformance|@figures\"",
     "test:astro-conformance": "playwright test --grep @conformance",
     "test:astro-package": "vitest run --config vitest.package.config.ts",
     "test:astro-trace": "tsx tests/trace/check-trace.ts"
