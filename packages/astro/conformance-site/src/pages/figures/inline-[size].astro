@@ -1,0 +1,17 @@
+---
+import Base from "../../layouts/Base.astro";
+import GraphData from "related-web-astro/graph-data";
+import { sized } from "../../graphs/sized";
+
+export function getStaticPaths() {
+  return [20, 300, 2000].map((size) => ({ params: { size: String(size) } }));
+}
+const { size } = Astro.params;
+---
+<Base title={`Figure: inline ${size}`} bare>
+  <div data-figure-page="graph">
+    <p>Total ms: <span data-figure-total>…</span></p>
+    <GraphData id="graph" document={sized(Number(size))} />
+  </div>
+  <script>import "../../scripts/figure-page";</script>
+</Base>

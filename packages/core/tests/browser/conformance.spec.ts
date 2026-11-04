@@ -1,4 +1,4 @@
-// covers: FR-029, SC-008, SC-011
+// covers: FR-029, SC-008, SC-011 (FR-028 of the Astro adapter, ADR-004: the dataRequests parameter)
 import { expect, test } from "./fixtures.js";
 import { formatReport, runConformance, type Profile } from "../../conformance/run.js";
 
@@ -21,4 +21,17 @@ test("@conformance a variant whose subscriptions do not re-run fails C-04 and th
   expect(report.failures.map((f) => f.id)).toEqual(["C-04"]);
   expect(report.failures[0]?.behavior).toMatch(/subscriptions re-run after a replacement/);
   expect(formatReport(report)).toMatch(/broken behavior: subscriptions re-run after a replacement/);
+});
+
+test("@conformance the runner accepts matchers for data requests, as an adapter with other file names needs (ADR-004)", async ({ browserName }) => {
+  test.setTimeout(300_000);
+  const report = await runConformance({
+    baseUrl,
+    profile: "multi-page",
+    browser: browserName,
+    only: ["C-02", "C-07", "C-11"],
+    dataRequests: { a: (url) => /\/graph\.json$/.test(new URL(url).pathname), b: (url) => /\/graph-b\.json$/.test(new URL(url).pathname) },
+  });
+  expect(report.failures.map((f) => `${f.id}: ${f.error}`)).toEqual([]);
+  expect(report.results.filter((r) => r.status === "passed").length).toBe(3);
 });

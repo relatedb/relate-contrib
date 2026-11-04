@@ -1,0 +1,14 @@
+---
+import Base from "../layouts/Base.astro";
+import GraphData from "related-web-astro/graph-data";
+const make = (n: number, label: string) => ({ version: 1 as const, nodes: Array.from({ length: n }, (_, i) => ({ id: `${label}${i}`, labels: [label] })), links: [] });
+---
+<Base title="Two graphs" bare>
+  <div data-inline-page>
+    <p>Alpha: <span data-inline-count="alpha">…</span> (generation <span data-inline-generation="alpha"></span>)</p>
+    <p>Beta: <span data-inline-count="beta">…</span> (generation <span data-inline-generation="beta"></span>)</p>
+    <GraphData id="alpha" document={make(5, "A")} />
+    <GraphData id="beta" document={make(7, "B")} />
+  </div>
+  <script>import "../scripts/inline-page";</script>
+</Base>

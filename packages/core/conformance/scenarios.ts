@@ -12,6 +12,9 @@ export interface ScenarioContext {
   baseUrl: string;
   profile: Profile;
   browser: BrowserName;
+  /** Whether a request URL fetched variant a's data, and variant b's. The example site's file names by default. */
+  isDataA(url: string): boolean;
+  isDataB(url: string): boolean;
   /** Open a page of the example site, with the scenario's profile in its query. `requests` collects its request URLs. */
   open(path: string, extra?: string, requests?: string[]): Promise<Page>;
 }
@@ -87,7 +90,7 @@ export const scenarios: Scenario[] = [
         await settled(second);
         assert.equal(await text(second, "restored"), "true", "the second page restores the graph from the store");
         assert.equal(await text(second, "count"), PAGES);
-        assert.deepEqual(requests.filter((u) => u.includes("/graph.json")), [], "the data document is not requested again");
+        assert.deepEqual(requests.filter((u) => ctx.isDataA(u)), [], "the data document is not requested again");
       }
     },
   },
@@ -180,13 +183,13 @@ export const scenarios: Scenario[] = [
       await settled(b);
       assert.equal(await text(b, "restored"), "false", "a new revision is loaded, not restored");
       assert.equal(await text(b, "count"), PAGES_B, "only the new data is shown");
-      assert.ok(requests.some((u) => u.includes("/graph-b.json")), "the new data was fetched");
+      assert.ok(requests.some((u) => ctx.isDataB(u)), "the new data was fetched");
       await b.close();
       const again: string[] = [];
       const c = await ctx.open("/page-1.html", "variant=b", again);
       await settled(c);
       assert.equal(await text(c, "restored"), "true", "the same revision is restored");
-      assert.deepEqual(again.filter((u) => u.includes("/graph-b.json")), [], "and the data is not fetched");
+      assert.deepEqual(again.filter((u) => ctx.isDataB(u)), [], "and the data is not fetched");
     },
   },
   {
@@ -276,7 +279,7 @@ export const scenarios: Scenario[] = [
       await settled(again);
       assert.equal(await text(again, "restored"), "false", "an emptied store is not restored");
       assert.equal(await text(again, "count"), PAGES);
-      assert.ok(requests.some((u) => u.includes("/graph.json")), "the data was fetched again");
+      assert.ok(requests.some((u) => ctx.isDataA(u)), "the data was fetched again");
     },
   },
 ];

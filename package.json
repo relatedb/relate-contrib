@@ -11,6 +11,11 @@
     "test:browsers": "pnpm --filter related-web-core test:browsers",
     "test:conformance": "pnpm --filter related-web-core test:conformance",
     "test:package": "pnpm --filter related-web-core test:package",
-    "test:trace": "pnpm --filter related-web-core test:trace"
+    "test:trace": "pnpm --filter related-web-core test:trace",
+    "test:astro": "pnpm --filter related-web-astro test:astro",
+    "test:astro-browsers": "pnpm --filter related-web-astro test:astro-browsers",
+    "test:astro-conformance": "pnpm --filter related-web-astro test:astro-conformance",
+    "test:astro-package": "pnpm --filter related-web-astro test:astro-package",
+    "test:astro-trace": "pnpm --filter related-web-astro test:astro-trace"
   }
 }

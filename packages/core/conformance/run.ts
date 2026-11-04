@@ -25,6 +25,11 @@ export interface RunOptions {
   browser: BrowserName;
   /** Extra query string for every page (used to run a deliberately broken variant of the pages). */
   query?: string;
+  /**
+   * How to recognize a request that fetched variant a's or variant b's data. Optional: by default the example site's
+   * file names (`/graph.json`, `/graph-b.json`) are matched. An adapter whose data URLs are named differently passes its own.
+   */
+  dataRequests?: { a: (url: string) => boolean; b: (url: string) => boolean };
   /** Run only these scenarios. */
   only?: string[];
 }
@@ -113,6 +118,8 @@ export async function runConformance(options: RunOptions): Promise<Report> {
             baseUrl: options.baseUrl,
             profile: options.profile,
             browser: options.browser,
+            isDataA: options.dataRequests?.a ?? ((url) => url.includes("/graph.json")),
+            isDataB: options.dataRequests?.b ?? ((url) => url.includes("/graph-b.json")),
             async open(path, extra, requests) {
               const page = await context.newPage();
               if (requests) page.on("request", (r) => requests.push(r.url()));
