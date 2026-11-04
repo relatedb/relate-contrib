@@ -16,7 +16,8 @@ Planned integration order (subject to change as ADRs land): ObservableHQ (spiked
 ## Project state
 
 The first package, `packages/core` (`related-web-core`, a working name), is implemented from `specs/001-core-package/`
-(see its `tasks.md`). Design documents are in `design/`. Further packages (framework adapters) come next.
+(see its `tasks.md`). The Astro adapter, `packages/astro` (`related-web-astro`), is implemented from `specs/002-astro-adapter/`
+(ADR-004). Design documents are in `design/`. Further adapters come next.
 
 ## Commands
 
@@ -33,11 +34,17 @@ pnpm test:browsers             # Playwright: Chromium, Firefox, WebKit
 pnpm test:conformance          # the conformance check over the example site, both profiles
 pnpm test:package              # packs the core, installs it in a clean project, bundles and runs a page
 pnpm test:trace                # every requirement and success criterion has a passing, tagged test
+pnpm test:astro                # the Astro adapter: unit and build tests
+pnpm test:astro-browsers       # the adapter in Chromium, Firefox, WebKit (lifecycle, store, inline graphs, profile check)
+pnpm test:astro-conformance    # the core's conformance runner over packages/astro/conformance-site, both profiles
+pnpm test:astro-package        # packs the adapter and core, installs them in a clean Astro project, builds and runs it
+pnpm test:astro-trace          # every adapter requirement and success criterion has a passing, tagged test
 ```
 
 Layout: `packages/core/src` (client, worker, data validators, profiles), `tests/` (unit, browser, package,
 fixtures, load-time baselines), `conformance/` (example site, scenarios, runner). Read
-`packages/core/README.md` for the API.
+`packages/core/README.md` for the API. The adapter: `packages/astro/src` (integration, injected route, component, client
+module), `tests/`, `conformance-site/` (an unpublished Astro site built once per profile); read `packages/astro/README.md`.
 
 ## Intended architecture (working assumptions, not yet decided by ADRs)
 

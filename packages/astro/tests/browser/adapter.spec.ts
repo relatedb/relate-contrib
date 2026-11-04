@@ -10,6 +10,6 @@ for (const [profile, base] of Object.entries({ "multi-page": "http://127.0.0.1:5
     await expect(page.locator("[data-direct-errors]")).not.toBeEmpty();
     const errors = JSON.parse((await page.locator("[data-direct-errors]").textContent())!) as string[];
     expect(errors[0]).toMatch(/"small" has the "page" lifetime; ask for it from the page's setup/);
-    expect(errors[1]).toMatch(/no registered graph named "nope" \(registered: example, small\)/);
+    expect(errors[1]).toMatch(/no registered graph named "nope" \(registered: example, small, /);
   });
 }

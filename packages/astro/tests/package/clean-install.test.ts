@@ -1,4 +1,4 @@
-// covers: FR-030, SC-007
+// covers: FR-001, FR-030, SC-001, SC-007
 // Packs the adapter and the core, installs both tarballs in a clean Astro project outside this repository (with the
 // engine package and Astro installed beside them, as a user would), builds a site with a registered graph and an
 // inline graph, and runs it in Chromium, from the build and from the development server. This shows the package

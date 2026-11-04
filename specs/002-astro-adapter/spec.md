@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-04
 
-**Status**: Draft
+**Status**: Implemented (ADR-004)
 
 **Input**: User description: "The related-web Astro adapter (`related-web-astro`, a working name): a workspace package in `packages/astro` that implements accepted ADR-004 (and builds on ADR-001, ADR-002, ADR-003) so an Astro 7 static site can embed the browser graph database through the shared core package. It provides an integration that serves registered graphs, a component that puts a small graph into a page, a client module tied to the page's arrival and departure, a warning when the navigation setting disagrees with the router, a conformance site run in three browsers with adapter tests, and a package test in a clean project. Out of scope: output other than static, Astro versions other than 7, components for UI frameworks, a default content extractor or site-graph schema (RFC-003), the navigation element (RFC-004), dashboards that fetch data at load, main-thread instances, and changes to the core." (Condensed; the full request is in the conversation that created this specification.)
 

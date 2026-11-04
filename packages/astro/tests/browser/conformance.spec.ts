@@ -1,4 +1,4 @@
-// covers: FR-027, FR-028, SC-004, SC-005
+// covers: FR-025, FR-027, FR-028, SC-004, SC-005
 import { expect, test } from "./fixtures.js";
 import { formatReport, runConformance, type Profile } from "related-web-core/conformance";
 

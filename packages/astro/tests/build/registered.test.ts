@@ -1,4 +1,4 @@
-// covers: FR-005, FR-006, FR-007, FR-008, FR-009, FR-010, SC-002, SC-006
+// covers: FR-003, FR-005, FR-006, FR-007, FR-008, FR-009, FR-010, SC-002, SC-006
 import { afterEach, describe, expect, it } from "vitest";
 import { buildSite, type Site } from "../helpers/build-site.js";
 

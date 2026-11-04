@@ -15,7 +15,8 @@ async function warningsFor(page: import("@playwright/test").Page, env: Record<st
     const warnings: string[] = [];
     page.on("console", (m) => m.type() === "warning" && m.text().includes("related-web-astro") && warnings.push(m.text()));
     await page.goto(`${dev.url}/page-1.html`);
-    await page.waitForFunction(() => document.documentElement.dataset.gwState !== undefined, undefined, { timeout: 120_000 });
+    // ready: the page keeps using the server until its graph has loaded
+    await page.waitForFunction(() => document.documentElement.dataset.gwState === "ready", undefined, { timeout: 120_000 });
     return warnings;
   } finally {
     await dev.stop();

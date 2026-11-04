@@ -1,4 +1,4 @@
-// covers: FR-017, FR-024, SC-008
+// covers: FR-012, FR-017, FR-024, SC-008
 import { expect, test } from "./fixtures.js";
 
 const sites = { "multi-page": "http://127.0.0.1:5180", "client-routing": "http://127.0.0.1:5181" } as const;
