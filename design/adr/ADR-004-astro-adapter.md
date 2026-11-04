@@ -40,8 +40,8 @@ A graph is identified by an id (the id rule of ADR-003). It is declared in one o
 ```js
 relatedWeb({
   graphs: {
-    site: { source: "./src/site-graph.ts", lifetime: "visit", indexes: [{ label: "Page", property: "id" }] },
     "pantry-data": { source: "./src/data/pantry.json" },
+    site: { source: "./src/site-graph.ts", lifetime: "visit", indexes: [{ label: "Page", property: "id" }] },
   },
   navigation: "client-routing", // or "multi-page"
 })
@@ -65,18 +65,23 @@ const document = { version: 1, nodes: [...], links: [...] }; // from the entry, 
 <GraphData id="recipe" document={document} />
 ```
 
-The `document` is built in the page's frontmatter, where the page's own content (`getEntry`, `getCollection`, its own data) is already available, so a graph per page derived from each page's content needs no entry in the integration options. The component validates the document at build time and renders it as `<script type="application/json" data-gw-graph-data="<id>">`. A page graph has no descriptor, so it has no revision and no stored copy, and it costs no extra request; it is replayed on each load. The component fails the build if the id is also registered in `graphs`. Several `<GraphData>` elements with different ids may appear on one page.
+The `document` is built in the page's frontmatter, where the page's own content (`getEntry`, `getCollection`, its own data) is already available, so a graph per page derived from each page's content needs no entry in the integration options. The component validates the document at build time and renders it as a `<script type="application/json">` element carrying the id in an attribute that only the adapter's own client reads. A page graph has no descriptor, so it has no revision and no stored copy, and it costs no extra request; it is replayed on each load. The component fails the build, naming the page, if the id is also registered in `graphs` or appears twice on the page. Several `<GraphData>` elements with different ids may appear on one page.
 
 ### 2.3 Client module: configuration comes from the integration
 
 The integration provides a virtual module (`virtual:related-web/config`) holding the registered graph ids, their descriptor URLs and lifetimes, the profile, and the options for the core. `related-web-astro/client` reads it and exports:
 
-- `onPage(setup)`: calls `setup(page)` on the first page and again on every `astro:page-load`; the function `setup` returns is called on `astro:before-swap` and on `pagehide`. This is the one place the adapter's page lifecycle lives. `page.graph(id, options?)` returns the core client for a graph that this page uses and ties that client to the page: a page-lifetime client is created with the core's `createClient` and destroyed on departure, so it cannot outlive its page and a page may hold several. Subscriptions made with the client's `subscribe` and views made with the core's `attachView` inside `setup` are added on arrival and dropped on departure under both profiles, without the page author listening to router events. `attachView` already ignores arrival work that completes after `detach()`.
-- `graph(id = "site", options?)`: the same lookup outside a page's setup, for code that lives across pages (a persisted navigation element, say). It accepts only a graph whose lifetime is `"visit"` and throws for any other.
+- `onPage(setup)`: calls `setup(page)` on the first page and again on every `astro:page-load`; the function `setup` returns is called on `astro:before-swap` and on `pagehide`. This is the one place the adapter's page lifecycle lives. `page.graph(id, options?)` returns the core client for a graph that this page uses and ties that client to the page: a page-lifetime client is created with the core's `createClient` and destroyed on departure, so it cannot outlive its page and a page may hold several. Subscriptions made with the client's `subscribe` and views made with the core's `attachView` (page-scoped data that is added on arrival and dropped on departure) inside `setup` are added on arrival and dropped on departure under both profiles, without the page author listening to router events. `attachView` already ignores arrival work that completes after `detach()`.
+- `graph(id, options?)`: the same lookup outside a page's setup, for code that lives across pages (a persisted navigation element, say). It accepts only a graph whose lifetime is `"visit"` and throws for any other.
 
-`id` is looked up first among the inline `<GraphData>` elements of the current page, then among the registered graphs. `options.navigation` overrides the profile (a testing aid; see section 4). The engine's binary URL comes from `@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url`, imported inside `related-web-astro/client` so the bundler places and hashes it.
+Asking twice for the same id on one page returns the same client. `id` is looked up first among the inline `<GraphData>` elements of the current page, then among the registered graphs. `options.navigation` overrides the profile (a testing aid; see section 4). The engine's binary URL comes from `@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url`, imported inside `related-web-astro/client` so the bundler places and hashes it.
 
-**Lifetime** is a property of a registered graph: `"page"` (the default) or `"visit"`. A `"visit"` graph is a graph that many pages share; it is made with the core's `createSiteClient`, so under `client-routing` it is one client for the whole visit, and under `multi-page` each page makes its own, as the core defines. A `"page"` graph is made with `createClient` for the page that asks and is destroyed when that page is left, which is also correct for a graph several pages use but that one page at a time works with. An inline page graph is always `"page"`. `"page"` is the default because it is correct for every graph under either profile; a graph declared `"visit"` gains the retained instance and takes the obligation to hold only data that pages share.
+**Lifetime** is a property of a registered graph: `"page"` (the default) or `"visit"`. A `"visit"` graph is a graph that many pages share; it is made with the core's `createSiteClient`, so under `client-routing` it is one client for the whole visit, and under `multi-page` each page makes its own, as the core defines. A `"page"` graph is made with the core's `createClient` for the page that asks and destroyed (`destroy()`) when that page is left, which is also correct for a registered graph that many pages use but that each page loads for itself. An inline page graph is always `"page"`. `"page"` is the default because it is correct for every graph under either profile; a graph declared `"visit"` gains the retained instance and takes the obligation to hold only data that pages share.
+
+The `"page"` lifetime composes two core primitives and adds no instance rule the core lacks: the core already defines a client that is independent of the visit's and ends when its owner calls `destroy()`. The adapter's part is to call them at the router's arrival and departure events. Two details follow from how the core behaves:
+
+- A registered `"page"` graph passes `store: true` whenever it has a descriptor, under either profile, so a stored copy is restored by revision instead of fetched on every navigation. The departing page's client is destroyed on `astro:before-swap`, before the next page's `setup` runs, so the new client does not open the store while the old one still holds it; the core's bounded retry covers the remainder.
+- The start-up sweep of leftover scoped data runs in the worker for every client. The `pagehide` hook belongs to the core's `per-page` profile and does not apply to a `createClient` client, so the adapter's own `pagehide` cleanup destroys it.
 
 The client never starts before a page asks for it. A page that does not import the module pays nothing, and nothing in the page's first render may depend on the instance.
 
@@ -88,7 +93,7 @@ The client never starts before a page asks for it. A page that does not import t
 
 ### 2.5 Checked against the core's conformance scenarios
 
-`packages/astro/conformance-site` is an Astro site, not published, that reproduces the example pages' `data-gw-*` markup (`conformance/example-site/gw-page.ts` in the core defines it) using only `related-web-astro`. It has pages for each way a graph is used: a shared registered graph (`"visit"`), a page with its own inline graph, a page that asks for a registered `"page"` graph, and a page with two graphs. It is built twice, once per profile, with `ClientRouter` in the layout only for `client-routing`. `runConformance` from `related-web-core/conformance` runs against each build in Chromium, Firefox and WebKit, and a failure blocks the adapter's release. These browsers render the page, so the router's real view-transition path is exercised, not only its no-animation swap.
+`packages/astro/conformance-site` is an Astro site, not published, that reproduces the example pages' `data-gw-*` markup (`conformance/example-site/gw-page.ts` in the core defines it) using only `related-web-astro`. It has pages for each way a graph is used: a shared registered graph (`"visit"`), a page with its own inline graph, a page that asks for a registered `"page"` graph, and a page with two graphs. It is built twice, once per profile, with `ClientRouter` in the layout only for `client-routing`. `runConformance` from `related-web-core/conformance` runs against each build in Chromium, Firefox and WebKit, and a failure blocks the adapter's release. The adapter's own behaviours have their own tests in `packages/astro/tests`: a page-lifetime client is destroyed on departure and its store is free for the next page, `graph()` rejects a page-lifetime id, and the build fails for an invalid document, a duplicate id, or an id both registered and inline. These browsers render the page, so the router's real view-transition path is exercised, not only its no-animation swap.
 
 A package test, like the core's, packs `related-web-astro` and the core, installs them in a clean Astro project outside the repository, and builds and runs a page.
 
@@ -96,6 +101,7 @@ A package test, like the core's, packs `related-web-astro` and the core, install
 
 - Static output only. A site rendered on demand (`output: "server"`) is not supported; the injected routes are prerendered.
 - Astro 7. Other versions are not checked.
+- Every instance runs in the core's worker. A dashboard that fetches its data at load, and a main-thread instance for small graphs (RFC-002 §5.1 and §5.4), are not decided here.
 - Several graphs per site and several clients per page are supported. The page-level graph, the shared graph, and two graphs on one page are covered by the conformance site.
 
 ## 3. Alternatives Considered
