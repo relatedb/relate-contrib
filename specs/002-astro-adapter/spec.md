@@ -20,6 +20,14 @@ Three kinds of people depend on it:
 
 The adapter implements ADR-004 and builds on ADR-001 (hosting and navigation profiles), ADR-002 (graph data format) and ADR-003 (graph descriptor). Terms used below: a *registered graph* is declared in the integration's options and delivered as a file; an *inline graph* is written into one page by a component; a *page* graph lifetime means the graph's client lives and ends with the page that asks for it; a *visit* lifetime means the client is shared by every page and kept across navigations under client-side routing; a *descriptor* is the small document beside registered graph data that names the graph, its revision and its indexes (ADR-003); a *profile* is one of the core's two navigation behaviors, `client-routing` and `multi-page`.
 
+## Clarifications
+
+### Session 2026-11-04
+
+- Q: Can an inline page graph name indexes to create? → A: Yes. The component takes an optional `config` value that holds a list of indexes, and later per-graph settings go in the same place.
+- Q: Under `multi-page`, does repeated direct lookup of one visit-lifetime graph on a page return the same client? → A: Yes, one client per page and name, as for the page entry.
+- Q: What does the development server do when a registered source throws or returns an invalid document? → A: It keeps serving, prints the error with the path of the first problem, and answers that graph's requests with an error status until the source is fixed.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - A site registers a graph and a page queries it (Priority: P1)
@@ -58,7 +66,8 @@ An author writes a small graph beside a page's prose, or builds it from the page
 4. **Given** two inline graphs with the same name on one page, **When** the site is built, **Then** the build fails and names the page.
 5. **Given** an inline graph whose name is also a registered graph, **When** the site is built, **Then** the build fails and names the page and the name.
 6. **Given** an inline graph, **When** a visitor loads the page again, **Then** the graph is replayed from the page, because an inline graph has no revision and no stored copy.
-7. **Given** a page with two inline graphs of different names, **When** the page loads and asks for both, **Then** each is an independent client and a fault in one does not affect the other.
+7. **Given** an inline graph with a `config` that lists an index, **When** the page loads it, **Then** that index is created before the nodes and no other index is created; **and** without a `config`, no index is created.
+8. **Given** a page with two inline graphs of different names, **When** the page loads and asks for both, **Then** each is an independent client and a fault in one does not affect the other.
 
 ---
 
@@ -111,7 +120,7 @@ Code that lives across pages, such as a persistent element, asks for a visit-lif
 
 **Acceptance Scenarios**:
 
-1. **Given** a visit-lifetime registered graph, **When** the direct lookup asks for it, **Then** it returns the core's client for the visit.
+1. **Given** a visit-lifetime registered graph, **When** the direct lookup asks for it, **Then** it returns the core's client for the visit; **and** under `multi-page`, asking again on the same page returns that same client.
 2. **Given** a page-lifetime registered graph or an inline graph, **When** the direct lookup asks for it, **Then** it fails with a message that names the graph and says to ask from page setup.
 3. **Given** a graph name that no registered graph or inline graph has, **When** it is asked for, **Then** it fails with a message that names the graph and lists the registered names.
 
@@ -154,7 +163,7 @@ The adapter and the core are packed as they would be published, installed into a
 
 - A page asks for a graph before the router's first page-load event or after the page is already left; the ask and its results follow the page's lifetime, and results for a departed page are ignored.
 - A registered source reads content collections and the build runs in the development server; the revision follows edits to the inputs.
-- The development server serves a registered graph while its source throws; the page shows the build error message instead of a silent empty graph.
+- The development server serves a registered graph while its source throws or returns an invalid document; the server keeps running and prints the error, the graph's requests return an error status so the core reports `failed`, and fixing the source restores the graph on the next edit.
 - Two registered graphs share the same name, or a name that does not satisfy ADR-003's id rule; the integration fails at configuration time.
 - A registered graph is requested from a site with `output: "server"`; the integration reports that only static output is supported.
 - Two pages ask for the same registered page-lifetime graph one after the other under `client-routing`; the second page's client opens the store only after the first is destroyed.
@@ -181,13 +190,13 @@ The adapter and the core are packed as they would be published, installed into a
 - **FR-008**: The integration MUST evaluate each source once per build and use that one result for both the data file and the descriptor.
 - **FR-009**: The integration MUST validate each document with the core's validator and MUST fail the build with the path of the first problem.
 - **FR-010**: The published locations MUST include the site's configured base path.
-- **FR-011**: In the development server, the integration MUST evaluate a source again when its inputs change, and the descriptor's revision MUST follow the new content.
+- **FR-011**: In the development server, the integration MUST evaluate a source again when its inputs change, and the descriptor's revision MUST follow the new content. If a source throws or returns an invalid document, the server MUST keep running, print the error with the path of the first problem, and answer that graph's requests with an error status until the source is fixed.
 - **FR-012**: The integration MUST give the client module the registered names, their descriptor locations, their lifetimes, their indexes, the profile and the engine binary's location, without the page author writing any of them.
 
 **Build time: inline graphs**
 
-- **FR-013**: The component MUST accept a graph name and an ADR-002 document, validate the document at build time, and write it into the page so the client module can find it, with no descriptor, no revision, no stored copy and no extra request.
-- **FR-014**: The component MUST fail the build, naming the page, for an invalid document, for a duplicate name on a page, and for a name that is also registered.
+- **FR-013**: The component MUST accept a graph name and an ADR-002 document, validate the document at build time, and write it into the page so the client module can find it, with no descriptor, no revision, no stored copy and no extra request. It MUST accept an optional `config` value holding a list of indexes, passed to the core as the caller's indexes, and MUST validate it at build time like the document; `config` is the one place for any later per-graph setting.
+- **FR-014**: The component MUST fail the build, naming the page, for an invalid document or `config`, for a duplicate name on a page, and for a name that is also registered.
 - **FR-015**: A page MUST be able to carry several inline graphs with different names, and the document MUST be able to be built from the page's own content in the page's source.
 
 **Client module**
@@ -197,7 +206,7 @@ The adapter and the core are packed as they would be published, installed into a
 - **FR-018**: For a page-lifetime graph the lookup MUST create a new core client for the page and destroy it when the page is left; for a registered one with a descriptor it MUST ask for the stored copy to be used, whatever the profile.
 - **FR-019**: The departing page's clients MUST be destroyed before the next page's setup runs.
 - **FR-020**: Asking twice for the same name on one page MUST return the same client.
-- **FR-021**: For a visit-lifetime graph the lookup MUST return the core's client for the visit under `client-routing`, and a new client for the page under `multi-page`, as the core defines.
+- **FR-021**: For a visit-lifetime graph the lookup MUST return the core's client for the visit under `client-routing`, and one client for the page under `multi-page` (repeated lookups of a name on one page return that client), so the adapter starts at most one worker per graph name per page.
 - **FR-022**: The client module MUST provide a direct lookup that accepts only visit-lifetime registered graphs and MUST fail, with a message that names the graph, for an inline graph or a page-lifetime graph, and fail, naming the registered names, for an unknown graph.
 - **FR-023**: Both lookups MUST accept an option that overrides the profile, documented as a testing aid; the override MUST change only the profile passed to the core.
 - **FR-024**: The client module MUST NOT start any client before a page asks for one, and the adapter MUST NOT make a page's first render depend on a client; a page that does not use the module MUST pay nothing for it.
@@ -211,14 +220,14 @@ The adapter and the core are packed as they would be published, installed into a
 
 - **FR-027**: The repository MUST contain an unpublished conformance site, built once per profile, with the router in the layout only for `client-routing`, that exercises a shared registered graph, an inline page graph, a registered page-lifetime graph, and a page with two graphs.
 - **FR-028**: The core's conformance runner MUST pass against both builds in Chromium, Firefox and WebKit, and a failure MUST block the adapter's release.
-- **FR-029**: The adapter's own tests MUST cover destruction of a page-lifetime client on departure, the store being free for the next page, rejection by the direct lookup, and each build failure in FR-005, FR-009 and FR-014.
+- **FR-029**: The adapter's own tests MUST cover destruction of a page-lifetime client on departure, the store being free for the next page, rejection by the direct lookup, each build failure in FR-005, FR-009 and FR-014, and the development server's handling of a failing source (FR-011).
 - **FR-030**: A package test MUST pack the adapter and the core, install them into a clean Astro 7 project outside the repository, build it and run a page that queries a registered graph.
 - **FR-031**: Every behavior stated here with MUST MUST have an automated test tagged with its requirement or scenario, and the repository's trace check MUST report any untagged requirement.
 
 ### Key Entities
 
 - **Registered graph**: a name, a source, optional indexes and a lifetime, delivered as a revision-named data file and a descriptor.
-- **Inline graph**: a name and a document carried in one page, with no descriptor or revision.
+- **Inline graph**: a name, a document and an optional `config` (a list of indexes) carried in one page, with no descriptor or revision.
 - **Lifetime**: `page` (ends with the page that asks) or `visit` (shared and, under client-side routing, retained).
 - **Page entry**: the client module's registration of a page's setup code and its cleanup.
 - **Conformance site**: the unpublished Astro site that every adapter check runs against.
