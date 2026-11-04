@@ -1,6 +1,15 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
+const here = (p: string) => fileURLToPath(new URL(p, import.meta.url));
+
 export default defineConfig({
+  resolve: {
+    alias: {
+      "virtual:related-web/config": here("tests/helpers/virtual-config.ts"),
+      "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url": here("tests/helpers/engine-url.ts"),
+    },
+  },
   test: {
     include: ["tests/unit/**/*.test.ts", "tests/build/**/*.test.ts"],
     environment: "node",

@@ -1,4 +1,4 @@
-// covers: FR-016, FR-018, FR-019, FR-020, FR-021, FR-022, SC-003, SC-004
+// covers: FR-016, FR-018, FR-019, FR-020, FR-021, FR-022, FR-024, SC-003, SC-004
 import { expect, test } from "./fixtures.js";
 import type { Page } from "./fixtures.js";
 
@@ -99,3 +99,22 @@ test("a page-lifetime client is destroyed on reload and when the page is hidden"
     expect(await page.evaluate(() => sessionStorage.getItem("gw-destroyed")), profile).toBe("Lifetime A");
   }
 });
+
+for (const [profile, base] of Object.entries(sites)) {
+  test(`the direct lookup returns one client for a visit-lifetime graph and starts one worker, under ${profile}`, async ({ page }) => {
+    await page.addInitScript(() => {
+      const Original = window.Worker;
+      (window as unknown as { __workers: number }).__workers = 0;
+      window.Worker = class extends Original {
+        constructor(...args: ConstructorParameters<typeof Worker>) {
+          super(...args);
+          (window as unknown as { __workers: number }).__workers++;
+        }
+      } as typeof Worker;
+    });
+    await page.goto(`${base}/direct.html?navigation=${profile}`);
+    await expect(page.locator("[data-direct-count]")).toHaveText("300");
+    expect(await page.evaluate(() => (window as unknown as { __gwDirect: { same: boolean } }).__gwDirect.same)).toBe(true);
+    expect(await page.evaluate(() => (window as unknown as { __workers: number }).__workers)).toBe(1);
+  });
+}

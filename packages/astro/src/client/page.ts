@@ -2,6 +2,7 @@
 // `astro:page-load` on the first load only when the router is present, so the first run does not wait for that event
 // and a registration is run at most once for each page it is eligible for.
 import { PageClients, type GraphOptions } from "./registry.js";
+import { checkProfile } from "./profile.js";
 import type { Client } from "related-web-core";
 
 export interface Page {
@@ -34,6 +35,7 @@ const ready = (): boolean => document.readyState !== "loading";
 function arrive(): void {
   if (!ready()) return;
   active = true;
+  checkProfile();
   clients ??= new PageClients();
   const page: Page = { graph: (name, options) => clients!.graph(name, options) };
   for (const reg of registrations) {

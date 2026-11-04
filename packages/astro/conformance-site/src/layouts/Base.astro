@@ -12,7 +12,8 @@ interface Props {
   variant?: string;
 }
 const { title, notesPage = false, bare = false, graph = "example", label = "Page", variant } = Astro.props;
-const routed = process.env.NAVIGATION === "client-routing";
+// ROUTER=on|off forces the router in or out, to make a build whose setting disagrees with it (the development warning).
+const routed = process.env.ROUTER ? process.env.ROUTER === "on" : process.env.NAVIGATION === "client-routing";
 ---
 <!doctype html>
 <html lang="en">

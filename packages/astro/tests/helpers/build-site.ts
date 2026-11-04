@@ -92,16 +92,21 @@ export interface DevSite {
   stop(): Promise<void>;
 }
 
-/** Start `astro dev` (the command-line tool, as a site author runs it) on a free port. */
-export async function startDev(fixture: Fixture): Promise<DevSite> {
-  const root = writeSite(fixture);
+export interface Dev {
+  url: string;
+  logs: string[];
+  stop(): Promise<void>;
+}
+
+/** Start `astro dev` (the command-line tool, as a site author runs it) in `root` on a free port. */
+export async function spawnDev(root: string, extraEnv: Record<string, string> = {}): Promise<Dev> {
   const port = await freePort();
   const logs: string[] = [];
   const child = spawn(join(pkg, "node_modules/.bin/astro"), ["dev", "--port", String(port), "--host", "127.0.0.1", "--ignore-lock"], {
     cwd: root,
     // Astro starts a background daemon when it detects an agent, and the test runner's NODE_ENV=test makes the dev
     // server serve nothing; a test needs the foreground, development-mode server it can stop.
-    env: Object.fromEntries(Object.entries({ ...process.env, FORCE_COLOR: "0" }).filter(([k]) => !["AI_AGENT", "CLAUDECODE", "NODE_ENV"].includes(k) && !k.startsWith("VITEST") && !k.startsWith("VITE_"))),
+    env: { ...Object.fromEntries(Object.entries({ ...process.env, FORCE_COLOR: "0" }).filter(([k]) => !["AI_AGENT", "CLAUDECODE", "NODE_ENV"].includes(k) && !k.startsWith("VITEST") && !k.startsWith("VITE_"))), ...extraEnv } as Record<string, string>,
     stdio: ["ignore", "pipe", "pipe"],
   });
   child.stdout.on("data", (d: Buffer) => logs.push(d.toString()));
@@ -117,18 +122,31 @@ export async function startDev(fixture: Fixture): Promise<DevSite> {
     await new Promise((r) => setTimeout(r, 250));
   }
   return {
-    root,
     url,
     logs,
-    write(path, text) {
-      mkdirSync(dirname(join(root, path)), { recursive: true });
-      writeFileSync(join(root, path), text);
-    },
     async stop() {
       if (child.exitCode === null) {
         child.kill("SIGTERM");
         await new Promise((r) => child.once("exit", r));
       }
+    },
+  };
+}
+
+/** Start `astro dev` on a fixture site. */
+export async function startDev(fixture: Fixture): Promise<DevSite> {
+  const root = writeSite(fixture);
+  const dev = await spawnDev(root);
+  return {
+    root,
+    url: dev.url,
+    logs: dev.logs,
+    write(path, text) {
+      mkdirSync(dirname(join(root, path)), { recursive: true });
+      writeFileSync(join(root, path), text);
+    },
+    async stop() {
+      await dev.stop();
       rmSync(root, { recursive: true, force: true });
     },
   };

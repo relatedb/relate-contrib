@@ -148,14 +148,14 @@ description: "Task list for the related-web Astro adapter"
 
 ### Tests for User Story 4
 
-- [ ] T048 [P] [US4] Dev-server tests in `packages/astro/tests/build/profile.test.ts`: `client-routing` without the router and `multi-page` with it each print the warning, matching combinations print none, and a production build contains no warning code (covers: US4 scenarios 3, 4, 6, FR-026)
-- [ ] T049 [US4] Playwright test `packages/astro/tests/browser/profile.spec.ts` in three browsers: with no option the profile is `multi-page` and the site works with and without the router; `client-routing` with the router retains a `visit` graph; an override option changes only the core's profile, not the router (covers: US4 scenarios 1, 2, 5, FR-004, FR-023)
+- [X] T048 [P] [US4] Dev-server tests in `packages/astro/tests/build/profile.test.ts`: `client-routing` without the router and `multi-page` with it each print the warning, matching combinations print none, and a production build contains no warning code (covers: US4 scenarios 3, 4, 6, FR-026)
+- [X] T049 [US4] Playwright test `packages/astro/tests/browser/profile.spec.ts` in three browsers: with no option the profile is `multi-page` and the site works with and without the router; `client-routing` with the router retains a `visit` graph; an override option changes only the core's profile, not the router (covers: US4 scenarios 1, 2, 5, FR-004, FR-023)
 
 ### Implementation for User Story 4
 
-- [ ] T050 [US4] Pass the profile from the virtual config to the core in `packages/astro/src/client/registry.ts` and add the `navigation` and `descriptor` options to both lookups (they change only the profile or the descriptor URL passed to the core)
-- [ ] T051 [US4] Add the development-only check in `packages/astro/src/client/index.ts` (`import.meta.env.DEV`): read the `astro-view-transitions-enabled` meta tag and warn on a disagreement with the configured profile
-- [ ] T052 [US4] Run T048 and T049 and make them pass; mark them in this file
+- [X] T050 [US4] Pass the profile from the virtual config to the core in `packages/astro/src/client/registry.ts` and add the `navigation` and `descriptor` options to both lookups (they change only the profile or the descriptor URL passed to the core)
+- [X] T051 [US4] Add the development-only check in `packages/astro/src/client/index.ts` (`import.meta.env.DEV`): read the `astro-view-transitions-enabled` meta tag and warn on a disagreement with the configured profile
+- [X] T052 [US4] Run T048 and T049 and make them pass; mark them in this file
 
 **Checkpoint**: Profile choice is explicit, checked and overridable.
 
@@ -169,13 +169,13 @@ description: "Task list for the related-web Astro adapter"
 
 ### Tests for User Story 5
 
-- [ ] T053 [P] [US5] Unit tests in `packages/astro/tests/unit/direct-lookup.test.ts`: an inline name and a page-lifetime name throw with a message naming the graph and saying to ask from page setup; an unknown name throws listing the registered names (covers: US5 scenarios 2 and 3, FR-022)
-- [ ] T054 [US5] Playwright test in `packages/astro/tests/browser/lifecycle.spec.ts` (new case, three browsers): the direct lookup returns the core's client for a `visit` graph; under `multi-page`, a second lookup on the same page returns the same client and starts one worker (covers: US5 scenario 1, FR-021, FR-022)
+- [X] T053 [P] [US5] Unit tests in `packages/astro/tests/unit/direct-lookup.test.ts`: an inline name and a page-lifetime name throw with a message naming the graph and saying to ask from page setup; an unknown name throws listing the registered names (covers: US5 scenarios 2 and 3, FR-022)
+- [X] T054 [US5] Playwright test in `packages/astro/tests/browser/lifecycle.spec.ts` (new case, three browsers): the direct lookup returns the core's client for a `visit` graph; under `multi-page`, a second lookup on the same page returns the same client and starts one worker (covers: US5 scenario 1, FR-021, FR-022)
 
 ### Implementation for User Story 5
 
-- [ ] T055 [US5] Implement `graph(name, options?)` in `packages/astro/src/client/index.ts` over the registry, with the errors of `contracts/client-module.md`, and the per-page-and-name cache for `visit` graphs under `multi-page`
-- [ ] T056 [US5] Run T053 and T054 and make them pass; mark them in this file
+- [X] T055 [US5] Implement `graph(name, options?)` in `packages/astro/src/client/index.ts` over the registry, with the errors of `contracts/client-module.md`, and the per-page-and-name cache for `visit` graphs under `multi-page`
+- [X] T056 [US5] Run T053 and T054 and make them pass; mark them in this file
 
 **Checkpoint**: Both lookups behave as specified.
 
