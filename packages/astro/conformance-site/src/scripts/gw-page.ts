@@ -3,9 +3,11 @@
 //
 // Query parameters: navigation=client-routing|multi-page (the profile), variant=a|b|mismatch|broken (which descriptor).
 import { onPage } from "related-web-astro/client";
+import { navigate } from "astro:transitions/client";
 import { attachView } from "related-web-core";
 import type { Client, View } from "related-web-core";
 
+(window as unknown as { __gwNavigate: typeof navigate }).__gwNavigate = navigate; // for the adapter's own tests
 const params = new URLSearchParams(location.search);
 const navigation = (params.get("navigation") ?? undefined) as "client-routing" | "multi-page" | undefined;
 const variant = params.get("variant") ?? document.body.dataset.gwVariant ?? "a";

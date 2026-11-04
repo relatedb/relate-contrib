@@ -14,10 +14,10 @@ export { expect } from "@playwright/test";
 export type { Page } from "@playwright/test";
 
 /** Remove everything at the origin-private root, retrying while a closing worker still holds its files. */
-async function clearOpfs(context: BrowserContext, baseURL: string | undefined): Promise<void> {
+async function clearOpfsAt(context: BrowserContext, origin: string): Promise<void> {
   const page = await context.newPage();
   try {
-    await page.goto(new URL("/blank.html", baseURL ?? "http://127.0.0.1:5180").href);
+    await page.goto(new URL("/blank.html", origin).href);
     for (let attempt = 0; attempt < 25; attempt++) {
       const left = await page.evaluate(async () => {
         const root = await navigator.storage.getDirectory();
@@ -41,6 +41,11 @@ async function clearOpfs(context: BrowserContext, baseURL: string | undefined): 
     await page.close();
   }
 }
+
+/** The conformance site is served on two origins, one per profile; each has its own origin-private file system. */
+const clearOpfs = async (context: BrowserContext, _baseURL: string | undefined): Promise<void> => {
+  for (const origin of ["http://127.0.0.1:5180", "http://127.0.0.1:5181"]) await clearOpfsAt(context, origin);
+};
 
 export const test = base.extend({
   context: async ({ browser, browserName, playwright, baseURL }, use) => {

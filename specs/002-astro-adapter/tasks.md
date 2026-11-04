@@ -120,21 +120,21 @@ description: "Task list for the related-web Astro adapter"
 
 ### Verify first
 
-- [ ] T039 [US3] Verify V-4 (research R-6): record when `astro:page-load` fires on the first load with and without `ClientRouter`, that a bundled page script runs once per document, and the order of `astro:before-swap` and the next page's script; note the result under R-6
-- [ ] T040 [US3] Verify V-5 (research R-6): in Chromium, Firefox and WebKit, check the router's real view-transition path (a rendering page, no fallback override) keeps a module-state client across navigations; record under R-6 (closes the gap ADR-004 section 4 names)
+- [X] T039 [US3] Verify V-4 (research R-6): record when `astro:page-load` fires on the first load with and without `ClientRouter`, that a bundled page script runs once per document, and the order of `astro:before-swap` and the next page's script; note the result under R-6
+- [X] T040 [US3] Verify V-5 (research R-6): in Chromium, Firefox and WebKit, check the router's real view-transition path (a rendering page, no fallback override) keeps a module-state client across navigations; record under R-6 (closes the gap ADR-004 section 4 names)
 
 ### Tests for User Story 3
 
-- [ ] T041 [US3] Playwright test `packages/astro/tests/browser/lifecycle.spec.ts` in three browsers and both profiles: setup runs once on the first page with and without the router (not twice at the router's first page-load); arrival runs the next page's setup after the previous cleanup; a page-lifetime client is destroyed before the next page's setup runs, and on tab close, reload and a link to another document; asking twice for one name returns one client; scoped data is dropped on departure and added again on arrival; a selector keeps a setup off pages where it does not match and runs it once where it does (covers: US3 scenarios 1 to 4 and 7 to 9, FR-016, FR-018, FR-019, FR-020, SC-003)
-- [ ] T042 [US3] Playwright test `packages/astro/tests/browser/store.spec.ts` in three browsers under `multi-page` and `client-routing`: a registered page-lifetime graph with a descriptor restores from the store on the next page with a matching revision, and does not wait on the previous page's client for the store (the departing client is destroyed first) (covers: US3 scenario 5, FR-018, FR-019)
-- [ ] T043 [US3] Playwright test in `packages/astro/tests/browser/lifecycle.spec.ts` (same file, new case): a `visit` graph under `client-routing` keeps one worker, instance and generation across link, history and script navigation, including the router's view-transition path (covers: US3 scenario 6, FR-021, SC-004)
+- [X] T041 [US3] Playwright test `packages/astro/tests/browser/lifecycle.spec.ts` in three browsers and both profiles: setup runs once on the first page with and without the router (not twice at the router's first page-load); arrival runs the next page's setup after the previous cleanup; a page-lifetime client is destroyed before the next page's setup runs, and on tab close, reload and a link to another document; asking twice for one name returns one client; scoped data is dropped on departure and added again on arrival; a selector keeps a setup off pages where it does not match and runs it once where it does (covers: US3 scenarios 1 to 4 and 7 to 9, FR-016, FR-018, FR-019, FR-020, SC-003)
+- [X] T042 [US3] Playwright test `packages/astro/tests/browser/store.spec.ts` in three browsers under `multi-page` and `client-routing`: a registered page-lifetime graph with a descriptor restores from the store on the next page with a matching revision, and does not wait on the previous page's client for the store (the departing client is destroyed first) (covers: US3 scenario 5, FR-018, FR-019)
+- [X] T043 [US3] Playwright test in `packages/astro/tests/browser/lifecycle.spec.ts` (same file, new case): a `visit` graph under `client-routing` keeps one worker, instance and generation across link, history and script navigation, including the router's view-transition path (covers: US3 scenario 6, FR-021, SC-004)
 
 ### Implementation for User Story 3
 
-- [ ] T044 [US3] Implement the full lifecycle in `packages/astro/src/client/page.ts`: first-load run once the DOM is ready, ignore the router's first `astro:page-load` for the document, run setups on later `astro:page-load`, run cleanups on `astro:before-swap` and `pagehide`, complete the departing page before the next setup, and the optional `selector` test
-- [ ] T045 [US3] Complete `packages/astro/src/client/registry.ts`: one client per (page, name) (same client on a second ask), track every page-lifetime client and `destroy()` it on departure, `store: true` for a registered page graph with a descriptor under either profile
-- [ ] T046 [US3] Add the pages `lifetime-a.astro` and `lifetime-b.astro` (a registered `page`-lifetime graph `small`), a scoped-data page and a page whose script registers a setup with a selector, to the conformance site and `astro.config.mjs`
-- [ ] T047 [US3] Run T041 to T043 and make them pass; mark them in this file
+- [X] T044 [US3] Implement the full lifecycle in `packages/astro/src/client/page.ts`: first-load run once the DOM is ready, ignore the router's first `astro:page-load` for the document, run setups on later `astro:page-load`, run cleanups on `astro:before-swap` and `pagehide`, complete the departing page before the next setup, and the optional `selector` test
+- [X] T045 [US3] Complete `packages/astro/src/client/registry.ts`: one client per (page, name) (same client on a second ask), track every page-lifetime client and `destroy()` it on departure, `store: true` for a registered page graph with a descriptor under either profile
+- [X] T046 [US3] Add the pages `lifetime-a.astro` and `lifetime-b.astro` (a registered `page`-lifetime graph `small`), a scoped-data page and a page whose script registers a setup with a selector, to the conformance site and `astro.config.mjs`
+- [X] T047 [US3] Run T041 to T043 and make them pass; mark them in this file
 
 **Checkpoint**: The three P1 stories are complete: the MVP.
 

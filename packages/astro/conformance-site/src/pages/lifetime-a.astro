@@ -1,0 +1,9 @@
+---
+import Base from "../layouts/Base.astro";
+---
+<Base title="Lifetime A" bare>
+  <div data-lifetime-page {...(Astro.url.pathname.includes("-a") ? { "data-marked": "" } : {})}>
+    <p>Status: <span data-life-status>loading</span> · items <span data-life-count>…</span> · restored <span data-life-restored>unknown</span></p>
+  </div>
+  <script>import "../scripts/lifetime-page";</script>
+</Base>
