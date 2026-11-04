@@ -93,20 +93,20 @@ description: "Task list for the related-web Astro adapter"
 
 ### Verify first
 
-- [ ] T031 [US2] Verify V-3 (research R-5): check that `GraphData.astro`, imported from the package under `node_modules` (linked, then packed), is compiled, which needs `vite.ssr.noExternal` for the package, in `astro build` and `astro dev`; record the result under R-5
+- [X] T031 [US2] Verify V-3 (research R-5): check that `GraphData.astro`, imported from the package under `node_modules` (linked, then packed), is compiled, which needs `vite.ssr.noExternal` for the package, in `astro build` and `astro dev`; record the result under R-5
 
 ### Tests for User Story 2
 
-- [ ] T032 [P] [US2] Unit tests in `packages/astro/tests/unit/graph-data.test.ts` (Astro's container API): the output is one `<script type="application/json" data-related-graph>`; `<`, `>`, `&`, U+2028 and U+2029 are escaped and a document containing `</script>` cannot close the element; `config.indexes` is carried (covers: FR-013, FR-015)
-- [ ] T033 [P] [US2] Build tests in `packages/astro/tests/build/inline.test.ts`: an invalid document or `config`, a duplicate name on a page, and a name that is also registered each fail the build naming the page and the problem; the same name on two different pages passes; a graph built from content entries produces one graph per page with no entry in the integration options (covers: FR-014, FR-015, SC-006)
-- [ ] T034 [US2] Playwright test `packages/astro/tests/browser/inline.spec.ts` in three browsers: an inline graph loads and answers a query with no descriptor or data request, an index named in `config` exists and no other, reloading replays from the page (no stored copy), and a page with two inline graphs gives independent clients (a trap in one leaves the other's generation and results) (covers: US2 scenarios 1, 6, 7, 8, FR-013, FR-015)
+- [X] T032 [P] [US2] Unit tests in `packages/astro/tests/unit/graph-data.test.ts` (Astro's container API): the output is one `<script type="application/json" data-related-graph>`; `<`, `>`, `&`, U+2028 and U+2029 are escaped and a document containing `</script>` cannot close the element; `config.indexes` is carried (covers: FR-013, FR-015)
+- [X] T033 [P] [US2] Build tests in `packages/astro/tests/build/inline.test.ts`: an invalid document or `config`, a duplicate name on a page, and a name that is also registered each fail the build naming the page and the problem; the same name on two different pages passes; a graph built from content entries produces one graph per page with no entry in the integration options (covers: FR-014, FR-015, SC-006)
+- [X] T034 [US2] Playwright test `packages/astro/tests/browser/inline.spec.ts` in three browsers: an inline graph loads and answers a query with no descriptor or data request, an index named in `config` exists and no other, reloading replays from the page (no stored copy), and a page with two inline graphs gives independent clients (a trap in one leaves the other's generation and results) (covers: US2 scenarios 1, 6, 7, 8, FR-013, FR-015)
 
 ### Implementation for User Story 2
 
-- [ ] T035 [US2] Implement `packages/astro/src/GraphData.astro`: props `id`, `document`, `config`; validate with `related-web-core/validate` and the index shape; check duplicates per page (a map keyed by the request) and against the registered names (read through the plugin's config); render the escaped JSON script of `contracts/graph-data-component.md`
-- [ ] T036 [US2] Extend `packages/astro/src/client/registry.ts` to find inline graphs first (`script[data-related-graph]` of the current document), parse them, and create a `createClient` client with `{ document }` and the caller's indexes from `config`, always `page` lifetime and `store` off
-- [ ] T037 [US2] Add the site content for the conformance site: a small content collection `recipes` (`src/content.config.ts`, two entries), `src/pages/inline.astro` (one inline graph with `config.indexes`), `src/pages/recipes/[slug].astro` (a graph built from the entry), and `src/pages/two-graphs.astro` (two inline graphs)
-- [ ] T038 [US2] Run T032 to T034 and make them pass; mark them in this file
+- [X] T035 [US2] Implement `packages/astro/src/GraphData.astro`: props `id`, `document`, `config`; validate with `related-web-core/validate` and the index shape; check duplicates per page (a map keyed by the request) and against the registered names (read through the plugin's config); render the escaped JSON script of `contracts/graph-data-component.md`
+- [X] T036 [US2] Extend `packages/astro/src/client/registry.ts` to find inline graphs first (`script[data-related-graph]` of the current document), parse them, and create a `createClient` client with `{ document }` and the caller's indexes from `config`, always `page` lifetime and `store` off
+- [X] T037 [US2] Add the site content for the conformance site: a small content collection `recipes` (`src/content.config.ts`, two entries), `src/pages/inline.astro` (one inline graph with `config.indexes`), `src/pages/recipes/[slug].astro` (a graph built from the entry), and `src/pages/two-graphs.astro` (two inline graphs)
+- [X] T038 [US2] Run T032 to T034 and make them pass; mark them in this file
 
 **Checkpoint**: Both ways of declaring a graph work.
 

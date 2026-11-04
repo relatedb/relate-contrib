@@ -1,0 +1,13 @@
+---
+import Base from "../layouts/Base.astro";
+import GraphData from "related-web-astro/graph-data";
+const nodes = Array.from({ length: 12 }, (_, i) => ({ id: `n${i}`, labels: ["Item"], properties: { n: i } }));
+const links = nodes.slice(1).map((n, i) => ({ source: `n${i}`, target: n.id, type: "NEXT" }));
+---
+<Base title="Inline graph" bare>
+  <div data-inline-page>
+    <p>Nodes: <span data-inline-count="notebook">…</span></p>
+    <GraphData id="notebook" document={{ version: 1, nodes, links }} config={{ indexes: [{ label: "Item", property: "id" }] }} />
+  </div>
+  <script>import "../scripts/inline-page";</script>
+</Base>

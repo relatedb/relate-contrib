@@ -1,0 +1,20 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import GraphData from "related-web-astro/graph-data";
+
+export async function getStaticPaths() {
+  return (await getCollection("recipes")).map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+const { entry } = Astro.props;
+// The graph is built from this page's own content: one node per step.
+const nodes = entry.data.steps.map((step: string, i: number) => ({ id: `s${i}`, labels: ["Step"], properties: { step } }));
+const links = nodes.slice(1).map((n: { id: string }, i: number) => ({ source: `s${i}`, target: n.id, type: "THEN" }));
+---
+<Base title={entry.data.title} bare>
+  <div data-inline-page>
+    <p>Steps: <span data-inline-count="steps">…</span></p>
+    <GraphData id="steps" document={{ version: 1, nodes, links }} />
+  </div>
+  <script>import "../../scripts/inline-page";</script>
+</Base>

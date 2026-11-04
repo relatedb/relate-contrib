@@ -1,0 +1,18 @@
+---
+// A small graph written into the page (spec FR-013 to FR-015, ADR-004 2.2): no descriptor, no revision, no stored copy,
+// no extra request. The page's script asks for it by name through `related-web-astro/client`.
+import { graphs } from "virtual:related-web/config";
+import { checkInline, escapeJson } from "../dist/inline.js";
+import type { InlineConfig } from "../dist/inline.js";
+import { seenOn } from "../dist/seen.js";
+
+interface Props {
+  id: string;
+  document: unknown;
+  config?: InlineConfig;
+}
+
+const { id, document, config } = Astro.props;
+const graph = checkInline(Astro.url.pathname, id, document, config, seenOn(Astro.request), Object.keys(graphs));
+---
+<script type="application/json" data-related-graph={id} set:html={escapeJson(graph)} />

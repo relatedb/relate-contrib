@@ -1,7 +1,7 @@
 // Builds or serves a small fixture Astro site with the integration under test. A fixture is a map of file paths to
 // text, written to a temporary directory inside this package (so the packages resolve as they do for the
 // conformance site) and removed afterwards.
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { spawn } from "node:child_process";
@@ -35,6 +35,9 @@ function writeSite(fixture: Fixture): string {
     mkdirSync(dirname(join(root, path)), { recursive: true });
     writeFileSync(join(root, path), text);
   }
+  // The package is installed in the site the way a workspace link would install it (its own name resolves to it).
+  mkdirSync(join(root, "node_modules"), { recursive: true });
+  symlinkSync(pkg, join(root, "node_modules/related-web-astro"), "dir");
   const integration = pathToFileURL(join(pkg, "dist/index.js")).href;
   writeFileSync(
     join(root, "astro.config.mjs"),

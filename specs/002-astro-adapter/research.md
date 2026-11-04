@@ -37,7 +37,8 @@ Findings that shaped the plan. "Verify" items are unmeasured assumptions; each b
 
 - **Decision**: `GraphData.astro` (exported as `related-web-astro/graph-data`) takes `id`, `document` and optional `config` (`{ indexes }`). It validates with the core's validator at render, then writes `<script type="application/json" data-related-graph="<id>">{document, config}</script>` with `<`, `>`, `&` and U+2028/2029 escaped. The duplicate-name check uses a per-render-request set; the registered-name check reads the integration's config.
 - **Rationale**: inert data costs no request and cannot execute; escaping avoids closing the script early.
-- **Verify (V-3)**: the package's `.astro` file is compiled when installed under `node_modules`; the integration adds the package to `vite.ssr.noExternal` through `updateConfig`. Check in the clean-install test.
+- **Finding (V-3, linked, 2026-11-04)**: `GraphData.astro` imported from a workspace-linked `node_modules/related-web-astro` compiles in `astro build` with `ssr.noExternal` (build tests `tests/build/inline.test.ts`). The component imports its helpers from `../dist`, because only `src/GraphData.astro` and `dist` are published. A packed install is still to be checked (task T064).
+- **Verify (V-3, original statement)**: the package's `.astro` file is compiled when installed under `node_modules`; the integration adds the package to `vite.ssr.noExternal` through `updateConfig`. Check in the clean-install test.
 - **Alternatives**: `define:vars` (executes script), a data attribute (size limits, escaping). Rejected.
 
 ## R-6. Page lifecycle in Astro
