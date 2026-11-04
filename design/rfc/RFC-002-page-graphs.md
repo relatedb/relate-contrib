@@ -3,7 +3,7 @@ id: RFC-002
 title: Page Graphs
 status: draft
 created: 2026-11-02
-adrs: [ADR-002]
+adrs: [ADR-002, ADR-004]
 ---
 
 # RFC-002: Page Graphs
@@ -115,3 +115,4 @@ Three candidates: keep them apart, with nothing in common; keep them apart but l
 ## 8. ADRs
 
 - [ADR-002](../adr/ADR-002-graph-data-format.md): Node-link JSON as the graph data format (accepted)
+- [ADR-004](../adr/ADR-004-astro-adapter.md): The Astro adapter, which declares page graphs inline and shared graphs as files (proposed)
