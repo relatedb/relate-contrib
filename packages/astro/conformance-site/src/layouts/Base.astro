@@ -1,0 +1,52 @@
+---
+// The markup the core's conformance scenarios drive (see packages/core/conformance/example-site/gw-page.ts):
+// every observable thing is a `data-gw-*` element. The router is present only when this build is for client-routing.
+import { ClientRouter } from "astro:transitions";
+interface Props {
+  title: string;
+  notesPage?: boolean;
+  bare?: boolean;
+}
+const { title, notesPage = false, bare = false } = Astro.props;
+const routed = process.env.NAVIGATION === "client-routing";
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {routed && <ClientRouter fallback="swap" />}
+  </head>
+  <body {...(notesPage ? { "data-gw-notes-page": "" } : {})}>
+    <main>
+      <h1 data-gw-title>{title}</h1>
+      <nav>
+        <a data-gw-link href="/index.html">Home</a>
+        <a data-gw-link href="/page-1.html">Page 1</a>
+        <a data-gw-link href="/page-2.html">Page 2</a>
+        <a data-gw-link href="/notes.html">Notes</a>
+        <a data-gw-link href="/broken.html">Broken</a>
+        <a data-gw-link href="/lifetime-a.html">Lifetime A</a>
+        <a data-gw-link href="/lifetime-b.html">Lifetime B</a>
+        <a data-gw-link href="/inline.html">Inline</a>
+      </nav>
+      <slot />
+      {!bare && (
+        <section>
+          <p>Status: <span data-gw-status>loading</span> · generation <span data-gw-generation>0</span> ·
+            profile <span data-gw-profile></span> · instance <span data-gw-instance></span> ·
+            restored <span data-gw-restored>unknown</span></p>
+          <p>Pages in the graph: <span data-gw-count>…</span> · updates <span data-gw-updates>0</span> ·
+            last error <span data-gw-last-error></span></p>
+          <p data-gw-failure></p>
+          <p data-gw-notes-row hidden>Notes: <span data-gw-notes>…</span></p>
+          <p>
+            <button type="button" data-gw-action="trap">Run a statement that crashes the engine</button>
+            <button type="button" data-gw-action="timeout">Run a statement that never ends (0.4 s timeout)</button>
+          </p>
+        </section>
+      )}
+    </main>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+node_modules
+dist
+reports
+test-results
+tests/.tmp
+conformance-site/dist-*
+conformance-site/.astro
+tests/verify/**/dist
+tests/verify/**/.astro
