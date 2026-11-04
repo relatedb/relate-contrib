@@ -136,4 +136,4 @@ These apply regardless of which axis values are chosen:
 - [ADR-001](../adr/ADR-001-worker-hosting-profiles.md): Dedicated-worker hosting with two navigation profiles (accepted)
 - [ADR-002](../adr/ADR-002-graph-data-format.md): Node-link JSON as the graph data format (accepted)
 - [ADR-003](../adr/ADR-003-graph-descriptor.md): Graph descriptor beside the graph data (accepted)
-- [ADR-004](../adr/ADR-004-astro-adapter.md): The Astro adapter as an integration over the core (proposed)
+- [ADR-004](../adr/ADR-004-astro-adapter.md): The Astro adapter as an integration over the core (accepted)

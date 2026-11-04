@@ -1,7 +1,7 @@
 ---
 id: ADR-004
 title: The Astro Adapter as an Integration over the Core
-status: proposed
+status: accepted
 rfcs: [RFC-001, RFC-002]
 created: 2026-11-04
 ---
