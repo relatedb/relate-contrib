@@ -6,8 +6,12 @@ interface Props {
   title: string;
   notesPage?: boolean;
   bare?: boolean;
+  /** The graph the page's script queries, and the label it counts. */
+  graph?: string;
+  label?: string;
+  variant?: string;
 }
-const { title, notesPage = false, bare = false } = Astro.props;
+const { title, notesPage = false, bare = false, graph = "example", label = "Page", variant } = Astro.props;
 const routed = process.env.NAVIGATION === "client-routing";
 ---
 <!doctype html>
@@ -18,7 +22,7 @@ const routed = process.env.NAVIGATION === "client-routing";
     <title>{title}</title>
     {routed && <ClientRouter fallback="swap" />}
   </head>
-  <body {...(notesPage ? { "data-gw-notes-page": "" } : {})}>
+  <body data-gw-graph={graph} data-gw-label={label} data-gw-variant={variant} {...(notesPage ? { "data-gw-notes-page": "" } : {})}>
     <main>
       <h1 data-gw-title>{title}</h1>
       <nav>
@@ -48,5 +52,6 @@ const routed = process.env.NAVIGATION === "client-routing";
         </section>
       )}
     </main>
+    <script>import "../scripts/gw-page";</script>
   </body>
 </html>

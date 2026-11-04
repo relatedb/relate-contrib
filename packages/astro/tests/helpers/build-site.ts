@@ -4,7 +4,9 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { build, dev, type AstroInlineConfig } from "astro";
+import { spawn } from "node:child_process";
+import { createServer } from "node:net";
+import { build, type AstroInlineConfig } from "astro";
 
 const pkg = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 
@@ -87,17 +89,30 @@ export interface DevSite {
   stop(): Promise<void>;
 }
 
-/** Start `astro dev` on a free port. */
+/** Start `astro dev` (the command-line tool, as a site author runs it) on a free port. */
 export async function startDev(fixture: Fixture): Promise<DevSite> {
   const root = writeSite(fixture);
+  const port = await freePort();
   const logs: string[] = [];
-  const server = await dev({
-    root,
-    logLevel: "debug",
-    server: { port: 0, host: "127.0.0.1" },
-  } as AstroInlineConfig);
-  const address = server.address;
-  const url = `http://127.0.0.1:${address.port}`;
+  const child = spawn(join(pkg, "node_modules/.bin/astro"), ["dev", "--port", String(port), "--host", "127.0.0.1", "--ignore-lock"], {
+    cwd: root,
+    // Astro starts a background daemon when it detects an agent, and the test runner's NODE_ENV=test makes the dev
+    // server serve nothing; a test needs the foreground, development-mode server it can stop.
+    env: Object.fromEntries(Object.entries({ ...process.env, FORCE_COLOR: "0" }).filter(([k]) => !["AI_AGENT", "CLAUDECODE", "NODE_ENV"].includes(k) && !k.startsWith("VITEST") && !k.startsWith("VITE_"))),
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  child.stdout.on("data", (d: Buffer) => logs.push(d.toString()));
+  child.stderr.on("data", (d: Buffer) => logs.push(d.toString()));
+  const url = `http://127.0.0.1:${port}`;
+  // Ready when the site's first page is served (the port opens before the routes are known).
+  for (let i = 0; i < 240; i++) {
+    try {
+      if ((await fetch(url)).status === 200) break;
+    } catch {
+      /* not listening yet */
+    }
+    await new Promise((r) => setTimeout(r, 250));
+  }
   return {
     root,
     url,
@@ -107,8 +122,22 @@ export async function startDev(fixture: Fixture): Promise<DevSite> {
       writeFileSync(join(root, path), text);
     },
     async stop() {
-      await server.stop();
+      if (child.exitCode === null) {
+        child.kill("SIGTERM");
+        await new Promise((r) => child.once("exit", r));
+      }
       rmSync(root, { recursive: true, force: true });
     },
   };
+}
+
+function freePort(): Promise<number> {
+  return new Promise((resolvePort, reject) => {
+    const server = createServer();
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const { port } = server.address() as { port: number };
+      server.close(() => resolvePort(port));
+    });
+  });
 }

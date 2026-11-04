@@ -20,8 +20,12 @@ Findings that shaped the plan. "Verify" items are unmeasured assumptions; each b
 
 - **Decision**: a Vite plugin in the integration provides `virtual:related-web/config` (names, descriptor URLs including `BASE_URL`, lifetimes, indexes, profile; imported by the client module) and `virtual:related-web/sources` (imports each source module or JSON file; used only on the server by the route entrypoint). A source module default-exports a function; a JSON file is wrapped as a function returning its content.
 - **Rationale**: sources go through Vite so they can use `astro:content` (FR-003); keeping the sources module out of the client config keeps documents out of the page bundle.
-- **Verify (V-2)**: the dev server re-evaluates a source when a file it imports changes (Vite module invalidation of the sources module on watcher events) and the descriptor's revision follows.
+- **Finding (V-2, 2026-11-04)**: `getStaticPaths` runs on each request in the dev server and the source module is re-imported when its file changes, so no explicit invalidation is needed and the descriptor's revision follows an edit (test: `packages/astro/tests/build/dev.test.ts`). Test processes must not inherit `NODE_ENV=test` or the agent variables (`AI_AGENT`, `CLAUDECODE`): with the first the dev server serves nothing, with the second `astro dev` starts a background daemon.
+- **Verify (V-2, original statement)**: the dev server re-evaluates a source when a file it imports changes (Vite module invalidation of the sources module on watcher events) and the descriptor's revision follows.
 - **Dev failure**: the memoized evaluation stores either a result or the error. A failing source prints the error and the route answers `500` with the error text for that graph's two files; the next successful evaluation replaces it (spec FR-011).
+
+- **Finding (client-routing, 2026-11-04)**: the core's `createSiteClient` under `client-routing` returns one client for the whole visit whatever graph is asked for, so two `visit` graphs would silently share the first. The client module therefore keeps visit-lifetime clients by name in module state, made with the core's `createClient` under `client-routing` and with `createSiteClient` under `multi-page`; behavior is the core's persistent profile for one graph and correct for several. ADR-004 says "made with `createSiteClient`"; this is a refinement to record in its amendments.
+- **Finding (base, mode, 2026-11-04)**: `import.meta.env.BASE_URL` and `PROD` in the injected route are unreliable under a programmatic build (the test process's `NODE_ENV`); the plugin passes the site's `base` and whether the command is `dev` through the sources module instead.
 
 ## R-4. Revision and canonical form
 

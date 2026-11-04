@@ -24,7 +24,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && cp src/types.d.ts dist/types.d.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:astro": "vitest run",
     "test:astro-browsers": "playwright test --grep-invert @conformance",
@@ -44,6 +44,7 @@
     "related-web-core": "workspace:*",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
+    "vite": "^8.3.5",
     "vitest": "^5.0.5"
   }
 }

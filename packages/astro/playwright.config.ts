@@ -5,7 +5,7 @@ const ROUTED = 5181;
 
 // The conformance site is built once per profile and served from its own output directory.
 const serve = (navigation: string, port: number) => ({
-  command: `NAVIGATION=${navigation} pnpm exec astro build --root conformance-site && NAVIGATION=${navigation} pnpm exec astro preview --root conformance-site --port ${port} --host 127.0.0.1`,
+  command: `cd conformance-site && NAVIGATION=${navigation} ../node_modules/.bin/astro build && node serve.mjs dist-${navigation} ${port}`,
   url: `http://127.0.0.1:${port}/blank.html`,
   reuseExistingServer: true,
   timeout: 300_000,

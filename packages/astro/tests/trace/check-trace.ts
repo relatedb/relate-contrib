@@ -18,7 +18,7 @@ const required = new Set<string>();
 for (const m of spec.matchAll(/\*\*((?:FR|SC)-\d+)\*\*/g)) required.add(m[1]!);
 
 function walk(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
+  return readdirSync(dir).filter((name) => name !== "node_modules" && name !== ".tmp" && name !== "verify").flatMap((name) => {
     const p = join(dir, name);
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
