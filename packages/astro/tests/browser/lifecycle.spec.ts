@@ -1,4 +1,4 @@
-// covers: FR-016, FR-018, FR-019, FR-020, FR-021, FR-022, FR-024, SC-003, SC-004
+// covers: FR-029, FR-016, FR-018, FR-019, FR-020, FR-021, FR-022, FR-024, SC-003, SC-004
 import { expect, test } from "./fixtures.js";
 import type { Page } from "./fixtures.js";
 
@@ -63,17 +63,17 @@ test.describe("under client-routing, across router navigations", () => {
       expect(await page.locator("[data-gw-generation]").textContent(), label).toBe("1");
       await expect(page.locator("[data-gw-count]")).toHaveText("300");
     };
-    await follow(page, "Page 2", "Example site: page-2");
+    await follow(page, "Page 2", "Example site: page 2");
     await steady("link");
     await page.goBack();
-    await page.waitForFunction(() => document.querySelector("[data-gw-title]")?.textContent?.trim() === "Example site: page-1");
+    await page.waitForFunction(() => document.querySelector("[data-gw-title]")?.textContent?.trim() === "Example site: page 1");
     await steady("back");
     await page.goForward();
-    await page.waitForFunction(() => document.querySelector("[data-gw-title]")?.textContent?.trim() === "Example site: page-2");
+    await page.waitForFunction(() => document.querySelector("[data-gw-title]")?.textContent?.trim() === "Example site: page 2");
     await steady("forward");
     // a programmatic navigation through the router
     await page.evaluate(() => (window as unknown as { __gwNavigate(href: string): Promise<void> }).__gwNavigate("/page-1.html?navigation=client-routing"));
-    await page.waitForFunction(() => document.querySelector("[data-gw-title]")?.textContent?.trim() === "Example site: page-1");
+    await page.waitForFunction(() => document.querySelector("[data-gw-title]")?.textContent?.trim() === "Example site: page 1");
     await steady("script");
   });
 });

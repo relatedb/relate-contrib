@@ -64,3 +64,12 @@ Findings that shaped the plan. "Verify" items are unmeasured assumptions; each b
 
 - **Decision**: Vitest for pure logic and for `astro build` of small fixture sites (failure messages, base path, determinism); Playwright for browser behavior and the conformance run; the clean-install test follows the core's (pack both packages, install in a temp project outside the repository, build, run in Chromium).
 - **Rationale**: matches the core's practice and its `// covers:` tagging so the trace check can be reused.
+
+## R-10. Recorded runs (single runs, one environment)
+
+Environment: macOS (Darwin 25.6.0, Apple silicon), Node 24.14.1, Astro 7.4.5, Playwright 1.64 browsers (Chromium, Firefox, WebKit), 2026-11-04.
+
+- Conformance (`pnpm test:astro-conformance`): the core's scenarios C-01 to C-11 passed under `multi-page` (11 of 11) and under `client-routing` (8 of 8 that apply; C-03 to C-05, C-06 and C-09 included) in Chromium, Firefox and WebKit: 6 of 6 runs passed, 1.3 minutes in total.
+- Browser suite (`pnpm test:astro-browsers`): 81 passed, 6 skipped (the development-check tests run in Chromium only), 1.1 minutes.
+- Unit and build suite (`pnpm test:astro`): 51 passed in 8 files.
+- Core regression after the runner parameters (`pnpm test:conformance` in `related-web-core`): 12 passed in three browsers.
