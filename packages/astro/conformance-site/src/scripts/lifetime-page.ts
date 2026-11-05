@@ -1,10 +1,10 @@
 // For the lifetime pages: a registered page-lifetime graph (`small`), with a log of what the adapter did, kept in module
-// state so it survives router navigations. The adapter's own tests read `window.__gwLog`.
+// state so it survives router navigations. The adapter's own tests read `window.__relLog`.
 import { onPage } from "@relate/web-astro/client";
 
 const log: string[] = [];
-(window as unknown as { __gwLog: string[] }).__gwLog = log;
-const title = () => document.querySelector("[data-gw-title]")?.textContent ?? "?";
+(window as unknown as { __relLog: string[] }).__relLog = log;
+const title = () => document.querySelector("[data-rel-title]")?.textContent ?? "?";
 
 onPage(
   (page) => {
@@ -17,7 +17,7 @@ onPage(
       log.push(`destroy:${here}`);
       try {
         // a departure that ends the document leaves no log, so the record is kept where a reload can read it
-        sessionStorage.setItem("gw-destroyed", [sessionStorage.getItem("gw-destroyed"), here].filter(Boolean).join("|"));
+        sessionStorage.setItem("rel-destroyed", [sessionStorage.getItem("rel-destroyed"), here].filter(Boolean).join("|"));
       } catch {
         /* storage may be unavailable */
       }
@@ -31,7 +31,7 @@ onPage(
       client.on("timing", ({ phase, restored: r }) => phase === "total" && restored && (restored.textContent = String(r))),
       client.subscribe("MATCH (n:Item) RETURN count(n) AS c", null, (u) => u.rows && count && (count.textContent = String(u.rows[0]?.c))),
     ];
-    (window as unknown as { __gwClient: unknown }).__gwClient = client;
+    (window as unknown as { __relClient: unknown }).__relClient = client;
     return () => {
       log.push(`cleanup:${here}`);
       offs.forEach((off) => off());

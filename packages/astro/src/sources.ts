@@ -14,8 +14,8 @@ export const prepare = (name: string, raw: unknown): Promise<Evaluated> => coreP
 /** Call a source, then prepare its output. */
 export const evaluate = (name: string, load: () => unknown): Promise<Evaluated> => coreEvaluate(OWNER, name, load);
 
-export const dataPath = (name: string, revision: string): string => `/_related/${name}/graph.${revision}.json`;
-export const descriptorPath = (name: string): string => `/_related/${name}/descriptor.json`;
+export const dataPath = (name: string, revision: string): string => `/_relate/${name}/graph.${revision}.json`;
+export const descriptorPath = (name: string): string => `/_relate/${name}/descriptor.json`;
 
 /** The ADR-003 descriptor of an evaluated graph. */
 export const descriptorOf = (name: string, evaluated: Evaluated, indexes: IndexSpec[], base: string) =>

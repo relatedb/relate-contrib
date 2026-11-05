@@ -27,7 +27,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:next": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json",
     "test:next-browsers": "playwright test --grep-invert \"@conformance|@figures\"",
-    "test:next-conformance": "GW_REPORT=reports/conformance.json playwright test --grep @conformance",
+    "test:next-conformance": "REL_REPORT=reports/conformance.json playwright test --grep @conformance",
     "test:next-package": "vitest run --config vitest.package.config.ts --reporter=default --reporter=json --outputFile.json=reports/package.json",
     "test:next-trace": "tsx tests/trace/check-trace.ts"
   },

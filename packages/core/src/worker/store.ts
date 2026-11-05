@@ -17,7 +17,7 @@ export function* retryWaits(config: { initialMs: number; maxMs: number; totalMs:
 const defaultSleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Open the store `gw-<id>`. A locked store is retried on the schedule above; `onRetry` hears each wait. Returns
+ * Open the store `rel-<id>`. A locked store is retried on the schedule above; `onRetry` hears each wait. Returns
  * null when the store stays locked or cannot be opened at all, and the caller continues in memory.
  */
 export async function openStore(

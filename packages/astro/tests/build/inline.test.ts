@@ -16,19 +16,19 @@ describe("inline graphs at build time", () => {
       files: { "src/pages/index.astro": pageWith(`<GraphData id="recipe" document={${doc}} config={{ indexes: [{ label: "P", property: "id" }] }} />`) },
     });
     const html = site.read("index.html");
-    const m = html.match(/<script type="application\/json" data-related-graph="recipe">([^<]*)<\/script>/);
+    const m = html.match(/<script type="application\/json" data-relate-graph="recipe">([^<]*)<\/script>/);
     expect(m).not.toBeNull();
     const payload = JSON.parse(m![1]!);
     expect(payload.document.nodes).toHaveLength(2);
     expect(payload.config.indexes).toEqual([{ label: "P", property: "id" }]);
-    expect(site.files().some((f) => f.startsWith("_related/"))).toBe(false); // no descriptor, no data file
+    expect(site.files().some((f) => f.startsWith("_relate/"))).toBe(false); // no descriptor, no data file
   });
 
   it("builds one graph per page from each page's own content, with nothing in the integration options", async () => {
     const dynamic = `---\nimport GraphData from "@relate/web-astro/graph-data";\nexport function getStaticPaths() { return [{ params: { slug: "a" } }, { params: { slug: "b" } }]; }\nconst { slug } = Astro.params;\nconst document = { version: 1, nodes: [{ id: slug }], links: [] };\n---\n<html><body><GraphData id="recipe" document={document} /></body></html>\n`;
     site = await buildSite({ files: { "src/pages/recipes/[slug].astro": dynamic } });
     for (const slug of ["a", "b"]) {
-      const m = site.read(`recipes/${slug}.html`).match(/data-related-graph="recipe">([^<]*)</);
+      const m = site.read(`recipes/${slug}.html`).match(/data-relate-graph="recipe">([^<]*)</);
       expect(JSON.parse(m![1]!).document.nodes.map((n: { id: string }) => n.id)).toEqual([slug]);
     }
   });
@@ -37,8 +37,8 @@ describe("inline graphs at build time", () => {
     const two = pageWith(`<GraphData id="one" document={${doc}} /><GraphData id="two" document={${doc}} />`);
     const other = pageWith(`<GraphData id="one" document={${doc}} />`);
     site = await buildSite({ files: { "src/pages/index.astro": two, "src/pages/other.astro": other } });
-    expect(site.read("index.html").match(/data-related-graph=/g)).toHaveLength(2);
-    expect(site.read("other.html")).toContain('data-related-graph="one"');
+    expect(site.read("index.html").match(/data-relate-graph=/g)).toHaveLength(2);
+    expect(site.read("other.html")).toContain('data-relate-graph="one"');
   });
 
   it("fails the build for an invalid document, naming the page and the path", async () => {

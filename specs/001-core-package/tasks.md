@@ -1,5 +1,5 @@
 ---
-description: "Task list for the related-web core package"
+description: "Task list for the relate-web core package"
 ---
 
 # Tasks: Core Package for Embedding the Graph Database in Web Pages
@@ -43,9 +43,9 @@ description: "Task list for the related-web core package"
 
 - [X] T011 Define the shared types in `packages/core/src/data/types.ts` (`GraphDocument`, `GraphNode`, `GraphLink`, `PropertyValue`, `Descriptor`) exactly as in `specs/001-core-package/contracts/client-api.md` and `data-model.md`
 - [X] T012 [P] Define `Reason` and `GraphError` in `packages/core/src/errors.ts` per `contracts/client-api.md` (`trap`, `timeout`, `lost`, `stopped`, `failed`, `unsupported`, `worker-error`)
-- [X] T013 [P] Define the constants in `packages/core/src/config.ts`: failure limit 3, store retry from 100 ms backing off to 500 ms for at most 5000 ms, batch size 1000, visitor timeout default 10000 ms, store name prefix `gw-`, stored-copy directory `related-web`
+- [X] T013 [P] Define the constants in `packages/core/src/config.ts`: failure limit 3, store retry from 100 ms backing off to 500 ms for at most 5000 ms, batch size 1000, visitor timeout default 10000 ms, store name prefix `rel-`, stored-copy directory `relate-web`
 - [X] T014 Define the message types of `contracts/worker-protocol.md` in `packages/core/src/worker/protocol.ts` (`init`, `query`, `scoped-add`, `scoped-drop`, `ready`, `init-failed`, `store-retry`, `result`, `error`)
-- [X] T015 Write the engine wrapper `packages/core/src/worker/engine.ts`: initialise with the `engineUrl` option, open in memory or `CypherliteDb.open("opfs://gw-<id>")`, `execute(statement, paramsJson)` returning the envelope text unaltered, `reset()`, and a dead flag set at the first trap (using `isWasmTrap`) after which every call answers as a trap
+- [X] T015 Write the engine wrapper `packages/core/src/worker/engine.ts`: initialise with the `engineUrl` option, open in memory or `CypherliteDb.open("opfs://rel-<id>")`, `execute(statement, paramsJson)` returning the envelope text unaltered, `reset()`, and a dead flag set at the first trap (using `isWasmTrap`) after which every call answers as a trap
 - [X] T016 [P] Create the valid and invalid data-document corpus in `packages/core/tests/fixtures/documents/valid/` and `packages/core/tests/fixtures/documents/invalid/` (one file per rule of `data-model.md`; each invalid file has a sidecar `<name>.expect.json` holding the expected path, for example `nodes[3].properties.id`)
 - [X] T017 [P] Create the valid and invalid descriptor corpus in `packages/core/tests/fixtures/descriptors/valid/` and `packages/core/tests/fixtures/descriptors/invalid/` with the same sidecar convention (rules: `version`, `id` pattern, `revision`, `data.url`, `data.nodes`, `data.links`, `indexes`, reserved `shape` and `embeddings`)
 - [X] T018 [P] Write `packages/core/tests/fixtures/generate-graph.ts` producing a document and descriptor for N pages with 5 links per page (1,000, 5,000 and 20,000) for the loader and timing tests
@@ -165,8 +165,8 @@ description: "Task list for the related-web core package"
 
 ### Implementation for User Story 5
 
-- [X] T063 [P] [US5] Implement the store open with the bounded retry in `packages/core/src/worker/store.ts` (`opfs://gw-<id>`; retry from 100 ms to 500 ms for at most 5000 ms, then continue in memory with no stored copy written), posting `store-retry` messages
-- [X] T064 [P] [US5] Implement the stored copy in `packages/core/src/worker/stored-copy.ts`: read, write and remove a file `related-web/<id>.json` at the origin-private root with a synchronous access handle, outside the engine's `cypherlite/` directory
+- [X] T063 [P] [US5] Implement the store open with the bounded retry in `packages/core/src/worker/store.ts` (`opfs://rel-<id>`; retry from 100 ms to 500 ms for at most 5000 ms, then continue in memory with no stored copy written), posting `store-retry` messages
+- [X] T064 [P] [US5] Implement the stored copy in `packages/core/src/worker/stored-copy.ts`: read, write and remove a file `relate-web/<id>.json` at the origin-private root with a synchronous access handle, outside the engine's `cypherlite/` directory
 - [X] T065 [P] [US5] Implement the start-up sweep (remove every node with a `scope` property) in `packages/core/src/worker/sweep.ts`
 - [X] T066 [US5] Extend the `init` handling in `packages/core/src/worker/worker.ts` with the start-up of `contracts/worker-protocol.md` (open store, read stored copy, restore on equal `revision` without fetching the data, sweep, compare the node count with `data.nodes`, otherwise remove the copy, reset if not empty, fetch, validate, check agreement, create indexes, load, write the copy last)
 - [X] T067 [US5] Implement the `per-page` profile in `packages/core/src/profiles/per-page.ts`: a new client per page, store on by default when a descriptor is given, and departure from `pagehide` that drops the page view's scoped data

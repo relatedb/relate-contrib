@@ -1,7 +1,7 @@
 // The conformance site: built once per navigation profile (NAVIGATION=multi-page|client-routing).
 import { defineConfig } from "astro/config";
 import { fileURLToPath } from "node:url";
-import relatedWeb from "../dist/index.js";
+import relateWeb from "../dist/index.js";
 
 const navigation = process.env.NAVIGATION === "client-routing" ? "client-routing" : "multi-page";
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
@@ -11,7 +11,7 @@ export default defineConfig({
   outDir: `./dist-${navigation}`,
   build: { format: "file" },
   integrations: [
-    relatedWeb({
+    relateWeb({
       navigation,
       graphs: {
         example: { source: "./src/graphs/example.ts", lifetime: "visit", indexes: [{ label: "Page", property: "id" }] },

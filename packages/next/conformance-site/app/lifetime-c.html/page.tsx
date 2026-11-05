@@ -1,11 +1,11 @@
-import { Nav } from "../gw-shell";
+import { Nav } from "../rel-shell";
 import { LifetimeProbe } from "../lifetime-probe";
 
 // A different page-lifetime graph from lifetime-a and lifetime-b, so a departure from them ends their client.
 export default function Page() {
   return (
     <main>
-      <h1 data-gw-title>Lifetime C</h1>
+      <h1 data-rel-title>Lifetime C</h1>
       <Nav />
       <div data-lifetime-page>
         <p>Status: <span data-life-status>loading</span> · items <span data-life-count>…</span> · restored <span data-life-restored>unknown</span></p>

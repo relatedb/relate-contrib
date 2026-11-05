@@ -4,7 +4,7 @@
 import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url";
 import { createClient, createSiteClient } from "@relate/web-core";
 import type { Client } from "@relate/web-core";
-import { graphs, navigation as configured } from "virtual:related-web/config";
+import { graphs, navigation as configured } from "virtual:relate-web/config";
 
 export type Navigation = "multi-page" | "client-routing";
 
@@ -22,8 +22,8 @@ interface Inline {
 
 /** The inline graph of the current document with this name, if any. */
 function findInline(name: string): Inline | null {
-  for (const el of Array.from(document.querySelectorAll('script[type="application/json"][data-related-graph]'))) {
-    if (el.getAttribute("data-related-graph") !== name) continue;
+  for (const el of Array.from(document.querySelectorAll('script[type="application/json"][data-relate-graph]'))) {
+    if (el.getAttribute("data-relate-graph") !== name) continue;
     const payload = JSON.parse(el.textContent ?? "{}") as { document: unknown; config?: { indexes?: Inline["indexes"] } };
     return { document: payload.document, indexes: payload.config?.indexes ?? [] };
   }

@@ -1,14 +1,14 @@
-// The route builder (spec FR-005, FR-006, FR-009, ADR-005 §2.2). Used from `app/related-web/[id]/[file]/route.ts`.
+// The route builder (spec FR-005, FR-006, FR-009, ADR-005 §2.2). Used from `app/relate-web/[id]/[file]/route.ts`.
 import { descriptorOf } from "@relate/web-core/build";
 import { Evaluations, OWNER, declare, isDevelopment, registeredNames } from "./graphs.js";
 import type { Graphs } from "./graphs.js";
 
 /** Where the files are published, below the site's base path. The route file's folder names must match. */
-export const ROUTE = "/related-web";
+export const ROUTE = "/relate-web";
 export const descriptorPath = (id: string): string => `${ROUTE}/${id}/descriptor.json`;
 export const dataPath = (id: string, revision: string): string => `${ROUTE}/${id}/graph.${revision}.json`;
 
-export const basePath = (): string => process.env.RELATED_WEB_BASE_PATH ?? "";
+export const basePath = (): string => process.env.RELATE_WEB_BASE_PATH ?? "";
 
 interface Params {
   id: string;

@@ -17,7 +17,7 @@ const visible = (el: Element): boolean => {
 };
 
 export function findInline(name: string, root: ParentNode = document): InlineFound | null {
-  const matches = Array.from(root.querySelectorAll('script[type="application/json"][data-related-graph]')).filter((el) => el.getAttribute("data-related-graph") === name);
+  const matches = Array.from(root.querySelectorAll('script[type="application/json"][data-relate-graph]')).filter((el) => el.getAttribute("data-relate-graph") === name);
   const element = matches.length === 1 ? matches[0] : matches.find(visible);
   if (!element) return null;
   const payload = JSON.parse(element.textContent ?? "{}") as { document: unknown; config?: { indexes?: IndexSpec[] } };

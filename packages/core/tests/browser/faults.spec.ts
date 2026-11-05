@@ -7,9 +7,9 @@ async function start(page: Page, options: { pages?: number; issueUrl?: string } 
   const graph = generateGraph(options.pages ?? 1000, { id: "faults", dataUrl: "/data/faults.json" });
   await serveGraph(page, graph);
   await page.evaluate(async ([descriptor, issueUrl]) => {
-    const gw = (window as any).gw;
-    const tracked = gw.faults.trackedWorkers();
-    const client = gw.core.createClient({ engineUrl: gw.engineUrl, graph: { descriptor }, navigation: "client-routing", workerFactory: tracked.factory, issueUrl });
+    const rel = (window as any).rel;
+    const tracked = rel.faults.trackedWorkers();
+    const client = rel.core.createClient({ engineUrl: rel.engineUrl, graph: { descriptor }, navigation: "client-routing", workerFactory: tracked.factory, issueUrl });
     const w = window as any;
     w.client = client;
     w.tracked = tracked;
@@ -44,7 +44,7 @@ test("a trap replaces the worker, increases the generation and re-runs subscript
   await start(page);
   const outcome = await page.evaluate(async () => {
     const w = window as any;
-    const reason = await w.client.query(w.gw.faults.trapStatement()).then(() => "resolved", (e: { reason: string }) => e.reason);
+    const reason = await w.client.query(w.rel.faults.trapStatement()).then(() => "resolved", (e: { reason: string }) => e.reason);
     return { reason };
   });
   expect(outcome.reason).toBe("trap");
@@ -65,7 +65,7 @@ test("a statement that exceeds its timeout rejects with `timeout` and the worker
   await start(page);
   const reason = await page.evaluate(async () => {
     const w = window as any;
-    return w.client.query(w.gw.faults.runawayStatement, null, { timeoutMs: 500 }).then(() => "resolved", (e: { reason: string }) => e.reason);
+    return w.client.query(w.rel.faults.runawayStatement, null, { timeoutMs: 500 }).then(() => "resolved", (e: { reason: string }) => e.reason);
   });
   expect(reason).toBe("timeout");
   await waitForGeneration(page, 2);
@@ -78,7 +78,7 @@ test("a call in flight when the instance is replaced rejects with `lost`, and a 
   await start(page);
   const reason = await page.evaluate(async () => {
     const w = window as any;
-    const inFlight = w.client.query(w.gw.faults.runawayStatement).then(() => "resolved", (e: { reason: string }) => e.reason);
+    const inFlight = w.client.query(w.rel.faults.runawayStatement).then(() => "resolved", (e: { reason: string }) => e.reason);
     await new Promise((r) => setTimeout(r, 100));
     w.tracked.failLatest("injected");
     return inFlight;
@@ -111,11 +111,11 @@ test("a graph that can never load ends in `failed` after exactly three attempts,
   await openHarness(page);
   await page.route("**/data/unreachable-missing.json", (route) => route.fulfill({ status: 404, body: "no" }));
   const result = await page.evaluate(async () => {
-    const gw = (window as any).gw;
-    const tracked = gw.faults.trackedWorkers();
-    const client = gw.core.createClient({
-      engineUrl: gw.engineUrl,
-      graph: { descriptor: gw.faults.unreachableDescriptor() },
+    const rel = (window as any).rel;
+    const tracked = rel.faults.trackedWorkers();
+    const client = rel.core.createClient({
+      engineUrl: rel.engineUrl,
+      graph: { descriptor: rel.faults.unreachableDescriptor() },
       navigation: "client-routing",
       workerFactory: tracked.factory,
       issueUrl: "https://example.org/issues",
@@ -143,9 +143,9 @@ test("`retry` starts a fresh attempt with the failure count back at zero", async
   await openHarness(page);
   await page.route("**/data/unreachable-missing.json", (route) => route.fulfill({ status: 404, body: "no" }));
   const result = await page.evaluate(async () => {
-    const gw = (window as any).gw;
-    const tracked = gw.faults.trackedWorkers();
-    const client = gw.core.createClient({ engineUrl: gw.engineUrl, graph: { descriptor: gw.faults.unreachableDescriptor() }, navigation: "client-routing", workerFactory: tracked.factory });
+    const rel = (window as any).rel;
+    const tracked = rel.faults.trackedWorkers();
+    const client = rel.core.createClient({ engineUrl: rel.engineUrl, graph: { descriptor: rel.faults.unreachableDescriptor() }, navigation: "client-routing", workerFactory: tracked.factory });
     const failed = () => new Promise<void>((resolve) => { const off = client.on("status", (e: { status: string }) => { if (e.status === "failed") { off(); resolve(); } }); });
     await failed();
     const before = tracked.workers.length;
@@ -180,8 +180,8 @@ test("the failure wording suggests reporting an issue and sends nothing", async 
   const requests: string[] = [];
   page.on("request", (r) => requests.push(r.url()));
   await page.evaluate(async () => {
-    const gw = (window as any).gw;
-    const client = gw.core.createClient({ engineUrl: gw.engineUrl, graph: { descriptor: gw.faults.unreachableDescriptor() }, navigation: "client-routing", issueUrl: "https://example.org/issues" });
+    const rel = (window as any).rel;
+    const client = rel.core.createClient({ engineUrl: rel.engineUrl, graph: { descriptor: rel.faults.unreachableDescriptor() }, navigation: "client-routing", issueUrl: "https://example.org/issues" });
     await new Promise<void>((resolve) => client.on("status", (e: { status: string }) => e.status === "failed" && resolve()));
     (window as any).message = client.failureMessage();
   });

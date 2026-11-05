@@ -25,7 +25,7 @@ const run = (command: string, args: string[], cwd: string): string =>
   execFileSync(command, args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, CI: "1" } });
 
 beforeAll(() => {
-  work = mkdtempSync(join(tmpdir(), "related-web-clean-install-"));
+  work = mkdtempSync(join(tmpdir(), "relate-web-clean-install-"));
   expect(work.startsWith(repo)).toBe(false); // the project is outside this repository
   run("pnpm", ["run", "build"], pkg);
   run("pnpm", ["pack", "--pack-destination", work], pkg);

@@ -7,7 +7,7 @@ import { checkBaseline, generateGraph, openHarness, restored, serveGraph, visitS
 
 async function loadInPage(page: import("@playwright/test").Page, descriptor: unknown): Promise<{ maxGapMs: number; totalMs: number; restored: boolean }> {
   return page.evaluate(async (d) => {
-    const gw = (window as any).gw;
+    const rel = (window as any).rel;
     const gaps: number[] = [];
     let last = performance.now();
     const timer = setInterval(() => {
@@ -15,7 +15,7 @@ async function loadInPage(page: import("@playwright/test").Page, descriptor: unk
       gaps.push(now - last);
       last = now;
     }, 4);
-    const client = gw.core.createClient({ engineUrl: gw.engineUrl, graph: { descriptor: d }, navigation: "client-routing" });
+    const client = rel.core.createClient({ engineUrl: rel.engineUrl, graph: { descriptor: d }, navigation: "client-routing" });
     const timing = new Promise<{ ms: number; restored: boolean }>((resolve) =>
       client.on("timing", (t: { phase: string; ms: number; restored: boolean }) => t.phase === "total" && resolve({ ms: t.ms, restored: t.restored })),
     );

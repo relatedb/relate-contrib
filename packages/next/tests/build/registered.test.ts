@@ -21,14 +21,14 @@ for (const bundler of ["turbopack", "webpack"] as Bundler[]) {
     it("publishes a descriptor and a revision-named data file, under the base path in the descriptor, with the same revision for the same content in another order", () => {
       const a = build({ bundler, basePath: "/docs", files: { "lib/graphs.js": doc(nodesA) } });
       expect(a.status, a.output).toBe(0);
-      const descriptor = JSON.parse(a.read("related-web/g/descriptor.json"));
+      const descriptor = JSON.parse(a.read("relate-web/g/descriptor.json"));
       expect(descriptor).toMatchObject({ version: 1, id: "g", data: { nodes: 2, links: 1 } });
-      expect(descriptor.data.url).toBe(`/docs/related-web/g/graph.${descriptor.revision}.json`);
-      expect(JSON.parse(a.read(`related-web/g/graph.${descriptor.revision}.json`)).nodes).toHaveLength(2);
+      expect(descriptor.data.url).toBe(`/docs/relate-web/g/graph.${descriptor.revision}.json`);
+      expect(JSON.parse(a.read(`relate-web/g/graph.${descriptor.revision}.json`)).nodes).toHaveLength(2);
       const b = build({ bundler, basePath: "/docs", files: { "lib/graphs.js": doc(nodesB) } });
-      expect(JSON.parse(b.read("related-web/g/descriptor.json")).revision).toBe(descriptor.revision);
+      expect(JSON.parse(b.read("relate-web/g/descriptor.json")).revision).toBe(descriptor.revision);
       const c = build({ bundler, files: { "lib/graphs.js": doc(nodesC) } });
-      expect(JSON.parse(c.read("related-web/g/descriptor.json")).revision).not.toBe(descriptor.revision);
+      expect(JSON.parse(c.read("relate-web/g/descriptor.json")).revision).not.toBe(descriptor.revision);
     });
 
     it("fails the build, naming the graph and the path of the first problem, for an invalid document", () => {
@@ -49,7 +49,7 @@ describe("build, server", () => {
   it("builds for the Node server and lists the graph's files as static routes", () => {
     const b = build({ mode: "server", files: { "lib/graphs.js": doc(nodesA) } });
     expect(b.status, b.output).toBe(0);
-    expect(b.output).toMatch(/related-web\/g\/descriptor\.json/);
+    expect(b.output).toMatch(/relate-web\/g\/descriptor\.json/);
   });
 
   it("rejects a name that breaks the id rule when the route is built", () => {

@@ -28,7 +28,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:astro": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json",
     "test:astro-browsers": "playwright test --grep-invert \"@conformance|@figures\"",
-    "test:astro-conformance": "GW_REPORT=reports/conformance.json playwright test --grep @conformance",
+    "test:astro-conformance": "REL_REPORT=reports/conformance.json playwright test --grep @conformance",
     "test:astro-package": "vitest run --config vitest.package.config.ts --reporter=default --reporter=json --outputFile.json=reports/package.json",
     "test:astro-trace": "tsx tests/trace/check-trace.ts"
   },

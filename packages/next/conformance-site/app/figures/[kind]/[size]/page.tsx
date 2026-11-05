@@ -1,6 +1,6 @@
 import { GraphData } from "@relate/web-next/server";
 import { notFound } from "next/navigation";
-import { Nav } from "../../../gw-shell";
+import { Nav } from "../../../rel-shell";
 import { FigureProbe } from "../../../figure-probe";
 import { sized } from "../../../../lib/documents";
 
@@ -13,7 +13,7 @@ export default async function Page({ params }: { params: Promise<{ kind: string;
   if (!["inline", "registered"].includes(kind) || !SIZES.includes(Number(size))) notFound();
   return (
     <main>
-      <h1 data-gw-title>{`Figure: ${kind} ${size}`}</h1>
+      <h1 data-rel-title>{`Figure: ${kind} ${size}`}</h1>
       <Nav />
       <div data-figure-page>
         <p>Total ms: <span data-figure-total>…</span></p>

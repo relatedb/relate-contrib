@@ -14,8 +14,8 @@ export const BUILDS: Array<{ name: string; navigation: string; exported: boolean
   { name: "dev", navigation: "client-routing", exported: false, cache: false, dev: true, port: 5285 },
 ];
 
-// GW_ONLY=client-routing,multi-page limits the builds that are made and served (a faster loop while developing).
-const only = process.env.GW_ONLY?.split(",");
+// REL_ONLY=client-routing,multi-page limits the builds that are made and served (a faster loop while developing).
+const only = process.env.REL_ONLY?.split(",");
 
 const serve = (b: (typeof BUILDS)[number]) => {
   const env = `NAVIGATION=${b.navigation} BUILD_NAME=${b.name}${b.base ? ` BASE_PATH=${b.base}` : ""}${b.exported ? " EXPORT=1" : ""}${b.cache ? " CACHE_COMPONENTS=1" : ""}`;
@@ -40,7 +40,7 @@ export default defineConfig({
   expect: { timeout: 30_000 },
   workers: 1,
   fullyParallel: false,
-  reporter: [["list"], ["json", { outputFile: process.env.GW_REPORT ?? "reports/playwright.json" }]],
+  reporter: [["list"], ["json", { outputFile: process.env.REL_REPORT ?? "reports/playwright.json" }]],
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "firefox", use: { ...devices["Desktop Firefox"] } },

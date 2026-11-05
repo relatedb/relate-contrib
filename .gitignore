@@ -19,3 +19,7 @@ packages/*/tests/**/*.js.map
 packages/*/conformance/*.js
 packages/*/conformance/*.d.ts
 packages/*/conformance/*.js.map
+
+# These two declare the adapter's virtual modules and are source, not build output
+!packages/astro/src/types.d.ts
+!packages/astro/src/env.d.ts

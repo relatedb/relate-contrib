@@ -15,7 +15,7 @@ export interface GraphOption {
   lifetime?: Lifetime;
 }
 
-export interface RelatedWebOptions {
+export interface RelateWebOptions {
   graphs?: Record<string, GraphOption>;
   navigation?: Navigation;
 }
@@ -38,7 +38,7 @@ const fail = (message: string): never => {
 };
 
 /** Parse and check the options. `root` is the site's root, which relative sources are resolved against. */
-export function resolveOptions(input: RelatedWebOptions | undefined, root: string, exists: (path: string) => boolean = existsSync): ResolvedOptions {
+export function resolveOptions(input: RelateWebOptions | undefined, root: string, exists: (path: string) => boolean = existsSync): ResolvedOptions {
   const options = input ?? {};
   const navigation = options.navigation ?? "multi-page";
   if (navigation !== "multi-page" && navigation !== "client-routing") {

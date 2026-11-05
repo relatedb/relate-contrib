@@ -98,7 +98,7 @@ with that value. The worker removes every node with a `scope` property when it s
 
 ## Store and stored copy
 
-One origin-private store per descriptor `id` (`gw-<id>`), used by one worker at a time, and one small file
+One origin-private store per descriptor `id` (`rel-<id>`), used by one worker at a time, and one small file
 beside it (outside the engine's directory) holding the **stored copy** of the descriptor.
 
 | Item | Meaning |

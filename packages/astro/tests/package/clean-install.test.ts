@@ -65,8 +65,8 @@ beforeAll(() => {
   writeFileSync(
     join(consumer, "astro.config.mjs"),
     `import { defineConfig } from "astro/config";
-import relatedWeb from "@relate/web-astro";
-export default defineConfig({ output: "static", build: { format: "file" }, integrations: [relatedWeb({ graphs: { things: { source: "./src/things.ts", indexes: [{ label: "Thing", property: "id" }] } } })] });
+import relateWeb from "@relate/web-astro";
+export default defineConfig({ output: "static", build: { format: "file" }, integrations: [relateWeb({ graphs: { things: { source: "./src/things.ts", indexes: [{ label: "Thing", property: "id" }] } } })] });
 `,
   );
   // The registered graph is built from a content collection, as a site's would be.
@@ -125,7 +125,7 @@ describe("the packed adapter in a clean project", () => {
   it("builds, places the engine binary with no workaround, and publishes the registered graph", () => {
     const dist = join(consumer, "dist");
     expect(readdirSync(join(dist, "_astro")).some((f) => f.endsWith(".wasm"))).toBe(true);
-    const descriptor = JSON.parse(readFileSync(join(dist, "_related/things/descriptor.json"), "utf8"));
+    const descriptor = JSON.parse(readFileSync(join(dist, "_relate/things/descriptor.json"), "utf8"));
     expect(descriptor).toMatchObject({ id: "things", data: { nodes: 7, links: 0 } });
   });
 

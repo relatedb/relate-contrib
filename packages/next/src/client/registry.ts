@@ -124,7 +124,7 @@ export function hold(config: Config, id: string, options: GraphOptions = {}): He
 
 /** A visit-lifetime registered graph, for code that lives across pages (spec FR-022). */
 export function visitGraph(config: Config | null, id: string, options: GraphOptions = {}): Client {
-  if (!config) throw new Error(`@relate/web-next: graph("${id}") was called before the provider mounted; ask after RelatedWebProvider has mounted, or from a component with useGraph`);
+  if (!config) throw new Error(`@relate/web-next: graph("${id}") was called before the provider mounted; ask after RelateWebProvider has mounted, or from a component with useGraph`);
   const entry = config.catalog.graphs.find((g) => g.id === id);
   if (!entry) {
     if (findInline(id)) throw new Error(`@relate/web-next: "${id}" is an inline graph of a page; ask for it from a component with useGraph`);

@@ -42,12 +42,12 @@ function writeSite(fixture: Fixture): string {
   writeFileSync(
     join(root, "astro.config.mjs"),
     `import { defineConfig } from "astro/config";
-import relatedWeb from ${JSON.stringify(integration)};
+import relateWeb from ${JSON.stringify(integration)};
 export default defineConfig({
   output: ${JSON.stringify(fixture.output ?? "static")},
   ${fixture.base ? `base: ${JSON.stringify(fixture.base)},` : ""}
   build: { format: "file" },
-  integrations: [relatedWeb(${fixture.options ?? "{}"})],
+  integrations: [relateWeb(${fixture.options ?? "{}"})],
 });
 `,
   );

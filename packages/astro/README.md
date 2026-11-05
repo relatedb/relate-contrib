@@ -11,10 +11,10 @@ Peer dependencies: `astro` (7.x), `@relate/web-core` and `@neo4j-labs/cypherlite
 
 ```js
 // astro.config.mjs
-import relatedWeb from "@relate/web-astro";
+import relateWeb from "@relate/web-astro";
 export default defineConfig({
   integrations: [
-    relatedWeb({
+    relateWeb({
       navigation: "client-routing", // "multi-page" (default) if the site has no ClientRouter
       graphs: {
         site: { source: "./src/site-graph.ts", lifetime: "visit", indexes: [{ label: "Page", property: "id" }] },
@@ -28,8 +28,8 @@ export default defineConfig({
 ## Two ways to declare a graph
 
 **Registered** (a file): `source` is a module whose default export returns an ADR-002 graph document (it may use
-`astro:content`), or a `.json` file. The build validates it and publishes `/_related/<name>/descriptor.json` and
-`/_related/<name>/graph.<revision>.json` (under Astro's `base`); the revision is 12 hex digits of a hash of the
+`astro:content`), or a `.json` file. The build validates it and publishes `/_relate/<name>/descriptor.json` and
+`/_relate/<name>/graph.<revision>.json` (under Astro's `base`); the revision is 12 hex digits of a hash of the
 canonical document, so content changes invalidate stored copies. A failing source fails the build with the path of the
 first problem; in `astro dev` the server keeps running, prints the error and answers that graph's files with `500`.
 

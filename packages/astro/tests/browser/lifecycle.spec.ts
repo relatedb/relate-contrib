@@ -3,10 +3,10 @@ import { expect, test } from "./fixtures.js";
 import type { Page } from "./fixtures.js";
 
 const sites = { "multi-page": "http://127.0.0.1:5180", "client-routing": "http://127.0.0.1:5181" } as const;
-const log = (page: Page) => page.evaluate(() => [...((window as unknown as { __gwLog?: string[] }).__gwLog ?? [])]);
+const log = (page: Page) => page.evaluate(() => [...((window as unknown as { __relLog?: string[] }).__relLog ?? [])]);
 const follow = async (page: Page, label: string, title: string) => {
-  await page.locator("a[data-gw-link]", { hasText: label }).first().click();
-  await page.waitForFunction((t) => document.querySelector("[data-gw-title]")?.textContent?.trim() === t, title);
+  await page.locator("a[data-rel-link]", { hasText: label }).first().click();
+  await page.waitForFunction((t) => document.querySelector("[data-rel-title]")?.textContent?.trim() === t, title);
 };
 
 for (const [profile, base] of Object.entries(sites)) {
@@ -55,25 +55,25 @@ test.describe("under client-routing, across router navigations", () => {
 
   test("a visit-lifetime graph keeps one worker and generation across link, history and script navigation", async ({ page }) => {
     await page.goto(`${base}/page-1.html?navigation=client-routing`);
-    await page.waitForFunction(() => document.documentElement.dataset.gwState === "ready");
-    const instance = await page.locator("[data-gw-instance]").textContent();
+    await page.waitForFunction(() => document.documentElement.dataset.relState === "ready");
+    const instance = await page.locator("[data-rel-instance]").textContent();
     const steady = async (label: string) => {
-      await page.waitForFunction(() => document.documentElement.dataset.gwState === "ready");
-      expect(await page.locator("[data-gw-instance]").textContent(), label).toBe(instance);
-      expect(await page.locator("[data-gw-generation]").textContent(), label).toBe("1");
-      await expect(page.locator("[data-gw-count]")).toHaveText("300");
+      await page.waitForFunction(() => document.documentElement.dataset.relState === "ready");
+      expect(await page.locator("[data-rel-instance]").textContent(), label).toBe(instance);
+      expect(await page.locator("[data-rel-generation]").textContent(), label).toBe("1");
+      await expect(page.locator("[data-rel-count]")).toHaveText("300");
     };
     await follow(page, "Page 2", "Example site: page 2");
     await steady("link");
     await page.goBack();
-    await page.waitForFunction(() => document.querySelector("[data-gw-title]")?.textContent?.trim() === "Example site: page 1");
+    await page.waitForFunction(() => document.querySelector("[data-rel-title]")?.textContent?.trim() === "Example site: page 1");
     await steady("back");
     await page.goForward();
-    await page.waitForFunction(() => document.querySelector("[data-gw-title]")?.textContent?.trim() === "Example site: page 2");
+    await page.waitForFunction(() => document.querySelector("[data-rel-title]")?.textContent?.trim() === "Example site: page 2");
     await steady("forward");
     // a programmatic navigation through the router
-    await page.evaluate(() => (window as unknown as { __gwNavigate(href: string): Promise<void> }).__gwNavigate("/page-1.html?navigation=client-routing"));
-    await page.waitForFunction(() => document.querySelector("[data-gw-title]")?.textContent?.trim() === "Example site: page 1");
+    await page.evaluate(() => (window as unknown as { __relNavigate(href: string): Promise<void> }).__relNavigate("/page-1.html?navigation=client-routing"));
+    await page.waitForFunction(() => document.querySelector("[data-rel-title]")?.textContent?.trim() === "Example site: page 1");
     await steady("script");
   });
 });
@@ -93,10 +93,10 @@ test("a page-lifetime client is destroyed on reload and when the page is hidden"
   for (const [profile, base] of Object.entries(sites)) {
     await page.goto(`${base}/lifetime-a.html?navigation=${profile}`);
     await expect(page.locator("[data-life-count]")).toHaveText("20");
-    await page.evaluate(() => sessionStorage.removeItem("gw-destroyed"));
+    await page.evaluate(() => sessionStorage.removeItem("rel-destroyed"));
     await page.reload();
     await expect(page.locator("[data-life-count]")).toHaveText("20");
-    expect(await page.evaluate(() => sessionStorage.getItem("gw-destroyed")), profile).toBe("Lifetime A");
+    expect(await page.evaluate(() => sessionStorage.getItem("rel-destroyed")), profile).toBe("Lifetime A");
   }
 });
 
@@ -114,7 +114,7 @@ for (const [profile, base] of Object.entries(sites)) {
     });
     await page.goto(`${base}/direct.html?navigation=${profile}`);
     await expect(page.locator("[data-direct-count]")).toHaveText("300");
-    expect(await page.evaluate(() => (window as unknown as { __gwDirect: { same: boolean } }).__gwDirect.same)).toBe(true);
+    expect(await page.evaluate(() => (window as unknown as { __relDirect: { same: boolean } }).__relDirect.same)).toBe(true);
     expect(await page.evaluate(() => (window as unknown as { __workers: number }).__workers)).toBe(1);
   });
 }

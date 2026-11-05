@@ -34,7 +34,7 @@ client resolves `descriptor.data.url` to an absolute URL before sending it.
 2. `init` with a descriptor and a store (ADR-003 2.4, research R5):
    1. validate the descriptor (FR-013); an invalid one fails the attempt (`invalid-descriptor`) and no store
       is opened;
-   2. initialise the engine and open the store `gw-<id>`, retrying a locked store from 100 ms, backing off to
+   2. initialise the engine and open the store `rel-<id>`, retrying a locked store from 100 ms, backing off to
       500 ms, for at most 5 s, then continuing in memory with no stored copy written (FR-012);
    3. read the stored copy; if its `revision` equals the descriptor's, restore: do not fetch the data and
       create no index;

@@ -23,8 +23,8 @@ describe("inline graphs in a build", () => {
     const b = build({ files: page(`<GraphData id="alpha" document={ok} /><GraphData id="beta" document={ok} config={{ indexes: [{ label: "X", property: "id" }] }} />`) });
     expect(b.status, b.output).toBe(0);
     const html = b.read("inline.html");
-    expect((html.match(/data-related-graph="/g) ?? []).length).toBe(2);
-    expect(html).toContain('data-related-graph="alpha"');
+    expect((html.match(/data-relate-graph="/g) ?? []).length).toBe(2);
+    expect(html).toContain('data-relate-graph="alpha"');
   });
 
   it("fails the build, naming the page and the path of the first problem, for an invalid document", () => {

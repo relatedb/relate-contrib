@@ -28,21 +28,21 @@ const run = (command: string, args: string[], cwd: string, env: Record<string, s
 const tarballIn = (dir: string, prefix: string): string => join(dir, readdirSync(dir).find((f) => f.startsWith(prefix) && f.endsWith(".tgz"))!);
 
 const files: Record<string, string> = {
-  "next.config.mjs": `import { withRelatedWeb } from "@relate/web-next";
-export default withRelatedWeb({ distDir: process.env.DIST ?? ".next" });
+  "next.config.mjs": `import { withRelateWeb } from "@relate/web-next";
+export default withRelateWeb({ distDir: process.env.DIST ?? ".next" });
 `,
   "lib/graphs.js": `export const graphs = { things: { source: () => ({ version: 1, nodes: Array.from({ length: 7 }, (_, i) => ({ id: "t" + i, labels: ["Thing"] })), links: [] }), indexes: [{ label: "Thing", property: "id" }] } };
 `,
-  "app/related-web/[id]/[file]/route.js": `import { createGraphRoute } from "@relate/web-next/server";
+  "app/relate-web/[id]/[file]/route.js": `import { createGraphRoute } from "@relate/web-next/server";
 import { graphs } from "../../../../lib/graphs.js";
 export const dynamic = "force-static";
 export const dynamicParams = false;
 export const { GET, generateStaticParams } = createGraphRoute(graphs);
 `,
   "app/providers.jsx": `"use client";
-import { RelatedWebProvider } from "@relate/web-next/client";
+import { RelateWebProvider } from "@relate/web-next/client";
 const engineUrl = new URL("@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm", import.meta.url);
-export function Providers({ catalog, children }) { return <RelatedWebProvider catalog={catalog} engineUrl={engineUrl}>{children}</RelatedWebProvider>; }
+export function Providers({ catalog, children }) { return <RelateWebProvider catalog={catalog} engineUrl={engineUrl}>{children}</RelateWebProvider>; }
 `,
   "app/layout.jsx": `import { catalog } from "@relate/web-next/server";
 import { graphs } from "../lib/graphs.js";
@@ -122,7 +122,7 @@ describe("the packed adapter in a clean project", () => {
 
   for (const [bundler, port] of [["turbopack", 5391], ["webpack", 5392]] as const) {
     it(`builds with ${bundler}, places the engine binary and the worker, and a page answers queries on both graphs`, async () => {
-      expect(outputs[bundler]).toMatch(/related-web\/things\/descriptor\.json/);
+      expect(outputs[bundler]).toMatch(/relate-web\/things\/descriptor\.json/);
       await serve(bundler, port);
       const browser = await chromium.launch();
       try {
@@ -134,7 +134,7 @@ describe("the packed adapter in a clean project", () => {
         expect(await page.locator("[data-registered]").textContent()).toBe("7");
         expect(await page.locator("[data-inline]").textContent()).toBe("2");
         expect(requests.some((p) => p.endsWith(".wasm"))).toBe(true); // placed by the bundler, no workaround
-        expect(requests.filter((p) => p.startsWith("/related-web/things/graph.")).length).toBe(1);
+        expect(requests.filter((p) => p.startsWith("/relate-web/things/graph.")).length).toBe(1);
       } finally {
         await browser.close();
       }

@@ -49,7 +49,7 @@ Planning checked ADR-005's four open questions early (V-1, V-2, V-4, V-5 in [res
 
 **D-2. Which Astro code moves.** ADR-005 §2.2 and spec FR-026 name canonical text, revision, document preparation and descriptor construction. The Astro adapter's inline check and JSON escaping (`inline.ts`) are framework-independent and the Next `GraphData` needs them. *Recommended*: they move too, with the caller's name as a parameter of the error text. Amend ADR-005 §2.2 and FR-026.
 
-**D-4. How an inline graph is found when a hidden page stays in the document.** ADR-005 §2.4 queries the document's `data-related-graph` elements. V-4 shows that under `cacheComponents: true` the departed page's element stays. *Recommended*: take the only match if there is one, otherwise the match whose parent element is visible (`checkVisibility()`, which Chromium, Firefox and WebKit all report correctly). Amend ADR-005 §2.4 and add User Story 3's scenario 9 as a firm requirement (FR-021 gains the rule); the fallback is in [research.md](research.md) D-4.
+**D-4. How an inline graph is found when a hidden page stays in the document.** ADR-005 §2.4 queries the document's `data-relate-graph` elements. V-4 shows that under `cacheComponents: true` the departed page's element stays. *Recommended*: take the only match if there is one, otherwise the match whose parent element is visible (`checkVisibility()`, which Chromium, Firefox and WebKit all report correctly). Amend ADR-005 §2.4 and add User Story 3's scenario 9 as a firm requirement (FR-021 gains the rule); the fallback is in [research.md](research.md) D-4.
 
 ## Project Structure
 
@@ -86,7 +86,7 @@ packages/next/
 ├── tsconfig.json
 ├── README.md                     # use, lifetimes, the placeholder-first rule, route file, base path
 ├── src/
-│   ├── index.ts                  # withRelatedWeb(nextConfig, options) (FR-002)
+│   ├── index.ts                  # withRelateWeb(nextConfig, options) (FR-002)
 │   ├── env.ts                    # names of the env values the wrapper sets and the client reads
 │   ├── server/
 │   │   ├── index.ts              # createGraphRoute, catalog, GraphData (re-exports)
@@ -95,7 +95,7 @@ packages/next/
 │   │   ├── catalog.ts            # plain-data catalog (FR-011)
 │   │   └── GraphData.tsx         # server component for inline graphs (FR-013 to FR-015)
 │   └── client/
-│       ├── index.ts              # RelatedWebProvider, useGraph, useQuery, graph (FR-016 to FR-024)
+│       ├── index.ts              # RelateWebProvider, useGraph, useQuery, graph (FR-016 to FR-024)
 │       ├── Provider.tsx          # context + effect-written module state; no client created
 │       ├── registry.ts           # visit clients (module state); page holders, deferred destroy (FR-019 to FR-021)
 │       ├── inline.ts             # find an inline graph by id: single match, else visible (D-4)
@@ -109,7 +109,7 @@ packages/next/
 └── conformance-site/             # unpublished Next app; built once per profile
     ├── next.config.mjs           # NAVIGATION, EXPORT, CACHE_COMPONENTS choose the build
     ├── lib/graphs.ts             # example graph sources (variant a; a small one for inline/page graphs)
-    ├── app/related-web/[id]/[file]/route.ts   # the three-line route
+    ├── app/relate-web/[id]/[file]/route.ts   # the three-line route
     ├── app/                      # layout with provider; pages: home, page-1, page-2, notes, broken, blank, inline, two-graphs, lifetime-a/b, direct
     └── public/                   # variants b, mismatch and broken descriptors and data (as Astro's D-1)
 pnpm-workspace.yaml               # unchanged: packages/* already includes packages/next

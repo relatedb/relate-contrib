@@ -24,5 +24,5 @@ export function inlineText(props: GraphDataProps, seen: Set<string>, registered:
 
 export function GraphData(props: GraphDataProps) {
   const html = inlineText(props, seenInRender());
-  return <script type="application/json" data-related-graph={props.id} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <script type="application/json" data-relate-graph={props.id} dangerouslySetInnerHTML={{ __html: html }} />;
 }

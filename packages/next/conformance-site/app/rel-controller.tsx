@@ -1,6 +1,6 @@
 "use client";
 // The behavior of the conformance pages, written against `@relate/web-next/client`. It renders nothing: it updates the
-// `data-gw-*` elements of the static markup, as the core's example pages do. Query parameters: `navigation` (the profile)
+// `data-rel-*` elements of the static markup, as the core's example pages do. Query parameters: `navigation` (the profile)
 // and `variant` (a, b, mismatch, broken: which descriptor the shared graph uses).
 import { useGraph } from "@relate/web-next/client";
 import { attachView } from "@relate/web-core";
@@ -24,13 +24,13 @@ let current: Client | null = null;
 let lastError = "";
 
 const set = (name: string, value: string): void => {
-  const el = visible(`[data-gw-${name}]`);
+  const el = visible(`[data-rel-${name}]`);
   if (el) el.textContent = value;
 };
 
 if (typeof document !== "undefined") {
   document.addEventListener("click", (e) => {
-    const action = (e.target as Element | null)?.closest("[data-gw-action]")?.getAttribute("data-gw-action");
+    const action = (e.target as Element | null)?.closest("[data-rel-action]")?.getAttribute("data-rel-action");
     const client = current;
     if (!client) return;
     const record = (err: { reason: string }): void => {
@@ -54,7 +54,7 @@ function Live({ graph, label, notesPage, variant: pageVariant, search }: Props &
   const navigation = (params.get("navigation") ?? undefined) as "client-routing" | "multi-page" | undefined;
   const variant = params.get("variant") ?? pageVariant ?? "a";
   const client = useGraph(graph, { navigation, descriptor: graph === "example" ? descriptors[variant] : undefined });
-  const profile = navigation ?? ((process.env.RELATED_WEB_NAVIGATION as string) === "multi-page" ? "multi-page" : "client-routing");
+  const profile = navigation ?? ((process.env.RELATE_WEB_NAVIGATION as string) === "multi-page" ? "multi-page" : "client-routing");
 
   useEffect(() => {
     if (!client) return;
@@ -80,7 +80,7 @@ function Live({ graph, label, notesPage, variant: pageVariant, search }: Props &
       set("last-error", lastError);
       set("failure", state.failure);
       set("notes", state.notes);
-      document.documentElement.dataset.gwState = state.status;
+      document.documentElement.dataset.relState = state.status;
     };
     const offs: Array<() => void> = [];
     offs.push(
@@ -129,7 +129,7 @@ function Live({ graph, label, notesPage, variant: pageVariant, search }: Props &
 }
 
 /** Mounts the behavior once the query string is known, so the graph is asked for with the right overrides from the start. */
-export function GwController(props: Props) {
+export function RelController(props: Props) {
   const [search, setSearch] = useState<string | null>(null);
   useEffect(() => setSearch(location.search), []);
   return search === null ? null : <Live {...props} search={search} />;

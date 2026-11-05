@@ -44,7 +44,7 @@ async function clearOpfsAt(context: BrowserContext, origin: string): Promise<voi
 }
 
 /** The conformance site is served on one origin per build; each has its own origin-private file system. */
-const ORIGINS = BUILDS.filter((b) => !process.env.GW_ONLY || process.env.GW_ONLY.split(",").includes(b.name)).map((b) => `http://127.0.0.1:${b.port}${b.base ?? ""}`);
+const ORIGINS = BUILDS.filter((b) => !process.env.REL_ONLY || process.env.REL_ONLY.split(",").includes(b.name)).map((b) => `http://127.0.0.1:${b.port}${b.base ?? ""}`);
 
 const clearOpfs = async (context: BrowserContext, _baseURL: string | undefined): Promise<void> => {
   for (const origin of ORIGINS) await clearOpfsAt(context, origin);
@@ -58,7 +58,7 @@ export const test = base.extend({
       await context.close();
       return;
     }
-    const profile = mkdtempSync(join(tmpdir(), "related-web-webkit-"));
+    const profile = mkdtempSync(join(tmpdir(), "relate-web-webkit-"));
     const context = await playwright.webkit.launchPersistentContext(profile, { baseURL });
     await clearOpfs(context, baseURL);
     await use(context);

@@ -5,11 +5,11 @@ import { expect, test } from "./fixtures.js";
 
 // Variant a is the registered graph, whose data file is named by its revision; variant b is a static file.
 const dataRequests = {
-  a: (url: string) => new URL(url).pathname.startsWith("/related-web/example/graph."),
+  a: (url: string) => new URL(url).pathname.startsWith("/relate-web/example/graph."),
   b: (url: string) => new URL(url).pathname === "/graph-b.json",
 };
 
-const only = process.env.GW_ONLY?.split(",");
+const only = process.env.REL_ONLY?.split(",");
 for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.cache && !b.dev && !b.base)) {
   test(`@conformance the conformance site passes the core's scenarios: ${build.name}`, async ({ browserName }) => {
     test.setTimeout(600_000);

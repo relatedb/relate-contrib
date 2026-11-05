@@ -35,7 +35,7 @@ describe("opening a store", () => {
     let calls = 0;
     const fake = {} as Engine;
     stub(async () => {
-      if (++calls < 4) throw new StorageLockedError("storage locked: opfs://gw-x");
+      if (++calls < 4) throw new StorageLockedError("storage locked: opfs://rel-x");
       return fake;
     });
     const reported: Array<[number, number]> = [];

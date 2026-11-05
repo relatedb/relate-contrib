@@ -3,7 +3,7 @@
 // them (keeping `*.orig`), `node variant.mjs standard` restores the originals.
 import { copyFileSync, existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 
-const files = ["app/related-web/[id]/[file]/route.ts", "app/recipes/[slug]/page.tsx"];
+const files = ["app/relate-web/[id]/[file]/route.ts", "app/recipes/[slug]/page.tsx"];
 const [, , mode] = process.argv;
 for (const file of files) {
   if (mode === "cache") {

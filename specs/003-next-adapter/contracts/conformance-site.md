@@ -4,7 +4,7 @@ An unpublished Next app in `packages/next/conformance-site`, built once per prof
 
 ## Markup
 
-The pages reproduce the `data-gw-*` markup the runner reads, as defined by the core's example site (`packages/core/conformance/example-site/gw-page.ts`) and as the Astro conformance site does.
+The pages reproduce the `data-rel-*` markup the runner reads, as defined by the core's example site (`packages/core/conformance/example-site/rel-page.ts`) and as the Astro conformance site does.
 
 ## Pages
 

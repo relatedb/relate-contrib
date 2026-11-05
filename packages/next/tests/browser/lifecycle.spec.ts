@@ -3,11 +3,11 @@ import type { Page } from "@playwright/test";
 import { BUILDS } from "../../playwright.config.js";
 import { expect, test } from "./fixtures.js";
 
-const only = process.env.GW_ONLY?.split(",");
-const log = (page: Page) => page.evaluate(() => [...((window as unknown as { __gwLog?: string[] }).__gwLog ?? [])]);
+const only = process.env.REL_ONLY?.split(",");
+const log = (page: Page) => page.evaluate(() => [...((window as unknown as { __relLog?: string[] }).__relLog ?? [])]);
 const follow = async (page: Page, label: string, title: string) => {
   await page.getByRole("link", { name: label, exact: true }).click();
-  await expect(page.locator("[data-gw-title]:visible")).toHaveText(title);
+  await expect(page.locator("[data-rel-title]:visible")).toHaveText(title);
 };
 const countWorkers = (page: Page) =>
   page.addInitScript(() => {
@@ -44,13 +44,13 @@ for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && b.n
     test("a visit-lifetime graph keeps one worker, instance and generation across link, history and script navigation", async ({ page }) => {
       await countWorkers(page);
       await page.goto(`${base}/page-1.html`);
-      await expect(page.locator("[data-gw-count]:visible")).toHaveText("300");
-      const instance = await page.locator("[data-gw-instance]:visible").textContent();
+      await expect(page.locator("[data-rel-count]:visible")).toHaveText("300");
+      const instance = await page.locator("[data-rel-instance]:visible").textContent();
       const steady = async (label: string, title: string) => {
-        await expect(page.locator("[data-gw-title]:visible")).toHaveText(title);
-        await expect(page.locator("[data-gw-count]:visible")).toHaveText("300");
-        expect(await page.locator("[data-gw-instance]:visible").textContent(), label).toBe(instance);
-        expect(await page.locator("[data-gw-generation]:visible").textContent(), label).toBe("1");
+        await expect(page.locator("[data-rel-title]:visible")).toHaveText(title);
+        await expect(page.locator("[data-rel-count]:visible")).toHaveText("300");
+        expect(await page.locator("[data-rel-instance]:visible").textContent(), label).toBe(instance);
+        expect(await page.locator("[data-rel-generation]:visible").textContent(), label).toBe("1");
         expect(await page.evaluate(() => (window as unknown as { __workers: number }).__workers), label).toBe(1);
       };
       await follow(page, "Page 2", "Example site: page 2");
@@ -73,10 +73,10 @@ for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && b.n
     test("a page-lifetime client does not outlive a document that ends (reload)", async ({ page }) => {
       await page.goto(`${base}/lifetime-a.html`);
       await expect(page.locator("[data-life-count]:visible")).toHaveText("20");
-      await page.evaluate(() => sessionStorage.removeItem("gw-destroyed"));
+      await page.evaluate(() => sessionStorage.removeItem("rel-destroyed"));
       await page.reload();
       await expect(page.locator("[data-life-count]:visible")).toHaveText("20");
-      expect(await page.evaluate(() => sessionStorage.getItem("gw-destroyed"))).toBe("Lifetime A");
+      expect(await page.evaluate(() => sessionStorage.getItem("rel-destroyed"))).toBe("Lifetime A");
     });
   });
 }

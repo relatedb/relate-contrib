@@ -6,7 +6,7 @@ const sites: Record<Profile, string> = { "multi-page": "http://127.0.0.1:5180", 
 
 // Variant a is the registered graph, whose data file is named by its revision; variant b is a static file.
 const dataRequests = {
-  a: (url: string) => new URL(url).pathname.startsWith("/_related/example/graph."),
+  a: (url: string) => new URL(url).pathname.startsWith("/_relate/example/graph."),
   b: (url: string) => new URL(url).pathname === "/graph-b.json",
 };
 

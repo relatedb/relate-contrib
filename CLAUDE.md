@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Purpose
 
-`related-web` is the planning home for **CypherLite integrations with web frameworks**, including static site generators. CypherLite is Neo4j Labs' embedded, in-memory property graph engine (openCypher), shipped for the browser as a WASM library. The integrations showcase the database and are meant to run on the dedicated CypherLite website first.
+`relate-web` is the planning home for **CypherLite integrations with web frameworks**, including static site generators. CypherLite is Neo4j Labs' embedded, in-memory property graph engine (openCypher), shipped for the browser as a WASM library. The integrations showcase the database and are meant to run on the dedicated CypherLite website first.
 
 Two uses of the embedded graph drive the work:
 

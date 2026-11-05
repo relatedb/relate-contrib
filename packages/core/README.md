@@ -101,5 +101,5 @@ pnpm --filter @relate/web-core test:package       # packs the core and installs 
 pnpm --filter @relate/web-core test:trace         # every requirement has a passing, tagged test
 ```
 
-Load-time baselines are in `tests/baselines/` (one file per browser and environment; `GW_ENV` names the
-environment, `GW_UPDATE_BASELINE=1` rewrites them). A run fails when a time is more than twice its baseline.
+Load-time baselines are in `tests/baselines/` (one file per browser and environment; `REL_ENV` names the
+environment, `REL_UPDATE_BASELINE=1` rewrites them). A run fails when a time is more than twice its baseline.

@@ -3,7 +3,7 @@ import { graph } from "@relate/web-astro/client";
 
 const first = graph("example");
 const second = graph("example");
-(window as unknown as { __gwDirect: unknown }).__gwDirect = { same: first === second, client: first };
+(window as unknown as { __relDirect: unknown }).__relDirect = { same: first === second, client: first };
 first.subscribe("MATCH (n:Page) RETURN count(n) AS c", null, (u) => {
   if (u.rows) document.querySelector("[data-direct-count]")!.textContent = String(u.rows[0]?.c);
 });

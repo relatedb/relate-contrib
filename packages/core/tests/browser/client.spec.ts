@@ -16,9 +16,9 @@ test("the page renders and its links work before and while the graph loads", asy
 
   // Start a large load and follow a link while the instance is loading.
   await page.evaluate(() => {
-    const gw = (window as any).gw;
-    const graph = gw.generateGraph(20000);
-    (window as any).client = gw.core.createClient({ engineUrl: gw.engineUrl, graph: { document: graph.document }, navigation: "client-routing" });
+    const rel = (window as any).rel;
+    const graph = rel.generateGraph(20000);
+    (window as any).client = rel.core.createClient({ engineUrl: rel.engineUrl, graph: { document: graph.document }, navigation: "client-routing" });
     (window as any).initialStatus = (window as any).client.status;
   });
   expect(await page.evaluate(() => (window as any).initialStatus)).toBe("loading");
@@ -29,8 +29,8 @@ test("the page renders and its links work before and while the graph loads", asy
 test("status goes from loading to ready, and a query resolves with the engine's envelope unaltered", async ({ page }) => {
   await openHarness(page);
   const result = await page.evaluate(async (doc) => {
-    const gw = (window as any).gw;
-    const client = gw.core.createClient({ engineUrl: gw.engineUrl, graph: { document: doc }, navigation: "client-routing" });
+    const rel = (window as any).rel;
+    const client = rel.core.createClient({ engineUrl: rel.engineUrl, graph: { document: doc }, navigation: "client-routing" });
     const statuses: string[] = [client.status];
     client.on("status", (e: { status: string }) => statuses.push(e.status));
     await new Promise<void>((resolve) => client.on("status", (e: { status: string }) => e.status === "ready" && resolve()));
@@ -50,8 +50,8 @@ test("status goes from loading to ready, and a query resolves with the engine's 
 test("a subscription shows its placeholder, then the rows, with no retry code in the caller", async ({ page }) => {
   await openHarness(page);
   const updates = await page.evaluate(async (doc) => {
-    const gw = (window as any).gw;
-    const client = gw.core.createClient({ engineUrl: gw.engineUrl, graph: { document: doc }, navigation: "client-routing" });
+    const rel = (window as any).rel;
+    const client = rel.core.createClient({ engineUrl: rel.engineUrl, graph: { document: doc }, navigation: "client-routing" });
     const seen: unknown[] = [];
     await new Promise<void>((resolve) => {
       client.subscribe("MATCH (n) RETURN count(n) AS c", null, (u: { rows: unknown }) => {
@@ -70,8 +70,8 @@ test("a subscription shows its placeholder, then the rows, with no retry code in
 test("a listener registered for new instances runs before subscriptions on the first instance", async ({ page }) => {
   await openHarness(page);
   const order = await page.evaluate(async (doc) => {
-    const gw = (window as any).gw;
-    const client = gw.core.createClient({ engineUrl: gw.engineUrl, graph: { document: doc }, navigation: "client-routing" });
+    const rel = (window as any).rel;
+    const client = rel.core.createClient({ engineUrl: rel.engineUrl, graph: { document: doc }, navigation: "client-routing" });
     const seen: string[] = [];
     client.onGeneration(async (g: number) => {
       await new Promise((r) => setTimeout(r, 20));
@@ -94,9 +94,9 @@ test("a descriptor and its data document load the graph, resolving the data loca
   await openHarness(page);
   await page.route("**/data/small.json", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ...smallDoc, revision: "r1" }) }));
   const rows = await page.evaluate(async () => {
-    const gw = (window as any).gw;
+    const rel = (window as any).rel;
     const descriptor = { version: 1, id: "small", revision: "r1", data: { url: "/data/small.json", nodes: 3, links: 1 }, indexes: [{ label: "Page", property: "id" }] };
-    const client = gw.core.createClient({ engineUrl: gw.engineUrl, graph: { descriptor }, navigation: "client-routing" });
+    const client = rel.core.createClient({ engineUrl: rel.engineUrl, graph: { descriptor }, navigation: "client-routing" });
     await new Promise<void>((resolve) => client.on("status", (e: { status: string }) => e.status === "ready" && resolve()));
     return (await client.query("SHOW INDEXES")).rows.map((r: { properties: string[] }) => r.properties);
   });

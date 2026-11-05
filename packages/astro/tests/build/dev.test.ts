@@ -15,7 +15,7 @@ const get = async (path: string) => {
   const res = await fetch(`${site!.url}${path}`);
   return { status: res.status, text: await res.text() };
 };
-const descriptor = async () => JSON.parse((await get("/_related/g/descriptor.json")).text);
+const descriptor = async () => JSON.parse((await get("/_relate/g/descriptor.json")).text);
 
 describe("registered graphs in the development server", () => {
   it("serves the descriptor and the data it names", async () => {
@@ -40,12 +40,12 @@ describe("registered graphs in the development server", () => {
 
   it("keeps running when the source fails, prints the error and answers with an error status until it is fixed", async () => {
     site = await startDev({ files: { "src/pages/index.astro": page, "src/graph.ts": source("n: 1") }, options });
-    expect((await get("/_related/g/descriptor.json")).status).toBe(200);
+    expect((await get("/_relate/g/descriptor.json")).status).toBe(200);
     site.write("src/graph.ts", `export default () => ({ version: 1, nodes: [{ id: "a" }, { id: "a" }], links: [] });\n`);
     let failing = { status: 200, text: "" };
     for (let i = 0; i < 40 && failing.status === 200; i++) {
       await new Promise((r) => setTimeout(r, 250));
-      failing = await get("/_related/g/descriptor.json");
+      failing = await get("/_relate/g/descriptor.json");
     }
     expect(failing.status).toBe(500);
     expect(failing.text).toMatch(/graph "g": nodes\[1\]/);
@@ -55,7 +55,7 @@ describe("registered graphs in the development server", () => {
     let fixed = failing;
     for (let i = 0; i < 40 && fixed.status !== 200; i++) {
       await new Promise((r) => setTimeout(r, 250));
-      fixed = await get("/_related/g/descriptor.json");
+      fixed = await get("/_relate/g/descriptor.json");
     }
     expect(fixed.status).toBe(200);
   });

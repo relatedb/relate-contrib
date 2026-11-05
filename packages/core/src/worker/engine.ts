@@ -36,7 +36,7 @@ export class Engine {
     return new Engine(new CypherliteDb());
   }
 
-  /** Open the durable store `gw-<id>`. Works only in a dedicated worker. */
+  /** Open the durable store `rel-<id>`. Works only in a dedicated worker. */
   static async store(id: string): Promise<Engine> {
     try {
       return new Engine(await CypherliteDb.open(`opfs://${STORE_PREFIX}${id}`));

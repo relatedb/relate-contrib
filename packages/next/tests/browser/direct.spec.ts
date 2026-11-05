@@ -2,7 +2,7 @@
 import { BUILDS } from "../../playwright.config.js";
 import { expect, test } from "./fixtures.js";
 
-const only = process.env.GW_ONLY?.split(",");
+const only = process.env.REL_ONLY?.split(",");
 for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.dev && !b.base)) {
   test(`the direct lookup returns one client for a visit-lifetime graph, starts one worker, and refuses the rest, ${build.name}`, async ({ page }) => {
     await page.addInitScript(() => {
@@ -17,7 +17,7 @@ for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.
     });
     await page.goto(`http://127.0.0.1:${build.port}/direct.html`);
     await expect(page.locator("[data-direct-count]")).toHaveText("300");
-    expect(await page.evaluate(() => (window as unknown as { __gwDirect: { same: boolean } }).__gwDirect.same)).toBe(true);
+    expect(await page.evaluate(() => (window as unknown as { __relDirect: { same: boolean } }).__relDirect.same)).toBe(true);
     expect(await page.evaluate(() => (window as unknown as { __workers: number }).__workers)).toBe(1);
     const errors = JSON.parse((await page.locator("[data-direct-errors]").textContent()) ?? "[]") as string[];
     expect(errors).toHaveLength(3);

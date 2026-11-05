@@ -13,7 +13,7 @@ export function useGraph(id: string, options?: GraphOptions): Client | null {
   const navigation = options?.navigation;
   const descriptor = options?.descriptor;
   useEffect(() => {
-    if (!config) throw new Error(`@relate/web-next: useGraph("${id}") was used outside RelatedWebProvider`);
+    if (!config) throw new Error(`@relate/web-next: useGraph("${id}") was used outside RelateWebProvider`);
     const held = hold(config, id, { navigation, descriptor });
     setClient(held.client);
     return () => {

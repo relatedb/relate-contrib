@@ -42,14 +42,14 @@ describe("@relate/web-core/build", () => {
   });
 
   it("prepare and evaluate name the owner, the graph and the first problem's path", async () => {
-    await expect(prepare("related-web-x", "g", doc({ nodes: [{ id: "a" }, { id: "a" }] }))).rejects.toThrow(/^related-web-x: graph "g": nodes\[1\]/);
-    await expect(evaluate("related-web-x", "g", () => { throw new Error("boom"); })).rejects.toThrow('related-web-x: graph "g": the source failed: boom');
+    await expect(prepare("relate-web-x", "g", doc({ nodes: [{ id: "a" }, { id: "a" }] }))).rejects.toThrow(/^relate-web-x: graph "g": nodes\[1\]/);
+    await expect(evaluate("relate-web-x", "g", () => { throw new Error("boom"); })).rejects.toThrow('relate-web-x: graph "g": the source failed: boom');
   });
 
   it("descriptorOf joins the base path without a doubled slash", async () => {
     const evaluated = await prepare("o", "g", doc());
-    const d = descriptorOf("g", evaluated, [], "/base/", "/related-web/g/graph.x.json");
-    expect(d.data.url).toBe("/base/related-web/g/graph.x.json");
+    const d = descriptorOf("g", evaluated, [], "/base/", "/relate-web/g/graph.x.json");
+    expect(d.data.url).toBe("/base/relate-web/g/graph.x.json");
     expect(d).toMatchObject({ version: 1, id: "g", revision: evaluated.revision });
     expect("indexes" in d).toBe(false);
     expect(withBase("", "/p")).toBe("/p");

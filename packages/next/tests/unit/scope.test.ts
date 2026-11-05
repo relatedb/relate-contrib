@@ -22,15 +22,26 @@ describe("the server entry", () => {
 });
 
 describe("the core", () => {
-  it("changes only by the build subpath and its export", () => {
-    let diff: string;
+  // The feature's first commit on main (`12897d8`, the accepted ADR-005) and its last (`3acc4f6`): between them the core
+  // gained the build subpath and its export, and nothing else.
+  it("gained only the build subpath and its export while the feature was built", () => {
+    let names: string[];
+    let manifest: string;
     try {
-      diff = execFileSync("git", ["diff", "-U0", "main", "--", "packages/core/src", "packages/core/conformance", "packages/core/package.json"], { cwd: here("../../../.."), encoding: "utf8" });
+      const cwd = here("../../../..");
+      names = execFileSync("git", ["diff", "--name-status", "12897d8", "3acc4f6", "--", "packages/core/src", "packages/core/conformance", "packages/core/package.json"], { cwd, encoding: "utf8" }).split("\n").filter(Boolean);
+      manifest = execFileSync("git", ["diff", "-U0", "12897d8", "3acc4f6", "--", "packages/core/package.json"], { cwd, encoding: "utf8" });
     } catch {
-      return; // not a git checkout, or no `main` to compare with
+      return; // not a checkout that has that history
     }
-    // The build subpath is already in main; what may differ is a change of package name (the `@relate` rename).
-    const changedLines = diff.split("\n").filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---)/.test(l));
-    expect(changedLines.filter((l) => !/related-web-|@relate\/web-/.test(l)), "lines changed in the core other than a package name").toEqual([]);
+    expect(names.length).toBeGreaterThan(0);
+    for (const line of names) {
+      const [status, file] = line.split("\t");
+      const allowed = status === "A" && file!.startsWith("packages/core/src/build/");
+      expect(allowed || file === "packages/core/package.json", line).toBe(true);
+    }
+    const added = manifest.split("\n").filter((l) => /^\+(?!\+\+)/.test(l));
+    expect(added.join("\n")).toMatch(/\.\/build/);
+    expect(manifest.split("\n").filter((l) => /^-(?!--)/.test(l))).toEqual([]);
   });
 });

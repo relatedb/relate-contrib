@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { expect, type Page } from "@playwright/test";
 import { generateGraph, type GeneratedGraph } from "../fixtures/generate-graph.js";
 
-/** Open a harness page and wait for the core to be exposed on `window.gw`. */
+/** Open a harness page and wait for the core to be exposed on `window.rel`. */
 export async function openHarness(page: Page, path = "/index.html"): Promise<void> {
   await page.goto(path);
   await page.waitForFunction(() => document.documentElement.dataset.harness === "ready");
@@ -29,14 +29,14 @@ const baselineDir = join(import.meta.dirname, "../baselines");
 
 /**
  * Compare a measured time with the baseline recorded for this browser and environment. The first measurement for
- * a key is recorded; later runs fail when a time is more than twice its baseline. GW_UPDATE_BASELINE=1 rewrites.
+ * a key is recorded; later runs fail when a time is more than twice its baseline. REL_UPDATE_BASELINE=1 rewrites.
  */
 export function checkBaseline(browser: string, key: string, ms: number): { baseline: number | null; recorded: boolean } {
   mkdirSync(baselineDir, { recursive: true });
-  const env = process.env.GW_ENV ?? "local";
+  const env = process.env.REL_ENV ?? "local";
   const file = join(baselineDir, `${browser}-${env}.json`);
   const data: Record<string, number> = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
-  if (data[key] === undefined || process.env.GW_UPDATE_BASELINE === "1") {
+  if (data[key] === undefined || process.env.REL_UPDATE_BASELINE === "1") {
     data[key] = Math.round(ms);
     writeFileSync(file, JSON.stringify(data, null, 2) + "\n");
     return { baseline: null, recorded: true };
@@ -101,7 +101,7 @@ export const storedCopy = (page: Page, id: string): Promise<any | null> =>
   page.evaluate(async (name) => {
     try {
       const root = await navigator.storage.getDirectory();
-      const dir = await root.getDirectoryHandle("related-web");
+      const dir = await root.getDirectoryHandle("relate-web");
       return JSON.parse(await (await (await dir.getFileHandle(`${name}.json`)).getFile()).text());
     } catch {
       return null;

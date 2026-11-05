@@ -8,7 +8,7 @@ const doc = { version: 1 as const, nodes: [{ id: "a", labels: ["X"] }, { id: "b"
 describe("GraphData", () => {
   it("renders one script element with escaped JSON and writes no descriptor or revision", () => {
     const html = renderToStaticMarkup(<GraphData id="notebook" document={doc} config={{ indexes: [{ label: "X", property: "id" }] }} />);
-    expect(html.startsWith('<script type="application/json" data-related-graph="notebook">')).toBe(true);
+    expect(html.startsWith('<script type="application/json" data-relate-graph="notebook">')).toBe(true);
     expect((html.match(/<script/g) ?? []).length).toBe(1);
     const payload = JSON.parse(html.replace(/^<script[^>]*>/, "").replace(/<\/script>$/, ""));
     expect(payload.document.nodes).toHaveLength(2);

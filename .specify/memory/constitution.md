@@ -1,4 +1,4 @@
-# related-web Constitution
+# relate-web Constitution
 
 ## Core Principles
 
@@ -64,9 +64,10 @@ Rationale: the engine has its own contribution rules, and a rename should stay a
 ## Technical Constraints
 
 - The repository is a pnpm workspace; the core package is its first module.
-- `related-web` (the repository) is a working name, and the packages are `@relate/web-core`, `@relate/web-astro` and `@relate/web-next` (renamed 2026-11-05), chosen to match the engine's
-  announced new name, `relate` (see `design/notes/2026-11-02-project-name.md`). The internal `gw-`
-  prefix and `data-gw-*` attributes keep their old form until a short prefix is chosen.
+- The project is `relate-web` and the packages are `@relate/web-core`, `@relate/web-astro` and `@relate/web-next` (renamed 2026-11-05), chosen to match the engine's
+  announced new name, `relate` (see `design/notes/2026-11-02-project-name.md`). The internal prefix is `rel-`
+  (`data-rel-*` attributes, `rel-<id>` store names, `REL_*` environment values), adopted 2026-11-05 in place of
+  `gw-`.
 - The browser engine is consumed as `@neo4j-labs/cypherlite-wasm`. Until it is published, a build
   from a pinned checkout is vendored in; the core declares the package as a peer dependency and
   MUST NOT reference the vendored path.

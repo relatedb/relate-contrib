@@ -9,17 +9,17 @@ test("two clients on one page have separate workers, generations and status; one
   await serveGraph(page, a);
   await serveGraph(page, b);
   const result = await page.evaluate(async ([da, db]) => {
-    const gw = (window as any).gw;
-    const ta = gw.faults.trackedWorkers();
-    const tb = gw.faults.trackedWorkers();
+    const rel = (window as any).rel;
+    const ta = rel.faults.trackedWorkers();
+    const tb = rel.faults.trackedWorkers();
     const make = (descriptor: unknown, tracked: { factory: () => Worker }) =>
-      gw.core.createClient({ engineUrl: gw.engineUrl, graph: { descriptor }, navigation: "client-routing", workerFactory: tracked.factory });
+      rel.core.createClient({ engineUrl: rel.engineUrl, graph: { descriptor }, navigation: "client-routing", workerFactory: tracked.factory });
     const ca = make(da, ta);
     const cb = make(db, tb);
     const ready = (c: any) => new Promise<void>((resolve) => c.on("status", (e: { status: string }) => e.status === "ready" && resolve()));
     await Promise.all([ready(ca), ready(cb)]);
     const countsBefore = [(await ca.query("MATCH (n) RETURN count(n) AS c")).rows[0].c, (await cb.query("MATCH (n) RETURN count(n) AS c")).rows[0].c];
-    const reason = await ca.query(gw.faults.trapStatement()).then(() => "resolved", (e: { reason: string }) => e.reason);
+    const reason = await ca.query(rel.faults.trapStatement()).then(() => "resolved", (e: { reason: string }) => e.reason);
     await new Promise<void>((resolve) => { const off = ca.on("status", (e: { status: string }) => { if (e.status === "ready") { off(); resolve(); } }); });
     return {
       countsBefore,

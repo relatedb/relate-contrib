@@ -9,7 +9,7 @@ const options = (extra = "") => `{ graphs: { g: { source: "./src/graph.ts", inde
 let site: Site | undefined;
 afterEach(() => site?.cleanup());
 
-const descriptorOf = (s: Site, name = "g") => JSON.parse(s.read(`_related/${name}/descriptor.json`));
+const descriptorOf = (s: Site, name = "g") => JSON.parse(s.read(`_relate/${name}/descriptor.json`));
 
 describe("registered graphs at build time", () => {
   it("publishes a revision-named data file and a descriptor that agree", async () => {
@@ -17,8 +17,8 @@ describe("registered graphs at build time", () => {
     const d = descriptorOf(site);
     expect(d).toMatchObject({ version: 1, id: "g", data: { nodes: 2, links: 1 }, indexes: [{ label: "P", property: "id" }] });
     expect(d.revision).toMatch(/^[0-9a-f]{12}$/);
-    expect(d.data.url).toBe(`/_related/g/graph.${d.revision}.json`);
-    const data = JSON.parse(site.read(`_related/g/graph.${d.revision}.json`));
+    expect(d.data.url).toBe(`/_relate/g/graph.${d.revision}.json`);
+    const data = JSON.parse(site.read(`_relate/g/graph.${d.revision}.json`));
     expect(data.nodes).toHaveLength(2);
     expect(data.revision).toBeUndefined();
   });
@@ -28,7 +28,7 @@ describe("registered graphs at build time", () => {
     site = await buildSite({ files: { "src/pages/index.astro": page, "src/data.json": json }, options: `{ graphs: { j: { source: "./src/data.json" } } }` });
     const d = descriptorOf(site, "j");
     expect(d.data.nodes).toBe(1);
-    expect(site.exists(`_related/j/graph.${d.revision}.json`)).toBe(true);
+    expect(site.exists(`_relate/j/graph.${d.revision}.json`)).toBe(true);
   });
 
   it("gives the same revision for the same content in two builds, and another when a property changes", async () => {
@@ -55,7 +55,7 @@ describe("registered graphs at build time", () => {
   it("includes a non-root base path in the descriptor's data URL", async () => {
     site = await buildSite({ files: { "src/pages/index.astro": page, "src/graph.ts": good }, options: options(), base: "/docs" });
     const d = descriptorOf(site);
-    expect(d.data.url).toBe(`/docs/_related/g/graph.${d.revision}.json`);
+    expect(d.data.url).toBe(`/docs/_relate/g/graph.${d.revision}.json`);
   });
 
   it("fails the build for an invalid document, naming the graph and the path of the first problem", async () => {
