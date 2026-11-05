@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-05
 
-**Status**: Draft (ADR-005)
+**Status**: Implemented (ADR-005)
 
 **Input**: User description: "The related-web Next.js adapter (`@relate/web-next`): a workspace package in `packages/next` that implements accepted ADR-005 (and builds on ADR-001 to ADR-004 and the SPIKE-006 findings) so a Next.js 16 app-router site can embed the browser graph database through the shared core package. It supplies registered graphs from a route handler, inline page graphs from a server component, React bindings whose lifetimes follow components, a shared build-time code subpath in the core, a conformance site, and a package test."
 
