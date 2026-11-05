@@ -1,7 +1,7 @@
 ---
 id: ADR-004
 title: The Astro Adapter as an Integration over the Core
-status: accepted
+status: accepted (amended 2026-11-05)
 rfcs: [RFC-001, RFC-002]
 created: 2026-11-04
 ---
@@ -141,3 +141,4 @@ A package test, like the core's, packs `related-web-astro` and the core, install
 
 - 2026-11-04: planning the adapter (`specs/002-astro-adapter/plan.md`, D-1 and D-2) found that a script that serves some pages would run on every later page, that Astro fires no first `astro:page-load` without the router, and that the core's conformance runner cannot be satisfied by hashed, name-bound descriptors. Added `selector` and the first-load rule to `onPage` (2.3), the `descriptor` testing-aid override (2.3), the inline `config` value (2.2), and the conformance and dev-server consequences (4).
 - 2026-11-04: the core's `createSiteClient` returns one client for the whole visit under `client-routing`, whichever graph is asked for, so two `"visit"` graphs would share the first. The client module keeps visit-lifetime clients by name in module state, made with `createClient` under `client-routing` and with `createSiteClient` under `multi-page`; for one graph the behavior is the core's persistent profile (2.3). Found while implementing (`specs/002-astro-adapter/research.md`, R-2).
+- 2026-11-05: ADR-005 (the Next.js adapter) is the second adapter that §4 named as the reason to move the revision and descriptor code. The canonical text, revision, document preparation and descriptor construction move into the core as `related-web-core/build`, and `related-web-astro` imports them from there; behavior is unchanged.
