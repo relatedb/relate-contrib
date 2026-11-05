@@ -1,4 +1,4 @@
-# Contract: client entry (`related-web-next/client`)
+# Contract: client entry (`@relate/web-next/client`)
 
 A `'use client'` module. Hook names and result shapes may change when tasks are written (ADR-005 §2.4).
 

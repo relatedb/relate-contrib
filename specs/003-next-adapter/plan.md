@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build `related-web-next` (`packages/next`): a configuration wrapper, a server entry that turns registered graph sources into statically generated, revision-named files and descriptors and writes inline graphs into pages, and a client entry with a provider and React hooks whose lifetimes follow components. Move the revision and descriptor code out of `related-web-astro` into the core as `related-web-core/build`. Check it with a Next conformance site and the core's conformance runner in three browsers, and with a clean-install package test under both of Next's bundlers.
+Build `@relate/web-next` (`packages/next`): a configuration wrapper, a server entry that turns registered graph sources into statically generated, revision-named files and descriptors and writes inline graphs into pages, and a client entry with a provider and React hooks whose lifetimes follow components. Move the revision and descriptor code out of `related-web-astro` into the core as `related-web-core/build`. Check it with a Next conformance site and the core's conformance runner in three browsers, and with a clean-install package test under both of Next's bundlers.
 
 Planning checked ADR-005's four open questions early (V-1, V-2, V-4, V-5 in [research.md](research.md)): the destructured route export and the catalog as props work, the development server follows source edits, and a hidden earlier page is released but, under `cacheComponents`, leaves its inline-graph element in the document. That last result, and two points where ADR-005 and the Astro code do not fit (a Node-only hash and the list of what moves), need ADR amendments (section "Decisions needed"). The recommendations follow the checks; they need your approval before tasks are generated.
 
@@ -82,7 +82,7 @@ packages/astro/                   # CHANGED: imports the above; behavior unchang
 └── src/{sources.ts,inline.ts,routes/files.ts,GraphData.astro,...}   # remove local copies, add await
 
 packages/next/
-├── package.json                  # related-web-next; exports ".", "./server", "./client"
+├── package.json                  # @relate/web-next; exports ".", "./server", "./client"
 ├── tsconfig.json
 ├── README.md                     # use, lifetimes, the placeholder-first rule, route file, base path
 ├── src/

@@ -1,7 +1,7 @@
 ---
 id: ADR-005
 title: The Next.js Adapter as React Bindings over the Core
-status: accepted
+status: accepted (amended 2026-11-05)
 rfcs: [RFC-001, RFC-002]
 created: 2026-11-05
 ---
@@ -23,13 +23,13 @@ The Astro adapter (ADR-004) settled the decisions that do not depend on the fram
 
 ## 2. Decision
 
-### 2.1 Package: `related-web-next`, with a server entry and a client entry
+### 2.1 Package: `@relate/web-next`, with a server entry and a client entry
 
-A workspace package `packages/next`, published as `related-web-next` (a working name, following `related-web-core` and `related-web-astro`). It has three entry points:
+A workspace package `packages/next`, published as `@relate/web-next`, in the `@relate` organizational namespace the project's packages are adopting (2026-11-05). The core and the Astro adapter keep their current names, `related-web-core` and `related-web-astro`, until a separate change renames them. It has three entry points:
 
-- `related-web-next` (default entry): `withRelatedWeb(nextConfig, options)`, a wrapper for `next.config`. It adds the site's `basePath` and the profile to `env` so client code can read them, and changes nothing else. The client must prefix descriptor URLs with the base path; the router's own copy of it is an internal name (`__NEXT_ROUTER_BASEPATH`) that SPIKE-006 did not try. The wrapper is also where later options go, as the `config` value on `GraphData` is for a graph.
-- `related-web-next/server`: `createGraphRoute(graphs)`, which builds the exports of the route handler (section 2.2); `catalog(graphs)`, which turns the graph declarations into plain data (ids, descriptor paths, lifetimes) a server component can pass to a client component; and `GraphData`, a server component that writes an inline graph into the page (section 2.3). It has no browser dependency and is imported only from server code.
-- `related-web-next/client`: a `'use client'` module with `RelatedWebProvider` and the hooks (section 2.4).
+- `@relate/web-next` (default entry): `withRelatedWeb(nextConfig, options)`, a wrapper for `next.config`. It adds the site's `basePath` and the profile to `env` so client code can read them, and changes nothing else. The client must prefix descriptor URLs with the base path; the router's own copy of it is an internal name (`__NEXT_ROUTER_BASEPATH`) that SPIKE-006 did not try. The wrapper is also where later options go, as the `config` value on `GraphData` is for a graph.
+- `@relate/web-next/server`: `createGraphRoute(graphs)`, which builds the exports of the route handler (section 2.2); `catalog(graphs)`, which turns the graph declarations into plain data (ids, descriptor paths, lifetimes) a server component can pass to a client component; and `GraphData`, a server component that writes an inline graph into the page (section 2.3). It has no browser dependency and is imported only from server code.
+- `@relate/web-next/client`: a `'use client'` module with `RelatedWebProvider` and the hooks (section 2.4).
 
 Peer dependencies are `next` (version 16), `react` (version 19), `related-web-core` and `@neo4j-labs/cypherlite-wasm`. The adapter has no other runtime dependency. The site passes `new URL("@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm", import.meta.url)` through the provider's `engineUrl` prop; the adapter does not import the binary itself, since a static `.wasm` import in a package that server code can reach is the trap described in section 1.
 
@@ -45,7 +45,7 @@ export const graphs = {
 };
 
 // app/related-web/[id]/[file]/route.ts
-import { createGraphRoute } from "related-web-next/server";
+import { createGraphRoute } from "@relate/web-next/server";
 import { graphs } from "../../../../lib/graphs";
 export const dynamic = "force-static";
 export const dynamicParams = false;
@@ -71,7 +71,7 @@ Under `output: "export"` the two files are written to `out/related-web/<id>/`; u
 
 ```tsx
 // app/recipes/[slug]/page.tsx (a server component)
-import { GraphData } from "related-web-next/server";
+import { GraphData } from "@relate/web-next/server";
 export default async function Recipe({ params }) {
   const recipe = await getRecipe((await params).slug);
   return <GraphData id="recipe" document={graphOf(recipe)} />;
@@ -113,7 +113,7 @@ A hook or a call that asks for a `"page"` or inline graph from outside a compone
 
 ### 2.7 Checked against the core's conformance scenarios
 
-`packages/next/conformance-site` is a Next app, not published, that reproduces the example pages' `data-gw-*` markup (`conformance/example-site/gw-page.ts` in the core defines it) using only `related-web-next`: a shared registered graph (`"visit"`), a page with its own inline graph, a page that asks for a registered `"page"` graph, and a page with two graphs. It is built once per profile as a production build and served with `next start`, and the same build is exported and served as static files; the core's conformance runner (ADR-004 §2.5, including its `dataRequests` and `descriptor` parameters) drives it in Chromium, Firefox and WebKit. Adapter tests cover destruction of a page client on departure (including under strict mode), a stored copy available to the next page, rejection of a page-lifetime id by `graph()`, and the build failures of section 2.3 and the revision check of section 2.2. A package test, like the core's and the Astro adapter's, packs `related-web-next`, the core and the engine, installs them in a clean Next project outside the repository, and builds and runs a page under both bundlers.
+`packages/next/conformance-site` is a Next app, not published, that reproduces the example pages' `data-gw-*` markup (`conformance/example-site/gw-page.ts` in the core defines it) using only `@relate/web-next`: a shared registered graph (`"visit"`), a page with its own inline graph, a page that asks for a registered `"page"` graph, and a page with two graphs. It is built once per profile as a production build and served with `next start`, and the same build is exported and served as static files; the core's conformance runner (ADR-004 §2.5, including its `dataRequests` and `descriptor` parameters) drives it in Chromium, Firefox and WebKit. Adapter tests cover destruction of a page client on departure (including under strict mode), a stored copy available to the next page, rejection of a page-lifetime id by `graph()`, and the build failures of section 2.3 and the revision check of section 2.2. A package test, like the core's and the Astro adapter's, packs `@relate/web-next`, the core and the engine, installs them in a clean Next project outside the repository, and builds and runs a page under both bundlers.
 
 ## 3. Alternatives Considered
 
@@ -150,5 +150,7 @@ A hook or a call that asks for a `"page"` or inline graph from outside a compone
 - Evidence: SPIKE-006 (embedding the core in Next.js)
 
 ## 6. Amendments
+
+- 2026-11-05: the package is named `@relate/web-next`, under the `@relate` namespace, instead of `related-web-next`. Entry points are `@relate/web-next`, `@relate/web-next/server` and `@relate/web-next/client`. Nothing else in the decision changes. The core and the Astro adapter are renamed in a later change; until then the adapter depends on `related-web-core` by its current name.
 
 Open questions this ADR leaves for implementation to check: whether Next 16 keeps a hidden earlier page mounted (section 4), whether `next dev` gives a new revision-named file when a source changes (section 4), the destructured route export and the catalog passed as props (section 4), and the questions left open in RFC-001 §7.5. The plan and the implementation settle each one, and this ADR is amended with what was found, as ADR-004 was.
