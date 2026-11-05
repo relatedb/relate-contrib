@@ -59,7 +59,23 @@ const elementIds = new WeakMap<Element, number>();
 let nextElement = 1;
 const idOf = (el: Element): number => elementIds.get(el) ?? (elementIds.set(el, nextElement), nextElement++);
 
+let listening = false;
+
+/** A document that ends (a closed tab, a reload, a link to another document) takes its page clients with it: end them now. */
+function endPageClientsOnDeparture(): void {
+  if (listening || typeof addEventListener !== "function") return;
+  listening = true;
+  addEventListener("pagehide", () => {
+    for (const entry of pageEntries.values()) {
+      if (entry.timer !== null) clearTimeout(entry.timer);
+      entry.client.destroy();
+    }
+    pageEntries.clear();
+  });
+}
+
 function holdPage(key: string, make: () => Client): Held {
+  endPageClientsOnDeparture();
   let entry = pageEntries.get(key);
   if (!entry) {
     entry = { client: make(), holders: 0, timer: null };

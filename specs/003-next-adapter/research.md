@@ -43,6 +43,13 @@ A Next 16.4.5 app in a pnpm workspace package (dependencies in the package's `no
 
 With a source that adds a random node on every read, `next build` failed under both bundlers with "revision mismatch for graph.<revision>.json" and exit status 1.
 
+### Checks made while implementing (V-8 to V-11)
+
+- **V-8. `cacheComponents` refuses `dynamic` and `dynamicParams`.** With `cacheComponents: true` the Turbopack build failed with "Route segment config "dynamic" is not compatible with `nextConfig.cacheComponents`" (and the same for `dynamicParams`), for the route file and for a page. The cache build of the conformance site is made from copies of those files without the two lines (`conformance-site/variant.mjs`). The route then answers an unlisted file through `GET`, so a stale revision must answer 404 outside a build; the revision check decides by `NEXT_PHASE` (not by `NODE_ENV`). ADR-005 §6 records it.
+- **V-9. The development server's list of files can trail an edit.** After a source edit the descriptor showed the new revision at once, but the new data file answered 404 for a moment (Next's own parameter list); polling for it succeeded. `allowedDevOrigins: ["127.0.0.1"]` is needed for the tests' address, or the development server blocks its own scripts.
+- **V-10. Static export hosting.** A route folder named `page-1.html` exports as `page-1.html.html` beside a folder `page-1.html/` of router data, and the router's `.txt` payloads must be served as `text/x-component`; with another content type the router fell back to a full page load and the core's C-02 scenario (the same instance across pages) failed in the export build only.
+- **V-11. Consecutive pages share a page client.** A page that unmounts while the next page mounts, in one commit, releases and holds in the same task, so a page-lifetime graph both pages ask for keeps one client. This follows FR-020's sharing; the lifecycle test records it.
+
 ## Decisions
 
 **D-1. The build subpath uses Web Crypto, so it is asynchronous.** ADR-005 §2.2 requires `related-web-core/build` to need no Node-only module, and the Astro code computes the revision with `node:crypto`'s synchronous `createHash`. `globalThis.crypto.subtle.digest` is available in Node 20 and later and in every browser, and gives the same SHA-256, so revisions do not change. It is asynchronous, so `revisionOf`, `prepare` and `descriptorOf`'s caller become asynchronous (`evaluate` already was). Astro's call sites and its unit tests add `await`; no expectation changes. Alternative: keep `node:crypto` and amend ADR-005 to "no browser dependency, Node-compatible runtimes only". Rejected: it would fix the subpath to Node, and the Next adapter's server code can run in other runtimes later.

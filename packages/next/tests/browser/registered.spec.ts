@@ -3,7 +3,7 @@ import { BUILDS } from "../../playwright.config.js";
 import { expect, test } from "./fixtures.js";
 
 const only = process.env.GW_ONLY?.split(",");
-for (const build of BUILDS.filter((b) => !only || only.includes(b.name) )) {
+for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.dev && !b.base)) {
   const origin = `http://127.0.0.1:${build.port}`;
   test.describe(`registered graph, ${build.name}`, () => {
     test("a page shows its placeholder, then the registered graph's result, with no hydration warning", async ({ page }) => {

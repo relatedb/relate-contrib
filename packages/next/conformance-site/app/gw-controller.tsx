@@ -5,6 +5,7 @@
 import { useGraph } from "@relate/web-next/client";
 import { attachView } from "related-web-core";
 import type { Client, View } from "related-web-core";
+import { visible } from "./visible";
 import { useEffect, useState } from "react";
 
 const descriptors: Record<string, string | undefined> = { a: undefined, b: "/descriptor-b.json", mismatch: "/descriptor-mismatch.json", broken: "/descriptor-broken.json" };
@@ -23,7 +24,7 @@ let current: Client | null = null;
 let lastError = "";
 
 const set = (name: string, value: string): void => {
-  const el = document.querySelector(`[data-gw-${name}]`);
+  const el = visible(`[data-gw-${name}]`);
   if (el) el.textContent = value;
 };
 

@@ -15,6 +15,8 @@ export default withRelatedWeb(
     ...(exported ? { output: "export" } : {}),
     ...(process.env.CACHE_COMPONENTS === "1" ? { cacheComponents: true } : {}),
     ...(process.env.BASE_PATH ? { basePath: process.env.BASE_PATH } : {}),
+    // the development server answers the tests' address
+    allowedDevOrigins: ["127.0.0.1"],
     // the workspace's packages are symlinks into the repository root
     turbopack: { root },
     outputFileTracingRoot: root,

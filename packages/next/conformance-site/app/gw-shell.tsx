@@ -25,6 +25,9 @@ export function Nav() {
       <NavLink href="/notes.html">Notes</NavLink>
       <NavLink href="/broken.html">Broken</NavLink>
       <NavLink href="/inline.html">Inline</NavLink>
+      <NavLink href="/lifetime-a.html">Lifetime A</NavLink>
+      <NavLink href="/lifetime-b.html">Lifetime B</NavLink>
+      <NavLink href="/lifetime-c.html">Lifetime C</NavLink>
     </nav>
   );
 }

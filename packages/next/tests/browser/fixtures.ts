@@ -18,7 +18,7 @@ export type { Page } from "@playwright/test";
 async function clearOpfsAt(context: BrowserContext, origin: string): Promise<void> {
   const page = await context.newPage();
   try {
-    await page.goto(new URL("/blank.html", origin).href);
+    await page.goto(`${origin}/blank.html`);
     for (let attempt = 0; attempt < 25; attempt++) {
       const left = await page.evaluate(async () => {
         const root = await navigator.storage.getDirectory();
@@ -44,7 +44,7 @@ async function clearOpfsAt(context: BrowserContext, origin: string): Promise<voi
 }
 
 /** The conformance site is served on one origin per build; each has its own origin-private file system. */
-const ORIGINS = BUILDS.filter((b) => !process.env.GW_ONLY || process.env.GW_ONLY.split(",").includes(b.name)).map((b) => `http://127.0.0.1:${b.port}`);
+const ORIGINS = BUILDS.filter((b) => !process.env.GW_ONLY || process.env.GW_ONLY.split(",").includes(b.name)).map((b) => `http://127.0.0.1:${b.port}${b.base ?? ""}`);
 
 const clearOpfs = async (context: BrowserContext, _baseURL: string | undefined): Promise<void> => {
   for (const origin of ORIGINS) await clearOpfsAt(context, origin);

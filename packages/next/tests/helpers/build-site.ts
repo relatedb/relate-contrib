@@ -1,6 +1,6 @@
 // Builds a small fixture Next app with the adapter under test. The app lives in `conformance-site/.fixtures/<unique>` so that
 // it resolves `next`, `react` and `@relate/web-next` from the conformance site's `node_modules`, as a workspace package does.
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -50,7 +50,7 @@ export default function Layout({ children }) { catalog(graphs); return <html lan
 const PAGE = `export default function Page() { return <main>fixture</main>; }
 `;
 
-export function buildSite(fixture: Fixture = {}): Built {
+function writeFixture(fixture: Fixture): string {
   mkdirSync(fixtures, { recursive: true });
   const dir = mkdtempSync(join(fixtures, "app-"));
   const mode = fixture.mode ?? "export";
@@ -70,6 +70,43 @@ export default withRelatedWeb({ distDir: ${JSON.stringify(mode === "export" ? "o
     mkdirSync(dirname(join(dir, path)), { recursive: true });
     writeFileSync(join(dir, path), text);
   }
+  return dir;
+}
+
+export interface Dev {
+  dir: string;
+  url: string;
+  write(path: string, text: string): void;
+  stop(): void;
+}
+
+/** Starts `next dev` on a fixture app and waits for it to answer. */
+export async function startDev(fixture: Fixture = {}, port = 5395): Promise<Dev> {
+  const dir = writeFixture({ ...fixture, mode: "server" });
+  const child: ChildProcess = spawn(join(site, "node_modules/.bin/next"), ["dev", "-p", String(port), ...(fixture.bundler === "webpack" ? ["--webpack"] : [])], { cwd: dir, env: { ...process.env, ...fixture.env }, stdio: "ignore" });
+  const url = `http://127.0.0.1:${port}`;
+  for (let i = 0; i < 240; i++) {
+    try {
+      if ((await fetch(`${url}/`)).ok) break;
+    } catch {
+      /* not up yet */
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  return {
+    dir,
+    url,
+    write: (path, text) => writeFileSync(join(dir, path), text),
+    stop: () => {
+      child.kill();
+      rmSync(dir, { recursive: true, force: true });
+    },
+  };
+}
+
+export function buildSite(fixture: Fixture = {}): Built {
+  const dir = writeFixture(fixture);
+  const mode = fixture.mode ?? "export";
   const next = join(site, "node_modules/.bin/next");
   const args = ["build", ...(fixture.bundler === "webpack" ? ["--webpack"] : [])];
   const run = spawnSync(next, args, { cwd: dir, env: { ...process.env, NODE_ENV: "production", ...fixture.env }, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });

@@ -58,7 +58,9 @@ export function createGraphRoute(graphs: Graphs) {
     if (match[1] !== evaluated.revision) {
       // Next builds in several processes, so the process that lists a file and the one that serves it evaluate separately.
       // The same source gives the same revision in both, or the source is not deterministic and the build must stop (FR-009).
-      if (isDevelopment()) return notFound();
+      // Outside a build, a revision that is not current is a file that does not exist (a stale link, or a request when the
+      // route is not limited to its listed files).
+      if (process.env.NEXT_PHASE !== "phase-production-build") return notFound();
       throw new Error(`${OWNER}: graph "${id}": revision mismatch for ${file}: this evaluation gave ${evaluated.revision}; the graph's source is not deterministic`);
     }
     return json(evaluated.text);

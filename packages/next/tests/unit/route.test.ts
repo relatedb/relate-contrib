@@ -42,9 +42,12 @@ describe("the route builder", () => {
     expect((await get(route, "g", "notes.txt")).status).toBe(404);
   });
 
-  it("fails, naming the graph, when a data file's revision is not the evaluation's, and answers 404 in development", async () => {
+  it("fails the build, naming the graph, when a data file's revision is not the evaluation's, and answers 404 otherwise", async () => {
     const route = createGraphRoute({ g: { source: () => doc() } });
+    vi.stubEnv("NEXT_PHASE", "phase-production-build");
     await expect(get(route, "g", "graph.000000000000.json")).rejects.toThrow(/graph "g": revision mismatch.*not deterministic/);
+    vi.stubEnv("NEXT_PHASE", "phase-production-server");
+    expect((await get(route, "g", "graph.000000000000.json")).status).toBe(404);
     vi.stubEnv("NODE_ENV", "development");
     expect((await get(route, "g", "graph.000000000000.json")).status).toBe(404);
   });
