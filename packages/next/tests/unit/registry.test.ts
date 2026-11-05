@@ -11,6 +11,10 @@ vi.mock("@relate/web-core", () => {
   return { createClient: make("client"), createSiteClient: make("site") };
 });
 
+// The registry listens for `pagehide` once, when it first holds a page client, so the listener is captured here, before any test.
+const pagehide: Array<(e: { persisted: boolean }) => void> = [];
+(globalThis as unknown as { addEventListener: unknown }).addEventListener = (type: string, fn: (e: { persisted: boolean }) => void) => type === "pagehide" && pagehide.push(fn);
+
 const { hold, visitGraph } = await import("../../src/client/registry.js");
 
 const catalog = {
@@ -90,23 +94,24 @@ describe("page-lifetime graphs", () => {
 });
 
 describe("departure of the document", () => {
-  it("destroys every page client at once on pagehide, and leaves visit clients alone", () => {
-    const listeners: Array<() => void> = [];
-    (globalThis as unknown as { addEventListener: unknown }).addEventListener = (type: string, fn: () => void) => type === "pagehide" && listeners.push(fn);
-    try {
-      hold(config, "shared", { descriptor: "/another-visit.json" }); // a visit client of its own, apart from the other tests'
-      hold(config, "local");
-      const gone = hold(config, "other");
-      gone.release(); // waiting for its task
-      expect(listeners.length).toBeGreaterThan(0);
-      listeners.forEach((fn) => fn());
-      const byKind = made.map((c) => c.destroy.mock.calls.length);
-      expect(byKind).toEqual([0, 1, 1]);
-      vi.runAllTimers();
-      expect(made.map((c) => c.destroy.mock.calls.length)).toEqual([0, 1, 1]); // no second destroy
-    } finally {
-      delete (globalThis as unknown as { addEventListener?: unknown }).addEventListener;
-    }
+  it("keeps page clients when the browser keeps the page for the back button (persisted)", () => {
+    const held = hold(config, "other", { descriptor: "/bfcache.json" });
+    pagehide.forEach((fn) => fn({ persisted: true }));
+    expect(made.at(-1)!.destroy).not.toHaveBeenCalled();
+    held.release();
+    vi.runAllTimers();
+  });
+
+  it("destroys every page client at once when the document ends, and leaves visit clients alone", () => {
+    hold(config, "shared", { descriptor: "/another-visit.json" }); // a visit client of its own, apart from the other tests'
+    hold(config, "local");
+    const gone = hold(config, "other");
+    gone.release(); // waiting for its task
+    expect(pagehide.length).toBeGreaterThan(0);
+    pagehide.forEach((fn) => fn({ persisted: false }));
+    expect(made.map((c) => c.destroy.mock.calls.length)).toEqual([0, 1, 1]);
+    vi.runAllTimers();
+    expect(made.map((c) => c.destroy.mock.calls.length)).toEqual([0, 1, 1]); // no second destroy
   });
 });
 
@@ -157,6 +162,11 @@ describe("inline graphs", () => {
 });
 
 describe("lookup errors", () => {
+  it("refuses an inline graph named like a registered graph, whatever the server saw", () => {
+    inlineElements = [element("local", "{}")];
+    expect(() => hold(config, "local")).toThrow('"local" is both an inline graph of this page and a registered graph');
+  });
+
   it("names an unknown graph and lists the registered names", () => {
     expect(() => hold(config, "nope")).toThrow('no graph named "nope" in this page or among the registered graphs (shared, local, other)');
   });

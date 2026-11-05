@@ -232,7 +232,7 @@ The questions ADR-005 left for implementation are tested early, and the ADR is a
 
 **Build time: inline graphs**
 
-- **FR-013**: The server entry MUST provide a server component that takes a graph name, an ADR-002 document and an optional `config` value holding a list of indexes, validates the document, and writes it into the page so the client code can find it, with no descriptor, no revision, no stored copy and no extra request.
+- **FR-013**: The server entry MUST provide a server component that takes a graph name, the page's path (for error messages), an ADR-002 document and an optional `config` value holding a list of indexes, validates the document, and writes it into the page so the client code can find it, with no descriptor, no revision, no stored copy and no extra request.
 - **FR-014**: The component MUST fail the render, naming the page, for an invalid document or `config`, for a duplicate name in one render, and for a name that is also registered.
 - **FR-015**: A page MUST be able to carry several inline graphs with different names, and the document MUST be able to be built from the page's own content.
 

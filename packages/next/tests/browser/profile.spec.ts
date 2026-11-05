@@ -1,9 +1,8 @@
 // covers: FR-002, FR-010, FR-016, FR-023
-import { BUILDS } from "../../playwright.config.js";
+import { builds } from "./builds.js";
 import { expect, test } from "./fixtures.js";
 
-const only = process.env.REL_ONLY?.split(",");
-const selected = BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.dev && !b.cache);
+const selected = builds({ cache: false, base: true });
 
 for (const build of selected) {
   const base = `http://127.0.0.1:${build.port}${build.base ?? ""}`;

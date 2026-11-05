@@ -26,6 +26,17 @@ describe("withRelateWeb", () => {
     expect(process.env.RELATE_WEB_BASE_PATH).toBe("/docs");
   });
 
+  it("wraps a function configuration, and an async one, and passes its arguments through", async () => {
+    const seen: unknown[] = [];
+    const sync = withRelateWeb((phase: string) => (seen.push(phase), { basePath: "/docs", reactStrictMode: true }));
+    const a = await sync("phase-production-build");
+    expect(seen).toEqual(["phase-production-build"]);
+    expect(a).toMatchObject({ basePath: "/docs", reactStrictMode: true, env: { RELATE_WEB_BASE_PATH: "/docs", RELATE_WEB_NAVIGATION: "client-routing" } });
+    const asynchronous = withRelateWeb(async () => ({ basePath: "/x", images: { unoptimized: true } }), { navigation: "multi-page" });
+    expect(await asynchronous()).toMatchObject({ basePath: "/x", images: { unoptimized: true }, env: { RELATE_WEB_NAVIGATION: "multi-page" } });
+    expect(process.env.RELATE_WEB_BASE_PATH).toBe("/x");
+  });
+
   it("accepts no configuration at all", () => {
     expect(withRelateWeb(undefined).env?.RELATE_WEB_NAVIGATION).toBe("client-routing");
   });

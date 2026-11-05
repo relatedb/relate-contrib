@@ -1,12 +1,11 @@
 // covers: FR-013, FR-014, FR-015, FR-021, SC-008
-import { BUILDS } from "../../playwright.config.js";
+import { builds, selected } from "./builds.js";
 import { expect, test } from "./fixtures.js";
 
 const trap = `RETURN ${"(".repeat(1000)}1${")".repeat(1000)} AS x`;
 type Win = { __relClients: Record<string, { generation: number; query(s: string): Promise<{ rows: Array<Record<string, unknown>> }> }> };
 
-const only = process.env.REL_ONLY?.split(",");
-for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.cache && !b.dev && !b.base)) {
+for (const build of builds({ cache: false })) {
   const base = `http://127.0.0.1:${build.port}`;
   test.describe(`inline graphs, ${build.name}`, () => {
     test("an inline graph loads from the page and answers a query, with its index only, and a reload replays it", async ({ page }) => {

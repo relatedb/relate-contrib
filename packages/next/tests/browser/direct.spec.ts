@@ -1,9 +1,8 @@
 // covers: FR-022
-import { BUILDS } from "../../playwright.config.js";
+import { builds, selected } from "./builds.js";
 import { expect, test } from "./fixtures.js";
 
-const only = process.env.REL_ONLY?.split(",");
-for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.dev && !b.base)) {
+for (const build of builds()) {
   test(`the direct lookup returns one client for a visit-lifetime graph, starts one worker, and refuses the rest, ${build.name}`, async ({ page }) => {
     await page.addInitScript(() => {
       const Original = window.Worker;

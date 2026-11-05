@@ -1,9 +1,9 @@
 // covers: FR-019, FR-020, FR-021, FR-024, SC-003, SC-004
 import type { Page } from "@playwright/test";
 import { BUILDS } from "../../playwright.config.js";
+import { builds, selected } from "./builds.js";
 import { expect, test } from "./fixtures.js";
 
-const only = process.env.REL_ONLY?.split(",");
 const log = (page: Page) => page.evaluate(() => [...((window as unknown as { __relLog?: string[] }).__relLog ?? [])]);
 const follow = async (page: Page, label: string, title: string) => {
   await page.getByRole("link", { name: label, exact: true }).click();
@@ -22,7 +22,7 @@ const countWorkers = (page: Page) =>
   });
 
 // Under client-routing the router keeps the document; with `cacheComponents` it also keeps the departed page hidden.
-for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && b.navigation === "client-routing" && !b.dev && !b.base)) {
+for (const build of builds({ where: (b) => b.navigation === "client-routing" })) {
   const base = `http://127.0.0.1:${build.port}`;
   test.describe(`lifetimes, ${build.name}`, () => {
     test("a page client is shared by consecutive pages that use it, and destroyed within one task of the last holder leaving", async ({ page }) => {
@@ -83,7 +83,7 @@ for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && b.n
 
 // React runs effects twice in development. The page client must still be made once and not destroyed while mounted.
 test.describe("lifetimes, strict mode (development server)", () => {
-  test.skip(!!only && !only.includes("dev"), "the development server is not selected");
+  test.skip(!selected("dev"), "the development server is not selected");
   test("exactly one client is made and none is destroyed while the component stays mounted", async ({ page }) => {
     test.setTimeout(240_000);
     await page.goto(`http://127.0.0.1:${BUILDS.find((b) => b.dev)!.port}/lifetime-a.html`, { timeout: 180_000 });

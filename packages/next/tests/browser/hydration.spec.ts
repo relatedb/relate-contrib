@@ -1,13 +1,12 @@
 // covers: SC-008, FR-017, FR-024
-import { BUILDS } from "../../playwright.config.js";
+import { builds, selected } from "./builds.js";
 import { expect, test } from "./fixtures.js";
 
-const only = process.env.REL_ONLY?.split(",");
 const PAGES = ["/index.html", "/page-1.html", "/page-2.html", "/notes.html", "/broken.html", "/blank.html", "/inline.html", "/two-graphs.html", "/lifetime-a.html", "/lifetime-b.html", "/lifetime-c.html", "/direct.html", "/recipes/soup", "/figures/inline/20"];
 
 // The server's markup shows the page's own text, its links and its placeholder before any script runs, and the browser
 // hydrates it with no warning.
-for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.dev && !b.base)) {
+for (const build of builds()) {
   test(`every conformance page renders without a hydration warning, ${build.name}`, async ({ page }) => {
     const origin = `http://127.0.0.1:${build.port}`;
     const problems: string[] = [];

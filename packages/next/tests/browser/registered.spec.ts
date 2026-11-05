@@ -1,9 +1,8 @@
 // covers: FR-005, FR-006, FR-016, FR-017, FR-024, SC-008
-import { BUILDS } from "../../playwright.config.js";
+import { builds, selected } from "./builds.js";
 import { expect, test } from "./fixtures.js";
 
-const only = process.env.REL_ONLY?.split(",");
-for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.dev && !b.base)) {
+for (const build of builds()) {
   const origin = `http://127.0.0.1:${build.port}`;
   test.describe(`registered graph, ${build.name}`, () => {
     test("a page shows its placeholder, then the registered graph's result, with no hydration warning", async ({ page }) => {
