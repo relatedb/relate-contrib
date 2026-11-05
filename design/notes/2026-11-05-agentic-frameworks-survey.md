@@ -4,6 +4,18 @@ This note is about where an embedded graph (relate, the engine behind this repos
 
 The web adapters so far (Astro, Next) are about a browser page. An agent integration is about a program in Node, a worker or a serverless function that uses a graph as a tool, as memory, or as retrieval. That mostly means the native Node package (`@neo4j-labs/cypherlite`) or Bolt and HTTP rather than the browser WASM build, which brings back RFC-001 §7.9 (the two JavaScript APIs differ in shape).
 
+## What relate already provides
+
+The engine is now `relate` (RelateDB; this repository's vendored copy still carries the old name `cypherlite` in places), and its command-line tool already covers much of the agent side. Read from its repository's documentation (`docs/api/cli`, `docs/api/mcp`, `docs/api/extensions`, at commit `0b596fd8`); the CLI was not run for this note and is not installed on this machine, so check behavior against a release before relying on it.
+
+- **MCP server:** `relate serve --database PATH --mcp PORT|stdio` hosts one store over streamable HTTP or stdio, with optional `--read-only`, `--auth`, and a tool-name namespace. Three tools today: `get_schema`, `read_cypher`, `write_cypher` (Neo4j's reference MCP server's vocabulary under Relate names). Results come in the canonical result envelope with plan notifications. Write detection uses `EXPLAIN`.
+- **Skill installation:** `relate skill install|remove|list|check [--agent NAME]` writes a bundle (`<skills dir>/relate`, marked and version-stamped) into the skill directories of the agents it detects, and `check` reports drift against the binary's own bundle.
+- **Agent briefing and agent mode:** `relate agent-context [COMMAND]` prints a compact briefing for agent harnesses, generated from the same command table as `--help`; piped output defaults to a compact format and a row cap; an `agent` build of the CLI exists for sandbox and Docker images (one-shot queries, JSON output, load from a URL, no self-update, no telemetry).
+- **Extensions:** `relate extension init|install|list|remove|check` and `relate run <name>` mount userland commands as MCP stdio children of a host that owns the store. The host keeps the flag grammar, the store, commit policy, caps and trust (first-party channel, GitHub pin, URL, local directory). Authoring is in `sh`, `py`, `ts` or `rust`, or any language that speaks JSON-RPC. First-party examples are `fs-to-graph` and `git-to-graph`. The docs name later strata (callables, starters, engine plugins) that are not built.
+- **Other doors:** Bolt, HTTP, Python and JavaScript clients, JSON snapshots, `--load` from a source.
+
+So the working principle for this repository is to augment these, not to build parallel ones. Anything an agent or a coding agent needs that is generic (run a query, serve MCP, install a skill, see the schema) is relate's to provide, and gaps are raised upstream as RFCs or ADRs here (the project rule), not patched around.
+
 ## What an integration would be made of
 
 Across all the frameworks below, the same few seams repeat:
@@ -11,7 +23,7 @@ Across all the frameworks below, the same few seams repeat:
 | Seam | What it would be for a graph |
 |---|---|
 | **Tool** | A typed function the model can call: run a read-only Cypher query, describe the schema, expand the neighbourhood of a node. Nearly every framework defines tools with a Zod input schema, so one tool definition ports with little change. |
-| **MCP server** | The lowest common denominator. Every framework below that is not tied to one vendor can consume MCP servers, so one graph MCP server covers all of them at once, at the price of a process boundary. |
+| **MCP server** | The lowest common denominator. Every framework below that is not tied to one vendor can consume MCP servers, so relate's MCP server covers all of them at once, at the price of a process boundary. |
 | **Memory or vector store** | A provider that stores and recalls what an agent learned, and answers similarity queries. Only some frameworks define an interface for it (Mastra most clearly). The engine's flat vector scan fits small corpora. |
 | **State and durability** | Where an agent's run state lives between steps. A graph is not the right place for the framework's own run state; it is the place for what the agent knows. |
 | **Runtime** | Node, edge, Lambda, a vendor sandbox. It decides whether the native package can run at all (native binaries are platform-specific) or only the WASM build can. |
@@ -42,8 +54,8 @@ A coding agent is a different kind of host: the user runs it on their own machin
 
 | Route | What it is | Cost to the user |
 |---|---|---|
-| **MCP server** | The graph as a tool server the agent connects to. Every coding agent below supports MCP. | A process to run and a config entry; the tool descriptions are always in the model's context. |
-| **CLI plus a skill** | A command-line tool (for example `relate query ...`) and a `SKILL.md` that tells the agent when and how to run it. The agent uses its shell. | Nothing running between uses; the skill's text loads only when relevant, so it costs less context than MCP. Needs the binary installed. |
+| **MCP server** | The graph as a tool server the agent connects to (relate's `relate serve --mcp`). Every coding agent below supports MCP. | A process to run and a config entry; the tool descriptions are always in the model's context. |
+| **CLI plus a skill** | A command-line tool (relate's `relate query ...`, with `relate agent-context` for the briefing) and a `SKILL.md` (relate's `relate skill install`) that tells the agent when and how to run it. The agent uses its shell. | Nothing running between uses; the skill's text loads only when relevant, so it costs less context than MCP. Needs the binary installed. |
 | **Direct code** | Plugin code, hooks that run on agent events, or a language-server style integration. | Per-agent and the most coupled; worth it only for something MCP and a CLI cannot do, such as acting on every file edit. |
 
 What is common across agents: a **skill** is a folder with a `SKILL.md`, an open format that Anthropic created and that more than 40 agents are reported to read (the specification is hosted at agentskills.io; the format is the file, and each agent decides how it runs it). **`AGENTS.md`** is a shared file of standing project instructions. A **plugin** is the installable bundle of skills, MCP configuration and sometimes hooks and agents. This repository already follows the shared layout: its skills live in `.agents/skills/` and are linked from `.claude/skills/`.
@@ -63,25 +75,28 @@ The fifth place is the least certain. Surveys disagree on who holds it, and Gemi
 Two different things an integration could give a coding agent, and they should not be mixed up:
 
 - **Help adopting the web adapters.** A skill that teaches an agent to add `@relate/web-astro` or `@relate/web-next` to a site correctly: the route file, the provider placement, the rules about inline graphs. This is documentation as a skill, needs no running process, and works in every agent above. It is the cheapest first step.
-- **A graph the agent works with.** The agent queries a graph about the user's project (the site's content, a codebase, notes) or keeps its own memory in one. This is the MCP or CLI route, and it needs the engine to run somewhere the agent can reach (the native package or a Bolt/HTTP server, not a browser).
+- **A graph the agent works with.** The agent queries a graph about the user's project (the site's content, a codebase, notes) or keeps its own memory in one. This is the MCP or CLI route, and it needs the engine to run somewhere the agent can reach, which `relate serve` already does (not a browser).
 
 ## What this suggests (a lean, not a decision)
 
-1. **A graph MCP server comes first**, because it serves every row above with one piece of work, and the agent frameworks are all converging on MCP. It also forces the decision about which runtime hosts the engine.
-2. **Per-framework packages are thin Zod tool definitions over that same client**, so they are cheap once the first exists. The order would follow who we want to reach: Mastra (memory interface, most direct fit), then Vercel's AI SDK and eve (largest audience, one tool shape), then Strands (browser-capable).
-3. **A `SKILL.md` for adopting the adapters is the cheapest coding-agent step**, and a CLI plus skill is usually lighter on the model's context than an MCP server; a graph MCP server and a CLI can share one implementation. One plugin that bundles the skill, the CLI instructions and the MCP configuration reaches Claude Code, Codex, Cursor, Copilot and Gemini CLI, because their plugin and skill formats overlap.
-4. **Effect is a separate, small adapter** and does not belong in the agent group.
-5. **Memory is where a graph is different from a plain database tool.** Mastra's vector-store and memory interfaces and LangChain's retriever interfaces are the places an embedded graph with vector search could be a real provider, not only a tool. That overlaps the site-graph and navigation work (planned RFC-003 and RFC-004): both need embedding generation and a query-time strategy, and the answer should be shared.
+Relate already ships an MCP server, a CLI and a skill installer, so this repository does not build those. What is left for it is what relate does not do, which is mostly about the web and about content.
+
+1. **Use relate's MCP server and CLI as they are**, and make the agent frameworks and coding agents consume them: Mastra, the Vercel AI SDK (`@ai-sdk/mcp`), Strands and the other frameworks that act as MCP clients need configuration and a recipe, not new code. For these, the work here is documentation and tested examples.
+2. **A site-content-to-graph extractor as a relate extension** (`relate run site-to-graph`, authored in TypeScript, which the extension system supports). That is the same job as the planned RFC-003 (how content becomes a site graph). Written as an extension, one implementation serves a build step (producing the graph document an adapter's `source` returns), an agent (who can run it and then query the result) and CI. Its first-party siblings, `fs-to-graph` and `git-to-graph`, show the shape.
+3. **A skill for adopting the web adapters** (`@relate/web-astro`, `@relate/web-next`): documentation as a `SKILL.md`, with nothing running. `relate skill install` installs relate's own bundle for the agents it detects; whether it can carry a second, third-party bundle, or whether the adapters' skill should be a section of relate's, is a question for upstream (see below). Until then it can ship as a plain skill folder, since the format is shared across the coding agents.
+4. **Adapters where MCP is the wrong seam.** Mastra's memory and vector-store interfaces and LangChain's retriever and store interfaces want a provider object, not a tool. Those would be thin packages over relate's JavaScript client or Bolt, and only where there is a real interface to implement. Effect is a separate, small adapter (a `Layer` and a conversion between `Graph` and the graph data format) and does not belong in the agent group.
+5. **Memory is where a graph differs from a plain database tool**, and it overlaps the navigation work (planned RFC-004): both need embedding generation and a query-time strategy, which should be decided once and ideally in relate.
 
 ## Questions this leaves
 
-- Which runtime hosts the engine for an agent: the native Node package in the agent's process, a separate Bolt or HTTP server, or WASM in a worker? (RFC-001 §7.5 and §7.9 were left open for exactly this.)
-- What may an agent do to the graph: read only, scoped writes, or full access? Cypher from a model is a safety question before it is a convenience.
+- Which runtime hosts the engine for an agent? Relate's answer is a process (`relate serve`, stdio or HTTP), which fits agents and coding agents. The browser WASM build and Cloudflare-style runtimes are the cases that process model does not reach. (RFC-001 §7.5 and §7.9 were left open for exactly this.)
+- What may an agent do to the graph? Relate offers `--read-only`, `--auth` and a separate `write_cypher` tool, so the policy knob exists; what is open is the default recommendation for a site's graph, since Cypher from a model is a safety question before it is a convenience.
 - Who produces embeddings, and where do they live, so a Mastra memory provider, an MCP tool and the site's navigation element do not each invent their own?
 - Does eve's self-hosting story, and whether it consumes MCP, change whether it is a first-round target?
 - Is a "pack" (tools plus a skill that explains the schema to the model) a better unit to publish than a library? For coding agents the equivalent is one portable plugin; does it stay portable once hooks are involved?
-- For coding agents, is the first deliverable the adoption skill (documentation) or a graph tool, and does the CLI route need a stable command-line contract that does not exist yet?
-- A coding agent's cloud form (Copilot's coding agent in Actions, Codex's cloud tasks) runs in a sandbox; which of the engine's distributions install there?
+- For coding agents, the CLI and MCP routes are relate's; is the first deliverable here the adoption skill, the site-to-graph extension, or both?
+- A coding agent's cloud form (Copilot's coding agent in Actions, Codex's cloud tasks) runs in a sandbox; relate's `agent` build and `--load` from a URL look aimed at that. Is it enough, and how does a site's graph get into it?
+- Upstream, to check with the relate repository's owners: can `relate skill install` carry additional bundles; are vector search and neighbourhood expansion meant to be MCP tools (today the three tools are schema, read and write); who generates embeddings; and are the planned extension strata (callables, starters, engine plugins) the home for a content extractor with its own schema?
 
 ## Sources
 
