@@ -17,7 +17,7 @@ Planned integration order (subject to change as ADRs land): ObservableHQ (spiked
 
 The first package, `packages/core` (`related-web-core`, a working name), is implemented from `specs/001-core-package/`
 (see its `tasks.md`). The Astro adapter, `packages/astro` (`related-web-astro`), is implemented from `specs/002-astro-adapter/`
-(ADR-004). Design documents are in `design/`. Further adapters come next.
+(ADR-004). The Next adapter, `packages/next` (`@relate/web-next`), is implemented from `specs/003-next-adapter/` (ADR-005) under the `@relate` namespace; the core and Astro adapter are renamed in a later change. Design documents are in `design/`. Further adapters come next.
 
 ## Commands
 
@@ -39,12 +39,17 @@ pnpm test:astro-browsers       # the adapter in Chromium, Firefox, WebKit (lifec
 pnpm test:astro-conformance    # the core's conformance runner over packages/astro/conformance-site, both profiles
 pnpm test:astro-package        # packs the adapter and core, installs them in a clean Astro project, builds and runs it
 pnpm test:astro-trace          # every adapter requirement and success criterion has a passing, tagged test
+pnpm test:next                 # the Next adapter: unit, build (next build under both bundlers) and development-server tests
+pnpm test:next-browsers        # lifecycle, store, inline graphs, profile, hydration, direct lookup in Chromium, Firefox, WebKit
+pnpm test:next-conformance     # the core's conformance runner over packages/next/conformance-site (server and export, both profiles)
+pnpm test:next-package         # packs the adapter and core, installs them in a clean Next project, builds under Turbopack and webpack, runs a page
+pnpm test:next-trace           # every adapter requirement and success criterion has a passing, tagged test
 ```
 
 Layout: `packages/core/src` (client, worker, data validators, profiles), `tests/` (unit, browser, package,
 fixtures, load-time baselines), `conformance/` (example site, scenarios, runner). Read
 `packages/core/README.md` for the API. The adapter: `packages/astro/src` (integration, injected route, component, client
-module), `tests/`, `conformance-site/` (an unpublished Astro site built once per profile); read `packages/astro/README.md`.
+module), `tests/`, `conformance-site/` (an unpublished Astro site built once per profile); read `packages/astro/README.md`. The Next adapter: `packages/next/src` (config wrapper, server entry, client entry), `tests/`, `conformance-site/` (an unpublished Next app); read `packages/next/README.md`.
 
 ## Intended architecture (working assumptions, not yet decided by ADRs)
 

@@ -1,0 +1,53 @@
+{
+  "name": "@relate/web-next",
+  "version": "0.0.0",
+  "description": "Next.js integration for related-web-core: serves graphs built from a site's content, carries small graphs in pages, and ties graph clients to React components.",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "default": "./dist/server/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "default": "./dist/client/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:next": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json",
+    "test:next-browsers": "playwright test --grep-invert \"@conformance|@figures\"",
+    "test:next-conformance": "GW_REPORT=reports/conformance.json playwright test --grep @conformance",
+    "test:next-package": "vitest run --config vitest.package.config.ts --reporter=default --reporter=json --outputFile.json=reports/package.json",
+    "test:next-trace": "tsx tests/trace/check-trace.ts"
+  },
+  "peerDependencies": {
+    "@neo4j-labs/cypherlite-wasm": "*",
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "related-web-core": "*"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "next": "^16.4.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "related-web-core": "workspace:*",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

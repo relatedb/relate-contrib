@@ -16,7 +16,7 @@ const doc = (over: Record<string, unknown> = {}) => ({
 });
 
 describe("canonical form and revision", () => {
-  it("is the same for the same content in another order of keys, nodes and links", () => {
+  it("is the same for the same content in another order of keys, nodes and links", async () => {
     const reordered = {
       links: [
         { type: "T", target: "b", source: "a", properties: { w: 2 } },
@@ -28,33 +28,33 @@ describe("canonical form and revision", () => {
       ],
       version: 1,
     };
-    expect(prepare("g", reordered).revision).toBe(prepare("g", doc()).revision);
+    expect((await prepare("g", reordered)).revision).toBe((await prepare("g", doc())).revision);
     expect(canonicalText(reordered as never)).toBe(canonicalText(doc() as never));
   });
 
-  it("changes when one property changes", () => {
+  it("changes when one property changes", async () => {
     const changed = doc({ nodes: [{ id: "b", labels: ["X"], properties: { z: 2, a: [3, 1, 2] } }, { id: "a", labels: ["X"] }] });
-    expect(prepare("g", changed).revision).not.toBe(prepare("g", doc()).revision);
+    expect((await prepare("g", changed)).revision).not.toBe((await prepare("g", doc())).revision);
   });
 
-  it("keeps the order of an array property, because the order is data", () => {
+  it("keeps the order of an array property, because the order is data", async () => {
     const swapped = doc({ nodes: [{ id: "b", labels: ["X"], properties: { z: 1, a: [1, 2, 3] } }, { id: "a", labels: ["X"] }] });
-    expect(prepare("g", swapped).revision).not.toBe(prepare("g", doc()).revision);
+    expect((await prepare("g", swapped)).revision).not.toBe((await prepare("g", doc())).revision);
   });
 
-  it("ignores a revision the author wrote into the document", () => {
-    expect(prepare("g", doc({ revision: "mine" })).revision).toBe(prepare("g", doc()).revision);
+  it("ignores a revision the author wrote into the document", async () => {
+    expect((await prepare("g", doc({ revision: "mine" }))).revision).toBe((await prepare("g", doc())).revision);
     expect(canonicalText(doc({ revision: "mine" }) as never)).not.toContain("mine");
   });
 
-  it("is 12 hexadecimal digits, and counts the nodes and links", () => {
-    const r = prepare("g", doc());
+  it("is 12 hexadecimal digits, and counts the nodes and links", async () => {
+    const r = await prepare("g", doc());
     expect(r.revision).toMatch(/^[0-9a-f]{12}$/);
-    expect(r.revision).toBe(revisionOf(r.text));
+    expect(r.revision).toBe(await revisionOf(r.text));
     expect([r.nodes, r.links]).toEqual([2, 2]);
   });
 
-  it("fails with the graph's name and the path of the first problem", () => {
-    expect(() => prepare("g", doc({ nodes: [{ id: "a" }, { id: "a" }] }))).toThrow(/graph "g": nodes\[1\]/);
+  it("fails with the graph's name and the path of the first problem", async () => {
+    await expect(prepare("g", doc({ nodes: [{ id: "a" }, { id: "a" }] }))).rejects.toThrow(/graph "g": nodes\[1\]/);
   });
 });

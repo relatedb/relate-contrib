@@ -1,5 +1,6 @@
 packages:
   - "packages/*"
+  - "packages/next/conformance-site"
 allowBuilds:
   esbuild: true
 overrides:

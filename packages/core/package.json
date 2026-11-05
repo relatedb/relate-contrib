@@ -18,6 +18,10 @@
       "types": "./dist/validate.d.ts",
       "default": "./dist/validate.js"
     },
+    "./build": {
+      "types": "./dist/build/index.d.ts",
+      "default": "./dist/build/index.js"
+    },
     "./worker": {
       "types": "./dist/worker/worker.d.ts",
       "default": "./dist/worker/worker.js"

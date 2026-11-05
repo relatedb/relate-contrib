@@ -1,0 +1,10 @@
+import { chromium } from "/Users/abk/Developer/akollegger/graph-web/design/spikes/SPIKE-006-nextjs-embedding/next-core/node_modules/@playwright/test/index.mjs";
+const b = await chromium.launch(); const p = await b.newPage();
+await p.goto(process.argv[2] + "/hide/a"); await p.waitForSelector('[data-holder="a"]');
+const snap = async (l) => console.log(l.padEnd(22), JSON.stringify(await p.evaluate(() => ({ holders: window.__holders, visibleH1: document.querySelector("h1:not([hidden])")?.textContent, scripts: [...document.querySelectorAll("script[data-related-graph]")].map((s) => s.textContent), hiddenSubtrees: document.querySelectorAll("[hidden]").length }))));
+await snap("on a");
+await p.click('nav a:has-text("b")'); await p.waitForSelector('[data-holder="b"]'); await snap("a -> b");
+await p.click('nav a:has-text("a")'); await p.waitForFunction(() => document.querySelector("h1")?.textContent === "a"); await snap("b -> a");
+await p.click('nav a:has-text("b")'); await p.waitForFunction(() => document.querySelector("h1")?.textContent === "b"); await snap("a -> b again");
+console.log("log:", JSON.stringify(await p.evaluate(() => window.__log)));
+await b.close();
