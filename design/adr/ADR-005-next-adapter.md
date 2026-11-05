@@ -1,7 +1,7 @@
 ---
 id: ADR-005
 title: The Next.js Adapter as React Bindings over the Core
-status: proposed
+status: accepted
 rfcs: [RFC-001, RFC-002]
 created: 2026-11-05
 ---
@@ -148,3 +148,7 @@ A hook or a call that asks for a `"page"` or inline graph from outside a compone
 - RFCs: RFC-001, RFC-002
 - Builds on: ADR-001 (hosting and profiles), ADR-002 (data format), ADR-003 (descriptor), ADR-004 (the Astro adapter)
 - Evidence: SPIKE-006 (embedding the core in Next.js)
+
+## 6. Amendments
+
+Open questions this ADR leaves for implementation to check: whether Next 16 keeps a hidden earlier page mounted (section 4), whether `next dev` gives a new revision-named file when a source changes (section 4), the destructured route export and the catalog passed as props (section 4), and the questions left open in RFC-001 §7.5. The plan and the implementation settle each one, and this ADR is amended with what was found, as ADR-004 was.

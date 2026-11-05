@@ -116,4 +116,4 @@ Three candidates: keep them apart, with nothing in common; keep them apart but l
 
 - [ADR-002](../adr/ADR-002-graph-data-format.md): Node-link JSON as the graph data format (accepted)
 - [ADR-004](../adr/ADR-004-astro-adapter.md): The Astro adapter, which declares page graphs inline and shared graphs as files (accepted)
-- [ADR-005](../adr/ADR-005-next-adapter.md): The Next.js adapter, which serves registered graphs from a route handler and reads inline graphs from the page (proposed)
+- [ADR-005](../adr/ADR-005-next-adapter.md): The Next.js adapter, which serves registered graphs from a route handler and reads inline graphs from the page (accepted)
