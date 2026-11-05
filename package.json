@@ -16,6 +16,11 @@
     "test:astro-browsers": "pnpm --filter related-web-astro test:astro-browsers",
     "test:astro-conformance": "pnpm --filter related-web-astro test:astro-conformance",
     "test:astro-package": "pnpm --filter related-web-astro test:astro-package",
-    "test:astro-trace": "pnpm --filter related-web-astro test:astro-trace"
+    "test:astro-trace": "pnpm --filter related-web-astro test:astro-trace",
+    "test:next": "pnpm --filter @relate/web-next test:next",
+    "test:next-browsers": "pnpm --filter @relate/web-next test:next-browsers",
+    "test:next-conformance": "pnpm --filter @relate/web-next test:next-conformance",
+    "test:next-package": "pnpm --filter @relate/web-next test:next-package",
+    "test:next-trace": "pnpm --filter @relate/web-next test:next-trace"
   }
 }
