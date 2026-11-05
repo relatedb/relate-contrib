@@ -1,0 +1,21 @@
+{
+  "name": "spike-006-next-core",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@neo4j-labs/cypherlite-wasm": "file:../../../../vendor/cypherlite-wasm/pkg",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "next": "^16.4.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "related-web-core": "file:../../../../packages/core",
+    "typescript": "^7.0.2"
+  }
+}
