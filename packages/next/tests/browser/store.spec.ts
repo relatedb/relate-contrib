@@ -1,9 +1,8 @@
 // covers: FR-020, SC-003
-import { BUILDS } from "../../playwright.config.js";
+import { builds, selected } from "./builds.js";
 import { expect, test } from "./fixtures.js";
 
-const only = process.env.REL_ONLY?.split(",");
-for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && b.navigation === "client-routing" && !b.dev && !b.base)) {
+for (const build of builds({ where: (b) => b.navigation === "client-routing" })) {
   const base = `http://127.0.0.1:${build.port}`;
   test.describe(`stored copy, ${build.name}`, () => {
     test("a registered page-lifetime graph restores from its stored copy on the next page, and another graph opens its own store", async ({ page }) => {

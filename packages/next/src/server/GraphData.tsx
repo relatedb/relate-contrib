@@ -9,8 +9,8 @@ export interface GraphDataProps {
   id: string;
   document: unknown;
   config?: InlineConfig;
-  /** Names the page in an error message. Next also names the page it was prerendering when a render fails. */
-  page?: string;
+  /** The page's path, for error messages: a failed render names the page and the graph. Server components cannot read their own route without making the page dynamic, so the author gives it. */
+  page: string;
 }
 
 /** The names used so far in one render: React's per-request cache, so concurrent renders do not share it. */
@@ -18,7 +18,10 @@ const seenInRender = cache(() => new Set<string>());
 
 /** The script element's text, or an error that names the page, the graph and the first problem. */
 export function inlineText(props: GraphDataProps, seen: Set<string>, registered: string[] = [...registeredNames]): string {
-  const graph = checkInline(OWNER, props.page ?? "this page", props.id, props.document, props.config, seen, registered);
+  if (typeof props.page !== "string" || props.page === "") {
+    throw new Error(`${OWNER}: inline graph "${String(props.id)}": GraphData needs a page prop, the page's path, to name the page in its error messages`);
+  }
+  const graph = checkInline(OWNER, props.page, props.id, props.document, props.config, seen, registered);
   return escapeJson(graph);
 }
 

@@ -21,12 +21,10 @@ const serve = (b: (typeof BUILDS)[number]) => {
   const env = `NAVIGATION=${b.navigation} BUILD_NAME=${b.name}${b.base ? ` BASE_PATH=${b.base}` : ""}${b.exported ? " EXPORT=1" : ""}${b.cache ? " CACHE_COMPONENTS=1" : ""}`;
   if (b.dev) return { command: `cd conformance-site && ${env} ./node_modules/.bin/next dev -p ${b.port}`, url: `http://127.0.0.1:${b.port}/blank.html`, reuseExistingServer: true, timeout: 600_000 };
   const start = b.exported ? `node serve.mjs out-${b.name} ${b.port}` : `./node_modules/.bin/next start -p ${b.port}`;
-  // the cache build is made from copies of the route and recipe files without the settings `cacheComponents` refuses
-  const build = b.cache
-    ? `node variant.mjs cache && ${env} ./node_modules/.bin/next build; status=$?; node variant.mjs standard; [ $status -eq 0 ]`
-    : `${env} ./node_modules/.bin/next build`;
+  // the cache build is made in a copy of the site without the settings `cacheComponents` refuses
+  const dir = b.cache ? "conformance-site/.variants/cache" : "conformance-site";
   return {
-    command: `cd conformance-site && ${build} && ${env} ${start}`,
+    command: `${b.cache ? "cd conformance-site && node variant.mjs cache && cd .. && " : ""}cd ${dir} && ${env} ${b.cache ? "../../node_modules" : "./node_modules"}/.bin/next build && ${env} ${start.replace("./node_modules", b.cache ? "../../node_modules" : "./node_modules")}`,
     url: `http://127.0.0.1:${b.port}${b.base ?? ""}/blank.html`,
     reuseExistingServer: true,
     timeout: 600_000,

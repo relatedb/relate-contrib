@@ -1,13 +1,20 @@
 // The conformance site: one build per NAVIGATION (client-routing or multi-page), as a production server build or, with
 // EXPORT=1, a static export. CACHE_COMPONENTS=1 adds `cacheComponents`, the setting under which the router keeps a
 // departed page in the document. BASE_PATH adds a base path. BUNDLER is read by the build command, not here.
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { withRelateWeb } from "@relate/web-next";
 
 const navigation = process.env.NAVIGATION === "multi-page" ? "multi-page" : "client-routing";
 const name = process.env.BUILD_NAME ?? navigation;
 const exported = process.env.EXPORT === "1";
-const root = fileURLToPath(new URL("../../../", import.meta.url));
+// the workspace root, which may be this folder's third or fifth parent (the cache build runs from `.variants/cache`)
+const root = (() => {
+  let dir = dirname(fileURLToPath(import.meta.url));
+  while (!existsSync(join(dir, "pnpm-workspace.yaml"))) dir = dirname(dir);
+  return dir;
+})();
 
 export default withRelateWeb(
   {

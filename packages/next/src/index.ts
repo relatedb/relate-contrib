@@ -16,14 +16,26 @@ interface NextConfigLike {
   [key: string]: unknown;
 }
 
-export function withRelateWeb<T extends NextConfigLike>(nextConfig: T = {} as T, options: RelateWebOptions = {}): T {
-  const navigation = options.navigation ?? "client-routing";
-  if (!NAVIGATIONS.includes(navigation)) {
-    throw new Error(`@relate/web-next: navigation "${String(navigation)}" is not one of ${NAVIGATIONS.map((n) => `"${n}"`).join(", ")}`);
-  }
+/** A configuration as Next accepts it: an object, or a function (phase, context) of one, or an async function. */
+type ConfigInput<T extends NextConfigLike> = T | ((...args: never[]) => T | Promise<T>);
+
+function wrap<T extends NextConfigLike>(nextConfig: T, navigation: Navigation): T {
   const basePath = nextConfig.basePath ?? "";
   // The server entry reads these from the process: route handlers and server components may not be bundled with the config's `env`.
   process.env[ENV_BASE_PATH] = basePath;
   process.env[ENV_NAVIGATION] = navigation;
   return { ...nextConfig, env: { ...nextConfig.env, [ENV_BASE_PATH]: basePath, [ENV_NAVIGATION]: navigation } };
+}
+
+export function withRelateWeb<T extends NextConfigLike>(nextConfig: T, options?: RelateWebOptions): T;
+export function withRelateWeb<T extends NextConfigLike, A extends never[]>(nextConfig: (...args: A) => T | Promise<T>, options?: RelateWebOptions): (...args: A) => Promise<T>;
+export function withRelateWeb<T extends NextConfigLike>(nextConfig: ConfigInput<T> = {} as T, options: RelateWebOptions = {}): unknown {
+  const navigation = options.navigation ?? "client-routing";
+  if (!NAVIGATIONS.includes(navigation)) {
+    throw new Error(`@relate/web-next: navigation "${String(navigation)}" is not one of ${NAVIGATIONS.map((n) => `"${n}"`).join(", ")}`);
+  }
+  if (typeof nextConfig === "function") {
+    return async (...args: never[]) => wrap(await nextConfig(...args), navigation);
+  }
+  return wrap(nextConfig, navigation);
 }

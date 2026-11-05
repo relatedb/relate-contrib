@@ -65,7 +65,9 @@ let listening = false;
 function endPageClientsOnDeparture(): void {
   if (listening || typeof addEventListener !== "function") return;
   listening = true;
-  addEventListener("pagehide", () => {
+  addEventListener("pagehide", (event) => {
+    // A page the browser keeps in its back/forward cache comes back alive; its clients must still be there.
+    if ((event as PageTransitionEvent).persisted) return;
     for (const entry of pageEntries.values()) {
       if (entry.timer !== null) clearTimeout(entry.timer);
       entry.client.destroy();
@@ -111,6 +113,10 @@ export function hold(config: Config, id: string, options: GraphOptions = {}): He
   const profile = options.navigation ?? config.profile;
   const inline = findInline(id);
   if (inline) {
+    // The server's check of this needs `catalog()` to have run before the page rendered, so it is repeated here, where it always can.
+    if (config.catalog.graphs.some((g) => g.id === id)) {
+      throw new Error(`@relate/web-next: "${id}" is both an inline graph of this page and a registered graph; use one name for one or the other`);
+    }
     const key = `inline\n${profile}\n${id}\n${idOf(inline.element)}`;
     return holdPage(key, () => createClient({ engineUrl: config.engineUrl, graph: { document: inline.document as never, indexes: inline.indexes }, navigation: profile }));
   }

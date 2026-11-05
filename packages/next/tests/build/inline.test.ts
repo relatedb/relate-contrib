@@ -20,7 +20,7 @@ export default function Page() { return <main>${jsx}</main>; }
 
 describe("inline graphs in a build", () => {
   it("writes one script element per graph into the page, and nothing else", () => {
-    const b = build({ files: page(`<GraphData id="alpha" document={ok} /><GraphData id="beta" document={ok} config={{ indexes: [{ label: "X", property: "id" }] }} />`) });
+    const b = build({ files: page(`<GraphData page="/inline" id="alpha" document={ok} /><GraphData page="/inline" id="beta" document={ok} config={{ indexes: [{ label: "X", property: "id" }] }} />`) });
     expect(b.status, b.output).toBe(0);
     const html = b.read("inline.html");
     expect((html.match(/data-relate-graph="/g) ?? []).length).toBe(2);
@@ -28,26 +28,31 @@ describe("inline graphs in a build", () => {
   });
 
   it("fails the build, naming the page and the path of the first problem, for an invalid document", () => {
-    const b = build({ files: page(`<GraphData id="notebook" document={{ version: 1, nodes: [{ id: "a" }, { id: "a" }], links: [] }} />`) });
+    const b = build({ files: page(`<GraphData page="/inline" id="notebook" document={{ version: 1, nodes: [{ id: "a" }, { id: "a" }], links: [] }} />`) });
     expect(b.status).not.toBe(0);
-    expect(b.output).toMatch(/inline graph "notebook": nodes\[1\]/);
-    expect(b.output).toMatch(/\/inline/);
+    expect(b.output).toMatch(/\/inline: inline graph "notebook": nodes\[1\]/);
+  });
+
+  it("fails, saying what is missing, when the page prop is left out", () => {
+    const b = build({ files: { "app/inline/page.jsx": `import { GraphData } from "@relate/web-next/server";\nexport default function Page() { return <main><GraphData id="a" document={{ version: 1, nodes: [], links: [] }} /></main>; }\n` } });
+    expect(b.status).not.toBe(0);
+    expect(b.output).toMatch(/GraphData needs a page prop/);
   });
 
   it("fails for an invalid config", () => {
-    const b = build({ files: page(`<GraphData id="notebook" document={ok} config={{ colour: 1 }} />`) });
+    const b = build({ files: page(`<GraphData page="/inline" id="notebook" document={ok} config={{ colour: 1 }} />`) });
     expect(b.status).not.toBe(0);
     expect(b.output).toMatch(/config\.colour: unknown setting/);
   });
 
   it("fails for a second use of one name in one render", () => {
-    const b = build({ files: page(`<GraphData id="twice" document={ok} /><GraphData id="twice" document={ok} />`) });
+    const b = build({ files: page(`<GraphData page="/inline" id="twice" document={ok} /><GraphData page="/inline" id="twice" document={ok} />`) });
     expect(b.status).not.toBe(0);
     expect(b.output).toMatch(/inline graph "twice": the name is used twice/);
   });
 
   it("fails for a name that is also registered", () => {
-    const b = build({ files: page(`<GraphData id="g" document={ok} />`) });
+    const b = build({ files: page(`<GraphData page="/inline" id="g" document={ok} />`) });
     expect(b.status).not.toBe(0);
     expect(b.output).toMatch(/inline graph "g": the name is also a registered graph/);
   });
