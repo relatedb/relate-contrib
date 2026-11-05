@@ -1,5 +1,5 @@
 // Shows how long the core says a graph took to load, for the load-figure pages (single measurements, see research R-10).
-import { onPage } from "related-web-astro/client";
+import { onPage } from "@relate/web-astro/client";
 
 onPage(
   (page) => {

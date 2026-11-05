@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build `related-web-astro` (`packages/astro`): an Astro 7 integration that turns registered graph sources into revision-named static files and descriptors, an `.astro` component that carries a small graph inside a page, and a client module whose page entry ties each page's graph clients to the router's arrival and departure. Everything about instances, faults, loading and profiles stays in `related-web-core`. The adapter is checked by an unpublished conformance site (run with the core's runner in three browsers, both profiles), its own browser and build tests, and a clean-install test.
+Build `@relate/web-astro` (`packages/astro`): an Astro 7 integration that turns registered graph sources into revision-named static files and descriptors, an `.astro` component that carries a small graph inside a page, and a client module whose page entry ties each page's graph clients to the router's arrival and departure. Everything about instances, faults, loading and profiles stays in `@relate/web-core`. The adapter is checked by an unpublished conformance site (run with the core's runner in three browsers, both profiles), its own browser and build tests, and a clean-install test.
 
 Planning found two points where ADR-004 and the core's conformance runner did not fit Astro (section "Decisions needed"). Both were resolved on 2026-11-04 by an ADR-004 amendment and a spec amendment, as recommended there.
 
@@ -14,7 +14,7 @@ Planning found two points where ADR-004 and the core's conformance runner did no
 
 **Language/Version**: TypeScript 7 (as the core), Node 24 for build and tests, ES2022 browser target
 
-**Primary Dependencies**: peers `astro` ^7.4, `related-web-core`, `@neo4j-labs/cypherlite-wasm`; no other runtime dependency. Dev: `@playwright/test`, `vitest`, `typescript`.
+**Primary Dependencies**: peers `astro` ^7.4, `@relate/web-core`, `@neo4j-labs/cypherlite-wasm`; no other runtime dependency. Dev: `@playwright/test`, `vitest`, `typescript`.
 
 **Storage**: none of its own. Registered graphs are static files; the core's origin-private store is used through the core.
 
@@ -74,7 +74,7 @@ specs/002-astro-adapter/
 
 ```text
 packages/astro/
-├── package.json                  # related-web-astro; exports ".", "./graph-data", "./client", "./types"
+├── package.json                  # @relate/web-astro; exports ".", "./graph-data", "./client", "./types"
 ├── tsconfig.json
 ├── README.md                     # use, lifetimes, the placeholder-first rule for UI-framework wrappers
 ├── src/
@@ -83,7 +83,7 @@ packages/astro/
 │   ├── sources.ts                # evaluate once, validate (core), canonical form, revision (FR-006 to FR-009)
 │   ├── routes/files.ts           # injected prerendered endpoint for descriptor.json and graph.<revision>.json
 │   ├── plugin.ts                 # Vite plugin: virtual:related-web/config and /sources, dev re-evaluation (FR-011, FR-012)
-│   ├── GraphData.astro           # exported as related-web-astro/graph-data (FR-013 to FR-015)
+│   ├── GraphData.astro           # exported as @relate/web-astro/graph-data (FR-013 to FR-015)
 │   ├── client/
 │   │   ├── index.ts              # onPage, graph (FR-016 to FR-024, FR-026)
 │   │   ├── page.ts               # page lifecycle: first load, arrival, departure, pagehide

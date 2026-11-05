@@ -1,7 +1,7 @@
-# Contract: the integration (`related-web-astro`)
+# Contract: the integration (`@relate/web-astro`)
 
 ```ts
-import relatedWeb from "related-web-astro";
+import relatedWeb from "@relate/web-astro";
 relatedWeb(options?: {
   graphs?: Record<string, {
     source: string;                       // path to a module (default export: () => Doc | Promise<Doc>) or a .json file

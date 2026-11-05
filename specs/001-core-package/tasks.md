@@ -26,7 +26,7 @@ description: "Task list for the related-web core package"
 - [X] T002 Add the engine as a git submodule at `vendor/cypherlite` (remote `git@github.com:neo4j-labs/cypherlite.git`, pinned to a commit that builds the browser package) and record the commit, why it was chosen, and the access requirement in `vendor/README.md`
 - [X] T003 [P] Create `.gitignore` covering `node_modules`, `dist`, `vendor/cypherlite-wasm/pkg`, `test-results` and `playwright-report`
 - [X] T004 Write `scripts/build-wasm.sh`: build the browser package from `vendor/cypherlite` into `vendor/cypherlite-wasm/pkg` following research R7 (release build, `wasm-bindgen-cli` at the version the checkout's lockfile pins, `wasm-opt`, the `wasm32-unknown-unknown` target), make sure `trap.js` and `opfs.js` sit beside `cypherlite.js`, and stop with a clear message when a tool is missing
-- [X] T005 Create `packages/core/package.json` (name `related-web-core`, `type: module`, exports `.`, `./validate`, `./worker`, `./conformance`; `peerDependencies` on `@neo4j-labs/cypherlite-wasm`; `@playwright/test` as an optional peer; no `dependencies`; dev dependencies `typescript`, `vitest`, `@playwright/test`, `vite`, `ajv`) per plan.md
+- [X] T005 Create `packages/core/package.json` (name `@relate/web-core`, `type: module`, exports `.`, `./validate`, `./worker`, `./conformance`; `peerDependencies` on `@neo4j-labs/cypherlite-wasm`; `@playwright/test` as an optional peer; no `dependencies`; dev dependencies `typescript`, `vitest`, `@playwright/test`, `vite`, `ajv`) per plan.md
 - [X] T006 [P] Create `tsconfig.base.json` at the root and `packages/core/tsconfig.json` (strict, ES2022, declaration files, `outDir` `dist`)
 - [X] T007 [P] Create `packages/core/vitest.config.ts` for `packages/core/tests/unit`
 - [X] T008 [P] Create `packages/core/playwright.config.ts` with projects `chromium`, `firefox` and `webkit`, serving `packages/core/tests/browser/harness` through Vite
@@ -77,7 +77,7 @@ description: "Task list for the related-web core package"
 - [X] T028 [P] [US2] Implement the parameter encoder in `packages/core/src/worker/encode.ts` that writes the parameters as JSON text, writing a number array that contains any fractional item with every item as a float
 - [X] T029 [US2] Implement the loader in `packages/core/src/worker/loader.ts`: validate before any statement; create only the indexes named by the descriptor (or the caller without one) before the nodes; run the two fixed statements of research R2 in batches of 1000, keeping a map from document `id` to element id for one load; add `scope` to every created node when a scope is given; check agreement with the descriptor; leave the instance empty when anything is rejected
 - [X] T030 [US2] Create the Node-only entry `packages/core/src/validate.ts` re-exporting `validate`, `validateDescriptor` and `checkAgreement` with no browser APIs, and wire it as the `./validate` export in `packages/core/package.json`
-- [X] T031 [US2] Make the US2 tests pass (`pnpm --filter related-web-core test:unit` and `test:browsers -- loader`) in Chromium, Firefox and WebKit
+- [X] T031 [US2] Make the US2 tests pass (`pnpm --filter @relate/web-core test:unit` and `test:browsers -- loader`) in Chromium, Firefox and WebKit
 
 ---
 
@@ -221,7 +221,7 @@ description: "Task list for the related-web core package"
 - [X] T081 Update the Commands and Architecture sections of `CLAUDE.md` with the pnpm workspace layout, the scripts of T001 and the `packages/core` structure
 - [X] T082 Record the browser and worker measurements of loading (1,000, 5,000 and 20,000 pages) and of restore in `design/adr/ADR-002-graph-data-format.md` section 4 and `design/adr/ADR-003-graph-descriptor.md` section 4, replacing the Node-only figures and the unverified items they settle
 - [X] T083 Decide how continuous integration reaches the private engine submodule (credentials, or a cached engine build) and document the decision in `vendor/README.md`
-- [X] T084 Run `pnpm test`, `pnpm --filter related-web-core test:conformance`, `test:package` and `test:trace` and confirm every requirement and success criterion has a passing test (SC-005)
+- [X] T084 Run `pnpm test`, `pnpm --filter @relate/web-core test:conformance`, `test:package` and `test:trace` and confirm every requirement and success criterion has a passing test (SC-005)
 - [X] T085 Run the scenarios of `specs/001-core-package/quickstart.md` end to end and correct the quickstart where the commands differ
 - [X] T086 Check the work against the constitution (principles I to VI) and note the result in `specs/001-core-package/plan.md`
 

@@ -78,7 +78,7 @@ beforeAll(() => {
   mkdirSync(consumer, { recursive: true });
   writeFileSync(join(consumer, "package.json"), JSON.stringify({ name: "consumer", private: true, type: "module" }));
   writeFileSync(join(consumer, "pnpm-workspace.yaml"), "allowBuilds:\n  esbuild: true\n  sharp: true\n");
-  run("pnpm", ["add", "--prefer-offline", adapterTarball, tarballIn(work, "related-web-core-"), `file:${engine}`, "next@^16.4.5", "react@^19", "react-dom@^19"], consumer);
+  run("pnpm", ["add", "--prefer-offline", adapterTarball, tarballIn(work, "relate-web-core-"), `file:${engine}`, "next@^16.4.5", "react@^19", "react-dom@^19"], consumer);
   for (const [path, text] of Object.entries(files)) {
     mkdirSync(join(consumer, path, ".."), { recursive: true });
     writeFileSync(join(consumer, path), text);
@@ -114,7 +114,7 @@ describe("the packed adapter in a clean project", () => {
     expect(listing.some((f) => /\b(tests|conformance-site|vendor|node_modules)\//.test(f))).toBe(false);
     const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/web-next/package.json"), "utf8"));
     expect(manifest.dependencies).toBeUndefined();
-    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@neo4j-labs/cypherlite-wasm", "next", "react", "related-web-core"]);
+    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@neo4j-labs/cypherlite-wasm", "@relate/web-core", "next", "react"]);
     expect(JSON.stringify(manifest)).not.toContain(repo);
     // no engine binary inside the package (FR-003)
     expect(listing.some((f) => f.endsWith(".wasm"))).toBe(false);

@@ -1,5 +1,5 @@
 // A script that asks for a visit-lifetime graph directly, outside any page setup, twice.
-import { graph } from "related-web-astro/client";
+import { graph } from "@relate/web-astro/client";
 
 const first = graph("example");
 const second = graph("example");

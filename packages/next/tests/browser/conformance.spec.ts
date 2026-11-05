@@ -1,5 +1,5 @@
 // covers: FR-025, FR-029, FR-030, SC-005
-import { formatReport, runConformance, type Profile } from "related-web-core/conformance";
+import { formatReport, runConformance, type Profile } from "@relate/web-core/conformance";
 import { BUILDS } from "../../playwright.config.js";
 import { expect, test } from "./fixtures.js";
 

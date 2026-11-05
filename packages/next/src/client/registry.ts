@@ -1,7 +1,7 @@
 // Finding a graph by name and making its client (spec FR-018 to FR-022; ADR-005 §2.4). Everything about the instance
 // (worker, status, faults, loading) is the core's; this file decides which core client a name gets and who ends it.
-import { createClient, createSiteClient } from "related-web-core";
-import type { Client } from "related-web-core";
+import { createClient, createSiteClient } from "@relate/web-core";
+import type { Client } from "@relate/web-core";
 import type { Navigation } from "../env.js";
 import type { Catalog } from "../server/catalog.js";
 import { findInline } from "./inline.js";

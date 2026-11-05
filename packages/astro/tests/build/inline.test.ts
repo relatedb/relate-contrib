@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { buildSite, type Site } from "../helpers/build-site.js";
 
 const doc = `{ version: 1, nodes: [{ id: "a", labels: ["P"] }, { id: "b" }], links: [{ source: "a", target: "b", type: "T" }] }`;
-const pageWith = (body: string, frontmatter = "") => `---\nimport GraphData from "related-web-astro/graph-data";\n${frontmatter}\n---\n<html><body>${body}</body></html>\n`;
+const pageWith = (body: string, frontmatter = "") => `---\nimport GraphData from "@relate/web-astro/graph-data";\n${frontmatter}\n---\n<html><body>${body}</body></html>\n`;
 const registered = `{ graphs: { shared: { source: "./src/shared.ts" } } }`;
 const sharedSource = `export default () => ({ version: 1, nodes: [{ id: "s" }], links: [] });\n`;
 
@@ -25,7 +25,7 @@ describe("inline graphs at build time", () => {
   });
 
   it("builds one graph per page from each page's own content, with nothing in the integration options", async () => {
-    const dynamic = `---\nimport GraphData from "related-web-astro/graph-data";\nexport function getStaticPaths() { return [{ params: { slug: "a" } }, { params: { slug: "b" } }]; }\nconst { slug } = Astro.params;\nconst document = { version: 1, nodes: [{ id: slug }], links: [] };\n---\n<html><body><GraphData id="recipe" document={document} /></body></html>\n`;
+    const dynamic = `---\nimport GraphData from "@relate/web-astro/graph-data";\nexport function getStaticPaths() { return [{ params: { slug: "a" } }, { params: { slug: "b" } }]; }\nconst { slug } = Astro.params;\nconst document = { version: 1, nodes: [{ id: slug }], links: [] };\n---\n<html><body><GraphData id="recipe" document={document} /></body></html>\n`;
     site = await buildSite({ files: { "src/pages/recipes/[slug].astro": dynamic } });
     for (const slug of ["a", "b"]) {
       const m = site.read(`recipes/${slug}.html`).match(/data-related-graph="recipe">([^<]*)</);

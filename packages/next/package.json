@@ -1,7 +1,7 @@
 {
   "name": "@relate/web-next",
   "version": "0.0.0",
-  "description": "Next.js integration for related-web-core: serves graphs built from a site's content, carries small graphs in pages, and ties graph clients to React components.",
+  "description": "Next.js integration for @relate/web-core: serves graphs built from a site's content, carries small graphs in pages, and ties graph clients to React components.",
   "private": true,
   "type": "module",
   "sideEffects": false,
@@ -35,7 +35,7 @@
     "@neo4j-labs/cypherlite-wasm": "*",
     "next": "^16.0.0",
     "react": "^19.0.0",
-    "related-web-core": "*"
+    "@relate/web-core": "*"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
@@ -45,7 +45,7 @@
     "next": "^16.4.5",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "related-web-core": "workspace:*",
+    "@relate/web-core": "workspace:*",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"

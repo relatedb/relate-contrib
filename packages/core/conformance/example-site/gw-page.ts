@@ -4,8 +4,8 @@
 // Query parameters: navigation=client-routing|multi-page (the profile), variant=a|b|mismatch|broken (which
 // descriptor), __break=no-rerun (a deliberately broken variant used to test the check itself).
 import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url";
-import { attachView, createSiteClient } from "related-web-core";
-import type { View } from "related-web-core";
+import { attachView, createSiteClient } from "@relate/web-core";
+import type { View } from "@relate/web-core";
 
 const params = new URLSearchParams(location.search);
 const navigation = (params.get("navigation") ?? "multi-page") as "client-routing" | "multi-page";

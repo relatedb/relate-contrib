@@ -1,8 +1,8 @@
 # @relate/web-next
 
-Next.js (app router) integration for `related-web-core`. It publishes graphs built from a site's content as revision-named static files, carries small graphs inside pages, and ties each graph's client to React components. The core does the rest: the worker, loading, faults, status.
+Next.js (app router) integration for `@relate/web-core`. It publishes graphs built from a site's content as revision-named static files, carries small graphs inside pages, and ties each graph's client to React components. The core does the rest: the worker, loading, faults, status.
 
-Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, React 19, `related-web-core` and `@neo4j-labs/cypherlite-wasm` (all peer dependencies). Static export and the Node server are supported; the pages router, edge and serverless runtimes are not.
+Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, React 19, `@relate/web-core` and `@neo4j-labs/cypherlite-wasm` (all peer dependencies). Static export and the Node server are supported; the pages router, edge and serverless runtimes are not.
 
 ## Use, in five steps
 
@@ -67,7 +67,7 @@ Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, R
 
 ## Layout, tests
 
-`src/` (`index.ts`, `env.ts`, `server/`, `client/`), `tests/` (unit, build, browser, package, trace), `conformance-site/` (an unpublished Next app built once per profile, as a server build and as an export, plus a `cacheComponents` build and a base-path build). The shared build code lives in `related-web-core/build`.
+`src/` (`index.ts`, `env.ts`, `server/`, `client/`), `tests/` (unit, build, browser, package, trace), `conformance-site/` (an unpublished Next app built once per profile, as a server build and as an export, plus a `cacheComponents` build and a base-path build). The shared build code lives in `@relate/web-core/build`.
 
 ```sh
 pnpm test:next                # unit, build and development-server tests

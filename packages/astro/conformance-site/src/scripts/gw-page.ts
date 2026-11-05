@@ -1,11 +1,11 @@
-// The behavior shared by the conformance pages, written against `related-web-astro/client`. Every observable thing is a
+// The behavior shared by the conformance pages, written against `@relate/web-astro/client`. Every observable thing is a
 // `data-gw-*` element, the contract the core's conformance scenarios drive (packages/core/conformance/example-site/gw-page.ts).
 //
 // Query parameters: navigation=client-routing|multi-page (the profile), variant=a|b|mismatch|broken (which descriptor).
-import { onPage } from "related-web-astro/client";
+import { onPage } from "@relate/web-astro/client";
 import { navigate } from "astro:transitions/client";
-import { attachView } from "related-web-core";
-import type { Client, View } from "related-web-core";
+import { attachView } from "@relate/web-core";
+import type { Client, View } from "@relate/web-core";
 
 (window as unknown as { __gwNavigate: typeof navigate }).__gwNavigate = navigate; // for the adapter's own tests
 const params = new URLSearchParams(location.search);

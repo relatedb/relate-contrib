@@ -36,8 +36,8 @@ function writeSite(fixture: Fixture): string {
     writeFileSync(join(root, path), text);
   }
   // The package is installed in the site the way a workspace link would install it (its own name resolves to it).
-  mkdirSync(join(root, "node_modules"), { recursive: true });
-  symlinkSync(pkg, join(root, "node_modules/related-web-astro"), "dir");
+  mkdirSync(join(root, "node_modules/@relate"), { recursive: true });
+  symlinkSync(pkg, join(root, "node_modules/@relate/web-astro"), "dir");
   const integration = pathToFileURL(join(pkg, "dist/index.js")).href;
   writeFileSync(
     join(root, "astro.config.mjs"),

@@ -1,7 +1,7 @@
 {
-  "name": "related-web-astro",
+  "name": "@relate/web-astro",
   "version": "0.0.0",
-  "description": "Astro integration for related-web-core: serves graphs built from a site's content, carries small graphs in pages, and ties a page's graph clients to the router.",
+  "description": "Astro integration for @relate/web-core: serves graphs built from a site's content, carries small graphs in pages, and ties a page's graph clients to the router.",
   "private": true,
   "type": "module",
   "sideEffects": false,
@@ -35,13 +35,13 @@
   "peerDependencies": {
     "@neo4j-labs/cypherlite-wasm": "*",
     "astro": "^7.4.0",
-    "related-web-core": "*"
+    "@relate/web-core": "*"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
     "@types/node": "^26.6.6",
     "astro": "^7.4.5",
-    "related-web-core": "workspace:*",
+    "@relate/web-core": "workspace:*",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",

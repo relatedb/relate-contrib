@@ -2,7 +2,7 @@
 // The hooks (spec FR-017, FR-023 to FR-025). Both return the same empty values on the server and on the first client
 // render, so the markup matches; the client is asked for in an effect.
 import { useContext, useEffect, useState } from "react";
-import type { Client, Status } from "related-web-core";
+import type { Client, Status } from "@relate/web-core";
 import { ConfigContext } from "./Provider.js";
 import { hold } from "./registry.js";
 import type { GraphOptions } from "./registry.js";

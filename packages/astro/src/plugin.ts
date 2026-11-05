@@ -16,7 +16,7 @@ export interface BuildContext {
 
 export function relatedWebPlugin(options: ResolvedOptions, context: BuildContext): Plugin {
   return {
-    name: "related-web-astro",
+    name: "@relate/web-astro",
     resolveId(id) {
       if (id === CONFIG || id === SOURCES) return `\0${id}`;
       return null;

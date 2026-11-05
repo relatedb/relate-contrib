@@ -1,17 +1,17 @@
-# related-web-astro
+# @relate/web-astro
 
-Astro integration for [`related-web-core`](../core/README.md) (a working name, like this package): it puts the embedded
+Astro integration for [`@relate/web-core`](../core/README.md) (a working name, like this package): it puts the embedded
 graph database into an Astro 7 static site. It serves graphs built from the site's content, carries small graphs inside
 pages, and ties each page's graph clients to the router's arrival and departure. Instances, faults, loading and
 navigation profiles are the core's; this package only wires them into Astro. Decisions: `design/adr/ADR-004-astro-adapter.md`.
 
 ## Install
 
-Peer dependencies: `astro` (7.x), `related-web-core` and `@neo4j-labs/cypherlite-wasm`. Static output only.
+Peer dependencies: `astro` (7.x), `@relate/web-core` and `@neo4j-labs/cypherlite-wasm`. Static output only.
 
 ```js
 // astro.config.mjs
-import relatedWeb from "related-web-astro";
+import relatedWeb from "@relate/web-astro";
 export default defineConfig({
   integrations: [
     relatedWeb({
@@ -37,7 +37,7 @@ first problem; in `astro dev` the server keeps running, prints the error and ans
 
 ```astro
 ---
-import GraphData from "related-web-astro/graph-data";
+import GraphData from "@relate/web-astro/graph-data";
 const entry = await getEntry("recipes", Astro.params.slug);
 ---
 <GraphData id="recipe" document={graphOf(entry)} config={{ indexes: [{ label: "Step", property: "id" }] }} />
@@ -48,7 +48,7 @@ The build fails for an invalid document or `config`, a duplicate `id` on a page,
 ## In the browser
 
 ```ts
-import { onPage, graph } from "related-web-astro/client";
+import { onPage, graph } from "@relate/web-astro/client";
 
 onPage(
   (page) => {

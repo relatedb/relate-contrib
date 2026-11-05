@@ -4,7 +4,7 @@
 import { useGraph } from "@relate/web-next/client";
 import { visible } from "./visible";
 import { useEffect } from "react";
-import type { Client } from "related-web-core";
+import type { Client } from "@relate/web-core";
 
 type Win = { __gwLog?: string[]; __gwClient?: Client };
 const log: string[] = [];

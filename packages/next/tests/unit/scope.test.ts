@@ -15,7 +15,7 @@ describe("the server entry", () => {
     for (const file of sources) {
       const text = readFileSync(join(dir, file), "utf8");
       expect(text, file).not.toMatch(/cypherlite|\.wasm|\bwindow\b|\bdocument\./);
-      for (const m of text.matchAll(/from "([^"]+)"/g)) expect(m[1], file).not.toBe("related-web-core"); // only its build and validate subpaths
+      for (const m of text.matchAll(/from "([^"]+)"/g)) expect(m[1], file).not.toBe("@relate/web-core"); // only its build and validate subpaths
       expect(text, file).not.toMatch(/\.\.\/client\//);
     }
   });
@@ -23,13 +23,14 @@ describe("the server entry", () => {
 
 describe("the core", () => {
   it("changes only by the build subpath and its export", () => {
-    let changed: string[];
+    let diff: string;
     try {
-      changed = execFileSync("git", ["diff", "--name-only", "main", "--", "packages/core/src", "packages/core/conformance", "packages/core/package.json"], { cwd: here("../../../.."), encoding: "utf8" }).split("\n").filter(Boolean);
+      diff = execFileSync("git", ["diff", "-U0", "main", "--", "packages/core/src", "packages/core/conformance", "packages/core/package.json"], { cwd: here("../../../.."), encoding: "utf8" });
     } catch {
       return; // not a git checkout, or no `main` to compare with
     }
-    // when this feature has been merged, main already holds the subpath and the difference is empty
-    expect(changed.filter((f) => !f.startsWith("packages/core/src/build/") && f !== "packages/core/package.json"), "files changed outside the build subpath").toEqual([]);
+    // The build subpath is already in main; what may differ is a change of package name (the `@relate` rename).
+    const changedLines = diff.split("\n").filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---)/.test(l));
+    expect(changedLines.filter((l) => !/related-web-|@relate\/web-/.test(l)), "lines changed in the core other than a package name").toEqual([]);
   });
 });

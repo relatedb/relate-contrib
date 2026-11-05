@@ -8,18 +8,18 @@ export type { RelatedWebOptions, GraphOption, Lifetime, Navigation } from "./opt
 
 export default function relatedWeb(options?: RelatedWebOptions): AstroIntegration {
   return {
-    name: "related-web-astro",
+    name: "@relate/web-astro",
     hooks: {
       "astro:config:setup": ({ command, config, injectRoute, updateConfig }) => {
         if (config.output !== "static") {
-          throw new Error(`related-web-astro: only static output is supported, but output is "${config.output}"`);
+          throw new Error(`@relate/web-astro: only static output is supported, but output is "${config.output}"`);
         }
         const resolved = resolveOptions(options, fileURLToPath(config.root));
         updateConfig({
           vite: {
             plugins: [relatedWebPlugin(resolved, { base: config.base, dev: command === "dev" })],
             // The component is an .astro file in this package, which Vite must compile instead of externalizing.
-            ssr: { noExternal: ["related-web-astro"] },
+            ssr: { noExternal: ["@relate/web-astro"] },
             // The engine's binary is placed by the bundler; the dev server must not pre-bundle it.
             optimizeDeps: { exclude: ["@neo4j-labs/cypherlite-wasm"] },
           },

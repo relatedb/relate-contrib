@@ -3,8 +3,8 @@
 // `data-gw-*` elements of the static markup, as the core's example pages do. Query parameters: `navigation` (the profile)
 // and `variant` (a, b, mismatch, broken: which descriptor the shared graph uses).
 import { useGraph } from "@relate/web-next/client";
-import { attachView } from "related-web-core";
-import type { Client, View } from "related-web-core";
+import { attachView } from "@relate/web-core";
+import type { Client, View } from "@relate/web-core";
 import { visible } from "./visible";
 import { useEffect, useState } from "react";
 

@@ -10,7 +10,7 @@
 
 ## Overview
 
-The shared core package (`related-web-core`, specification `specs/001-core-package/spec.md`) runs the embedded graph database in a page and knows nothing about any framework. The Astro adapter (`specs/002-astro-adapter/spec.md`) showed what an adapter supplies: graph data and descriptors at build time, a way for a page to ask for a graph, and lifetimes that follow the page. Next.js needs the same things in a different shape, because it has no route injection and no virtual modules, it renders components on the server and again in the browser, and its router keeps layouts mounted while pages change.
+The shared core package (`@relate/web-core`, specification `specs/001-core-package/spec.md`) runs the embedded graph database in a page and knows nothing about any framework. The Astro adapter (`specs/002-astro-adapter/spec.md`) showed what an adapter supplies: graph data and descriptors at build time, a way for a page to ask for a graph, and lifetimes that follow the page. Next.js needs the same things in a different shape, because it has no route injection and no virtual modules, it renders components on the server and again in the browser, and its router keeps layouts mounted while pages change.
 
 Three kinds of people depend on it:
 
@@ -296,4 +296,4 @@ The questions ADR-005 left for implementation are tested early, and the ADR is a
 - **Graph contents**: the adapter does not decide what a graph contains. The conformance site uses small hand-written graphs, and RFC-003 and RFC-002's decisions will govern real ones.
 - **Evidence**: SPIKE-006 found that the worker and binary are placed under both bundlers with no configuration, that a module-state client survives the router, and that a statically generated route handler publishes the two files. This feature depends on those findings and re-checks them through the package test.
 - **Out of scope**: the pages router, Next versions other than 16, edge and serverless runtimes, running the engine on the server, a default content extractor or site-graph schema (RFC-003), the navigation element (RFC-004), dashboards that fetch their data at load, main-thread instances, and changes to the core other than the build subpath.
-- **Names**: the package is `@relate/web-next`, in the `@relate` namespace (ADR-005 §6, 2026-11-05). The core (`related-web-core`) and the Astro adapter (`related-web-astro`) keep their current names until a separate change renames them, and this feature imports the core by its current name. The engine's package name is its current one.
+- **Names**: the package is `@relate/web-next`, in the `@relate` namespace (ADR-005 §6, 2026-11-05). The core (`@relate/web-core`) and the Astro adapter (`@relate/web-astro`) were renamed into the same namespace after this feature was implemented (they were `related-web-core` and `related-web-astro`). The engine's package name is its current one.

@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build `@relate/web-next` (`packages/next`): a configuration wrapper, a server entry that turns registered graph sources into statically generated, revision-named files and descriptors and writes inline graphs into pages, and a client entry with a provider and React hooks whose lifetimes follow components. Move the revision and descriptor code out of `related-web-astro` into the core as `related-web-core/build`. Check it with a Next conformance site and the core's conformance runner in three browsers, and with a clean-install package test under both of Next's bundlers.
+Build `@relate/web-next` (`packages/next`): a configuration wrapper, a server entry that turns registered graph sources into statically generated, revision-named files and descriptors and writes inline graphs into pages, and a client entry with a provider and React hooks whose lifetimes follow components. Move the revision and descriptor code out of `@relate/web-astro` into the core as `@relate/web-core/build`. Check it with a Next conformance site and the core's conformance runner in three browsers, and with a clean-install package test under both of Next's bundlers.
 
 Planning checked ADR-005's four open questions early (V-1, V-2, V-4, V-5 in [research.md](research.md)): the destructured route export and the catalog as props work, the development server follows source edits, and a hidden earlier page is released but, under `cacheComponents`, leaves its inline-graph element in the document. That last result, and two points where ADR-005 and the Astro code do not fit (a Node-only hash and the list of what moves), need ADR amendments (section "Decisions needed"). The recommendations follow the checks; they need your approval before tasks are generated.
 
@@ -14,7 +14,7 @@ Planning checked ADR-005's four open questions early (V-1, V-2, V-4, V-5 in [res
 
 **Language/Version**: TypeScript 7 (as the core and the Astro adapter), React 19, Node 24 for build and tests, ES2022 browser target
 
-**Primary Dependencies**: peers `next` ^16, `react` ^19, `related-web-core`, `@neo4j-labs/cypherlite-wasm`; no other runtime dependency. Dev: `@playwright/test`, `vitest`, `typescript`, `@types/react`.
+**Primary Dependencies**: peers `next` ^16, `react` ^19, `@relate/web-core`, `@neo4j-labs/cypherlite-wasm`; no other runtime dependency. Dev: `@playwright/test`, `vitest`, `typescript`, `@types/react`.
 
 **Storage**: none of its own. Registered graphs are static files; the core's origin-private store is used through the core.
 
@@ -45,7 +45,7 @@ Planning checked ADR-005's four open questions early (V-1, V-2, V-4, V-5 in [res
 
 ## Decisions (D-1, D-2, D-4 approved 2026-11-05; ADR-005 §6 and the spec are amended)
 
-**D-1. The build subpath cannot use `node:crypto`.** ADR-005 §2.2 says `related-web-core/build` needs no Node-only module; the Astro code hashes with `createHash`. *Recommended*: use `globalThis.crypto.subtle.digest` (same SHA-256, so revisions are unchanged), which makes `revisionOf` and `prepare` asynchronous; the Astro adapter's call sites and unit tests gain `await` and no expectation changes. See [research.md](research.md) D-1 for the rejected alternative.
+**D-1. The build subpath cannot use `node:crypto`.** ADR-005 §2.2 says `@relate/web-core/build` needs no Node-only module; the Astro code hashes with `createHash`. *Recommended*: use `globalThis.crypto.subtle.digest` (same SHA-256, so revisions are unchanged), which makes `revisionOf` and `prepare` asynchronous; the Astro adapter's call sites and unit tests gain `await` and no expectation changes. See [research.md](research.md) D-1 for the rejected alternative.
 
 **D-2. Which Astro code moves.** ADR-005 §2.2 and spec FR-026 name canonical text, revision, document preparation and descriptor construction. The Astro adapter's inline check and JSON escaping (`inline.ts`) are framework-independent and the Next `GraphData` needs them. *Recommended*: they move too, with the caller's name as a parameter of the error text. Amend ADR-005 §2.2 and FR-026.
 

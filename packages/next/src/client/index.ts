@@ -1,6 +1,6 @@
 "use client";
 // `@relate/web-next/client` (spec FR-016 to FR-024).
-import type { Client } from "related-web-core";
+import type { Client } from "@relate/web-core";
 import { mountedConfig } from "./Provider.js";
 import { visitGraph } from "./registry.js";
 import type { GraphOptions } from "./registry.js";

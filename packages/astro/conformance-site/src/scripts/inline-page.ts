@@ -1,7 +1,7 @@
 // For the pages that carry inline graphs: asks for each one, counts its nodes and shows the count. The clients are
 // exposed for the adapter's own tests (`window.__gwClients`).
-import { onPage } from "related-web-astro/client";
-import type { Client } from "related-web-core";
+import { onPage } from "@relate/web-astro/client";
+import type { Client } from "@relate/web-core";
 
 onPage(
   (page) => {

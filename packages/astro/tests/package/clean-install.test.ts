@@ -29,7 +29,7 @@ const run = (command: string, args: string[], cwd: string): string =>
 const tarballIn = (dir: string, prefix: string): string => join(dir, readdirSync(dir).find((f) => f.startsWith(prefix) && f.endsWith(".tgz"))!);
 
 const page = `---
-import GraphData from "related-web-astro/graph-data";
+import GraphData from "@relate/web-astro/graph-data";
 ---
 <html lang="en">
   <head><meta charset="utf-8" /><title>consumer</title></head>
@@ -37,7 +37,7 @@ import GraphData from "related-web-astro/graph-data";
     <p>Registered: <span data-registered>…</span> · inline: <span data-inline>…</span></p>
     <GraphData id="mini" document={{ version: 1, nodes: [{ id: "x", labels: ["Item"] }, { id: "y", labels: ["Item"] }], links: [] }} />
     <script>
-      import { onPage } from "related-web-astro/client";
+      import { onPage } from "@relate/web-astro/client";
       onPage((page) => {
         page.graph("things").subscribe("MATCH (n:Thing) RETURN count(n) AS c", null, (u) => u.rows && ((document.querySelector("[data-registered]")!).textContent = String(u.rows[0].c)));
         page.graph("mini").subscribe("MATCH (n:Item) RETURN count(n) AS c", null, (u) => u.rows && ((document.querySelector("[data-inline]")!).textContent = String(u.rows[0].c)));
@@ -48,24 +48,24 @@ import GraphData from "related-web-astro/graph-data";
 `;
 
 beforeAll(() => {
-  work = mkdtempSync(join(tmpdir(), "related-web-astro-clean-install-"));
+  work = mkdtempSync(join(tmpdir(), "relate-web-astro-clean-install-"));
   expect(work.startsWith(repo)).toBe(false); // the project is outside this repository
   run("pnpm", ["run", "build"], core);
   run("pnpm", ["run", "build"], pkg);
   run("pnpm", ["pack", "--pack-destination", work], core);
   run("pnpm", ["pack", "--pack-destination", work], pkg);
-  adapterTarball = tarballIn(work, "related-web-astro-");
+  adapterTarball = tarballIn(work, "relate-web-astro-");
 
   consumer = join(work, "consumer");
   mkdirSync(join(consumer, "src/pages"), { recursive: true });
   writeFileSync(join(consumer, "package.json"), JSON.stringify({ name: "consumer", private: true, type: "module" }));
   writeFileSync(join(consumer, "pnpm-workspace.yaml"), "allowBuilds:\n  esbuild: true\n  sharp: true\n");
-  run("pnpm", ["add", "--prefer-offline", adapterTarball, tarballIn(work, "related-web-core-"), `file:${engine}`, "astro@^7.4.5"], consumer);
+  run("pnpm", ["add", "--prefer-offline", adapterTarball, tarballIn(work, "relate-web-core-"), `file:${engine}`, "astro@^7.4.5"], consumer);
 
   writeFileSync(
     join(consumer, "astro.config.mjs"),
     `import { defineConfig } from "astro/config";
-import relatedWeb from "related-web-astro";
+import relatedWeb from "@relate/web-astro";
 export default defineConfig({ output: "static", build: { format: "file" }, integrations: [relatedWeb({ graphs: { things: { source: "./src/things.ts", indexes: [{ label: "Thing", property: "id" }] } } })] });
 `,
   );
@@ -116,9 +116,9 @@ describe("the packed adapter in a clean project", () => {
     expect(listing).toContain("package/dist/types.d.ts");
     expect(listing).toContain("package/src/GraphData.astro");
     expect(listing.some((f) => /\b(tests|conformance-site|vendor|node_modules)\//.test(f))).toBe(false);
-    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/related-web-astro/package.json"), "utf8"));
+    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/web-astro/package.json"), "utf8"));
     expect(manifest.dependencies).toBeUndefined();
-    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@neo4j-labs/cypherlite-wasm", "astro", "related-web-core"]);
+    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@neo4j-labs/cypherlite-wasm", "@relate/web-core", "astro"]);
     expect(JSON.stringify(manifest)).not.toContain(repo);
   });
 

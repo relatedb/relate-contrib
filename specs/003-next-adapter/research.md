@@ -18,7 +18,7 @@ A root layout (a server component) passed an object with a list of `{ id, descri
 
 ### V-3. Revision and determinism check (ADR-005 §2.2)
 
-Pre-existing code: `related-web-astro`'s `sources.ts` imports `node:crypto`. ADR-005 §2.2 says the build subpath has "no Node-only module". See decision D-1.
+Pre-existing code: `@relate/web-astro`'s `sources.ts` imports `node:crypto`. ADR-005 §2.2 says the build subpath has "no Node-only module". See decision D-1.
 
 ### V-4. Hidden earlier pages (ADR-005 §6)
 
@@ -52,7 +52,7 @@ With a source that adds a random node on every read, `next build` failed under b
 
 ## Decisions
 
-**D-1. The build subpath uses Web Crypto, so it is asynchronous.** ADR-005 §2.2 requires `related-web-core/build` to need no Node-only module, and the Astro code computes the revision with `node:crypto`'s synchronous `createHash`. `globalThis.crypto.subtle.digest` is available in Node 20 and later and in every browser, and gives the same SHA-256, so revisions do not change. It is asynchronous, so `revisionOf`, `prepare` and `descriptorOf`'s caller become asynchronous (`evaluate` already was). Astro's call sites and its unit tests add `await`; no expectation changes. Alternative: keep `node:crypto` and amend ADR-005 to "no browser dependency, Node-compatible runtimes only". Rejected: it would fix the subpath to Node, and the Next adapter's server code can run in other runtimes later.
+**D-1. The build subpath uses Web Crypto, so it is asynchronous.** ADR-005 §2.2 requires `@relate/web-core/build` to need no Node-only module, and the Astro code computes the revision with `node:crypto`'s synchronous `createHash`. `globalThis.crypto.subtle.digest` is available in Node 20 and later and in every browser, and gives the same SHA-256, so revisions do not change. It is asynchronous, so `revisionOf`, `prepare` and `descriptorOf`'s caller become asynchronous (`evaluate` already was). Astro's call sites and its unit tests add `await`; no expectation changes. Alternative: keep `node:crypto` and amend ADR-005 to "no browser dependency, Node-compatible runtimes only". Rejected: it would fix the subpath to Node, and the Next adapter's server code can run in other runtimes later.
 
 **D-2. The inline-graph check and JSON escaping move to the same subpath.** The Astro adapter's `inline.ts` (`checkInline`, `escapeJson`) validates an inline document and `config`, and escapes JSON for a script element. Both depend on nothing framework-specific, and the Next `GraphData` needs the same rules and the same error wording. Constitution principle II places framework-independent behavior in the core. The error text takes the caller's name as a parameter so messages still name the adapter. This extends the list in ADR-005 §2.2 and in spec FR-026 (which name canonical text, revision, document preparation and descriptor construction); both are amended.
 
