@@ -1,5 +1,5 @@
 // Framework-neutral conformance scenarios (specs contracts/conformance.md). They drive the example pages by what a
-// visitor can see: `data-gw-*` elements and attributes, links, buttons and the network. They know nothing about
+// visitor can see: `data-rel-*` elements and attributes, links, buttons and the network. They know nothing about
 // the framework that serves the pages, so an adapter passes by producing the same markup and behavior.
 import assert from "node:assert/strict";
 import type { BrowserContext, Page } from "@playwright/test";
@@ -34,16 +34,16 @@ const BOTH: Profile[] = ["client-routing", "multi-page"];
 const PAGES = "300"; // variant a of the example graph
 const PAGES_B = "400"; // variant b
 
-const text = async (page: Page, name: string): Promise<string> => ((await page.locator(`[data-gw-${name}]`).first().textContent()) ?? "").trim();
+const text = async (page: Page, name: string): Promise<string> => ((await page.locator(`[data-rel-${name}]`).first().textContent()) ?? "").trim();
 const settled = (page: Page, status = "ready", timeout = 60_000) =>
-  page.waitForFunction((s) => document.documentElement.dataset.gwState === s, status, { timeout });
+  page.waitForFunction((s) => document.documentElement.dataset.relState === s, status, { timeout });
 const showing = (page: Page, name: string, value: string, timeout = 30_000) =>
-  page.waitForFunction(([n, v]) => document.querySelector(`[data-gw-${n}]`)?.textContent?.trim() === v, [name, value] as const, { timeout });
+  page.waitForFunction(([n, v]) => document.querySelector(`[data-rel-${n}]`)?.textContent?.trim() === v, [name, value] as const, { timeout });
 
 /** Click a link and wait until the page it leads to is showing (works for a client-side swap and a full load). */
 async function follow(page: Page, label: string, title: string): Promise<void> {
-  await page.locator(`a[data-gw-link]`, { hasText: label }).first().click();
-  await page.waitForFunction((t) => document.querySelector("[data-gw-title]")?.textContent?.trim() === t, title);
+  await page.locator(`a[data-rel-link]`, { hasText: label }).first().click();
+  await page.waitForFunction((t) => document.querySelector("[data-rel-title]")?.textContent?.trim() === t, title);
 }
 
 export const scenarios: Scenario[] = [
@@ -55,12 +55,12 @@ export const scenarios: Scenario[] = [
     profiles: BOTH,
     async run(ctx) {
       const raw = await (await ctx.context.request.get(`${ctx.baseUrl}/page-1.html`)).text();
-      assert.match(raw, /data-gw-link/, "the navigation links are in the page as served, before any script runs");
-      assert.match(raw, /data-gw-status/, "the status placeholder is in the page as served");
+      assert.match(raw, /data-rel-link/, "the navigation links are in the page as served, before any script runs");
+      assert.match(raw, /data-rel-status/, "the status placeholder is in the page as served");
       const page = await ctx.open("/page-1.html");
       await settled(page);
       assert.equal(await text(page, "count"), PAGES, "the query result is shown");
-      assert.ok((await page.locator("a[data-gw-link]").count()) >= 4, "the links are present");
+      assert.ok((await page.locator("a[data-rel-link]").count()) >= 4, "the links are present");
     },
   },
   {
@@ -119,10 +119,10 @@ export const scenarios: Scenario[] = [
       await settled(page);
       await page.evaluate(() => ((window as unknown as { __kept: boolean }).__kept = true));
       const before = Number(await text(page, "updates"));
-      await page.locator('[data-gw-action="trap"]').click();
+      await page.locator('[data-rel-action="trap"]').click();
       await showing(page, "generation", "2", 60_000);
       await settled(page);
-      await page.waitForFunction((n) => Number(document.querySelector("[data-gw-updates]")?.textContent) > n, before, { timeout: 30_000 });
+      await page.waitForFunction((n) => Number(document.querySelector("[data-rel-updates]")?.textContent) > n, before, { timeout: 30_000 });
       assert.equal(await text(page, "last-error"), "trap");
       assert.equal(await page.evaluate(() => (window as unknown as { __kept?: boolean }).__kept), true, "the page was not reloaded");
     },
@@ -136,7 +136,7 @@ export const scenarios: Scenario[] = [
     async run(ctx) {
       const page = await ctx.open("/page-1.html");
       await settled(page);
-      await page.locator('[data-gw-action="timeout"]').click();
+      await page.locator('[data-rel-action="timeout"]').click();
       await showing(page, "generation", "2", 60_000);
       await settled(page);
       assert.equal(await text(page, "last-error"), "timeout");
@@ -152,7 +152,7 @@ export const scenarios: Scenario[] = [
       const page = await ctx.open("/notes.html");
       await settled(page);
       await showing(page, "notes", "2");
-      await page.locator('[data-gw-action="trap"]').click();
+      await page.locator('[data-rel-action="trap"]').click();
       await showing(page, "generation", "2", 60_000);
       await showing(page, "notes", "2", 60_000);
       if (ctx.profile === "client-routing") {
@@ -264,7 +264,7 @@ export const scenarios: Scenario[] = [
         removed = await tool.evaluate(async () => {
           try {
             const root = await navigator.storage.getDirectory();
-            await (await root.getDirectoryHandle("cypherlite")).removeEntry("gw-example", { recursive: true });
+            await (await root.getDirectoryHandle("cypherlite")).removeEntry("rel-example", { recursive: true });
             return "removed";
           } catch (e) {
             return String(e);

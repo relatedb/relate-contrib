@@ -10,15 +10,15 @@ Findings that shaped the plan. "Verify" items are unmeasured assumptions; each b
 
 ## R-2. Serving the registered files
 
-- **Decision**: the integration calls `injectRoute` once, with the pattern `/_related/[id]/[file]` and `prerender: true`, and an entrypoint file in the package whose `getStaticPaths` returns two entries per registered graph (`descriptor.json` and `graph.<revision>.json`). The entrypoint reads a shared, memoized evaluation of every source.
+- **Decision**: the integration calls `injectRoute` once, with the pattern `/_relate/[id]/[file]` and `prerender: true`, and an entrypoint file in the package whose `getStaticPaths` returns two entries per registered graph (`descriptor.json` and `graph.<revision>.json`). The entrypoint reads a shared, memoized evaluation of every source.
 - **Rationale**: SPIKE-002 produced the correct graph from a `src/pages` static endpoint over `astro:content`. One dynamic route keeps the route list independent of the number of graphs, and the memoized evaluation gives FR-008 (one evaluation per build).
-- **Finding (V-1, 2026-11-04, Astro 7.4.5, Node 24)**: confirmed for `astro build` and `astro dev` with the integration and route entrypoint outside the project root (code: `packages/astro/tests/verify/v1`). An injected route `/_related/[id]/[file]` with `prerender: true` and a `getStaticPaths` that awaits a user source importing `astro:content` generated `/_related/x/graph.json` with the collection's entries, and the dev server served it and reflected a newly added content file on the next request. Not yet checked: the integration installed as a packed package under `node_modules` (task T064).
+- **Finding (V-1, 2026-11-04, Astro 7.4.5, Node 24)**: confirmed for `astro build` and `astro dev` with the integration and route entrypoint outside the project root (code: `packages/astro/tests/verify/v1`). An injected route `/_relate/[id]/[file]` with `prerender: true` and a `getStaticPaths` that awaits a user source importing `astro:content` generated `/_relate/x/graph.json` with the collection's entries, and the dev server served it and reflected a newly added content file on the next request. Not yet checked: the integration installed as a packed package under `node_modules` (task T064).
 - **Verify (V-1, original statement)**: that an injected route's entrypoint, in a package under `node_modules` (and linked in the workspace), can import a user source that itself imports `astro:content`, in `astro build` and `astro dev`. SPIKE-002 did not use `injectRoute`; its type exists in 7.4.4 (`integrations.d.ts`).
 - **Alternatives**: one injected route per graph (more routes, same behavior); a generated `src/pages` file (writes into the user's tree). Rejected.
 
 ## R-3. Sources and the virtual modules
 
-- **Decision**: a Vite plugin in the integration provides `virtual:related-web/config` (names, descriptor URLs including `BASE_URL`, lifetimes, indexes, profile; imported by the client module) and `virtual:related-web/sources` (imports each source module or JSON file; used only on the server by the route entrypoint). A source module default-exports a function; a JSON file is wrapped as a function returning its content.
+- **Decision**: a Vite plugin in the integration provides `virtual:relate-web/config` (names, descriptor URLs including `BASE_URL`, lifetimes, indexes, profile; imported by the client module) and `virtual:relate-web/sources` (imports each source module or JSON file; used only on the server by the route entrypoint). A source module default-exports a function; a JSON file is wrapped as a function returning its content.
 - **Rationale**: sources go through Vite so they can use `astro:content` (FR-003); keeping the sources module out of the client config keeps documents out of the page bundle.
 - **Finding (V-2, 2026-11-04)**: `getStaticPaths` runs on each request in the dev server and the source module is re-imported when its file changes, so no explicit invalidation is needed and the descriptor's revision follows an edit (test: `packages/astro/tests/build/dev.test.ts`). Test processes must not inherit `NODE_ENV=test` or the agent variables (`AI_AGENT`, `CLAUDECODE`): with the first the dev server serves nothing, with the second `astro dev` starts a background daemon.
 - **Verify (V-2, original statement)**: the dev server re-evaluates a source when a file it imports changes (Vite module invalidation of the sources module on watcher events) and the descriptor's revision follows.
@@ -35,9 +35,9 @@ Findings that shaped the plan. "Verify" items are unmeasured assumptions; each b
 
 ## R-5. The inline graph component
 
-- **Decision**: `GraphData.astro` (exported as `related-web-astro/graph-data`) takes `id`, `document` and optional `config` (`{ indexes }`). It validates with the core's validator at render, then writes `<script type="application/json" data-related-graph="<id>">{document, config}</script>` with `<`, `>`, `&` and U+2028/2029 escaped. The duplicate-name check uses a per-render-request set; the registered-name check reads the integration's config.
+- **Decision**: `GraphData.astro` (exported as `@relate/web-astro/graph-data`) takes `id`, `document` and optional `config` (`{ indexes }`). It validates with the core's validator at render, then writes `<script type="application/json" data-relate-graph="<id>">{document, config}</script>` with `<`, `>`, `&` and U+2028/2029 escaped. The duplicate-name check uses a per-render-request set; the registered-name check reads the integration's config.
 - **Rationale**: inert data costs no request and cannot execute; escaping avoids closing the script early.
-- **Finding (V-3, linked, 2026-11-04)**: `GraphData.astro` imported from a workspace-linked `node_modules/related-web-astro` compiles in `astro build` with `ssr.noExternal` (build tests `tests/build/inline.test.ts`). The component imports its helpers from `../dist`, because only `src/GraphData.astro` and `dist` are published. A packed install is still to be checked (task T064).
+- **Finding (V-3, linked, 2026-11-04)**: `GraphData.astro` imported from a workspace-linked `node_modules/@relate/web-astro` compiles in `astro build` with `ssr.noExternal` (build tests `tests/build/inline.test.ts`). The component imports its helpers from `../dist`, because only `src/GraphData.astro` and `dist` are published. A packed install is still to be checked (task T064).
 - **Verify (V-3, original statement)**: the package's `.astro` file is compiled when installed under `node_modules`; the integration adds the package to `vite.ssr.noExternal` through `updateConfig`. Check in the clean-install test.
 - **Alternatives**: `define:vars` (executes script), a data attribute (size limits, escaping). Rejected.
 
@@ -72,7 +72,7 @@ Environment: macOS (Darwin 25.6.0, Apple silicon), Node 24.14.1, Astro 7.4.5, Pl
 - Conformance (`pnpm test:astro-conformance`): the core's scenarios C-01 to C-11 passed under `multi-page` (11 of 11) and under `client-routing` (8 of 8 that apply; C-07, C-08 and C-11 are multi-page scenarios) in Chromium, Firefox and WebKit: 6 of 6 runs passed, 1.3 minutes in total.
 - Browser suite (`pnpm test:astro-browsers`): 81 passed, 6 skipped (the development-check tests run in Chromium only), 1.1 minutes.
 - Unit and build suite (`pnpm test:astro`): 51 passed in 8 files.
-- Core regression after the runner parameters (`pnpm test:conformance` in `related-web-core`): 12 passed in three browsers.
+- Core regression after the runner parameters (`pnpm test:conformance` in `@relate/web-core`): 12 passed in three browsers.
 
 **Load figures** (`pnpm exec playwright test tests/browser/figures.spec.ts`, Chromium and Firefox, not WebKit; median of three cold loads in fresh browser contexts, the core's own `total` timing, milliseconds, one environment, single session):
 

@@ -4,7 +4,7 @@ A `'use client'` module. Hook names and result shapes may change when tasks are 
 
 ## Provider
 
-`RelatedWebProvider({ catalog, engineUrl, children })`: puts the catalog and the profile in context for the hooks, mirrors the catalog to module state in an effect, creates no client and starts no worker (FR-016, FR-024). `engineUrl` is the binary's URL, given by the site and passed to the core unchanged.
+`RelateWebProvider({ catalog, engineUrl, children })`: puts the catalog and the profile in context for the hooks, mirrors the catalog to module state in an effect, creates no client and starts no worker (FR-016, FR-024). `engineUrl` is the binary's URL, given by the site and passed to the core unchanged.
 
 ## Hooks
 

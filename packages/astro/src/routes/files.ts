@@ -1,6 +1,6 @@
-// The injected route (spec FR-006 to FR-011): `/_related/<name>/descriptor.json` and `/_related/<name>/graph.<revision>.json`
+// The injected route (spec FR-006 to FR-011): `/_relate/<name>/descriptor.json` and `/_relate/<name>/graph.<revision>.json`
 // for every registered graph. `getStaticPaths` evaluates each source once and hands the result to both files as props.
-import graphs, { base, dev } from "virtual:related-web/sources";
+import graphs, { base, dev } from "virtual:relate-web/sources";
 import { descriptorOf, evaluate } from "../sources.js";
 
 export const prerender = true;

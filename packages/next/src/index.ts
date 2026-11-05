@@ -5,7 +5,7 @@ import type { Navigation } from "./env.js";
 
 export type { Navigation } from "./env.js";
 
-export interface RelatedWebOptions {
+export interface RelateWebOptions {
   /** `"client-routing"` (default): the site navigates inside one document. `"multi-page"`: every page is a document. */
   navigation?: Navigation;
 }
@@ -16,7 +16,7 @@ interface NextConfigLike {
   [key: string]: unknown;
 }
 
-export function withRelatedWeb<T extends NextConfigLike>(nextConfig: T = {} as T, options: RelatedWebOptions = {}): T {
+export function withRelateWeb<T extends NextConfigLike>(nextConfig: T = {} as T, options: RelateWebOptions = {}): T {
   const navigation = options.navigation ?? "client-routing";
   if (!NAVIGATIONS.includes(navigation)) {
     throw new Error(`@relate/web-next: navigation "${String(navigation)}" is not one of ${NAVIGATIONS.map((n) => `"${n}"`).join(", ")}`);

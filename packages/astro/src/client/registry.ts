@@ -2,9 +2,9 @@
 // instance (worker, status, faults, loading) is the core's; this file only decides which core client a name gets
 // and who ends it.
 import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url";
-import { createClient, createSiteClient } from "related-web-core";
-import type { Client } from "related-web-core";
-import { graphs, navigation as configured } from "virtual:related-web/config";
+import { createClient, createSiteClient } from "@relate/web-core";
+import type { Client } from "@relate/web-core";
+import { graphs, navigation as configured } from "virtual:relate-web/config";
 
 export type Navigation = "multi-page" | "client-routing";
 
@@ -22,8 +22,8 @@ interface Inline {
 
 /** The inline graph of the current document with this name, if any. */
 function findInline(name: string): Inline | null {
-  for (const el of Array.from(document.querySelectorAll('script[type="application/json"][data-related-graph]'))) {
-    if (el.getAttribute("data-related-graph") !== name) continue;
+  for (const el of Array.from(document.querySelectorAll('script[type="application/json"][data-relate-graph]'))) {
+    if (el.getAttribute("data-relate-graph") !== name) continue;
     const payload = JSON.parse(el.textContent ?? "{}") as { document: unknown; config?: { indexes?: Inline["indexes"] } };
     return { document: payload.document, indexes: payload.config?.indexes ?? [] };
   }
@@ -69,7 +69,7 @@ export class PageClients {
       this.owned.add(client);
     } else {
       const entry = graphs[name];
-      if (!entry) throw new Error(`related-web-astro: no graph named "${name}" on this page or in the registered graphs (${listNames()})`);
+      if (!entry) throw new Error(`@relate/web-astro: no graph named "${name}" on this page or in the registered graphs (${listNames()})`);
       const descriptor = options.descriptor ?? entry.descriptor;
       if (entry.lifetime === "visit") {
         client = visitClient(name, descriptor, profile);
@@ -94,11 +94,11 @@ export class PageClients {
 export function visitGraph(name: string, options: GraphOptions = {}): Client {
   const entry = graphs[name];
   if (!entry) {
-    if (findInline(name)) throw new Error(`related-web-astro: "${name}" is an inline graph of a page; ask for it from the page's setup (onPage)`);
-    throw new Error(`related-web-astro: no registered graph named "${name}" (registered: ${listNames()})`);
+    if (findInline(name)) throw new Error(`@relate/web-astro: "${name}" is an inline graph of a page; ask for it from the page's setup (onPage)`);
+    throw new Error(`@relate/web-astro: no registered graph named "${name}" (registered: ${listNames()})`);
   }
   if (entry.lifetime !== "visit") {
-    throw new Error(`related-web-astro: "${name}" has the "page" lifetime; ask for it from the page's setup (onPage), or register it with lifetime "visit"`);
+    throw new Error(`@relate/web-astro: "${name}" has the "page" lifetime; ask for it from the page's setup (onPage), or register it with lifetime "visit"`);
   }
   return visitClient(name, options.descriptor ?? entry.descriptor, options.navigation ?? configured);
 }

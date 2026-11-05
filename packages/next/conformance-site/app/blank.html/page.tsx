@@ -1,9 +1,9 @@
-import { Nav } from "../gw-shell";
+import { Nav } from "../rel-shell";
 
 export default function Page() {
   return (
     <main>
-      <h1 data-gw-title>Blank</h1>
+      <h1 data-rel-title>Blank</h1>
       <Nav />
     </main>
   );

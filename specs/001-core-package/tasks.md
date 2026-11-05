@@ -1,5 +1,5 @@
 ---
-description: "Task list for the related-web core package"
+description: "Task list for the relate-web core package"
 ---
 
 # Tasks: Core Package for Embedding the Graph Database in Web Pages
@@ -26,7 +26,7 @@ description: "Task list for the related-web core package"
 - [X] T002 Add the engine as a git submodule at `vendor/cypherlite` (remote `git@github.com:neo4j-labs/cypherlite.git`, pinned to a commit that builds the browser package) and record the commit, why it was chosen, and the access requirement in `vendor/README.md`
 - [X] T003 [P] Create `.gitignore` covering `node_modules`, `dist`, `vendor/cypherlite-wasm/pkg`, `test-results` and `playwright-report`
 - [X] T004 Write `scripts/build-wasm.sh`: build the browser package from `vendor/cypherlite` into `vendor/cypherlite-wasm/pkg` following research R7 (release build, `wasm-bindgen-cli` at the version the checkout's lockfile pins, `wasm-opt`, the `wasm32-unknown-unknown` target), make sure `trap.js` and `opfs.js` sit beside `cypherlite.js`, and stop with a clear message when a tool is missing
-- [X] T005 Create `packages/core/package.json` (name `related-web-core`, `type: module`, exports `.`, `./validate`, `./worker`, `./conformance`; `peerDependencies` on `@neo4j-labs/cypherlite-wasm`; `@playwright/test` as an optional peer; no `dependencies`; dev dependencies `typescript`, `vitest`, `@playwright/test`, `vite`, `ajv`) per plan.md
+- [X] T005 Create `packages/core/package.json` (name `@relate/web-core`, `type: module`, exports `.`, `./validate`, `./worker`, `./conformance`; `peerDependencies` on `@neo4j-labs/cypherlite-wasm`; `@playwright/test` as an optional peer; no `dependencies`; dev dependencies `typescript`, `vitest`, `@playwright/test`, `vite`, `ajv`) per plan.md
 - [X] T006 [P] Create `tsconfig.base.json` at the root and `packages/core/tsconfig.json` (strict, ES2022, declaration files, `outDir` `dist`)
 - [X] T007 [P] Create `packages/core/vitest.config.ts` for `packages/core/tests/unit`
 - [X] T008 [P] Create `packages/core/playwright.config.ts` with projects `chromium`, `firefox` and `webkit`, serving `packages/core/tests/browser/harness` through Vite
@@ -43,9 +43,9 @@ description: "Task list for the related-web core package"
 
 - [X] T011 Define the shared types in `packages/core/src/data/types.ts` (`GraphDocument`, `GraphNode`, `GraphLink`, `PropertyValue`, `Descriptor`) exactly as in `specs/001-core-package/contracts/client-api.md` and `data-model.md`
 - [X] T012 [P] Define `Reason` and `GraphError` in `packages/core/src/errors.ts` per `contracts/client-api.md` (`trap`, `timeout`, `lost`, `stopped`, `failed`, `unsupported`, `worker-error`)
-- [X] T013 [P] Define the constants in `packages/core/src/config.ts`: failure limit 3, store retry from 100 ms backing off to 500 ms for at most 5000 ms, batch size 1000, visitor timeout default 10000 ms, store name prefix `gw-`, stored-copy directory `related-web`
+- [X] T013 [P] Define the constants in `packages/core/src/config.ts`: failure limit 3, store retry from 100 ms backing off to 500 ms for at most 5000 ms, batch size 1000, visitor timeout default 10000 ms, store name prefix `rel-`, stored-copy directory `relate-web`
 - [X] T014 Define the message types of `contracts/worker-protocol.md` in `packages/core/src/worker/protocol.ts` (`init`, `query`, `scoped-add`, `scoped-drop`, `ready`, `init-failed`, `store-retry`, `result`, `error`)
-- [X] T015 Write the engine wrapper `packages/core/src/worker/engine.ts`: initialise with the `engineUrl` option, open in memory or `CypherliteDb.open("opfs://gw-<id>")`, `execute(statement, paramsJson)` returning the envelope text unaltered, `reset()`, and a dead flag set at the first trap (using `isWasmTrap`) after which every call answers as a trap
+- [X] T015 Write the engine wrapper `packages/core/src/worker/engine.ts`: initialise with the `engineUrl` option, open in memory or `CypherliteDb.open("opfs://rel-<id>")`, `execute(statement, paramsJson)` returning the envelope text unaltered, `reset()`, and a dead flag set at the first trap (using `isWasmTrap`) after which every call answers as a trap
 - [X] T016 [P] Create the valid and invalid data-document corpus in `packages/core/tests/fixtures/documents/valid/` and `packages/core/tests/fixtures/documents/invalid/` (one file per rule of `data-model.md`; each invalid file has a sidecar `<name>.expect.json` holding the expected path, for example `nodes[3].properties.id`)
 - [X] T017 [P] Create the valid and invalid descriptor corpus in `packages/core/tests/fixtures/descriptors/valid/` and `packages/core/tests/fixtures/descriptors/invalid/` with the same sidecar convention (rules: `version`, `id` pattern, `revision`, `data.url`, `data.nodes`, `data.links`, `indexes`, reserved `shape` and `embeddings`)
 - [X] T018 [P] Write `packages/core/tests/fixtures/generate-graph.ts` producing a document and descriptor for N pages with 5 links per page (1,000, 5,000 and 20,000) for the loader and timing tests
@@ -77,7 +77,7 @@ description: "Task list for the related-web core package"
 - [X] T028 [P] [US2] Implement the parameter encoder in `packages/core/src/worker/encode.ts` that writes the parameters as JSON text, writing a number array that contains any fractional item with every item as a float
 - [X] T029 [US2] Implement the loader in `packages/core/src/worker/loader.ts`: validate before any statement; create only the indexes named by the descriptor (or the caller without one) before the nodes; run the two fixed statements of research R2 in batches of 1000, keeping a map from document `id` to element id for one load; add `scope` to every created node when a scope is given; check agreement with the descriptor; leave the instance empty when anything is rejected
 - [X] T030 [US2] Create the Node-only entry `packages/core/src/validate.ts` re-exporting `validate`, `validateDescriptor` and `checkAgreement` with no browser APIs, and wire it as the `./validate` export in `packages/core/package.json`
-- [X] T031 [US2] Make the US2 tests pass (`pnpm --filter related-web-core test:unit` and `test:browsers -- loader`) in Chromium, Firefox and WebKit
+- [X] T031 [US2] Make the US2 tests pass (`pnpm --filter @relate/web-core test:unit` and `test:browsers -- loader`) in Chromium, Firefox and WebKit
 
 ---
 
@@ -165,8 +165,8 @@ description: "Task list for the related-web core package"
 
 ### Implementation for User Story 5
 
-- [X] T063 [P] [US5] Implement the store open with the bounded retry in `packages/core/src/worker/store.ts` (`opfs://gw-<id>`; retry from 100 ms to 500 ms for at most 5000 ms, then continue in memory with no stored copy written), posting `store-retry` messages
-- [X] T064 [P] [US5] Implement the stored copy in `packages/core/src/worker/stored-copy.ts`: read, write and remove a file `related-web/<id>.json` at the origin-private root with a synchronous access handle, outside the engine's `cypherlite/` directory
+- [X] T063 [P] [US5] Implement the store open with the bounded retry in `packages/core/src/worker/store.ts` (`opfs://rel-<id>`; retry from 100 ms to 500 ms for at most 5000 ms, then continue in memory with no stored copy written), posting `store-retry` messages
+- [X] T064 [P] [US5] Implement the stored copy in `packages/core/src/worker/stored-copy.ts`: read, write and remove a file `relate-web/<id>.json` at the origin-private root with a synchronous access handle, outside the engine's `cypherlite/` directory
 - [X] T065 [P] [US5] Implement the start-up sweep (remove every node with a `scope` property) in `packages/core/src/worker/sweep.ts`
 - [X] T066 [US5] Extend the `init` handling in `packages/core/src/worker/worker.ts` with the start-up of `contracts/worker-protocol.md` (open store, read stored copy, restore on equal `revision` without fetching the data, sweep, compare the node count with `data.nodes`, otherwise remove the copy, reset if not empty, fetch, validate, check agreement, create indexes, load, write the copy last)
 - [X] T067 [US5] Implement the `per-page` profile in `packages/core/src/profiles/per-page.ts`: a new client per page, store on by default when a descriptor is given, and departure from `pagehide` that drops the page view's scoped data
@@ -221,7 +221,7 @@ description: "Task list for the related-web core package"
 - [X] T081 Update the Commands and Architecture sections of `CLAUDE.md` with the pnpm workspace layout, the scripts of T001 and the `packages/core` structure
 - [X] T082 Record the browser and worker measurements of loading (1,000, 5,000 and 20,000 pages) and of restore in `design/adr/ADR-002-graph-data-format.md` section 4 and `design/adr/ADR-003-graph-descriptor.md` section 4, replacing the Node-only figures and the unverified items they settle
 - [X] T083 Decide how continuous integration reaches the private engine submodule (credentials, or a cached engine build) and document the decision in `vendor/README.md`
-- [X] T084 Run `pnpm test`, `pnpm --filter related-web-core test:conformance`, `test:package` and `test:trace` and confirm every requirement and success criterion has a passing test (SC-005)
+- [X] T084 Run `pnpm test`, `pnpm --filter @relate/web-core test:conformance`, `test:package` and `test:trace` and confirm every requirement and success criterion has a passing test (SC-005)
 - [X] T085 Run the scenarios of `specs/001-core-package/quickstart.md` end to end and correct the quickstart where the commands differ
 - [X] T086 Check the work against the constitution (principles I to VI) and note the result in `specs/001-core-package/plan.md`
 

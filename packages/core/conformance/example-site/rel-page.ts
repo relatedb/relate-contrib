@@ -1,15 +1,15 @@
 // The behavior shared by the example pages. It is the contract the conformance check drives: every observable
-// thing is a `data-gw-*` element or attribute, so an adapter's pages only have to produce the same markup.
+// thing is a `data-rel-*` element or attribute, so an adapter's pages only have to produce the same markup.
 //
 // Query parameters: navigation=client-routing|multi-page (the profile), variant=a|b|mismatch|broken (which
 // descriptor), __break=no-rerun (a deliberately broken variant used to test the check itself).
 import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url";
-import { attachView, createSiteClient } from "related-web-core";
-import type { View } from "related-web-core";
+import { attachView, createSiteClient } from "@relate/web-core";
+import type { View } from "@relate/web-core";
 
 const params = new URLSearchParams(location.search);
 const navigation = (params.get("navigation") ?? "multi-page") as "client-routing" | "multi-page";
-const variant = params.get("variant") ?? document.body.dataset.gwVariant ?? "a";
+const variant = params.get("variant") ?? document.body.dataset.relVariant ?? "a";
 const descriptors: Record<string, string> = {
   a: "/descriptor.json",
   b: "/descriptor-b.json",
@@ -38,7 +38,7 @@ const notes = {
 
 const state = { status: client.status, generation: client.generation, count: "…", updates: 0, lastError: "", notes: "…", restored: "unknown", failure: "" };
 const set = (name: string, value: string): void => {
-  const el = document.querySelector(`[data-gw-${name}]`);
+  const el = document.querySelector(`[data-rel-${name}]`);
   if (el) el.textContent = value;
 };
 
@@ -54,7 +54,7 @@ function render(): void {
   set("failure", state.failure);
   set("notes", state.notes);
   // the status as an attribute of <html>, so a scenario can wait for it without matching the status element
-  document.documentElement.dataset.gwState = state.status;
+  document.documentElement.dataset.relState = state.status;
 }
 
 client.on("status", ({ status, generation }) => {
@@ -76,8 +76,8 @@ let view: View | null = null;
 function arrive(): void {
   state.count = "…";
   state.notes = "…";
-  const notesPage = "gwNotesPage" in document.body.dataset;
-  document.querySelector("[data-gw-notes-row]")?.toggleAttribute("hidden", !notesPage);
+  const notesPage = "relNotesPage" in document.body.dataset;
+  document.querySelector("[data-rel-notes-row]")?.toggleAttribute("hidden", !notesPage);
   const off = client.subscribe("MATCH (n:Page) RETURN count(n) AS c", null, (u) => {
     state.status = u.status;
     state.generation = u.generation;
@@ -115,14 +115,14 @@ function depart(): void {
 
 document.addEventListener("click", (e) => {
   const target = e.target as Element | null;
-  const action = target?.closest("[data-gw-action]")?.getAttribute("data-gw-action");
+  const action = target?.closest("[data-rel-action]")?.getAttribute("data-rel-action");
   if (action === "trap") {
     void client.query(trap).catch((err: { reason: string }) => ((state.lastError = err.reason), render()));
   } else if (action === "timeout") {
     void client.query(runaway, null, { timeoutMs: 400 }).catch((err: { reason: string }) => ((state.lastError = err.reason), render()));
   } else if (navigation === "client-routing") {
     // Client-side routing: fetch the next page and swap its <main>, so this module (and the client) stays alive.
-    const a = target?.closest("a[data-gw-link]") as HTMLAnchorElement | null;
+    const a = target?.closest("a[data-rel-link]") as HTMLAnchorElement | null;
     if (a && !e.defaultPrevented && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
       e.preventDefault();
       void go(a.href, true);
@@ -136,8 +136,8 @@ async function go(href: string, push: boolean): Promise<void> {
   depart();
   document.querySelector("main")!.innerHTML = next.querySelector("main")!.innerHTML;
   document.title = next.title;
-  document.body.removeAttribute("data-gw-notes-page");
-  if (next.body.hasAttribute("data-gw-notes-page")) document.body.setAttribute("data-gw-notes-page", "");
+  document.body.removeAttribute("data-rel-notes-page");
+  if (next.body.hasAttribute("data-rel-notes-page")) document.body.setAttribute("data-rel-notes-page", "");
   if (push) history.pushState({}, "", href);
   arrive();
 }

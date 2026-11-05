@@ -1,20 +1,20 @@
-# related-web-astro
+# @relate/web-astro
 
-Astro integration for [`related-web-core`](../core/README.md) (a working name, like this package): it puts the embedded
+Astro integration for [`@relate/web-core`](../core/README.md) (a working name, like this package): it puts the embedded
 graph database into an Astro 7 static site. It serves graphs built from the site's content, carries small graphs inside
 pages, and ties each page's graph clients to the router's arrival and departure. Instances, faults, loading and
 navigation profiles are the core's; this package only wires them into Astro. Decisions: `design/adr/ADR-004-astro-adapter.md`.
 
 ## Install
 
-Peer dependencies: `astro` (7.x), `related-web-core` and `@neo4j-labs/cypherlite-wasm`. Static output only.
+Peer dependencies: `astro` (7.x), `@relate/web-core` and `@neo4j-labs/cypherlite-wasm`. Static output only.
 
 ```js
 // astro.config.mjs
-import relatedWeb from "related-web-astro";
+import relateWeb from "@relate/web-astro";
 export default defineConfig({
   integrations: [
-    relatedWeb({
+    relateWeb({
       navigation: "client-routing", // "multi-page" (default) if the site has no ClientRouter
       graphs: {
         site: { source: "./src/site-graph.ts", lifetime: "visit", indexes: [{ label: "Page", property: "id" }] },
@@ -28,8 +28,8 @@ export default defineConfig({
 ## Two ways to declare a graph
 
 **Registered** (a file): `source` is a module whose default export returns an ADR-002 graph document (it may use
-`astro:content`), or a `.json` file. The build validates it and publishes `/_related/<name>/descriptor.json` and
-`/_related/<name>/graph.<revision>.json` (under Astro's `base`); the revision is 12 hex digits of a hash of the
+`astro:content`), or a `.json` file. The build validates it and publishes `/_relate/<name>/descriptor.json` and
+`/_relate/<name>/graph.<revision>.json` (under Astro's `base`); the revision is 12 hex digits of a hash of the
 canonical document, so content changes invalidate stored copies. A failing source fails the build with the path of the
 first problem; in `astro dev` the server keeps running, prints the error and answers that graph's files with `500`.
 
@@ -37,7 +37,7 @@ first problem; in `astro dev` the server keeps running, prints the error and ans
 
 ```astro
 ---
-import GraphData from "related-web-astro/graph-data";
+import GraphData from "@relate/web-astro/graph-data";
 const entry = await getEntry("recipes", Astro.params.slug);
 ---
 <GraphData id="recipe" document={graphOf(entry)} config={{ indexes: [{ label: "Step", property: "id" }] }} />
@@ -48,7 +48,7 @@ The build fails for an invalid document or `config`, a duplicate `id` on a page,
 ## In the browser
 
 ```ts
-import { onPage, graph } from "related-web-astro/client";
+import { onPage, graph } from "@relate/web-astro/client";
 
 onPage(
   (page) => {

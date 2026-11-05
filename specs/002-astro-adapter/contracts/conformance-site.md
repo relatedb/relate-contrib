@@ -2,7 +2,7 @@
 
 **Site**: `packages/astro/conformance-site`, built once per profile with `NAVIGATION=multi-page` or `client-routing` (the router is in the layout only for `client-routing`) and `build.format: "file"`.
 
-**Pages** (markup contract: the core's `data-gw-*` elements, from `packages/core/conformance/example-site/gw-page.ts`):
+**Pages** (markup contract: the core's `data-rel-*` elements, from `packages/core/conformance/example-site/rel-page.ts`):
 
 | Page | Purpose | Graph use |
 |------|---------|-----------|

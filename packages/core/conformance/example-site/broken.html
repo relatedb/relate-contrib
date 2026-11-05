@@ -5,31 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Example site: broken graph</title>
   </head>
-  <body data-gw-variant="broken">
+  <body data-rel-variant="broken">
     <main>
-      <h1 data-gw-title>Example site: broken graph</h1>
+      <h1 data-rel-title>Example site: broken graph</h1>
     <nav>
-      <a data-gw-link href="/index.html">Home</a>
-      <a data-gw-link href="/page-1.html">Page 1</a>
-      <a data-gw-link href="/page-2.html">Page 2</a>
-      <a data-gw-link href="/notes.html">Notes</a>
-      <a data-gw-link href="/broken.html">Broken</a>
+      <a data-rel-link href="/index.html">Home</a>
+      <a data-rel-link href="/page-1.html">Page 1</a>
+      <a data-rel-link href="/page-2.html">Page 2</a>
+      <a data-rel-link href="/notes.html">Notes</a>
+      <a data-rel-link href="/broken.html">Broken</a>
     </nav>
       <p>The graph on this page cannot be loaded; the page still works.</p>
     <section>
-      <p>Status: <span data-gw-status>loading</span> · generation <span data-gw-generation>0</span> ·
-        profile <span data-gw-profile></span> · instance <span data-gw-instance></span> ·
-        restored <span data-gw-restored>unknown</span></p>
-      <p>Pages in the graph: <span data-gw-count>…</span> · updates <span data-gw-updates>0</span> ·
-        last error <span data-gw-last-error></span></p>
-      <p data-gw-failure></p>
-      <p data-gw-notes-row hidden>Notes: <span data-gw-notes>…</span></p>
+      <p>Status: <span data-rel-status>loading</span> · generation <span data-rel-generation>0</span> ·
+        profile <span data-rel-profile></span> · instance <span data-rel-instance></span> ·
+        restored <span data-rel-restored>unknown</span></p>
+      <p>Pages in the graph: <span data-rel-count>…</span> · updates <span data-rel-updates>0</span> ·
+        last error <span data-rel-last-error></span></p>
+      <p data-rel-failure></p>
+      <p data-rel-notes-row hidden>Notes: <span data-rel-notes>…</span></p>
       <p>
-        <button type="button" data-gw-action="trap">Run a statement that crashes the engine</button>
-        <button type="button" data-gw-action="timeout">Run a statement that never ends (0.4 s timeout)</button>
+        <button type="button" data-rel-action="trap">Run a statement that crashes the engine</button>
+        <button type="button" data-rel-action="timeout">Run a statement that never ends (0.4 s timeout)</button>
       </p>
     </section>
     </main>
-    <script type="module" src="./gw-page.ts"></script>
+    <script type="module" src="./rel-page.ts"></script>
   </body>
 </html>

@@ -6,7 +6,7 @@
 
 ## Summary
 
-`related-web-core` is a framework-agnostic TypeScript library that hosts a CypherLite browser database in
+`@relate/web-core` is a framework-agnostic TypeScript library that hosts a CypherLite browser database in
 a dedicated worker behind a small client. It loads graph data from the node-link document of ADR-002,
 with the optional descriptor of ADR-003 that lets a page restore a stored graph without fetching the data;
 it contains faults by replacing the worker (and stops after three failed attempts); and it provides the two
@@ -25,7 +25,7 @@ in the engine and found one point that changed ADR-002 (arrays of mixed whole an
 
 **Testing**: Vitest for unit tests in Node; Playwright test runner in Chromium, Firefox and WebKit for browser tests and the conformance check; load-time baselines kept in the repository (research R4)
 
-**Target Platform**: current desktop Chromium, Firefox and WebKit browsers; Node for `related-web-core/validate`
+**Target Platform**: current desktop Chromium, Firefox and WebKit browsers; Node for `@relate/web-core/validate`
 
 **Project Type**: library in a pnpm workspace, with an example site inside it for the conformance check
 
@@ -60,7 +60,7 @@ who owns the decisions; the two amendments have not been through `/adr-review`.
 3. **ADR-003 accepted**: the graph descriptor, the stored copy beside the store, and the start-up decision.
 
 Spec FR-029 says the package includes the example site and the conformance check; the plan delivers them as
-the `./conformance` export of `related-web-core` (fixtures and scenario definitions) with Playwright as an
+the `./conformance` export of `@relate/web-core` (fixtures and scenario definitions) with Playwright as an
 optional peer dependency for the runner, so the published tarball stays small.
 
 ## Project Structure
@@ -94,7 +94,7 @@ vendor/
 ├── cypherlite/                   # git submodule, pinned commit
 └── cypherlite-wasm/pkg/          # build output, gitignored
 
-packages/core/                    # related-web-core (working name)
+packages/core/                    # @relate/web-core (working name)
 ├── package.json                  # exports ".", "./validate", "./worker", "./conformance"
 ├── tsconfig.json
 ├── src/

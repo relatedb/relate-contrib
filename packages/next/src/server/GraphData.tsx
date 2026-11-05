@@ -1,8 +1,8 @@
 // A small graph written into the page (spec FR-013 to FR-015, ADR-005 §2.3): no descriptor, no revision, no stored copy,
 // no extra request. A component asks for it by name through `useGraph`.
 import { cache } from "react";
-import { checkInline, escapeJson } from "related-web-core/build";
-import type { InlineConfig } from "related-web-core/build";
+import { checkInline, escapeJson } from "@relate/web-core/build";
+import type { InlineConfig } from "@relate/web-core/build";
 import { OWNER, registeredNames } from "./graphs.js";
 
 export interface GraphDataProps {
@@ -24,5 +24,5 @@ export function inlineText(props: GraphDataProps, seen: Set<string>, registered:
 
 export function GraphData(props: GraphDataProps) {
   const html = inlineText(props, seenInRender());
-  return <script type="application/json" data-related-graph={props.id} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <script type="application/json" data-relate-graph={props.id} dangerouslySetInnerHTML={{ __html: html }} />;
 }

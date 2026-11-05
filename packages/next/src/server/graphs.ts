@@ -1,8 +1,8 @@
 // Registered graphs: the declaration check and the per-process evaluation of sources (spec FR-004, FR-012; research D-5).
-import { evaluate } from "related-web-core/build";
-import type { Evaluated } from "related-web-core/build";
-import { validateDescriptor } from "related-web-core/validate";
-import type { GraphDocument, IndexSpec } from "related-web-core/validate";
+import { evaluate } from "@relate/web-core/build";
+import type { Evaluated } from "@relate/web-core/build";
+import { validateDescriptor } from "@relate/web-core/validate";
+import type { GraphDocument, IndexSpec } from "@relate/web-core/validate";
 
 export const OWNER = "@relate/web-next";
 

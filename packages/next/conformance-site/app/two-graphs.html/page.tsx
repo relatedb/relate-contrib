@@ -1,5 +1,5 @@
 import { GraphData } from "@relate/web-next/server";
-import { Nav } from "../gw-shell";
+import { Nav } from "../rel-shell";
 import { InlineCount } from "../inline-count";
 
 const make = (n: number, label: string) => ({ version: 1 as const, nodes: Array.from({ length: n }, (_, i) => ({ id: `${label}${i}`, labels: [label] })), links: [] });
@@ -7,7 +7,7 @@ const make = (n: number, label: string) => ({ version: 1 as const, nodes: Array.
 export default function Page() {
   return (
     <main>
-      <h1 data-gw-title>Two graphs</h1>
+      <h1 data-rel-title>Two graphs</h1>
       <Nav />
       <div data-inline-page>
         <p>Alpha: <span data-inline-count="alpha">…</span> (generation <span data-inline-generation="alpha"></span>)</p>

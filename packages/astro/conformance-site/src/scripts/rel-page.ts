@@ -1,16 +1,16 @@
-// The behavior shared by the conformance pages, written against `related-web-astro/client`. Every observable thing is a
-// `data-gw-*` element, the contract the core's conformance scenarios drive (packages/core/conformance/example-site/gw-page.ts).
+// The behavior shared by the conformance pages, written against `@relate/web-astro/client`. Every observable thing is a
+// `data-rel-*` element, the contract the core's conformance scenarios drive (packages/core/conformance/example-site/rel-page.ts).
 //
 // Query parameters: navigation=client-routing|multi-page (the profile), variant=a|b|mismatch|broken (which descriptor).
-import { onPage } from "related-web-astro/client";
+import { onPage } from "@relate/web-astro/client";
 import { navigate } from "astro:transitions/client";
-import { attachView } from "related-web-core";
-import type { Client, View } from "related-web-core";
+import { attachView } from "@relate/web-core";
+import type { Client, View } from "@relate/web-core";
 
-(window as unknown as { __gwNavigate: typeof navigate }).__gwNavigate = navigate; // for the adapter's own tests
+(window as unknown as { __relNavigate: typeof navigate }).__relNavigate = navigate; // for the adapter's own tests
 const params = new URLSearchParams(location.search);
 const navigation = (params.get("navigation") ?? undefined) as "client-routing" | "multi-page" | undefined;
-const variant = params.get("variant") ?? document.body.dataset.gwVariant ?? "a";
+const variant = params.get("variant") ?? document.body.dataset.relVariant ?? "a";
 // Variant a is the registered graph. The other variants are static descriptors the integration cannot generate
 // (the same id with another revision, counts that disagree, data that is missing); they go through the testing aid.
 const descriptors: Record<string, string | undefined> = { a: undefined, b: "/descriptor-b.json", mismatch: "/descriptor-mismatch.json", broken: "/descriptor-broken.json" };
@@ -33,12 +33,12 @@ let current: Client | null = null;
 let lastError = "";
 
 const set = (name: string, value: string): void => {
-  const el = document.querySelector(`[data-gw-${name}]`);
+  const el = document.querySelector(`[data-rel-${name}]`);
   if (el) el.textContent = value;
 };
 
 document.addEventListener("click", (e) => {
-  const action = (e.target as Element | null)?.closest("[data-gw-action]")?.getAttribute("data-gw-action");
+  const action = (e.target as Element | null)?.closest("[data-rel-action]")?.getAttribute("data-rel-action");
   const client = current;
   if (!client) return;
   const record = (err: { reason: string }): void => {
@@ -51,11 +51,11 @@ document.addEventListener("click", (e) => {
 
 onPage((page) => {
   const body = document.body.dataset;
-  const name = body.gwGraph ?? "example";
-  const label = body.gwLabel ?? "Page";
+  const name = body.relGraph ?? "example";
+  const label = body.relLabel ?? "Page";
   const client = page.graph(name, { navigation, descriptor: name === "example" ? descriptors[variant] : undefined });
   current = client;
-  (window as unknown as { __gw?: { client: Client } }).__gw = { client }; // for the adapter's own tests
+  (window as unknown as { __rel?: { client: Client } }).__rel = { client }; // for the adapter's own tests
   if (!watched.has(client)) {
     watched.add(client);
     client.on("timing", ({ phase, restored }) => {
@@ -78,11 +78,11 @@ onPage((page) => {
     set("last-error", lastError);
     set("failure", state.failure);
     set("notes", state.notes);
-    document.documentElement.dataset.gwState = state.status;
+    document.documentElement.dataset.relState = state.status;
   };
 
-  const notesPage = "gwNotesPage" in document.body.dataset;
-  document.querySelector("[data-gw-notes-row]")?.toggleAttribute("hidden", !notesPage);
+  const notesPage = "relNotesPage" in document.body.dataset;
+  document.querySelector("[data-rel-notes-row]")?.toggleAttribute("hidden", !notesPage);
 
   const offs: Array<() => void> = [];
   offs.push(
@@ -125,4 +125,4 @@ onPage((page) => {
     void view?.detach();
     view = null;
   };
-}, { selector: "[data-gw-status]" }); // the blank page has no graph
+}, { selector: "[data-rel-status]" }); // the blank page has no graph

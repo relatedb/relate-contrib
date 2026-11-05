@@ -15,7 +15,7 @@ export default function v1() {
             }],
           },
         });
-        injectRoute({ pattern: "/_related/[id]/[file]", entrypoint: fileURLToPath(new URL("./route.ts", import.meta.url)), prerender: true });
+        injectRoute({ pattern: "/_relate/[id]/[file]", entrypoint: fileURLToPath(new URL("./route.ts", import.meta.url)), prerender: true });
       },
     },
   };

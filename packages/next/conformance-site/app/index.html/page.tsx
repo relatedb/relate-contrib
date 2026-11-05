@@ -1,5 +1,5 @@
-import { GwShell } from "../gw-shell";
+import { RelShell } from "../rel-shell";
 
 export default function Page() {
-  return <GwShell title="Example site: home"><p>The example site's home page.</p></GwShell>;
+  return <RelShell title="Example site: home"><p>The example site's home page.</p></RelShell>;
 }

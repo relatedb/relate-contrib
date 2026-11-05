@@ -1,5 +1,5 @@
 // The catalog of registered graphs, as plain data a server component can pass to the client provider (spec FR-011).
-import type { IndexSpec } from "related-web-core/validate";
+import type { IndexSpec } from "@relate/web-core/validate";
 import { declare, registeredNames } from "./graphs.js";
 import type { Graphs, Lifetime } from "./graphs.js";
 import { basePath, descriptorPath } from "./route.js";

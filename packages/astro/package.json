@@ -1,7 +1,7 @@
 {
-  "name": "related-web-astro",
+  "name": "@relate/web-astro",
   "version": "0.0.0",
-  "description": "Astro integration for related-web-core: serves graphs built from a site's content, carries small graphs in pages, and ties a page's graph clients to the router.",
+  "description": "Astro integration for @relate/web-core: serves graphs built from a site's content, carries small graphs in pages, and ties a page's graph clients to the router.",
   "private": true,
   "type": "module",
   "sideEffects": false,
@@ -28,20 +28,20 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:astro": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json",
     "test:astro-browsers": "playwright test --grep-invert \"@conformance|@figures\"",
-    "test:astro-conformance": "GW_REPORT=reports/conformance.json playwright test --grep @conformance",
+    "test:astro-conformance": "REL_REPORT=reports/conformance.json playwright test --grep @conformance",
     "test:astro-package": "vitest run --config vitest.package.config.ts --reporter=default --reporter=json --outputFile.json=reports/package.json",
     "test:astro-trace": "tsx tests/trace/check-trace.ts"
   },
   "peerDependencies": {
     "@neo4j-labs/cypherlite-wasm": "*",
     "astro": "^7.4.0",
-    "related-web-core": "*"
+    "@relate/web-core": "*"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
     "@types/node": "^26.6.6",
     "astro": "^7.4.5",
-    "related-web-core": "workspace:*",
+    "@relate/web-core": "workspace:*",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",

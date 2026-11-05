@@ -2,7 +2,7 @@
 
 **Feature**: [spec.md](../spec.md) | **Plan**: [plan.md](../plan.md)
 
-## Module `related-web-core/conformance`
+## Module `@relate/web-core/conformance`
 
 ```ts
 export const exampleDescriptor: Descriptor;        // names the graph, its revision and indexes
@@ -23,10 +23,10 @@ descriptor whose data location does not exist) and plain HTML pages: an index, t
 per-page query and show the shared graph's page count, a notes page that adds two notes of its own and drops them
 when the page is left, a broken page whose graph can never load, and a blank page with no script.
 
-The scenarios drive the pages by what a visitor can see. Every observable thing is a `data-gw-*` element or
-attribute: `data-gw-status`, `data-gw-generation`, `data-gw-count`, `data-gw-updates`, `data-gw-instance`,
-`data-gw-profile`, `data-gw-restored`, `data-gw-failure`, `data-gw-last-error`, `data-gw-notes`, links marked
-`data-gw-link`, and buttons marked `data-gw-action` (`trap`, `timeout`), plus `data-gw-state` on `<html>` for the
+The scenarios drive the pages by what a visitor can see. Every observable thing is a `data-rel-*` element or
+attribute: `data-rel-status`, `data-rel-generation`, `data-rel-count`, `data-rel-updates`, `data-rel-instance`,
+`data-rel-profile`, `data-rel-restored`, `data-rel-failure`, `data-rel-last-error`, `data-rel-notes`, links marked
+`data-rel-link`, and buttons marked `data-rel-action` (`trap`, `timeout`), plus `data-rel-state` on `<html>` for the
 current status. The pages read their profile from a `navigation` query parameter and their graph from a `variant`
 parameter. An adapter serves the same pages through its framework and produces the same markup and behavior.
 

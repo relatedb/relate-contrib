@@ -10,13 +10,13 @@ describe("the catalog", () => {
     const c = catalog({ shared: { source, lifetime: "visit", indexes: [{ label: "Page", property: "id" }] }, local: { source } });
     expect(JSON.parse(JSON.stringify(c))).toEqual(c);
     expect(c.graphs).toEqual([
-      { id: "shared", descriptor: "/related-web/shared/descriptor.json", lifetime: "visit", indexes: [{ label: "Page", property: "id" }] },
-      { id: "local", descriptor: "/related-web/local/descriptor.json", lifetime: "page", indexes: [] },
+      { id: "shared", descriptor: "/relate-web/shared/descriptor.json", lifetime: "visit", indexes: [{ label: "Page", property: "id" }] },
+      { id: "local", descriptor: "/relate-web/local/descriptor.json", lifetime: "page", indexes: [] },
     ]);
   });
 
   it("includes the base path in the descriptor location", () => {
-    vi.stubEnv("RELATED_WEB_BASE_PATH", "/docs/");
-    expect(catalog({ g: { source } }).graphs[0]!.descriptor).toBe("/docs/related-web/g/descriptor.json");
+    vi.stubEnv("RELATE_WEB_BASE_PATH", "/docs/");
+    expect(catalog({ g: { source } }).graphs[0]!.descriptor).toBe("/docs/relate-web/g/descriptor.json");
   });
 });

@@ -1,7 +1,7 @@
 // Finding a graph by name and making its client (spec FR-018 to FR-022; ADR-005 §2.4). Everything about the instance
 // (worker, status, faults, loading) is the core's; this file decides which core client a name gets and who ends it.
-import { createClient, createSiteClient } from "related-web-core";
-import type { Client } from "related-web-core";
+import { createClient, createSiteClient } from "@relate/web-core";
+import type { Client } from "@relate/web-core";
 import type { Navigation } from "../env.js";
 import type { Catalog } from "../server/catalog.js";
 import { findInline } from "./inline.js";
@@ -124,7 +124,7 @@ export function hold(config: Config, id: string, options: GraphOptions = {}): He
 
 /** A visit-lifetime registered graph, for code that lives across pages (spec FR-022). */
 export function visitGraph(config: Config | null, id: string, options: GraphOptions = {}): Client {
-  if (!config) throw new Error(`@relate/web-next: graph("${id}") was called before the provider mounted; ask after RelatedWebProvider has mounted, or from a component with useGraph`);
+  if (!config) throw new Error(`@relate/web-next: graph("${id}") was called before the provider mounted; ask after RelateWebProvider has mounted, or from a component with useGraph`);
   const entry = config.catalog.graphs.find((g) => g.id === id);
   if (!entry) {
     if (findInline(id)) throw new Error(`@relate/web-next: "${id}" is an inline graph of a page; ask for it from a component with useGraph`);

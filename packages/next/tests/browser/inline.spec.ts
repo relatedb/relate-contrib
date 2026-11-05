@@ -3,9 +3,9 @@ import { BUILDS } from "../../playwright.config.js";
 import { expect, test } from "./fixtures.js";
 
 const trap = `RETURN ${"(".repeat(1000)}1${")".repeat(1000)} AS x`;
-type Win = { __gwClients: Record<string, { generation: number; query(s: string): Promise<{ rows: Array<Record<string, unknown>> }> }> };
+type Win = { __relClients: Record<string, { generation: number; query(s: string): Promise<{ rows: Array<Record<string, unknown>> }> }> };
 
-const only = process.env.GW_ONLY?.split(",");
+const only = process.env.REL_ONLY?.split(",");
 for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.cache && !b.dev && !b.base)) {
   const base = `http://127.0.0.1:${build.port}`;
   test.describe(`inline graphs, ${build.name}`, () => {
@@ -16,13 +16,13 @@ for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.
       page.on("request", (r) => requests.push(new URL(r.url()).pathname));
       await page.goto(`${base}/inline.html`);
       await expect(page.locator('[data-inline-count="notebook"]:visible')).toHaveText("12");
-      expect(requests.filter((p) => p.startsWith("/related-web/"))).toEqual([]); // no descriptor and no data request
-      await page.waitForFunction(() => !!(window as unknown as Partial<Win>).__gwClients?.notebook);
-      const indexes = await page.evaluate(async () => (await (window as unknown as Win).__gwClients.notebook!.query("SHOW INDEXES")).rows.map((r) => r.properties));
+      expect(requests.filter((p) => p.startsWith("/relate-web/"))).toEqual([]); // no descriptor and no data request
+      await page.waitForFunction(() => !!(window as unknown as Partial<Win>).__relClients?.notebook);
+      const indexes = await page.evaluate(async () => (await (window as unknown as Win).__relClients.notebook!.query("SHOW INDEXES")).rows.map((r) => r.properties));
       expect(indexes).toEqual([["id"]]);
       await page.reload();
       await expect(page.locator('[data-inline-count="notebook"]:visible')).toHaveText("12");
-      expect(requests.filter((p) => p.startsWith("/related-web/"))).toEqual([]);
+      expect(requests.filter((p) => p.startsWith("/relate-web/"))).toEqual([]);
       expect(problems).toEqual([]);
     });
 
@@ -30,7 +30,7 @@ for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.
       await page.goto(`${base}/two-graphs.html`);
       await expect(page.locator('[data-inline-count="alpha"]:visible')).toHaveText("5");
       await expect(page.locator('[data-inline-count="beta"]:visible')).toHaveText("7");
-      await page.evaluate((statement) => (window as unknown as Win).__gwClients.alpha!.query(statement).catch(() => undefined), trap);
+      await page.evaluate((statement) => (window as unknown as Win).__relClients.alpha!.query(statement).catch(() => undefined), trap);
       await expect(page.locator('[data-inline-generation="alpha"]:visible')).toHaveText("2", { timeout: 60_000 });
       await expect(page.locator('[data-inline-count="alpha"]:visible')).toHaveText("5");
       await expect(page.locator('[data-inline-generation="beta"]:visible')).toHaveText("1");
@@ -41,7 +41,7 @@ for (const build of BUILDS.filter((b) => (!only || only.includes(b.name)) && !b.
       await page.goto(`${base}/recipes/soup`);
       await expect(page.locator('[data-inline-count="steps"]:visible')).toHaveText("3");
       await page.getByRole("link", { name: "Bread" }).click();
-      await expect(page.locator("[data-gw-title]:visible")).toHaveText("Bread");
+      await expect(page.locator("[data-rel-title]:visible")).toHaveText("Bread");
       await expect(page.locator('[data-inline-count="steps"]:visible')).toHaveText("4");
     });
   });

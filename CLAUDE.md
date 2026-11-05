@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Purpose
 
-`related-web` is the planning home for **CypherLite integrations with web frameworks**, including static site generators. CypherLite is Neo4j Labs' embedded, in-memory property graph engine (openCypher), shipped for the browser as a WASM library. The integrations showcase the database and are meant to run on the dedicated CypherLite website first.
+`relate-web` is the planning home for **CypherLite integrations with web frameworks**, including static site generators. CypherLite is Neo4j Labs' embedded, in-memory property graph engine (openCypher), shipped for the browser as a WASM library. The integrations showcase the database and are meant to run on the dedicated CypherLite website first.
 
 Two uses of the embedded graph drive the work:
 
@@ -15,9 +15,9 @@ Planned integration order (subject to change as ADRs land): ObservableHQ (spiked
 
 ## Project state
 
-The first package, `packages/core` (`related-web-core`, a working name), is implemented from `specs/001-core-package/`
-(see its `tasks.md`). The Astro adapter, `packages/astro` (`related-web-astro`), is implemented from `specs/002-astro-adapter/`
-(ADR-004). The Next adapter, `packages/next` (`@relate/web-next`), is implemented from `specs/003-next-adapter/` (ADR-005) under the `@relate` namespace; the core and Astro adapter are renamed in a later change. Design documents are in `design/`. Further adapters come next.
+The first package, `packages/core` (`@relate/web-core`), is implemented from `specs/001-core-package/`
+(see its `tasks.md`). The Astro adapter, `packages/astro` (`@relate/web-astro`), is implemented from `specs/002-astro-adapter/`
+(ADR-004). The Next adapter, `packages/next` (`@relate/web-next`), is implemented from `specs/003-next-adapter/` (ADR-005) under the `@relate` namespace; the core and Astro adapter were renamed into the same namespace (`@relate/web-core`, `@relate/web-astro`). Design documents are in `design/`. Further adapters come next.
 
 ## Commands
 
@@ -107,5 +107,5 @@ ADRs (snapshot format, embedding model and query-time strategy, runtime targets,
 
 ## Conventions
 
-- The repository is a pnpm workspace with the core package (`related-web-core`, a working name) as its first module, independently publishable. Until `@neo4j-labs/cypherlite-wasm` is published, a pinned build is vendored in and the core declares it a peer dependency.
+- The repository is a pnpm workspace with the core package (`@relate/web-core`) as its first module, independently publishable. Until `@neo4j-labs/cypherlite-wasm` is published, a pinned build is vendored in and the core declares it a peer dependency.
 - Keep documents in `design/` written for a newcomer to this repo: name project artifacts on first use rather than assuming the reader has seen sibling documents (the review skills check this).

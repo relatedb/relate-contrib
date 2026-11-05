@@ -1,8 +1,8 @@
 # @relate/web-next
 
-Next.js (app router) integration for `related-web-core`. It publishes graphs built from a site's content as revision-named static files, carries small graphs inside pages, and ties each graph's client to React components. The core does the rest: the worker, loading, faults, status.
+Next.js (app router) integration for `@relate/web-core`. It publishes graphs built from a site's content as revision-named static files, carries small graphs inside pages, and ties each graph's client to React components. The core does the rest: the worker, loading, faults, status.
 
-Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, React 19, `related-web-core` and `@neo4j-labs/cypherlite-wasm` (all peer dependencies). Static export and the Node server are supported; the pages router, edge and serverless runtimes are not.
+Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, React 19, `@relate/web-core` and `@neo4j-labs/cypherlite-wasm` (all peer dependencies). Static export and the Node server are supported; the pages router, edge and serverless runtimes are not.
 
 ## Use, in five steps
 
@@ -10,8 +10,8 @@ Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, R
 
    ```js
    // next.config.mjs
-   import { withRelatedWeb } from "@relate/web-next";
-   export default withRelatedWeb({ /* your config */ }, { navigation: "client-routing" });
+   import { withRelateWeb } from "@relate/web-next";
+   export default withRelateWeb({ /* your config */ }, { navigation: "client-routing" });
    ```
 
 2. **Declare the graphs.** A name maps to a source that returns a graph document (ADR-002), with optional indexes and a lifetime: `"page"` (default) or `"visit"`.
@@ -27,7 +27,7 @@ Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, R
 3. **Add the route file.** The two `export const` lines are literal because Next reads route settings from the file's text.
 
    ```ts
-   // app/related-web/[id]/[file]/route.ts
+   // app/relate-web/[id]/[file]/route.ts
    import { createGraphRoute } from "@relate/web-next/server";
    import { graphs } from "../../../../lib/graphs";
    export const dynamic = "force-static";
@@ -41,7 +41,7 @@ Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, R
 
    ```tsx
    // app/layout.tsx (server)            // app/providers.tsx ("use client")
-   <Providers catalog={catalog(graphs)}>  <RelatedWebProvider catalog={catalog} engineUrl={new URL("@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm", import.meta.url)}>
+   <Providers catalog={catalog(graphs)}>  <RelateWebProvider catalog={catalog} engineUrl={new URL("@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm", import.meta.url)}>
    ```
 
    The root layout must call `catalog()`: `GraphData` uses the names it records to refuse an inline graph named like a registered one.
@@ -58,7 +58,7 @@ Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, R
 
 - **Placeholder first.** `useGraph` returns `null` and `useQuery` returns `{ status: "idle", rows: null, error: null }` on the server and on the first client render, so the markup matches and hydration warns of nothing. The client is asked for in an effect. A page that uses no hook pays nothing.
 - **Lifetimes.** A visit graph is made once and never destroyed by navigation. A registered page graph is shared by its holders and destroyed one task after the last one unmounts (so React's development double mount ends nothing), and at once when the document ends (`pagehide`). Two consecutive pages that both ask for it in the same commit share one client.
-- **Inline graphs.** `<GraphData id document config />` (server) writes a validated `<script type="application/json" data-related-graph>` into the page: no descriptor, no revision, no stored copy. Ask for it by name with the same hooks. A page can carry several; a second use of a name, an invalid document, and a name that is also registered fail the render. Under `cacheComponents` a hidden earlier page's element can stay in the document; the lookup takes the only match, else the first whose parent is visible.
+- **Inline graphs.** `<GraphData id document config />` (server) writes a validated `<script type="application/json" data-relate-graph>` into the page: no descriptor, no revision, no stored copy. Ask for it by name with the same hooks. A page can carry several; a second use of a name, an invalid document, and a name that is also registered fail the render. Under `cacheComponents` a hidden earlier page's element can stay in the document; the lookup takes the only match, else the first whose parent is visible.
 - **Direct lookup.** `graph(id)` returns a visit graph for code outside components. It refuses page graphs and inline graphs, and is available once the provider has mounted (a later task or an event handler, not a child's first effect).
 - **Determinism.** Next builds in several processes, and each evaluates a source. The same content gives the same revision in all of them, whatever the order of keys, nodes and links; a source that does not fails the build, naming the graph.
 - **Base path.** The catalog's and the descriptor's locations include it, in a static export and for the Node server.
@@ -67,7 +67,7 @@ Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, R
 
 ## Layout, tests
 
-`src/` (`index.ts`, `env.ts`, `server/`, `client/`), `tests/` (unit, build, browser, package, trace), `conformance-site/` (an unpublished Next app built once per profile, as a server build and as an export, plus a `cacheComponents` build and a base-path build). The shared build code lives in `related-web-core/build`.
+`src/` (`index.ts`, `env.ts`, `server/`, `client/`), `tests/` (unit, build, browser, package, trace), `conformance-site/` (an unpublished Next app built once per profile, as a server build and as an export, plus a `cacheComponents` build and a base-path build). The shared build code lives in `@relate/web-core/build`.
 
 ```sh
 pnpm test:next                # unit, build and development-server tests
@@ -77,4 +77,4 @@ pnpm test:next-package        # a clean Next project outside the repository, bot
 pnpm test:next-trace          # every requirement and success criterion has a passing, tagged test
 ```
 
-`GW_ONLY=client-routing,multi-page` limits the builds Playwright makes and serves (names are in `playwright.config.ts`).
+`REL_ONLY=client-routing,multi-page` limits the builds Playwright makes and serves (names are in `playwright.config.ts`).

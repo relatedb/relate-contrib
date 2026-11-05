@@ -1,6 +1,6 @@
-# related-web-core
+# @relate/web-core
 
-`related-web-core` is a working name; see `design/notes/2026-11-02-project-name.md`.
+`@relate/web-core` is a working name; see `design/notes/2026-11-02-project-name.md`.
 
 Hosts a small embedded graph database (the engine's browser build, `@neo4j-labs/cypherlite-wasm`) in a web page. The database runs in a
 dedicated worker behind a client, so loading and querying never block the page. A crash, a timeout or a
@@ -14,7 +14,7 @@ format), `ADR-003` (the graph descriptor). The specification and plan are in `sp
 ## Install
 
 ```sh
-pnpm add related-web-core @neo4j-labs/cypherlite-wasm
+pnpm add @relate/web-core @neo4j-labs/cypherlite-wasm
 ```
 
 `@neo4j-labs/cypherlite-wasm` is a peer dependency. Until it is published to npm this repository vendors a
@@ -24,7 +24,7 @@ pinned build (see `vendor/README.md`). The package has no other runtime dependen
 
 ```js
 import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url"; // the bundler places the binary
-import { createSiteClient, attachView } from "related-web-core";
+import { createSiteClient, attachView } from "@relate/web-core";
 
 const client = createSiteClient({
   engineUrl,                                     // where the engine's binary is served from
@@ -64,7 +64,7 @@ engine's JSON envelope, unaltered (`columns`, `rows`, `stats`, `error`, ...); an
 ## Graph data
 
 - **Data document** (`graph-data.schema.json`): `{ version: 1, nodes: [{ id, labels?, properties? }], links: [{ source, target, type, properties? }] }`.
-  Properties live only under `properties`. Validate in a build step with `import { validate } from "related-web-core/validate"`.
+  Properties live only under `properties`. Validate in a build step with `import { validate } from "@relate/web-core/validate"`.
 - **Descriptor** (`graph-descriptor.schema.json`): `{ version: 1, id, revision, data: { url, nodes, links }, indexes? }`, served beside the
   data. With a descriptor, a store can be restored without fetching the data when the `revision` has not
   changed. Without one there is no store and no revision.
@@ -83,7 +83,7 @@ default WebKit context is not); where the store is unavailable the package loads
 
 ## Conformance check for adapters
 
-`related-web-core/conformance` exports `runConformance({ baseUrl, profile, browser })` and the scenarios. Serve the
+`@relate/web-core/conformance` exports `runConformance({ baseUrl, profile, browser })` and the scenarios. Serve the
 example pages (`conformance/example-site/`) through your adapter and run it for each profile and browser; a failure
 names the broken behavior. Playwright is an optional peer dependency used by the runner. The contract is in
 `specs/001-core-package/contracts/conformance.md`.
@@ -93,13 +93,13 @@ names the broken behavior. Playwright is an optional peer dependency used by the
 ```sh
 pnpm run build:wasm          # build the vendored engine (needs Rust, wasm-bindgen-cli, binaryen)
 pnpm install
-pnpm --filter related-web-core build
-pnpm --filter related-web-core test:unit
-pnpm --filter related-web-core test:browsers      # Chromium, Firefox and WebKit
-pnpm --filter related-web-core test:conformance
-pnpm --filter related-web-core test:package       # packs the core and installs it in a clean project
-pnpm --filter related-web-core test:trace         # every requirement has a passing, tagged test
+pnpm --filter @relate/web-core build
+pnpm --filter @relate/web-core test:unit
+pnpm --filter @relate/web-core test:browsers      # Chromium, Firefox and WebKit
+pnpm --filter @relate/web-core test:conformance
+pnpm --filter @relate/web-core test:package       # packs the core and installs it in a clean project
+pnpm --filter @relate/web-core test:trace         # every requirement has a passing, tagged test
 ```
 
-Load-time baselines are in `tests/baselines/` (one file per browser and environment; `GW_ENV` names the
-environment, `GW_UPDATE_BASELINE=1` rewrites them). A run fails when a time is more than twice its baseline.
+Load-time baselines are in `tests/baselines/` (one file per browser and environment; `REL_ENV` names the
+environment, `REL_UPDATE_BASELINE=1` rewrites them). A run fails when a time is more than twice its baseline.

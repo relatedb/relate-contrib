@@ -50,7 +50,7 @@ export const test = base.extend({
       await context.close();
       return;
     }
-    const profile = mkdtempSync(join(tmpdir(), "related-web-webkit-"));
+    const profile = mkdtempSync(join(tmpdir(), "relate-web-webkit-"));
     const context = await playwright.webkit.launchPersistentContext(profile, { baseURL });
     await clearOpfs(context, baseURL);
     await use(context);

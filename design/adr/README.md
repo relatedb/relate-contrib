@@ -63,3 +63,5 @@ Use `/adr-review` before moving a draft to `accepted`.
 | [ADR-003](ADR-003-graph-descriptor.md) | Graph Descriptor Beside the Graph Data | accepted | RFC-001 |
 | [ADR-004](ADR-004-astro-adapter.md) | The Astro Adapter as an Integration over the Core | accepted (amended 2026-11-05) | RFC-001, RFC-002 |
 | [ADR-005](ADR-005-next-adapter.md) | The Next.js Adapter as React Bindings over the Core | accepted (amended 2026-11-05) | RFC-001, RFC-002 |
+
+Package names: on 2026-11-05 the core and the Astro adapter were renamed from `related-web-core` and `related-web-astro` to `@relate/web-core` and `@relate/web-astro`, joining `@relate/web-next`. The ADRs use the new names throughout; the decisions are unchanged.

@@ -1,6 +1,6 @@
-# Contract: `related-web-core/build`
+# Contract: `@relate/web-core/build`
 
-An additive export of the core (FR-026 to FR-028). It imports nothing but the core's own validators and uses only `globalThis.crypto.subtle` for hashing (research D-1). It is the code that moves out of `related-web-astro`, with the Astro adapter importing it and behaving as before.
+An additive export of the core (FR-026 to FR-028). It imports nothing but the core's own validators and uses only `globalThis.crypto.subtle` for hashing (research D-1). It is the code that moves out of `@relate/web-astro`, with the Astro adapter importing it and behaving as before.
 
 | Function | Behavior |
 |---|---|

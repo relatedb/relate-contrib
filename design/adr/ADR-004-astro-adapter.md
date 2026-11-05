@@ -17,28 +17,28 @@ Astro, a Vite-based site generator, builds pages from content at build time and 
 - **The binary and the hydration rules are already known.** The bundler emitted the engine's `.wasm` once, with a hashed name, and rewrote the glue's default lookup to it, so no workaround was needed (SPIKE-002 §5.3). A component that read the instance during its first render mismatched the server output once the instance outlived the page; one that showed a placeholder first did not (SPIKE-003 §5.3).
 - **Small graphs and large graphs want different delivery.** A graph of a few dozen nodes written beside a page's prose costs less inline than as a second request with its own descriptor. A graph shared by many pages, or a large one, benefits from a cacheable file and a stored copy that is restored when its revision has not changed (ADR-003).
 
-The core package `related-web-core` already provides the client, the loader, the descriptor handling and the two profiles (ADR-001, ADR-002, ADR-003), plus a conformance check that drives example pages (`packages/core/conformance/example-site`). `createSiteClient` returns one retained client under `client-routing`; `createClient` makes a new independent client, and a page may have several. What remains is the Astro-specific wiring: where each kind of graph's data comes from at build time, how its lifetime is chosen, how the profile is chosen, how a page's own data follows the router, and how the adapter is checked. RFC-001 §5.1 frames the adapter as owning only that wiring; RFC-002 §5.1 and §5.2 list the sources and the page shapes it has to cover.
+The core package `@relate/web-core` already provides the client, the loader, the descriptor handling and the two profiles (ADR-001, ADR-002, ADR-003), plus a conformance check that drives example pages (`packages/core/conformance/example-site`). `createSiteClient` returns one retained client under `client-routing`; `createClient` makes a new independent client, and a page may have several. What remains is the Astro-specific wiring: where each kind of graph's data comes from at build time, how its lifetime is chosen, how the profile is chosen, how a page's own data follows the router, and how the adapter is checked. RFC-001 §5.1 frames the adapter as owning only that wiring; RFC-002 §5.1 and §5.2 list the sources and the page shapes it has to cover.
 
 ## 2. Decision
 
-### 2.1 Package: `related-web-astro`, an Astro integration
+### 2.1 Package: `@relate/web-astro`, an Astro integration
 
-A workspace package `packages/astro`, published as `related-web-astro` (a working name, following `related-web-core`). It has three entry points:
+A workspace package `packages/astro`, published as `@relate/web-astro` (a working name, following `@relate/web-core`). It has three entry points:
 
-- the default export, an Astro integration, added to `astro.config` as `relatedWeb({ ... })`;
-- `related-web-astro/graph-data`, an Astro component (an `.astro` file, not a React, Vue or Svelte component) that puts a small graph into a page;
-- `related-web-astro/client`, a browser module for pages and islands.
+- the default export, an Astro integration, added to `astro.config` as `relateWeb({ ... })`;
+- `@relate/web-astro/graph-data`, an Astro component (an `.astro` file, not a React, Vue or Svelte component) that puts a small graph into a page;
+- `@relate/web-astro/client`, a browser module for pages and islands.
 
-Peer dependencies are `astro` (version 7, the version the spikes ran on), `related-web-core` and `@neo4j-labs/cypherlite-wasm`. The adapter has no other runtime dependency. It ships no components for UI frameworks; the client module is plain TypeScript and is used from Astro `<script>` blocks and from islands of any framework.
+Peer dependencies are `astro` (version 7, the version the spikes ran on), `@relate/web-core` and `@neo4j-labs/cypherlite-wasm`. The adapter has no other runtime dependency. It ships no components for UI frameworks; the client module is plain TypeScript and is used from Astro `<script>` blocks and from islands of any framework.
 
 ### 2.2 Build time: two ways to declare a graph
 
-A graph is identified by an id (the id rule of ADR-003). It is declared in one of two ways, and the way is chosen by the author per graph. Which pages use it is not declared anywhere: a page uses a graph by asking for its id (section 2.3), so the same mechanism serves a graph for every page, for a few, or for one. In both ways the data is an ADR-002 data document, and the adapter validates it with `related-web-core/validate` and fails the build with the path of the first problem. What a document contains, the schema that turns content into nodes and links, is outside this decision (RFC-003 for the site graph, RFC-002 for page graphs). The adapter ships no default extractor.
+A graph is identified by an id (the id rule of ADR-003). It is declared in one of two ways, and the way is chosen by the author per graph. Which pages use it is not declared anywhere: a page uses a graph by asking for its id (section 2.3), so the same mechanism serves a graph for every page, for a few, or for one. In both ways the data is an ADR-002 data document, and the adapter validates it with `@relate/web-core/validate` and fails the build with the path of the first problem. What a document contains, the schema that turns content into nodes and links, is outside this decision (RFC-003 for the site graph, RFC-002 for page graphs). The adapter ships no default extractor.
 
 **Registered graph: a file served from static endpoints.** The integration option `graphs` maps an id to a source and optional indexes and a lifetime (section 2.3):
 
 ```js
-relatedWeb({
+relateWeb({
   graphs: {
     "pantry-data": { source: "./src/data/pantry.json" },
     site: { source: "./src/site-graph.ts", lifetime: "visit", indexes: [{ label: "Page", property: "id" }] },
@@ -49,8 +49,8 @@ relatedWeb({
 
 A source is a module that default-exports a function returning an ADR-002 document, or a promise of one, or a JSON file holding one. A module is imported through Vite, so it can use `astro:content`. For each registered graph the integration injects two prerendered routes, using Astro's `injectRoute`:
 
-- `/_related/<id>/graph.<revision>.json`, the data document, where `<revision>` is the first 12 hex digits of the SHA-256 of the canonical document;
-- `/_related/<id>/descriptor.json`, the ADR-003 descriptor, with `revision` set to the same value, `data.url` pointing at the hashed file, and `data.nodes` and `data.links` set to the counts.
+- `/_relate/<id>/graph.<revision>.json`, the data document, where `<revision>` is the first 12 hex digits of the SHA-256 of the canonical document;
+- `/_relate/<id>/descriptor.json`, the ADR-003 descriptor, with `revision` set to the same value, `data.url` pointing at the hashed file, and `data.nodes` and `data.links` set to the counts.
 
 Both routes share one evaluation of the source per build, so the descriptor, the document and its hash always agree. The data URL changes with the content, so it can be cached indefinitely; the small descriptor is the only file a browser revalidates, and a stored copy is restored by revision (ADR-003). The routes respect Astro's `base` setting. In `astro dev` the source is re-evaluated when its inputs change, so the descriptor's revision follows edits.
 
@@ -58,7 +58,7 @@ Both routes share one evaluation of the source per build, so the descriptor, the
 
 ```astro
 ---
-import GraphData from "related-web-astro/graph-data";
+import GraphData from "@relate/web-astro/graph-data";
 const entry = await getEntry("recipes", Astro.params.slug);
 const document = { version: 1, nodes: [...], links: [...] }; // from the entry, or written by hand
 ---
@@ -69,12 +69,12 @@ The `document` is built in the page's frontmatter, where the page's own content 
 
 ### 2.3 Client module: configuration comes from the integration
 
-The integration provides a virtual module (`virtual:related-web/config`) holding the registered graph ids, their descriptor URLs and lifetimes, the profile, and the options for the core. `related-web-astro/client` reads it and exports:
+The integration provides a virtual module (`virtual:relate-web/config`) holding the registered graph ids, their descriptor URLs and lifetimes, the profile, and the options for the core. `@relate/web-astro/client` reads it and exports:
 
 - `onPage(setup, { selector }?)`: calls `setup(page)` on the first page, once the DOM is ready and with or without the router, and again on every later `astro:page-load`; the function `setup` returns is called on `astro:before-swap` and on `pagehide`. Astro runs a bundled module script once per document and fires `astro:page-load` on the first load only when the router is present, so the first run does not wait for that event and the router's first event for the document does not run it twice. A registration outlives the page whose script made it, so `selector` limits it to pages where `document.querySelector(selector)` matches (default: every page); a script that serves only some pages passes the selector of the markup it drives. This is the one place the adapter's page lifecycle lives. `page.graph(id, options?)` returns the core client for a graph that this page uses and ties that client to the page: a page-lifetime client is created with the core's `createClient` and destroyed on departure, so it cannot outlive its page and a page may hold several. Subscriptions made with the client's `subscribe` and views made with the core's `attachView` (page-scoped data that is added on arrival and dropped on departure) inside `setup` are added on arrival and dropped on departure under both profiles, without the page author listening to router events. `attachView` already ignores arrival work that completes after `detach()`.
 - `graph(id, options?)`: the same lookup outside a page's setup, for code that lives across pages (a persisted navigation element, say). It accepts only a graph whose lifetime is `"visit"` and throws for any other.
 
-Asking twice for the same id on one page returns the same client. `id` is looked up first among the inline `<GraphData>` elements of the current page, then among the registered graphs. `options.navigation` overrides the profile and `options.descriptor` overrides the descriptor URL; both are testing aids (see section 4). The engine's binary URL comes from `@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url`, imported inside `related-web-astro/client` so the bundler places and hashes it.
+Asking twice for the same id on one page returns the same client. `id` is looked up first among the inline `<GraphData>` elements of the current page, then among the registered graphs. `options.navigation` overrides the profile and `options.descriptor` overrides the descriptor URL; both are testing aids (see section 4). The engine's binary URL comes from `@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url`, imported inside `@relate/web-astro/client` so the bundler places and hashes it.
 
 **Lifetime** is a property of a registered graph: `"page"` (the default) or `"visit"`. A `"visit"` graph is a graph that many pages share; it is made with the core's `createSiteClient`, so under `client-routing` it is one client for the whole visit, and under `multi-page` each page makes its own, as the core defines. A `"page"` graph is made with the core's `createClient` for the page that asks and destroyed (`destroy()`) when that page is left, which is also correct for a registered graph that many pages use but that each page loads for itself. An inline page graph is always `"page"`. `"page"` is the default because it is correct for every graph under either profile; a graph declared `"visit"` gains the retained instance and takes the obligation to hold only data that pages share.
 
@@ -93,9 +93,9 @@ The client never starts before a page asks for it. A page that does not import t
 
 ### 2.5 Checked against the core's conformance scenarios
 
-`packages/astro/conformance-site` is an Astro site, not published, that reproduces the example pages' `data-gw-*` markup (`conformance/example-site/gw-page.ts` in the core defines it) using only `related-web-astro`. It has pages for each way a graph is used: a shared registered graph (`"visit"`), a page with its own inline graph, a page that asks for a registered `"page"` graph, and a page with two graphs. It is built twice, once per profile, with `ClientRouter` in the layout only for `client-routing`. `runConformance` from `related-web-core/conformance` runs against each build in Chromium, Firefox and WebKit, and a failure blocks the adapter's release. The adapter's own behaviours have their own tests in `packages/astro/tests`: a page-lifetime client is destroyed on departure and its store is free for the next page, `graph()` rejects a page-lifetime id, and the build fails for an invalid document, a duplicate id, or an id both registered and inline. These browsers render the page, so the router's real view-transition path is exercised, not only its no-animation swap.
+`packages/astro/conformance-site` is an Astro site, not published, that reproduces the example pages' `data-rel-*` markup (`conformance/example-site/rel-page.ts` in the core defines it) using only `@relate/web-astro`. It has pages for each way a graph is used: a shared registered graph (`"visit"`), a page with its own inline graph, a page that asks for a registered `"page"` graph, and a page with two graphs. It is built twice, once per profile, with `ClientRouter` in the layout only for `client-routing`. `runConformance` from `@relate/web-core/conformance` runs against each build in Chromium, Firefox and WebKit, and a failure blocks the adapter's release. The adapter's own behaviours have their own tests in `packages/astro/tests`: a page-lifetime client is destroyed on departure and its store is free for the next page, `graph()` rejects a page-lifetime id, and the build fails for an invalid document, a duplicate id, or an id both registered and inline. These browsers render the page, so the router's real view-transition path is exercised, not only its no-animation swap.
 
-A package test, like the core's, packs `related-web-astro` and the core, installs them in a clean Astro project outside the repository, and builds and runs a page.
+A package test, like the core's, packs `@relate/web-astro` and the core, installs them in a clean Astro project outside the repository, and builds and runs a page.
 
 ### 2.6 Scope of the first version
 
@@ -141,4 +141,4 @@ A package test, like the core's, packs `related-web-astro` and the core, install
 
 - 2026-11-04: planning the adapter (`specs/002-astro-adapter/plan.md`, D-1 and D-2) found that a script that serves some pages would run on every later page, that Astro fires no first `astro:page-load` without the router, and that the core's conformance runner cannot be satisfied by hashed, name-bound descriptors. Added `selector` and the first-load rule to `onPage` (2.3), the `descriptor` testing-aid override (2.3), the inline `config` value (2.2), and the conformance and dev-server consequences (4).
 - 2026-11-04: the core's `createSiteClient` returns one client for the whole visit under `client-routing`, whichever graph is asked for, so two `"visit"` graphs would share the first. The client module keeps visit-lifetime clients by name in module state, made with `createClient` under `client-routing` and with `createSiteClient` under `multi-page`; for one graph the behavior is the core's persistent profile (2.3). Found while implementing (`specs/002-astro-adapter/research.md`, R-2).
-- 2026-11-05: ADR-005 (the Next.js adapter) is the second adapter that §4 named as the reason to move the revision and descriptor code. The canonical text, revision, document preparation and descriptor construction move into the core as `related-web-core/build`, and `related-web-astro` imports them from there; behavior is unchanged.
+- 2026-11-05: ADR-005 (the Next.js adapter) is the second adapter that §4 named as the reason to move the revision and descriptor code. The canonical text, revision, document preparation and descriptor construction move into the core as `@relate/web-core/build`, and `@relate/web-astro` imports them from there; behavior is unchanged.

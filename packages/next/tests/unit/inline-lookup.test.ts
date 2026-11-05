@@ -11,7 +11,7 @@ interface Stub {
 // A document with just the part of the DOM the lookup uses.
 const documentOf = (...scripts: Stub[]) => {
   const elements = scripts.map((s) => ({
-    getAttribute: (a: string) => (a === "data-related-graph" ? s.name : null),
+    getAttribute: (a: string) => (a === "data-relate-graph" ? s.name : null),
     textContent: s.text,
     parentElement: { checkVisibility: () => s.visible ?? true },
   }));

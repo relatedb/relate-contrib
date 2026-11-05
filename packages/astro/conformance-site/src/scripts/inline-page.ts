@@ -1,14 +1,14 @@
 // For the pages that carry inline graphs: asks for each one, counts its nodes and shows the count. The clients are
-// exposed for the adapter's own tests (`window.__gwClients`).
-import { onPage } from "related-web-astro/client";
-import type { Client } from "related-web-core";
+// exposed for the adapter's own tests (`window.__relClients`).
+import { onPage } from "@relate/web-astro/client";
+import type { Client } from "@relate/web-core";
 
 onPage(
   (page) => {
     const clients: Record<string, Client> = {};
     const offs: Array<() => void> = [];
-    for (const el of Array.from(document.querySelectorAll("script[data-related-graph]"))) {
-      const name = el.getAttribute("data-related-graph")!;
+    for (const el of Array.from(document.querySelectorAll("script[data-relate-graph]"))) {
+      const name = el.getAttribute("data-relate-graph")!;
       const client = page.graph(name);
       clients[name] = client;
       const show = (text: string): void => {
@@ -20,7 +20,7 @@ onPage(
       offs.push(client.on("status", () => show("…")));
       offs.push(client.subscribe("MATCH (n) RETURN count(n) AS c", null, (u) => u.rows && show(String(u.rows[0]?.c))));
     }
-    (window as unknown as { __gwClients: Record<string, Client> }).__gwClients = clients;
+    (window as unknown as { __relClients: Record<string, Client> }).__relClients = clients;
     return () => offs.forEach((off) => off());
   },
   { selector: "[data-inline-page]" },

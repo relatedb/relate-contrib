@@ -12,7 +12,7 @@ export const ConfigContext = createContext<Config | null>(null);
 let mounted: Config | null = null;
 export const mountedConfig = (): Config | null => mounted;
 
-export interface RelatedWebProviderProps {
+export interface RelateWebProviderProps {
   catalog: Catalog;
   /** The URL of the engine binary, passed to the core unchanged. */
   engineUrl: string | URL;
@@ -21,8 +21,8 @@ export interface RelatedWebProviderProps {
   children: ReactNode;
 }
 
-export function RelatedWebProvider({ catalog, engineUrl, navigation, children }: RelatedWebProviderProps) {
-  const profile = navigation ?? ((process.env.RELATED_WEB_NAVIGATION as Navigation | undefined) ?? "client-routing");
+export function RelateWebProvider({ catalog, engineUrl, navigation, children }: RelateWebProviderProps) {
+  const profile = navigation ?? ((process.env.RELATE_WEB_NAVIGATION as Navigation | undefined) ?? "client-routing");
   const config = useMemo<Config>(() => ({ catalog, engineUrl, profile }), [catalog, engineUrl, profile]);
   useEffect(() => {
     mounted = config;

@@ -1,5 +1,5 @@
 "use client";
-import { RelatedWebProvider } from "@relate/web-next/client";
+import { RelateWebProvider } from "@relate/web-next/client";
 import type { Catalog } from "@relate/web-next/server";
 import type { ReactNode } from "react";
 
@@ -7,5 +7,5 @@ import type { ReactNode } from "react";
 const engineUrl = new URL("@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm", import.meta.url);
 
 export function Providers({ catalog, children }: { catalog: Catalog; children: ReactNode }) {
-  return <RelatedWebProvider catalog={catalog} engineUrl={engineUrl}>{children}</RelatedWebProvider>;
+  return <RelateWebProvider catalog={catalog} engineUrl={engineUrl}>{children}</RelateWebProvider>;
 }

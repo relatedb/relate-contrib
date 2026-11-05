@@ -110,11 +110,11 @@ multiple pages and tabs); Selenium or WebdriverIO (no advantage here).
 
 **Decision** (ADR-003): the page gives the client a descriptor (`id`, `revision`, the data's location and
 counts, optional indexes). The worker keeps a copy of it in a file at the origin-private root, for example
-`related-web/<id>.json`, outside the `cypherlite/<name>/` directory the engine manages for its store. The file
+`relate-web/<id>.json`, outside the `cypherlite/<name>/` directory the engine manages for its store. The file
 is read and written in the worker with a synchronous access handle, the capability the engine's store needs
 too. With a store, start-up is:
 
-1. open the store `gw-<id>` (the `id` is 1 to 48 characters from `[A-Za-z0-9_-]`, so the name stays within
+1. open the store `rel-<id>` (the `id` is 1 to 48 characters from `[A-Za-z0-9_-]`, so the name stays within
    the engine's 64-character limit), retrying a locked store from 100 ms to 500 ms for at most 5 s and then
    continuing in memory (FR-012);
 2. read the stored copy; if its `revision` equals the descriptor's, restore: no data fetch, no index

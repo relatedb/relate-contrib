@@ -7,8 +7,8 @@ async function start(page: Page, visitorTimeoutMs = 500): Promise<void> {
   await serveGraph(page, graph);
   await page.evaluate(async ([descriptor, timeout]) => {
     const w = window as any;
-    const tracked = w.gw.faults.trackedWorkers();
-    const client = w.gw.core.createClient({ engineUrl: w.gw.engineUrl, graph: { descriptor }, navigation: "client-routing", workerFactory: tracked.factory, visitorTimeoutMs: timeout });
+    const tracked = w.rel.faults.trackedWorkers();
+    const client = w.rel.core.createClient({ engineUrl: w.rel.engineUrl, graph: { descriptor }, navigation: "client-routing", workerFactory: tracked.factory, visitorTimeoutMs: timeout });
     w.client = client;
     w.tracked = tracked;
     w.replaced = [];
@@ -27,7 +27,7 @@ test("a visitor statement gets the default timeout, fails with `timeout`, and th
   await start(page, 500);
   const reason = await page.evaluate(() => {
     const w = window as any;
-    return w.client.run(w.gw.faults.runawayStatement).result.then(() => "resolved", (e: { reason: string }) => e.reason);
+    return w.client.run(w.rel.faults.runawayStatement).result.then(() => "resolved", (e: { reason: string }) => e.reason);
   });
   expect(reason).toBe("timeout");
   await generation(page, 2);
@@ -40,7 +40,7 @@ test("stop() fails the call with `stopped`, replaces the instance and re-runs th
   await start(page, 60_000);
   const reason = await page.evaluate(async () => {
     const w = window as any;
-    const run = w.client.run(w.gw.faults.runawayStatement);
+    const run = w.client.run(w.rel.faults.runawayStatement);
     await new Promise((r) => setTimeout(r, 200));
     run.stop();
     return run.result.then(() => "resolved", (e: { reason: string }) => e.reason);
@@ -72,7 +72,7 @@ test("a statement the page ships through query() is not given the visitor timeou
   const outcome = await page.evaluate(async () => {
     const w = window as any;
     let settled = false;
-    void w.client.query(w.gw.faults.runawayStatement).then(() => (settled = true), () => (settled = true));
+    void w.client.query(w.rel.faults.runawayStatement).then(() => (settled = true), () => (settled = true));
     await new Promise((r) => setTimeout(r, 1500));
     return { settled, generation: w.client.generation };
   });

@@ -1,5 +1,5 @@
 {
-  "name": "related-web-core",
+  "name": "@relate/web-core",
   "version": "0.0.0",
   "description": "Hosts an embedded graph database in a web page: a worker client, graph loading, fault containment and navigation profiles.",
   "private": true,
@@ -36,7 +36,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:unit": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json",
     "test:browsers": "playwright test --grep-invert @conformance",
-    "test:conformance": "GW_REPORT=reports/conformance.json playwright test --grep @conformance",
+    "test:conformance": "REL_REPORT=reports/conformance.json playwright test --grep @conformance",
     "test:package": "vitest run --config vitest.package.config.ts --reporter=default --reporter=json --outputFile.json=reports/package.json",
     "test:trace": "tsx tests/trace/check-trace.ts"
   },

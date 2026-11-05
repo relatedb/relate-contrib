@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build `related-web-astro` (`packages/astro`): an Astro 7 integration that turns registered graph sources into revision-named static files and descriptors, an `.astro` component that carries a small graph inside a page, and a client module whose page entry ties each page's graph clients to the router's arrival and departure. Everything about instances, faults, loading and profiles stays in `related-web-core`. The adapter is checked by an unpublished conformance site (run with the core's runner in three browsers, both profiles), its own browser and build tests, and a clean-install test.
+Build `@relate/web-astro` (`packages/astro`): an Astro 7 integration that turns registered graph sources into revision-named static files and descriptors, an `.astro` component that carries a small graph inside a page, and a client module whose page entry ties each page's graph clients to the router's arrival and departure. Everything about instances, faults, loading and profiles stays in `@relate/web-core`. The adapter is checked by an unpublished conformance site (run with the core's runner in three browsers, both profiles), its own browser and build tests, and a clean-install test.
 
 Planning found two points where ADR-004 and the core's conformance runner did not fit Astro (section "Decisions needed"). Both were resolved on 2026-11-04 by an ADR-004 amendment and a spec amendment, as recommended there.
 
@@ -14,7 +14,7 @@ Planning found two points where ADR-004 and the core's conformance runner did no
 
 **Language/Version**: TypeScript 7 (as the core), Node 24 for build and tests, ES2022 browser target
 
-**Primary Dependencies**: peers `astro` ^7.4, `related-web-core`, `@neo4j-labs/cypherlite-wasm`; no other runtime dependency. Dev: `@playwright/test`, `vitest`, `typescript`.
+**Primary Dependencies**: peers `astro` ^7.4, `@relate/web-core`, `@neo4j-labs/cypherlite-wasm`; no other runtime dependency. Dev: `@playwright/test`, `vitest`, `typescript`.
 
 **Storage**: none of its own. Registered graphs are static files; the core's origin-private store is used through the core.
 
@@ -47,7 +47,7 @@ Planning found two points where ADR-004 and the core's conformance runner did no
 
 **D-1. Conformance of an id-bound, hashed-URL adapter against the core's runner.** The runner (`packages/core/conformance/scenarios.ts`) assumes the core's example site: fixed page paths (`/index.html`, `/page-1.html`, `/notes.html`, `/blank.html`), `variant=b|mismatch|broken` query values that select other descriptors, and request checks that look for the substrings `/graph.json` (C-11, positive) and `/graph-b.json` (C-07, positive). Two facts about the adapter break that:
 
-1. A registered graph's data URL is `/_related/<id>/graph.<revision>.json` and contains neither substring, so C-07 and C-11 fail on the positive checks.
+1. A registered graph's data URL is `/_relate/<id>/graph.<revision>.json` and contains neither substring, so C-07 and C-11 fail on the positive checks.
 2. A descriptor's `id` is the graph name, and the store is named by the descriptor `id`. C-07 needs the same `id` with a different `revision` (an older store replaced by a newer revision). One Astro build produces one revision per name, so a "variant b" of the same graph needs a second build, or a descriptor the adapter does not generate. C-03 (broken data URL) and C-10 (counts that disagree) likewise need descriptors the adapter never writes.
 
 *Recommended resolution*: amend ADR-004 so `page.graph(id, options)` and `graph(id, options)` accept a `descriptor` URL override beside the `navigation` override (a testing aid, documented as such); and parameterize the runner (additive, optional) with a predicate for "this request fetched variant A / B data" so the default behavior is unchanged. The conformance site then registers the graph for variant `a` through the integration (so the adapter's build path is what scenarios C-01 to C-06, C-08, C-09 exercise) and serves variants `b`, `mismatch` and `broken` from static files under `public/` through the override. This keeps "every adapter passes the same check" (principle II) without weakening the core's scenarios. It needs the spec's "changes to the core" exclusion to read "except additive parameters of the conformance runner".
@@ -74,7 +74,7 @@ specs/002-astro-adapter/
 
 ```text
 packages/astro/
-├── package.json                  # related-web-astro; exports ".", "./graph-data", "./client", "./types"
+├── package.json                  # @relate/web-astro; exports ".", "./graph-data", "./client", "./types"
 ├── tsconfig.json
 ├── README.md                     # use, lifetimes, the placeholder-first rule for UI-framework wrappers
 ├── src/
@@ -82,8 +82,8 @@ packages/astro/
 │   ├── options.ts                # parse and validate `graphs`, `navigation`, lifetimes (FR-002 to FR-005)
 │   ├── sources.ts                # evaluate once, validate (core), canonical form, revision (FR-006 to FR-009)
 │   ├── routes/files.ts           # injected prerendered endpoint for descriptor.json and graph.<revision>.json
-│   ├── plugin.ts                 # Vite plugin: virtual:related-web/config and /sources, dev re-evaluation (FR-011, FR-012)
-│   ├── GraphData.astro           # exported as related-web-astro/graph-data (FR-013 to FR-015)
+│   ├── plugin.ts                 # Vite plugin: virtual:relate-web/config and /sources, dev re-evaluation (FR-011, FR-012)
+│   ├── GraphData.astro           # exported as @relate/web-astro/graph-data (FR-013 to FR-015)
 │   ├── client/
 │   │   ├── index.ts              # onPage, graph (FR-016 to FR-024, FR-026)
 │   │   ├── page.ts               # page lifecycle: first load, arrival, departure, pagehide
@@ -98,7 +98,7 @@ packages/astro/
 └── conformance-site/             # unpublished Astro site; built once per profile
     ├── astro.config.mjs          # NAVIGATION=client-routing|multi-page chooses the profile and the layout's router
     ├── src/graphs/               # example graph sources (variant a, and a small one for inline/page graphs)
-    ├── src/layouts/Base.astro    # markup contract (data-gw-*), ClientRouter only for client-routing
+    ├── src/layouts/Base.astro    # markup contract (data-rel-*), ClientRouter only for client-routing
     ├── src/pages/                # index, page-1, page-2, notes, broken, blank, plus lifetime and two-graph pages
     └── public/                   # variant b, mismatch and broken descriptors and data (D-1)
 pnpm-workspace.yaml               # unchanged: packages/* already includes packages/astro

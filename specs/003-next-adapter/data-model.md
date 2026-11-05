@@ -33,8 +33,8 @@ Evaluated once per source per process in the production build and per request in
 
 | Path | Content |
 |---|---|
-| `/related-web/<name>/descriptor.json` | the descriptor |
-| `/related-web/<name>/graph.<revision>.json` | the canonical document |
+| `/relate-web/<name>/descriptor.json` | the descriptor |
+| `/relate-web/<name>/graph.<revision>.json` | the canonical document |
 
 Statically generated for export and for the production server; any other name or revision is not found (FR-006).
 
@@ -44,7 +44,7 @@ Statically generated for export and for the production server; any other name or
 
 ## Inline graph (in the page)
 
-An element `<script type="application/json" data-related-graph="<name>">` holding `{ document, config? }` as escaped JSON, where `config` is `{ indexes? }`. No descriptor, revision or stored copy (FR-013). Found by the client as in research D-4.
+An element `<script type="application/json" data-relate-graph="<name>">` holding `{ document, config? }` as escaped JSON, where `config` is `{ indexes? }`. No descriptor, revision or stored copy (FR-013). Found by the client as in research D-4.
 
 ## Client-side state
 

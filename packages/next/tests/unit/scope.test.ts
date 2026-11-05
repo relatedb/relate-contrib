@@ -15,21 +15,33 @@ describe("the server entry", () => {
     for (const file of sources) {
       const text = readFileSync(join(dir, file), "utf8");
       expect(text, file).not.toMatch(/cypherlite|\.wasm|\bwindow\b|\bdocument\./);
-      for (const m of text.matchAll(/from "([^"]+)"/g)) expect(m[1], file).not.toBe("related-web-core"); // only its build and validate subpaths
+      for (const m of text.matchAll(/from "([^"]+)"/g)) expect(m[1], file).not.toBe("@relate/web-core"); // only its build and validate subpaths
       expect(text, file).not.toMatch(/\.\.\/client\//);
     }
   });
 });
 
 describe("the core", () => {
-  it("changes only by the build subpath and its export", () => {
-    let changed: string[];
+  // The feature's first commit on main (`12897d8`, the accepted ADR-005) and its last (`3acc4f6`): between them the core
+  // gained the build subpath and its export, and nothing else.
+  it("gained only the build subpath and its export while the feature was built", () => {
+    let names: string[];
+    let manifest: string;
     try {
-      changed = execFileSync("git", ["diff", "--name-only", "main", "--", "packages/core/src", "packages/core/conformance", "packages/core/package.json"], { cwd: here("../../../.."), encoding: "utf8" }).split("\n").filter(Boolean);
+      const cwd = here("../../../..");
+      names = execFileSync("git", ["diff", "--name-status", "12897d8", "3acc4f6", "--", "packages/core/src", "packages/core/conformance", "packages/core/package.json"], { cwd, encoding: "utf8" }).split("\n").filter(Boolean);
+      manifest = execFileSync("git", ["diff", "-U0", "12897d8", "3acc4f6", "--", "packages/core/package.json"], { cwd, encoding: "utf8" });
     } catch {
-      return; // not a git checkout, or no `main` to compare with
+      return; // not a checkout that has that history
     }
-    // when this feature has been merged, main already holds the subpath and the difference is empty
-    expect(changed.filter((f) => !f.startsWith("packages/core/src/build/") && f !== "packages/core/package.json"), "files changed outside the build subpath").toEqual([]);
+    expect(names.length).toBeGreaterThan(0);
+    for (const line of names) {
+      const [status, file] = line.split("\t");
+      const allowed = status === "A" && file!.startsWith("packages/core/src/build/");
+      expect(allowed || file === "packages/core/package.json", line).toBe(true);
+    }
+    const added = manifest.split("\n").filter((l) => /^\+(?!\+\+)/.test(l));
+    expect(added.join("\n")).toMatch(/\.\/build/);
+    expect(manifest.split("\n").filter((l) => /^-(?!--)/.test(l))).toEqual([]);
   });
 });

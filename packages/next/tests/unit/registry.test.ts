@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const made: Array<{ kind: string; options: Record<string, unknown>; destroy: ReturnType<typeof vi.fn> }> = [];
-vi.mock("related-web-core", () => {
+vi.mock("@relate/web-core", () => {
   const make = (kind: string) => (options: Record<string, unknown>) => {
     const client = { kind, options, destroy: vi.fn() };
     made.push(client);
@@ -15,9 +15,9 @@ const { hold, visitGraph } = await import("../../src/client/registry.js");
 
 const catalog = {
   graphs: [
-    { id: "shared", descriptor: "/related-web/shared/descriptor.json", lifetime: "visit" as const, indexes: [] },
-    { id: "local", descriptor: "/related-web/local/descriptor.json", lifetime: "page" as const, indexes: [] },
-    { id: "other", descriptor: "/related-web/other/descriptor.json", lifetime: "page" as const, indexes: [] },
+    { id: "shared", descriptor: "/relate-web/shared/descriptor.json", lifetime: "visit" as const, indexes: [] },
+    { id: "local", descriptor: "/relate-web/local/descriptor.json", lifetime: "page" as const, indexes: [] },
+    { id: "other", descriptor: "/relate-web/other/descriptor.json", lifetime: "page" as const, indexes: [] },
   ],
 };
 const config = { catalog, engineUrl: "engine.wasm", profile: "client-routing" as const };
@@ -44,7 +44,7 @@ describe("page-lifetime graphs", () => {
     const b = hold(config, "local");
     expect(a.client).toBe(b.client);
     expect(made).toHaveLength(1);
-    expect(made[0]!.options).toMatchObject({ engineUrl: "engine.wasm", graph: { descriptor: "/related-web/local/descriptor.json" }, navigation: "client-routing", store: true });
+    expect(made[0]!.options).toMatchObject({ engineUrl: "engine.wasm", graph: { descriptor: "/relate-web/local/descriptor.json" }, navigation: "client-routing", store: true });
     a.release();
     vi.runAllTimers();
     expect(made[0]!.destroy).not.toHaveBeenCalled();
@@ -173,7 +173,7 @@ describe("lookup errors", () => {
 describe("testing aids", () => {
   it("the profile override changes only the profile, and the descriptor override only the location", () => {
     hold(config, "local", { navigation: "multi-page" });
-    expect(made[0]!.options).toMatchObject({ navigation: "multi-page", graph: { descriptor: "/related-web/local/descriptor.json" }, store: true });
+    expect(made[0]!.options).toMatchObject({ navigation: "multi-page", graph: { descriptor: "/relate-web/local/descriptor.json" }, store: true });
     hold(config, "other", { descriptor: "/elsewhere.json" });
     expect(made[1]!.options).toMatchObject({ navigation: "client-routing", graph: { descriptor: "/elsewhere.json" }, store: true });
   });

@@ -36,18 +36,18 @@ function writeSite(fixture: Fixture): string {
     writeFileSync(join(root, path), text);
   }
   // The package is installed in the site the way a workspace link would install it (its own name resolves to it).
-  mkdirSync(join(root, "node_modules"), { recursive: true });
-  symlinkSync(pkg, join(root, "node_modules/related-web-astro"), "dir");
+  mkdirSync(join(root, "node_modules/@relate"), { recursive: true });
+  symlinkSync(pkg, join(root, "node_modules/@relate/web-astro"), "dir");
   const integration = pathToFileURL(join(pkg, "dist/index.js")).href;
   writeFileSync(
     join(root, "astro.config.mjs"),
     `import { defineConfig } from "astro/config";
-import relatedWeb from ${JSON.stringify(integration)};
+import relateWeb from ${JSON.stringify(integration)};
 export default defineConfig({
   output: ${JSON.stringify(fixture.output ?? "static")},
   ${fixture.base ? `base: ${JSON.stringify(fixture.base)},` : ""}
   build: { format: "file" },
-  integrations: [relatedWeb(${fixture.options ?? "{}"})],
+  integrations: [relateWeb(${fixture.options ?? "{}"})],
 });
 `,
   );

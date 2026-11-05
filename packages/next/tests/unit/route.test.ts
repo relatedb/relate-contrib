@@ -16,7 +16,7 @@ describe("the route builder", () => {
     const dataFile = params[1]!.file;
     expect(dataFile).toMatch(/^graph\.[0-9a-f]{12}\.json$/);
     const descriptor = await (await get(route, "g", "descriptor.json")).json();
-    expect(descriptor).toMatchObject({ version: 1, id: "g", data: { url: `/related-web/g/${dataFile}`, nodes: 1, links: 0 }, indexes: [{ label: "X", property: "id" }] });
+    expect(descriptor).toMatchObject({ version: 1, id: "g", data: { url: `/relate-web/g/${dataFile}`, nodes: 1, links: 0 }, indexes: [{ label: "X", property: "id" }] });
     expect(descriptor.revision).toBe(dataFile.slice(6, 18));
     const data = await get(route, "g", dataFile);
     expect(data.status).toBe(200);
@@ -24,10 +24,10 @@ describe("the route builder", () => {
   });
 
   it("puts the base path in the descriptor's data location", async () => {
-    vi.stubEnv("RELATED_WEB_BASE_PATH", "/docs");
+    vi.stubEnv("RELATE_WEB_BASE_PATH", "/docs");
     const route = createGraphRoute({ g: { source: () => doc() } });
     const descriptor = await (await get(route, "g", "descriptor.json")).json();
-    expect(descriptor.data.url).toMatch(/^\/docs\/related-web\/g\/graph\.[0-9a-f]{12}\.json$/);
+    expect(descriptor.data.url).toMatch(/^\/docs\/relate-web\/g\/graph\.[0-9a-f]{12}\.json$/);
   });
 
   it("gives one revision for one content in another order", async () => {

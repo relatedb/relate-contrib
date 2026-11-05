@@ -55,14 +55,14 @@ function writeFixture(fixture: Fixture): string {
   const dir = mkdtempSync(join(fixtures, "app-"));
   const mode = fixture.mode ?? "export";
   const files: Record<string, string> = {
-    "app/related-web/[id]/[file]/route.js": ROUTE,
+    "app/relate-web/[id]/[file]/route.js": ROUTE,
     "lib/graphs.js": GRAPHS,
     "app/layout.jsx": LAYOUT,
     "app/page.jsx": PAGE,
     "next.config.mjs": `import { fileURLToPath } from "node:url";
-import { withRelatedWeb } from "@relate/web-next";
+import { withRelateWeb } from "@relate/web-next";
 const root = fileURLToPath(new URL("../../../../../", import.meta.url));
-export default withRelatedWeb({ distDir: ${JSON.stringify(mode === "export" ? "out" : ".next")}, ${mode === "export" ? 'output: "export",' : ""} ${fixture.basePath ? `basePath: ${JSON.stringify(fixture.basePath)},` : ""} turbopack: { root }, outputFileTracingRoot: root, ${fixture.config ?? ""} }, {});
+export default withRelateWeb({ distDir: ${JSON.stringify(mode === "export" ? "out" : ".next")}, ${mode === "export" ? 'output: "export",' : ""} ${fixture.basePath ? `basePath: ${JSON.stringify(fixture.basePath)},` : ""} turbopack: { root }, outputFileTracingRoot: root, ${fixture.config ?? ""} }, {});
 `,
     ...fixture.files,
   };
