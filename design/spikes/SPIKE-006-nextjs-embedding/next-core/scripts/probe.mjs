@@ -1,0 +1,26 @@
+// Drives the app in a real browser: node scripts/probe.mjs <baseUrl> [browser]
+import { chromium, firefox, webkit } from "@playwright/test";
+const [base = "http://localhost:3100", which = "chromium"] = process.argv.slice(2);
+const browser = await { chromium, firefox, webkit }[which].launch();
+const page = await browser.newPage();
+const logs = [];
+page.on("console", (m) => ["error", "warning"].includes(m.type()) && logs.push(`${m.type()}: ${m.text()}`));
+page.on("pageerror", (e) => logs.push(`pageerror: ${e.message}`));
+const failed = [];
+page.on("requestfailed", (r) => failed.push(r.url()));
+page.on("response", (r) => r.status() >= 400 && failed.push(`${r.status()} ${r.url()}`));
+const read = async () => page.evaluate(() => Object.fromEntries([...document.querySelectorAll("[data-k]")].map((e) => [e.dataset.k, e.textContent])));
+const settle = async (where) => { try { await page.waitForFunction((w) => (!w || document.querySelector('[data-k="where"]')?.textContent === w) && document.querySelector('[data-k="module"]')?.textContent !== "…" && document.querySelector('[data-k="status"]')?.textContent === "ready" && document.querySelector('[data-k="count"]')?.textContent !== "…", where, { timeout: 15000 }); } catch {} };
+const step = async (label, where, fn) => { await fn(); await settle(where); console.log(label.padEnd(28), JSON.stringify(await read())); };
+await page.goto(base + "/");
+await settle();
+console.log("first load".padEnd(28), JSON.stringify(await read()));
+await step("click a", "a", () => page.click('nav a[href$="/a"]'));
+await step("click b", "b", () => page.click('nav a[href$="/b"]'));
+await step("back", "a", () => page.goBack());
+await step("forward", "b", () => page.goForward());
+await step("click home", "home", () => page.click('nav a:has-text("home")'));
+await step("document load (plain.html)", null, () => page.click('a[href$="/plain.html"]'));
+await step("back to app", "home", () => page.goBack());
+console.log("diagnostics:", JSON.stringify({ logs, failed }, null, 1));
+await browser.close();
