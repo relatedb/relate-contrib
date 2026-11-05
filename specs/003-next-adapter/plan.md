@@ -36,14 +36,14 @@ Planning checked ADR-005's four open questions early (V-1, V-2, V-4, V-5 in [res
 
 | Principle | Check | Result |
 |-----------|-------|--------|
-| I. Decisions Before Code | The plan implements ADR-005 (accepted) and builds on ADR-001 to ADR-004. Three points are not covered by ADR-005: D-1 (the hash must not use a Node-only module), D-2 (the inline check and escaping move too) and D-4 (inline graphs are found by visibility). Pass after the ADR-005 amendment those three call for. | Pass (pending amendment) |
+| I. Decisions Before Code | The plan implements ADR-005 (accepted) and builds on ADR-001 to ADR-004. Three points are not covered by ADR-005: D-1 (the hash must not use a Node-only module), D-2 (the inline check and escaping move too) and D-4 (inline graphs are found by visibility). Resolved by the ADR-005 amendment of 2026-11-05. | Pass |
 | II. Core First, Thin Adapters | The adapter wires route handlers, a provider and hooks; instance lifetime, faults, loading and status pass through the core. The page lifetime composes `createClient` and `destroy()` as ADR-005 §2.4 records. The shared build code moves into the core (D-1, D-2), which is what the principle asks. | Pass |
 | III. The Page Works Without the Graph | Hooks return empty values on the server and the first client render; inline graphs are inert `<script type="application/json">` data; conformance pages keep links and placeholders; SC-008 tests markup equality and hydration warnings. | Pass |
 | IV. Faults Are Contained | All instances run in the core's worker; page clients are destroyed one task after the last holder leaves; the adapter adds no visitor statements. | Pass |
 | V. Specified Behavior Is Tested and Measured | Every FR and SC gets a tagged test and the trace check; the inline-size threshold is labeled unmeasured and load figures are recorded as single-run figures. Planning checks V-1 to V-7 are single runs and say so. | Pass |
 | VI. The Engine Stays Upstream | The engine is reached through its package interface, with the site passing the binary's URL (`new URL("@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm", import.meta.url)`); no engine internals are copied. | Pass |
 
-## Decisions needed (recommended; ADR-005 and the spec are amended once approved)
+## Decisions (D-1, D-2, D-4 approved 2026-11-05; ADR-005 §6 and the spec are amended)
 
 **D-1. The build subpath cannot use `node:crypto`.** ADR-005 §2.2 says `related-web-core/build` needs no Node-only module; the Astro code hashes with `createHash`. *Recommended*: use `globalThis.crypto.subtle.digest` (same SHA-256, so revisions are unchanged), which makes `revisionOf` and `prepare` asynchronous; the Astro adapter's call sites and unit tests gain `await` and no expectation changes. See [research.md](research.md) D-1 for the rejected alternative.
 

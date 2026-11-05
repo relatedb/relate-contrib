@@ -243,7 +243,7 @@ The questions ADR-005 left for implementation are tested early, and the ADR is a
 - **FR-018**: A graph name MUST be looked up first among the current document's inline graphs and then among the catalog, and an unknown name MUST fail with a message that names it and lists the registered names.
 - **FR-019**: A visit-lifetime graph MUST be created once per name and MUST NOT be destroyed by navigation.
 - **FR-020**: A registered page-lifetime graph MUST be created by the first holder, shared by every holder, use the stored copy whenever it has a descriptor, and be destroyed one task after the last holder is removed, so that React's development remount neither destroys it nor creates a second one.
-- **FR-021**: An inline graph MUST be keyed by its name and by the page element it was read from, so that a later page's graph with the same name is a new client, and the earlier client MUST be destroyed by the same rule as FR-020.
+- **FR-021**: An inline graph MUST be keyed by its name and by the page element it was read from, so that a later page's graph with the same name is a new client, and the earlier client MUST be destroyed by the same rule as FR-020. When the document holds several elements for one name, the lookup MUST use the only one, else the first whose parent element is visible, so a hidden earlier page's graph is never chosen.
 - **FR-022**: The client entry MUST provide a direct lookup that accepts only visit-lifetime registered graphs and MUST fail, with a message that names the graph, for an inline graph or a page-lifetime graph, and fail, naming the registered names, for an unknown name.
 - **FR-023**: Both hooks and the direct lookup MUST accept options that override the profile and the descriptor location, documented as testing aids; each override MUST change only the profile, or the descriptor location, passed to the core.
 - **FR-024**: No client MUST start before a component asks for one, a component's first render MUST NOT depend on a client, and a page that uses no hook MUST pay nothing for the adapter.
@@ -251,7 +251,7 @@ The questions ADR-005 left for implementation are tested early, and the ADR is a
 
 **Shared build code in the core**
 
-- **FR-026**: The core MUST export a build subpath that provides the canonical text, revision, document preparation and descriptor construction, needing no browser, no Node-only module, no framework and no other package.
+- **FR-026**: The core MUST export a build subpath that provides the canonical text, revision, document preparation, descriptor construction, and the inline-document check and JSON escaping for a script element, with revision and preparation asynchronous (Web Crypto), needing no browser, no Node-only module, no framework and no other package.
 - **FR-027**: The Astro adapter MUST import that code from the core, its behavior MUST be unchanged, and its tests MUST pass without change to their expectations.
 - **FR-028**: The core MUST change in no other way.
 
