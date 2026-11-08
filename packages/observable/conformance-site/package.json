@@ -1,0 +1,24 @@
+{
+  "name": "relate-observable-conformance-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clean": "rm -rf docs/.observablehq/cache dist",
+    "build": "node scripts/refresh-deps.mjs && pnpm run clean && observable build",
+    "dev": "node scripts/refresh-deps.mjs && pnpm run clean && observable preview"
+  },
+  "dependencies": {
+    "@observablehq/framework": "^1.13.4",
+    "@relate/observable": "workspace:*",
+    "@relate/relate-wasm": "*",
+    "@relate/web": "workspace:*"
+  },
+  "dependenciesMeta": {
+    "@relate/observable": {
+      "injected": true
+    },
+    "@relate/web": {
+      "injected": true
+    }
+  }
+}

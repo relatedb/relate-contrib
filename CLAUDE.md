@@ -11,13 +11,13 @@ Two uses of the embedded graph drive the work:
 1. **Per page** — a graph (almost notebook-like) embedded in an individual page, queried with Cypher.
 2. **Site-wide** — one shared graph across the whole website, with vector embeddings, powering a navigation element. The element is primarily visual with a minimal natural-language interface: language-driven navigation and search, **not a chatbot**.
 
-Planned integration order (subject to change as ADRs land): ObservableHQ (spiked, promising) → Astro → Next → Nuxt → SvelteKit. Docs-oriented generators (Starlight, VitePress, Docusaurus) may jump the queue depending on what the relate website is built on.
+Planned integration order (subject to change as ADRs land): ObservableHQ, Astro and Next (done) → Nuxt → SvelteKit. Docs-oriented generators (Starlight, VitePress, Docusaurus) may jump the queue depending on what the relate website is built on.
 
 ## Project state
 
 The first package, `packages/web` (`@relate/web`), is implemented from `specs/001-core-package/`
 (see its `tasks.md`). The Astro adapter, `packages/astro` (`@relate/astro`), is implemented from `specs/002-astro-adapter/`
-(ADR-004). The Next adapter, `packages/nextjs` (`@relate/nextjs`), is implemented from `specs/003-next-adapter/` (ADR-005) under the `@relate` namespace, like the core and the Astro adapter (all three renamed on 2026-11-08, see `design/notes/2026-11-08-relate-contrib-rename.md`). Design documents are in `design/`. Further adapters come next.
+(ADR-004). The Next adapter, `packages/nextjs` (`@relate/nextjs`), is implemented from `specs/003-next-adapter/` (ADR-005) under the `@relate` namespace, like the core and the Astro adapter (all three renamed on 2026-11-08, see `design/notes/2026-11-08-relate-contrib-rename.md`). The Observable Framework adapter, `packages/observable` (`@relate/observable`), is implemented from `specs/004-observable-adapter/` (ADR-006). Design documents are in `design/`. Further adapters come next.
 
 ## Commands
 
@@ -44,12 +44,17 @@ pnpm test:next-browsers        # lifecycle, store, inline graphs, profile, hydra
 pnpm test:next-conformance     # the core's conformance runner over packages/nextjs/conformance-site (server and export, both profiles)
 pnpm test:next-package         # packs the adapter and core, installs them in a clean Next project, builds under Turbopack and webpack, runs a page
 pnpm test:next-trace           # every adapter requirement and success criterion has a passing, tagged test
+pnpm test:observable           # the Observable adapter: results against the real engine, loaders, build, freshness and preview-server tests
+pnpm test:observable-browsers  # the adapter in Chromium, Firefox, WebKit (lifetime, several graphs, components, descriptor restore)
+pnpm test:observable-conformance # the core's conformance runner over packages/observable/conformance-site (per-page profile)
+pnpm test:observable-package   # packs the adapter, core and engine, installs them in a clean Framework project, builds and runs a page
+pnpm test:observable-trace     # every adapter requirement and success criterion has a passing, tagged test
 ```
 
 Layout: `packages/web/src` (client, worker, data validators, profiles), `tests/` (unit, browser, package,
 fixtures, load-time baselines), `conformance/` (example site, scenarios, runner). Read
 `packages/web/README.md` for the API. The adapter: `packages/astro/src` (integration, injected route, component, client
-module), `tests/`, `conformance-site/` (an unpublished Astro site built once per profile); read `packages/astro/README.md`. The Next adapter: `packages/nextjs/src` (config wrapper, server entry, client entry), `tests/`, `conformance-site/` (an unpublished Next app); read `packages/nextjs/README.md`.
+module), `tests/`, `conformance-site/` (an unpublished Astro site built once per profile); read `packages/astro/README.md`. The Next adapter: `packages/nextjs/src` (config wrapper, server entry, client entry), `tests/`, `conformance-site/` (an unpublished Next app); read `packages/nextjs/README.md`. The Observable adapter: `packages/observable/src` (loader, browser and results entries), `tests/`, `conformance-site/` (an unpublished Framework project); read `packages/observable/README.md`.
 
 ## Intended architecture (working assumptions, not yet decided by ADRs)
 

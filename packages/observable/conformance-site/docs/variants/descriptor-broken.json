@@ -1,0 +1,16 @@
+{
+ "version": 1,
+ "id": "example-broken",
+ "revision": "example-a",
+ "data": {
+  "url": "variants/missing.json",
+  "nodes": 300,
+  "links": 1500
+ },
+ "indexes": [
+  {
+   "label": "Page",
+   "property": "id"
+  }
+ ]
+}
