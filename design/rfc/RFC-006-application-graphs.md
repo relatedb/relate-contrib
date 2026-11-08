@@ -3,7 +3,7 @@ id: RFC-006
 title: Application Graphs
 status: draft
 created: 2026-11-08
-adrs: []
+adrs: [ADR-008]
 ---
 
 # RFC-006: Application Graphs
@@ -116,4 +116,4 @@ A site may need both: a read-only content graph that is replaced at each release
 
 ## 8. ADRs
 
-_(none yet)_
+- ADR-008: a react-admin data provider over the core, with a local-first starter (depends on the application-graph decisions this RFC leads to)

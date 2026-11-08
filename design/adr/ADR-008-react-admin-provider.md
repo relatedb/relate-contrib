@@ -2,7 +2,7 @@
 id: ADR-008
 title: A react-admin Data Provider over the Core, with a Local-First Starter
 status: proposed
-rfcs: [RFC-005]
+rfcs: [RFC-005, RFC-006]
 created: 2026-11-08
 ---
 
@@ -14,7 +14,7 @@ react-admin is a React framework for administrative applications: lists with sor
 
 The database side has these properties. The core package's client runs the engine in a worker; `query(statement, params)` returns a promise, waits until the instance is ready, and resolves with the engine's result envelope, in which an engine error arrives in an `error` field and does not throw. A node comes back as a tagged value with the engine's element id, its labels and its properties. Element ids are internal to the engine, while the graph data format already gives every node an application `id` property (ADR-002). One statement is one atomic unit; the client offers no multi-statement transaction.
 
-A data provider is a small contract with a broad payoff: a team that describes three or four entities gets lists, filters, edit forms and relation pickers over a graph, with no server. That is the first starter proposed by RFC-005, which asks for runnable, local-first starters that lower the cost of starting a project. Two parts of the work have real design in them: turning the interface's sort and filter into queries without allowing injection, and mapping react-admin's foreign-key fields onto relationships.
+A data provider is a small contract with a broad payoff: a team that describes three or four entities gets lists, filters, edit forms and relation pickers over a graph, with no server. That is the first starter proposed by RFC-005, which asks for runnable, local-first starters that lower the cost of starting a project. The data has to persist. A starter that empties on reload is a demo, not an application, and RFC-006 sets out what an application graph needs from the core: a durable store that a new seed revision does not wipe, a seed applied once, and a versioned schema. This ADR assumes that support and does not decide it; the ADR that follows RFC-006 does, and this one is not accepted before it. Two parts of the work have real design in them: turning the interface's sort and filter into queries without allowing injection, and mapping react-admin's foreign-key fields onto relationships.
 
 ## 2. Decision
 
@@ -58,11 +58,11 @@ An engine error in the envelope, a missing record, and an undeclared field becom
 
 ### 2.6 The starter
 
-The starter has three resources: companies, people (each works at one company) and projects (each owned by one company, led by one person). Seeded data of about 50 people and a few companies and projects is loaded from a graph data document through the descriptor (ADR-003), as the other starters will. The interface has sortable, filterable, paged lists, edit forms with relation pickers, a company page listing its people and projects through `getManyReference`, and a panel showing the statements the provider ran. The graph is in memory: a reload restores the seed data, and a "reset demo data" control says so. Persisting visitor edits is left to RFC-002's recovery questions and RFC-005 7.4.
+The starter has three resources: companies, people (each works at one company) and projects (each owned by one company, led by one person). Data of about 50 people and a few companies and projects is loaded on first run from a graph data document through the descriptor (ADR-003), as the other starters will, and never reapplied over stored data. The starter's graph is an application graph (RFC-006): the visitor's records survive reloads and return visits, in the one graph that all of the starter's pages share. The interface has sortable, filterable, paged lists, edit forms with relation pickers, a company page listing its people and projects through `getManyReference`, and a panel showing the statements the provider ran. A "reset demo data" control re-seeds after confirmation and offers an export first. The interface says whether the data is stored durably, in memory only, or held by another tab, using whatever status the core's application-graph support exposes. The starter carries a schema version, and its README describes what a visitor loses by clearing site data.
 
 ### 2.7 Checks
 
-A contract test runs every provider method against the real engine through the core and asserts the shapes react-admin expects, including the rejection of undeclared fields and injection attempts in sort and filter values. A browser test runs the starter in Chromium, Firefox and WebKit through create, filter, sort, paging, changing a reference, delete and reload. A package test installs the packed package into a clean project. Test names carry the identifiers of the requirements they cover, as the other packages' tests do.
+A contract test runs every provider method against the real engine through the core and asserts the shapes react-admin expects, including the rejection of undeclared fields and injection attempts in sort and filter values. A browser test runs the starter in Chromium, Firefox and WebKit through create, filter, sort, paging, changing a reference, delete, reload (the records remain), a second tab, and reset. A package test installs the packed package into a clean project. Test names carry the identifiers of the requirements they cover, as the other packages' tests do.
 
 ## 3. Alternatives Considered
 
@@ -77,7 +77,8 @@ A contract test runs every provider method against the real engine through the c
 - The provider is the first working case of two needs RFC-005 expects to recur: turning interface state into queries from a declared list of names and bound parameters, and giving records a stable application id. Their code stays inside this package behind a narrow seam. The datagrid starter will need the same translation; extraction into a shared library happens then, as that starter's work.
 - Many-to-one references only. A person assigned to several projects, or a relationship that carries data, does not fit; the starter avoids them and the README says so.
 - A list costs two statements (data and count). The graphs involved are small, and the cost is stated, not measured.
-- Data is per browser and resets on reload. A visitor cannot share a record with another visitor.
+- Data is per browser and persists. A visitor cannot share a record with another visitor or another device, and clearing site data erases it, which the export control and the starter's notice address.
+- The starter depends on the core offering application graphs, which RFC-006 describes and no ADR yet decides. Until that ADR exists this one stays proposed, and the section on the starter (2.6) and its checks (2.7) may change with it.
 - The package fixes one interpretation of react-admin's filter conventions. Another set of conventions needs a schema or a provider option, not a second package.
 - The starter pulls in react-admin's component library and its bundle; its paid add-on modules are not used.
 - To confirm at implementation, and amend this ADR with the results: that a single statement can remove and create a relationship in one pass; that `SKIP` and `LIMIT` accept parameters; that case-insensitive contains and comparisons behave as assumed for strings, numbers and mixed types; that `RETURN n` yields properties in the envelope's node value as described; and that a statement issued while the client is `loading` resolves once it is ready.
@@ -85,5 +86,5 @@ A contract test runs every provider method against the real engine through the c
 
 ## 5. Related
 
-- RFCs: RFC-005
+- RFCs: RFC-005, RFC-006
 - ADR-001 (worker hosting), ADR-002 (the `id` property and graph data format), ADR-003 (the descriptor the starter loads)
