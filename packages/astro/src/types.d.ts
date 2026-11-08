@@ -11,7 +11,7 @@ declare module "virtual:relate/sources" {
   export default graphs;
 }
 
-declare module "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url" {
+declare module "@relate/relate-wasm/relate_bg.wasm?url" {
   const url: string;
   export default url;
 }

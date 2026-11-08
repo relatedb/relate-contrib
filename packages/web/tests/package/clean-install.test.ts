@@ -13,7 +13,7 @@ import { chromium } from "@playwright/test";
 
 const pkg = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const repo = resolve(pkg, "../..");
-const engine = join(repo, "vendor/cypherlite-wasm/pkg");
+const engine = join(repo, "vendor/relate-wasm/pkg");
 
 let work = "";
 let tarball = "";
@@ -44,7 +44,7 @@ beforeAll(() => {
   );
   writeFileSync(
     join(consumer, "src/main.js"),
-    `import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url";
+    `import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
 import { createClient } from "@relate/web";
 import { validate } from "@relate/web/validate";
 const document = { version: 1, nodes: [{ id: "a", labels: ["Page"] }, { id: "b", labels: ["Page"] }, { id: "c" }], links: [{ source: "a", target: "b", type: "T" }] };
@@ -72,7 +72,7 @@ describe("the packed core in a clean project", () => {
     expect(listing.some((f) => /\b(tests|vendor|node_modules)\//.test(f))).toBe(false);
     const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/web/package.json"), "utf8"));
     expect(manifest.dependencies).toBeUndefined();
-    expect(Object.keys(manifest.peerDependencies)).toContain("@neo4j-labs/cypherlite-wasm");
+    expect(Object.keys(manifest.peerDependencies)).toContain("@relate/relate-wasm");
   });
 
   it("works in a bundled page, with the engine binary's URL passed as an option", async () => {

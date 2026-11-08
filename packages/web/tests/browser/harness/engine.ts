@@ -1,5 +1,5 @@
 // A page that drives the engine and loader directly in a worker, for tests of the loader alone.
-import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url";
+import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
 
 declare global {
   interface Window {

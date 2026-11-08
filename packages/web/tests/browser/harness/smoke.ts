@@ -1,4 +1,4 @@
-import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url";
+import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
 
 declare global {
   interface Window {

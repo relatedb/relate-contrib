@@ -41,7 +41,7 @@
     "test:trace": "tsx tests/trace/check-trace.ts"
   },
   "peerDependencies": {
-    "@neo4j-labs/cypherlite-wasm": "*",
+    "@relate/relate-wasm": "*",
     "@playwright/test": "*"
   },
   "peerDependenciesMeta": {

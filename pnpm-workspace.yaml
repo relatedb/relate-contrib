@@ -4,4 +4,4 @@ packages:
 allowBuilds:
   esbuild: true
 overrides:
-  "@neo4j-labs/cypherlite-wasm": "link:vendor/cypherlite-wasm/pkg"
+  "@relate/relate-wasm": "link:vendor/relate-wasm/pkg"

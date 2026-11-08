@@ -8,10 +8,10 @@ experiment, the method and environment are given; all figures are single runs.
 ## R1. What the engine's browser API provides
 
 **Decision**: Build the worker on the API as documented in the engine's WASM spec
-(`docs/api/wasm/spec.md` in the CypherLite repository) and checked against the spike code:
+(`docs/api/wasm/spec.md` in the relate repository) and checked against the spike code:
 
 - `init({module_or_path})` takes the binary's URL (or bytes); the core passes it through from an option.
-- `new CypherliteDb()` is in-memory; `await CypherliteDb.open("opfs://<name>")` opens the durable store
+- `new RelateDb()` is in-memory; `await RelateDb.open("opfs://<name>")` opens the durable store
   and works only in a dedicated worker. `<name>` is 1 to 64 characters from `[A-Za-z0-9_-]`.
 - `execute(statement, paramsJson)` takes the parameters **as a JSON text** and returns the result
   envelope as a JSON text; engine errors arrive in the envelope's `error` field and do not throw.
@@ -75,7 +75,7 @@ cost matches the indexed replay. **Alternatives**: an index per label with a lab
 **Decision**: TypeScript in strict mode compiled by `tsc` to unbundled ES modules with declaration files.
 The worker is its own module, started with `new Worker(new URL("./worker/worker.js", import.meta.url),
 {type: "module"})`, which Vite, webpack, Rollup and esbuild resolve and bundle. The package has no runtime
-dependency; `@neo4j-labs/cypherlite-wasm` is a peer dependency, and the binary's URL is an option. Exports:
+dependency; `@relate/relate-wasm` is a peer dependency, and the binary's URL is an option. Exports:
 `.` (client and profiles), `./validate` (for build steps, no browser APIs), `./worker`, `./conformance`.
 
 **Rationale**: an unbundled library lets each adapter's bundler place the worker and the binary (the bundler
@@ -110,7 +110,7 @@ multiple pages and tabs); Selenium or WebdriverIO (no advantage here).
 
 **Decision** (ADR-003): the page gives the client a descriptor (`id`, `revision`, the data's location and
 counts, optional indexes). The worker keeps a copy of it in a file at the origin-private root, for example
-`relate-web/<id>.json`, outside the `cypherlite/<name>/` directory the engine manages for its store. The file
+`relate-web/<id>.json`, outside the `relate/<name>/` directory the engine manages for its store. The file
 is read and written in the worker with a synchronous access handle, the capability the engine's store needs
 too. With a store, start-up is:
 
@@ -152,16 +152,16 @@ would give two replacements on that path and three on the initial path).
 
 ## R7. Vendoring the engine until it is published
 
-**Decision**: The CypherLite repository is a git submodule at `vendor/cypherlite`, pinned to a commit.
-`scripts/build-wasm.sh` builds the browser package from it into `vendor/cypherlite-wasm/pkg` (gitignored),
+**Decision**: The relate repository is a git submodule at `vendor/relate`, pinned to a commit.
+`scripts/build-wasm.sh` builds the browser package from it into `vendor/relate-wasm/pkg` (gitignored),
 following SPIKE-001's recipe: the release build needs `wasm-bindgen-cli` at the version the checkout's
 lockfile pins (0.2.128 in SPIKE-001), binaryen (`wasm-opt`) and the `wasm32-unknown-unknown` target for the
-checkout's pinned Rust toolchain, and took about 37 s. The workspace resolves `@neo4j-labs/cypherlite-wasm`
+checkout's pinned Rust toolchain, and took about 37 s. The workspace resolves `@relate/relate-wasm`
 to that directory through a pnpm override; the core lists the package as a peer dependency only.
 Switching to the published package later removes the override.
 
 **Rationale**: reproducible and pinned, and the override keeps the core free of `vendor/`.
-**Risks**: the submodule's remote is `git@github.com:neo4j-labs/cypherlite.git`, which is not public, so a
+**Risks**: the submodule's remote is `git@github.com:relatedb/relate.git`, which is not public, so a
 clone without access cannot initialise it; continuous integration needs credentials or a cached build
 artifact; a Rust toolchain is required to build. **Alternatives**: committing the built 6 MB package (binary
 churn in history); a local tarball outside git (not reproducible).

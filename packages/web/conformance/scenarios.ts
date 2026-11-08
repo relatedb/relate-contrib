@@ -264,7 +264,7 @@ export const scenarios: Scenario[] = [
         removed = await tool.evaluate(async () => {
           try {
             const root = await navigator.storage.getDirectory();
-            await (await root.getDirectoryHandle("cypherlite")).removeEntry("rel-example", { recursive: true });
+            await (await root.getDirectoryHandle("relate")).removeEntry("rel-example", { recursive: true });
             return "removed";
           } catch (e) {
             return String(e);

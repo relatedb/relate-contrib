@@ -1,6 +1,6 @@
 node_modules/
 dist/
-vendor/cypherlite-wasm/
+vendor/relate-wasm/
 vendor/.build/
 test-results/
 playwright-report/

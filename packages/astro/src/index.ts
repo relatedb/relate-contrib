@@ -21,7 +21,7 @@ export default function relate(options?: RelateOptions): AstroIntegration {
             // The component is an .astro file in this package, which Vite must compile instead of externalizing.
             ssr: { noExternal: ["@relate/astro"] },
             // The engine's binary is placed by the bundler; the dev server must not pre-bundle it.
-            optimizeDeps: { exclude: ["@neo4j-labs/cypherlite-wasm"] },
+            optimizeDeps: { exclude: ["@relate/relate-wasm"] },
           },
         });
         if (resolved.graphs.length > 0) {

@@ -6,7 +6,7 @@
 
 ## Summary
 
-`@relate/web` is a framework-agnostic TypeScript library that hosts a CypherLite browser database in
+`@relate/web` is a framework-agnostic TypeScript library that hosts a relate browser database in
 a dedicated worker behind a small client. It loads graph data from the node-link document of ADR-002,
 with the optional descriptor of ADR-003 that lets a page restore a stored graph without fetching the data;
 it contains faults by replacing the worker (and stops after three failed attempts); and it provides the two
@@ -19,7 +19,7 @@ in the engine and found one point that changed ADR-002 (arrays of mixed whole an
 
 **Language/Version**: TypeScript 5 (strict), ES2022 modules; Node 22 or newer for the validators and tooling (24.14.1 and pnpm 11.7.0 are installed here)
 
-**Primary Dependencies**: none at run time. Peer dependency: `@neo4j-labs/cypherlite-wasm`. Dev dependencies: `typescript`, `vitest`, `@playwright/test`, `vite` (serves the example site), `ajv` (checks the validators against the JSON Schemas)
+**Primary Dependencies**: none at run time. Peer dependency: `@relate/relate-wasm`. Dev dependencies: `typescript`, `vitest`, `@playwright/test`, `vite` (serves the example site), `ajv` (checks the validators against the JSON Schemas)
 
 **Storage**: the browser's origin-private store through the engine's `opfs://` URI, one store per descriptor `id`, plus one small file per graph holding the stored copy of the descriptor (outside the engine's directory); no other persistence
 
@@ -88,11 +88,11 @@ specs/001-core-package/
 ```text
 pnpm-workspace.yaml
 package.json                      # private root: scripts, pnpm override for the engine
-.gitmodules                       # vendor/cypherlite
-scripts/build-wasm.sh             # builds the pinned engine into vendor/cypherlite-wasm/pkg
+.gitmodules                       # vendor/relate
+scripts/build-wasm.sh             # builds the pinned engine into vendor/relate-wasm/pkg
 vendor/
-├── cypherlite/                   # git submodule, pinned commit
-└── cypherlite-wasm/pkg/          # build output, gitignored
+├── relate/                       # git submodule, pinned commit
+└── relate-wasm/pkg/              # build output, gitignored
 
 packages/web/                    # @relate/web
 ├── package.json                  # exports ".", "./validate", "./worker", "./conformance"
@@ -147,7 +147,7 @@ Checked on 2026-11-02, with all 86 tasks done.
 | III. The Page Works Without the Graph | Pass. Tests show links and the first render working before and while the graph loads, and in the `failed` state. |
 | IV. Faults Are Contained | Pass. Every instance is in a worker; the main thread never instantiates the engine (tested); a trap, a timeout and a worker error each replace the worker; `run()` has a timeout and `stop()`. |
 | V. Specified Behavior Is Tested and Measured | Pass. `test:trace` finds all 52 requirement and success-criterion ids tagged in tests whose results passed, in Chromium, Firefox and WebKit. Load and restore times are recorded against per-browser baselines. Unmeasured and labeled: validation cost on large documents with embeddings, the cost of reading a descriptor on every page, mobile and older browsers. |
-| VI. The Engine Stays Upstream | Pass. The submodule is unmodified (`git -C vendor/cypherlite status` is clean); the engine is a peer dependency; the one engine behavior worked around (mixed number arrays) is handled in the package's own encoding. |
+| VI. The Engine Stays Upstream | Pass. The submodule is unmodified (`git -C vendor/relate status` is clean); the engine is a peer dependency; the one engine behavior worked around (mixed number arrays) is handled in the package's own encoding. |
 
 ## Complexity Tracking
 

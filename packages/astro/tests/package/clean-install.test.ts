@@ -16,7 +16,7 @@ import { spawnDev } from "../helpers/build-site.js";
 const pkg = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const repo = resolve(pkg, "../..");
 const core = join(repo, "packages/web");
-const engine = join(repo, "vendor/cypherlite-wasm/pkg");
+const engine = join(repo, "vendor/relate-wasm/pkg");
 
 let work = "";
 let consumer = "";
@@ -118,7 +118,7 @@ describe("the packed adapter in a clean project", () => {
     expect(listing.some((f) => /\b(tests|conformance-site|vendor|node_modules)\//.test(f))).toBe(false);
     const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/astro/package.json"), "utf8"));
     expect(manifest.dependencies).toBeUndefined();
-    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@neo4j-labs/cypherlite-wasm", "@relate/web", "astro"]);
+    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@relate/relate-wasm", "@relate/web", "astro"]);
     expect(JSON.stringify(manifest)).not.toContain(repo);
   });
 

@@ -7,7 +7,7 @@ navigation profiles are the core's; this package only wires them into Astro. Dec
 
 ## Install
 
-Peer dependencies: `astro` (7.x), `@relate/web` and `@neo4j-labs/cypherlite-wasm`. Static output only.
+Peer dependencies: `astro` (7.x), `@relate/web` and `@relate/relate-wasm`. Static output only.
 
 ```js
 // astro.config.mjs

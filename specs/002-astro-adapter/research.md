@@ -51,7 +51,7 @@ Findings that shaped the plan. "Verify" items are unmeasured assumptions; each b
 
 ## R-7. The engine binary and the dev server
 
-- **Decision**: the client module imports `@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url`; the integration adds `optimizeDeps.exclude` for the engine package so the dev server does not pre-bundle it (the core's own site does the same).
+- **Decision**: the client module imports `@relate/relate-wasm/relate_bg.wasm?url`; the integration adds `optimizeDeps.exclude` for the engine package so the dev server does not pre-bundle it (the core's own site does the same).
 - **Rationale**: SPIKE-002 saw the production bundler place and hash the binary without a workaround; the core's Vite config shows the dev-server exclusion.
 - **Verify (V-6)**: dev server serves the binary and the worker from a packed (not linked) install.
 

@@ -1,8 +1,8 @@
 // Wrapper around the engine's browser build. It keeps the engine's result text unaltered, marks the instance
 // dead at the first trap (the engine's own classifier misses the second error a dead instance throws), and
 // answers every later call as a trap.
-import init, { CypherliteDb } from "@neo4j-labs/cypherlite-wasm";
-import { isWasmTrap } from "@neo4j-labs/cypherlite-wasm/trap.js";
+import init, { RelateDb } from "@relate/relate-wasm";
+import { isWasmTrap } from "@relate/relate-wasm/trap.js";
 import { STORE_PREFIX } from "../config.js";
 
 export class TrapError extends Error {
@@ -25,7 +25,7 @@ const messageOf = (e: unknown): string => (e instanceof Error ? e.message : Stri
 export class Engine {
   private dead = false;
 
-  private constructor(private readonly db: CypherliteDb) {}
+  private constructor(private readonly db: RelateDb) {}
 
   /** Initialise the engine's WebAssembly module from its binary's URL. Call once per worker. */
   static async load(engineUrl: string): Promise<void> {
@@ -33,13 +33,13 @@ export class Engine {
   }
 
   static memory(): Engine {
-    return new Engine(new CypherliteDb());
+    return new Engine(new RelateDb());
   }
 
   /** Open the durable store `rel-<id>`. Works only in a dedicated worker. */
   static async store(id: string): Promise<Engine> {
     try {
-      return new Engine(await CypherliteDb.open(`opfs://${STORE_PREFIX}${id}`));
+      return new Engine(await RelateDb.open(`opfs://${STORE_PREFIX}${id}`));
     } catch (e) {
       if (/storage locked/i.test(messageOf(e))) throw new StorageLockedError(messageOf(e));
       throw e;
