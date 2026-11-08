@@ -1,0 +1,8 @@
+<script lang="ts">
+  import LifetimeProbe from "#lib/LifetimeProbe.svelte";
+  import RelPage from "#lib/RelPage.svelte";
+</script>
+
+<RelPage title="Example site: lifetime B" bare>
+  <LifetimeProbe name="small" title="lifetime B" />
+</RelPage>

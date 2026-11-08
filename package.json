@@ -26,6 +26,11 @@
     "test:observable-browsers": "pnpm --filter @relate/observable test:observable-browsers",
     "test:observable-conformance": "pnpm --filter @relate/observable test:observable-conformance",
     "test:observable-package": "pnpm --filter @relate/observable test:observable-package",
-    "test:observable-trace": "pnpm --filter @relate/observable test:observable-trace"
+    "test:observable-trace": "pnpm --filter @relate/observable test:observable-trace",
+    "test:sveltekit": "pnpm --filter @relate/sveltekit test:sveltekit",
+    "test:sveltekit-browsers": "pnpm --filter @relate/sveltekit test:sveltekit-browsers",
+    "test:sveltekit-conformance": "pnpm --filter @relate/sveltekit test:sveltekit-conformance",
+    "test:sveltekit-package": "pnpm --filter @relate/sveltekit test:sveltekit-package",
+    "test:sveltekit-trace": "pnpm --filter @relate/sveltekit test:sveltekit-trace"
   }
 }

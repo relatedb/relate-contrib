@@ -1,0 +1,55 @@
+{
+  "name": "@relate/sveltekit",
+  "version": "0.0.0",
+  "description": "SvelteKit integration for @relate/web: publishes graphs built from a site's content from a prerendered route, carries small graphs in pages, and ties graph clients to Svelte components.",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "src/*.js",
+    "src/*.svelte",
+    "src/*.d.ts",
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "svelte": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "default": "./dist/server/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:sveltekit": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json",
+    "test:sveltekit-browsers": "playwright test --grep-invert \"@conformance|@figures\"",
+    "test:sveltekit-conformance": "REL_REPORT=reports/conformance.json playwright test --grep @conformance",
+    "test:sveltekit-package": "vitest run --config vitest.package.config.ts --reporter=default --reporter=json --outputFile.json=reports/package.json",
+    "test:sveltekit-trace": "tsx tests/trace/check-trace.ts"
+  },
+  "peerDependencies": {
+    "@relate/relate-wasm": "*",
+    "@relate/web": "*",
+    "@sveltejs/kit": "^3.0.0",
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@relate/relate-wasm": "*",
+    "@relate/web": "workspace:*",
+    "@sveltejs/adapter-node": "^6.0.1",
+    "@sveltejs/adapter-static": "^4.0.1",
+    "@sveltejs/kit": "^3.1.1",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@types/node": "^26.6.6",
+    "svelte": "^5.57.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6",
+    "vitest": "^5.0.5"
+  }
+}
