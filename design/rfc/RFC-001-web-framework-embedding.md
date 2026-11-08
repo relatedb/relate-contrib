@@ -3,7 +3,7 @@ id: RFC-001
 title: Embedding CypherLite in Web Frameworks
 status: accepted
 created: 2026-11-01
-adrs: [ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007]
+adrs: [ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, ADR-009]
 ---
 
 # RFC-001: Embedding CypherLite in Web Frameworks
@@ -140,3 +140,4 @@ These apply regardless of which axis values are chosen:
 - [ADR-005](../adr/ADR-005-next-adapter.md): The Next.js adapter as React bindings over the core (accepted)
 - [ADR-006](../adr/ADR-006-observable-adapter.md): The Observable Framework adapter as a helper package over the core (accepted)
 - [ADR-007](../adr/ADR-007-sveltekit-adapter.md): The SvelteKit adapter as Svelte 5 helpers over the core (accepted)
+- [ADR-009](../adr/ADR-009-application-graphs-in-the-core.md): Application graphs in the core as a named durable store with schema versions (proposed)

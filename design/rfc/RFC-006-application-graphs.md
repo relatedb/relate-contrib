@@ -3,7 +3,7 @@ id: RFC-006
 title: Application Graphs
 status: draft
 created: 2026-11-08
-adrs: []
+adrs: [ADR-009]
 ---
 
 # RFC-006: Application Graphs
@@ -129,4 +129,4 @@ A site may need both: a read-only content graph that is replaced at each release
 
 ## 8. ADRs
 
-_(none yet)_
+- [ADR-009](../adr/ADR-009-application-graphs-in-the-core.md): Application graphs in the core as a named durable store with schema versions (proposed)
