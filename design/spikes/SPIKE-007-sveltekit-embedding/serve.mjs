@@ -10,7 +10,8 @@ createServer((req, res) => {
   let path = normalize(decodeURIComponent(new URL(req.url, "http://x").pathname)).replace(/^(\.\.[/\\])+/, "");
   if (base && path.startsWith(base)) path = path.slice(base.length) || "/";
   let file = join(root, path);
-  if (existsSync(file) && statSync(file).isDirectory()) file = join(file, "index.html");
+  // a route with a server load also has a folder of that name (for its __data.json), so the page file wins over the folder
+  if (existsSync(file) && statSync(file).isDirectory()) file = existsSync(file + ".html") ? file + ".html" : join(file, "index.html");
   if (!existsSync(file) && existsSync(file + ".html")) file += ".html";
   if (!existsSync(file)) return void res.writeHead(404, { "content-type": "text/plain" }).end("not found");
   res.writeHead(200, { "content-type": types[extname(file)] ?? "application/octet-stream" });

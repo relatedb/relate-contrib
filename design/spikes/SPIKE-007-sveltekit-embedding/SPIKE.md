@@ -71,7 +71,14 @@ All runs are single runs on SvelteKit 3.1.1, Svelte 5.57.3, Vite 8.3.6, Node 24.
 
 **5.7 A package can ship Svelte source.** `probe-pkg/` (a component in a `.svelte` file, a rune module in a `.svelte.js` file, `"svelte"` and `"default"` export conditions, `svelte` as a peer dependency), packed and installed in the app, was compiled by the site's own build: prerendering wrote the component's text, and in Chromium the rune state updated on click (n = 2 after two clicks). Single run.
 
-**5.8 Not checked.** The endpoint under `adapter-node` (its output was not requested); a build that fails when a source throws; rendering on demand (SSR, not prerendered) and its hydration; the serverless and edge adapters; `vite dev` publishing of the endpoint; hash-based routing; view transitions; cold-network cost; and a rune module shipped as `.svelte.ts` (the probe used `.svelte.js`).
+**5.8 Checked while reviewing the ADR.**
+- A route file's destructured export, `export const { GET, entries } = createRoute(graphs)` with a literal `prerender = true`, built and published the same two files as the separate `export function` forms.
+- A server-only layout load (`+layout.server.ts` returning plain data) reached every page: the prerendered pages carried it, a client-side navigation kept it, and a reload at another page had it, with no error. A route with a server load gets a folder of that name beside its page file (`a/__data.json` beside `a.html`), so a static host has to serve `a.html` for `/a`; `serve.mjs` now does.
+- A rune module written in TypeScript (`.svelte.ts`, with types) shipped in a packed package was compiled by the site's build and reacted in Chromium (n = 2 after two clicks), as the `.svelte.js` one did.
+
+Single runs, same environment.
+
+**5.9 Not checked.** The endpoint under `adapter-node` (its output was not requested); a build that fails when a source throws; rendering on demand (SSR, not prerendered) and its hydration; the serverless and edge adapters; `vite dev` publishing of the endpoint; hash-based routing; view transitions; cold-network cost; and
 
 ## 6. Conclusion
 
