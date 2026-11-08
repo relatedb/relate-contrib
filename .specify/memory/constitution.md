@@ -53,7 +53,7 @@ Rationale: the staleness check, the start-up sweep and the bounded retry are spe
 measured, and vector search cost grows with corpus size and dimensions.
 
 ### VI. The Engine Stays Upstream
-CypherLite is used through its package interface. When it lacks something an integration needs (a
+The engine (relate) is used through its package interface. When it lacks something an integration needs (a
 new API, snapshot import), the need is recorded as an RFC or ADR here and raised with its
 maintainers; the repository MUST NOT patch around it by copying engine internals. The engine's name
 is not settled, so documents say "the engine" or "the embedded graph" and use its current name only
@@ -68,7 +68,7 @@ Rationale: the engine has its own contribution rules, and a rename should stay a
   announced new name, `relate` (see `design/notes/2026-11-02-project-name.md`). The internal prefix is `rel-`
   (`data-rel-*` attributes, `rel-<id>` store names, `REL_*` environment values), adopted 2026-11-05 in place of
   `gw-`.
-- The browser engine is consumed as `@neo4j-labs/cypherlite-wasm`. Until it is published, a build
+- The browser engine is consumed as `@relate/relate-wasm`. Until it is published, a build
   from a pinned checkout is vendored in; the core declares the package as a peer dependency and
   MUST NOT reference the vendored path.
 - Query results are passed through as the engine's JSON envelope, unaltered, until a decision on

@@ -67,7 +67,7 @@ test("a store that holds fewer nodes than its descriptor says is treated as stal
         tool.evaluate(async () => {
           try {
             const root = await navigator.storage.getDirectory();
-            const engine = await root.getDirectoryHandle("cypherlite");
+            const engine = await root.getDirectoryHandle("relate");
             await engine.removeEntry("rel-wiped", { recursive: true });
             return "removed";
           } catch (e) {
@@ -93,5 +93,5 @@ test("a graph without a descriptor never uses a store", async ({ page }) => {
   expect(await restored(page)).toBe(false);
   const root = await opfsRoot(page);
   expect(root).not.toContain("relate-web");
-  expect(root).not.toContain("cypherlite");
+  expect(root).not.toContain("relate");
 });

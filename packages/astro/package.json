@@ -33,7 +33,7 @@
     "test:astro-trace": "tsx tests/trace/check-trace.ts"
   },
   "peerDependencies": {
-    "@neo4j-labs/cypherlite-wasm": "*",
+    "@relate/relate-wasm": "*",
     "astro": "^7.4.0",
     "@relate/web": "*"
   },

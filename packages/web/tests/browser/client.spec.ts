@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { expect, test } from "./fixtures.js";
 import { openHarness, walk } from "./helpers.js";
 
-const ENVELOPE_KEYS = ["columns", "columnTypes", "rows", "stats", "plan", "notifications", "elapsed_ms", "error"];
+const ENVELOPE_KEYS = ["columns", "columnTypes", "rows", "stats", "plan", "notifications", "elapsed_ms", "parse_ms", "plan_ms", "execute_ms", "error"]; // the phase timings are the engine's ADR-0491
 
 const smallDoc = { version: 1, nodes: [{ id: "a", labels: ["Page"] }, { id: "b", labels: ["Page"] }, { id: "c" }], links: [{ source: "a", target: "b", type: "T" }] };
 
@@ -109,6 +109,6 @@ test("the built package refers to no vendored path", async () => {
   expect(files.length).toBeGreaterThan(0);
   for (const f of files) {
     const text = readFileSync(f, "utf8");
-    expect(text, f).not.toMatch(/vendor\/|cypherlite-wasm\/pkg/);
+    expect(text, f).not.toMatch(/vendor\/|relate-wasm\/pkg/);
   }
 });

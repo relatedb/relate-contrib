@@ -2,7 +2,7 @@
 
 The name follows the `@relate` namespace; see `design/notes/2026-11-08-relate-contrib-rename.md`.
 
-Hosts a small embedded graph database (the engine's browser build, `@neo4j-labs/cypherlite-wasm`) in a web page. The database runs in a
+Hosts a small embedded graph database (the engine's browser build, `@relate/relate-wasm`) in a web page. The database runs in a
 dedicated worker behind a client, so loading and querying never block the page. A crash, a timeout or a
 failed load is contained: the worker is replaced, subscriptions re-run, and after three failed attempts the
 client reports `failed` and the page keeps working. The package is framework-agnostic; a framework adapter
@@ -14,16 +14,16 @@ format), `ADR-003` (the graph descriptor). The specification and plan are in `sp
 ## Install
 
 ```sh
-pnpm add @relate/web @neo4j-labs/cypherlite-wasm
+pnpm add @relate/web @relate/relate-wasm
 ```
 
-`@neo4j-labs/cypherlite-wasm` is a peer dependency. Until it is published to npm this repository vendors a
+`@relate/relate-wasm` is a peer dependency. Until it is published to npm this repository vendors a
 pinned build (see `vendor/README.md`). The package has no other runtime dependency.
 
 ## Use
 
 ```js
-import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url"; // the bundler places the binary
+import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url"; // the bundler places the binary
 import { createSiteClient, attachView } from "@relate/web";
 
 const client = createSiteClient({

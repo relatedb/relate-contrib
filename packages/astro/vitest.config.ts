@@ -7,7 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "virtual:relate/config": here("tests/helpers/virtual-config.ts"),
-      "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url": here("tests/helpers/engine-url.ts"),
+      "@relate/relate-wasm/relate_bg.wasm?url": here("tests/helpers/engine-url.ts"),
     },
   },
   test: {

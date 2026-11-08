@@ -14,7 +14,7 @@ Planning found two points where ADR-004 and the core's conformance runner did no
 
 **Language/Version**: TypeScript 7 (as the core), Node 24 for build and tests, ES2022 browser target
 
-**Primary Dependencies**: peers `astro` ^7.4, `@relate/web`, `@neo4j-labs/cypherlite-wasm`; no other runtime dependency. Dev: `@playwright/test`, `vitest`, `typescript`.
+**Primary Dependencies**: peers `astro` ^7.4, `@relate/web`, `@relate/relate-wasm`; no other runtime dependency. Dev: `@playwright/test`, `vitest`, `typescript`.
 
 **Storage**: none of its own. Registered graphs are static files; the core's origin-private store is used through the core.
 
@@ -41,7 +41,7 @@ Planning found two points where ADR-004 and the core's conformance runner did no
 | III. The Page Works Without the Graph | Inline graphs are inert `<script type="application/json">` data; nothing renders from the instance; conformance pages keep links and placeholders; SC-008 tests it. | Pass |
 | IV. Faults Are Contained | All instances run in the core's worker; page-lifetime clients are destroyed on departure; no visitor statements are added by the adapter. | Pass |
 | V. Specified Behavior Is Tested and Measured | Every FR and SC gets a tagged test and the trace check; the inline-size threshold is labeled unmeasured and load figures are recorded as single-run figures. | Pass |
-| VI. The Engine Stays Upstream | The engine is imported through its package interface (`@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url`); no engine internals are copied. | Pass |
+| VI. The Engine Stays Upstream | The engine is imported through its package interface (`@relate/relate-wasm/relate_bg.wasm?url`); no engine internals are copied. | Pass |
 
 ## Decisions needed (resolved 2026-11-04 by the ADR-004 amendment)
 

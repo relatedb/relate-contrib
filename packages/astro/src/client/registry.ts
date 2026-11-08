@@ -1,7 +1,7 @@
 // Finding a graph by name and making its client (spec FR-017 to FR-021; ADR-004 2.3). Everything about the
 // instance (worker, status, faults, loading) is the core's; this file only decides which core client a name gets
 // and who ends it.
-import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url";
+import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
 import { createClient, createSiteClient } from "@relate/web";
 import type { Client } from "@relate/web";
 import { graphs, navigation as configured } from "virtual:relate/config";

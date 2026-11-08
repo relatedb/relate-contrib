@@ -2,7 +2,7 @@
 //   pages=N          size of the generated graph (default 300)
 //   graph=descriptor load through a descriptor served at /data/site-<pages>.json (the test routes it)
 //   navigation=...   client-routing (default) or multi-page
-import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url";
+import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
 import * as core from "../../../dist/index.js";
 import { generateGraph } from "../../fixtures/generate-graph.js";
 import * as faults from "./faults.js";

@@ -3,7 +3,7 @@
 //
 // Query parameters: navigation=client-routing|multi-page (the profile), variant=a|b|mismatch|broken (which
 // descriptor), __break=no-rerun (a deliberately broken variant used to test the check itself).
-import engineUrl from "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url";
+import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
 import { attachView, createSiteClient } from "@relate/web";
 import type { View } from "@relate/web";
 

@@ -16,13 +16,13 @@ this guide defines what they must do. Details of the interfaces are in [contract
 ## Setup
 
 ```bash
-git submodule update --init vendor/cypherlite
-pnpm run build:wasm      # builds the pinned engine into vendor/cypherlite-wasm/pkg
+git submodule update --init vendor/relate
+pnpm run build:wasm      # builds the pinned engine into vendor/relate-wasm/pkg
 pnpm install
 pnpm -r build            # compiles packages/web
 ```
 
-Expected: `vendor/cypherlite-wasm/pkg` contains `cypherlite.js` and `cypherlite_bg.wasm`; `packages/web/dist` exists.
+Expected: `vendor/relate-wasm/pkg` contains `relate.js` and `relate_bg.wasm`; `packages/web/dist` exists.
 
 ## Scenario 1: data checks (User Story 2, SC-006)
 

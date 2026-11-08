@@ -22,16 +22,16 @@ description: "Task list for the relate-contrib core package"
 
 **Purpose**: Workspace, vendored engine, tooling configuration
 
-- [X] T001 Create the root `package.json` (private; scripts `build:wasm`, `build`, `test`, `test:unit`, `test:browsers`, `test:conformance`, `test:package`, `test:trace`; `pnpm.overrides` resolving `@neo4j-labs/cypherlite-wasm` to `link:vendor/cypherlite-wasm/pkg`) and `pnpm-workspace.yaml` listing `packages/*`
-- [X] T002 Add the engine as a git submodule at `vendor/cypherlite` (remote `git@github.com:neo4j-labs/cypherlite.git`, pinned to a commit that builds the browser package) and record the commit, why it was chosen, and the access requirement in `vendor/README.md`
-- [X] T003 [P] Create `.gitignore` covering `node_modules`, `dist`, `vendor/cypherlite-wasm/pkg`, `test-results` and `playwright-report`
-- [X] T004 Write `scripts/build-wasm.sh`: build the browser package from `vendor/cypherlite` into `vendor/cypherlite-wasm/pkg` following research R7 (release build, `wasm-bindgen-cli` at the version the checkout's lockfile pins, `wasm-opt`, the `wasm32-unknown-unknown` target), make sure `trap.js` and `opfs.js` sit beside `cypherlite.js`, and stop with a clear message when a tool is missing
-- [X] T005 Create `packages/web/package.json` (name `@relate/web`, `type: module`, exports `.`, `./validate`, `./worker`, `./conformance`; `peerDependencies` on `@neo4j-labs/cypherlite-wasm`; `@playwright/test` as an optional peer; no `dependencies`; dev dependencies `typescript`, `vitest`, `@playwright/test`, `vite`, `ajv`) per plan.md
+- [X] T001 Create the root `package.json` (private; scripts `build:wasm`, `build`, `test`, `test:unit`, `test:browsers`, `test:conformance`, `test:package`, `test:trace`; `pnpm.overrides` resolving `@relate/relate-wasm` to `link:vendor/relate-wasm/pkg`) and `pnpm-workspace.yaml` listing `packages/*`
+- [X] T002 Add the engine as a git submodule at `vendor/relate` (remote `git@github.com:relatedb/relate.git`, pinned to a commit that builds the browser package) and record the commit, why it was chosen, and the access requirement in `vendor/README.md`
+- [X] T003 [P] Create `.gitignore` covering `node_modules`, `dist`, `vendor/relate-wasm/pkg`, `test-results` and `playwright-report`
+- [X] T004 Write `scripts/build-wasm.sh`: build the browser package from `vendor/relate` into `vendor/relate-wasm/pkg` following research R7 (release build, `wasm-bindgen-cli` at the version the checkout's lockfile pins, `wasm-opt`, the `wasm32-unknown-unknown` target), make sure `trap.js` and `opfs.js` sit beside `relate.js`, and stop with a clear message when a tool is missing
+- [X] T005 Create `packages/web/package.json` (name `@relate/web`, `type: module`, exports `.`, `./validate`, `./worker`, `./conformance`; `peerDependencies` on `@relate/relate-wasm`; `@playwright/test` as an optional peer; no `dependencies`; dev dependencies `typescript`, `vitest`, `@playwright/test`, `vite`, `ajv`) per plan.md
 - [X] T006 [P] Create `tsconfig.base.json` at the root and `packages/web/tsconfig.json` (strict, ES2022, declaration files, `outDir` `dist`)
 - [X] T007 [P] Create `packages/web/vitest.config.ts` for `packages/web/tests/unit`
 - [X] T008 [P] Create `packages/web/playwright.config.ts` with projects `chromium`, `firefox` and `webkit`, serving `packages/web/tests/browser/harness` through Vite
 - [X] T009 [P] Create `packages/web/conformance/example-site/vite.config.ts` (multi-page build; imports the engine binary with the `?url` pattern from the engine README)
-- [X] T010 Run `pnpm install` and `pnpm run build:wasm`, confirm `vendor/cypherlite-wasm/pkg` holds `cypherlite.js` and `cypherlite_bg.wasm`, and run `pnpm exec playwright install chromium firefox webkit`
+- [X] T010 Run `pnpm install` and `pnpm run build:wasm`, confirm `vendor/relate-wasm/pkg` holds `relate.js` and `relate_bg.wasm`, and run `pnpm exec playwright install chromium firefox webkit`
 
 ---
 
@@ -45,7 +45,7 @@ description: "Task list for the relate-contrib core package"
 - [X] T012 [P] Define `Reason` and `GraphError` in `packages/web/src/errors.ts` per `contracts/client-api.md` (`trap`, `timeout`, `lost`, `stopped`, `failed`, `unsupported`, `worker-error`)
 - [X] T013 [P] Define the constants in `packages/web/src/config.ts`: failure limit 3, store retry from 100 ms backing off to 500 ms for at most 5000 ms, batch size 1000, visitor timeout default 10000 ms, store name prefix `rel-`, stored-copy directory `relate-web`
 - [X] T014 Define the message types of `contracts/worker-protocol.md` in `packages/web/src/worker/protocol.ts` (`init`, `query`, `scoped-add`, `scoped-drop`, `ready`, `init-failed`, `store-retry`, `result`, `error`)
-- [X] T015 Write the engine wrapper `packages/web/src/worker/engine.ts`: initialise with the `engineUrl` option, open in memory or `CypherliteDb.open("opfs://rel-<id>")`, `execute(statement, paramsJson)` returning the envelope text unaltered, `reset()`, and a dead flag set at the first trap (using `isWasmTrap`) after which every call answers as a trap
+- [X] T015 Write the engine wrapper `packages/web/src/worker/engine.ts`: initialise with the `engineUrl` option, open in memory or `RelateDb.open("opfs://rel-<id>")`, `execute(statement, paramsJson)` returning the envelope text unaltered, `reset()`, and a dead flag set at the first trap (using `isWasmTrap`) after which every call answers as a trap
 - [X] T016 [P] Create the valid and invalid data-document corpus in `packages/web/tests/fixtures/documents/valid/` and `packages/web/tests/fixtures/documents/invalid/` (one file per rule of `data-model.md`; each invalid file has a sidecar `<name>.expect.json` holding the expected path, for example `nodes[3].properties.id`)
 - [X] T017 [P] Create the valid and invalid descriptor corpus in `packages/web/tests/fixtures/descriptors/valid/` and `packages/web/tests/fixtures/descriptors/invalid/` with the same sidecar convention (rules: `version`, `id` pattern, `revision`, `data.url`, `data.nodes`, `data.links`, `indexes`, reserved `shape` and `embeddings`)
 - [X] T018 [P] Write `packages/web/tests/fixtures/generate-graph.ts` producing a document and descriptor for N pages with 5 links per page (1,000, 5,000 and 20,000) for the loader and timing tests
@@ -166,7 +166,7 @@ description: "Task list for the relate-contrib core package"
 ### Implementation for User Story 5
 
 - [X] T063 [P] [US5] Implement the store open with the bounded retry in `packages/web/src/worker/store.ts` (`opfs://rel-<id>`; retry from 100 ms to 500 ms for at most 5000 ms, then continue in memory with no stored copy written), posting `store-retry` messages
-- [X] T064 [P] [US5] Implement the stored copy in `packages/web/src/worker/stored-copy.ts`: read, write and remove a file `relate-web/<id>.json` at the origin-private root with a synchronous access handle, outside the engine's `cypherlite/` directory
+- [X] T064 [P] [US5] Implement the stored copy in `packages/web/src/worker/stored-copy.ts`: read, write and remove a file `relate-web/<id>.json` at the origin-private root with a synchronous access handle, outside the engine's `relate/` directory
 - [X] T065 [P] [US5] Implement the start-up sweep (remove every node with a `scope` property) in `packages/web/src/worker/sweep.ts`
 - [X] T066 [US5] Extend the `init` handling in `packages/web/src/worker/worker.ts` with the start-up of `contracts/worker-protocol.md` (open store, read stored copy, restore on equal `revision` without fetching the data, sweep, compare the node count with `data.nodes`, otherwise remove the copy, reset if not empty, fetch, validate, check agreement, create indexes, load, write the copy last)
 - [X] T067 [US5] Implement the `per-page` profile in `packages/web/src/profiles/per-page.ts`: a new client per page, store on by default when a descriptor is given, and departure from `pagehide` that drops the page view's scoped data

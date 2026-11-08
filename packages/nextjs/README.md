@@ -2,7 +2,7 @@
 
 Next.js (app router) integration for `@relate/web`. It publishes graphs built from a site's content as revision-named static files, carries small graphs inside pages, and ties each graph's client to React components. The core does the rest: the worker, loading, faults, status.
 
-Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, React 19, `@relate/web` and `@neo4j-labs/cypherlite-wasm` (all peer dependencies). Static export and the Node server are supported; the pages router, edge and serverless runtimes are not.
+Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, React 19, `@relate/web` and `@relate/relate-wasm` (all peer dependencies). Static export and the Node server are supported; the pages router, edge and serverless runtimes are not.
 
 ## Use, in five steps
 
@@ -41,7 +41,7 @@ Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, R
 
    ```tsx
    // app/layout.tsx (server)            // app/providers.tsx ("use client")
-   <Providers catalog={catalog(graphs)}>  <RelateProvider catalog={catalog} engineUrl={new URL("@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm", import.meta.url)}>
+   <Providers catalog={catalog(graphs)}>  <RelateProvider catalog={catalog} engineUrl={new URL("@relate/relate-wasm/relate_bg.wasm", import.meta.url)}>
    ```
 
    The root layout must call `catalog()`: `GraphData` uses the names it records to refuse an inline graph named like a registered one.

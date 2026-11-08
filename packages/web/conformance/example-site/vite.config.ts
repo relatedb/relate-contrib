@@ -19,5 +19,5 @@ export default defineConfig({
   server: { fs: { allow: [repoRoot] } },
   worker: { format: "es" },
   build: { target: "es2022", rollupOptions: { input } },
-  optimizeDeps: { exclude: ["@neo4j-labs/cypherlite-wasm"] },
+  optimizeDeps: { exclude: ["@relate/relate-wasm"] },
 });

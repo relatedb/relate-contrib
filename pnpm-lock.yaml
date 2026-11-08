@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@neo4j-labs/cypherlite-wasm': link:vendor/cypherlite-wasm/pkg
+  '@relate/relate-wasm': link:vendor/relate-wasm/pkg
 
 importers:
 
@@ -13,9 +13,9 @@ importers:
 
   packages/astro:
     dependencies:
-      '@neo4j-labs/cypherlite-wasm':
-        specifier: link:../../vendor/cypherlite-wasm/pkg
-        version: link:../../vendor/cypherlite-wasm/pkg
+      '@relate/relate-wasm':
+        specifier: link:../../vendor/relate-wasm/pkg
+        version: link:../../vendor/relate-wasm/pkg
     devDependencies:
       '@playwright/test':
         specifier: ^1.64.1
@@ -44,9 +44,9 @@ importers:
 
   packages/nextjs:
     dependencies:
-      '@neo4j-labs/cypherlite-wasm':
-        specifier: link:../../vendor/cypherlite-wasm/pkg
-        version: link:../../vendor/cypherlite-wasm/pkg
+      '@relate/relate-wasm':
+        specifier: link:../../vendor/relate-wasm/pkg
+        version: link:../../vendor/relate-wasm/pkg
     devDependencies:
       '@playwright/test':
         specifier: ^1.64.1
@@ -84,12 +84,12 @@ importers:
 
   packages/nextjs/conformance-site:
     dependencies:
-      '@neo4j-labs/cypherlite-wasm':
-        specifier: link:../../../vendor/cypherlite-wasm/pkg
-        version: link:../../../vendor/cypherlite-wasm/pkg
       '@relate/nextjs':
         specifier: workspace:*
         version: link:..
+      '@relate/relate-wasm':
+        specifier: link:../../../vendor/relate-wasm/pkg
+        version: link:../../../vendor/relate-wasm/pkg
       '@relate/web':
         specifier: workspace:*
         version: link:../../web
@@ -118,9 +118,9 @@ importers:
 
   packages/web:
     dependencies:
-      '@neo4j-labs/cypherlite-wasm':
-        specifier: link:../../vendor/cypherlite-wasm/pkg
-        version: link:../../vendor/cypherlite-wasm/pkg
+      '@relate/relate-wasm':
+        specifier: link:../../vendor/relate-wasm/pkg
+        version: link:../../vendor/relate-wasm/pkg
     devDependencies:
       '@playwright/test':
         specifier: ^1.64.1

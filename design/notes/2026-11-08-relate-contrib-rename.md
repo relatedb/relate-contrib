@@ -31,8 +31,20 @@ Directories follow: `packages/web`, `packages/astro`, `packages/nextjs`.
 
 The Astro route `/_relate/`, the `data-relate-graph` marker and the whole `rel-` family (`data-rel-*`, `__rel*`, `rel-<id>` stores, `STORE_PREFIX`) are unchanged. So is `STORED_COPY_DIR`, `"relate-web"`: the stored-copy directory at the origin-private root is named for `@relate/web`, and nothing about it depends on the website's repository name.
 
-## Not part of this change
+## Engine rename (same day, follow-up branch)
 
-The engine's own rename is separate work. This repository still depends on `@neo4j-labs/cypherlite-wasm`, the `CypherliteDb` API and the `vendor/cypherlite` submodule; the engine now publishes `@relate/relate-wasm` with `RelateDb`, from `relatedb/relate`. That arrives when the engine pin is bumped.
+The engine pin moved to the renamed repository, `relatedb/relate`, at commit `31269e3`; the `vendor/cypherlite` submodule is now `vendor/relate` and the built package lands in `vendor/relate-wasm/pkg`. Nothing is on a public registry yet, so the submodule was first added from the local checkout and then pointed at the GitHub remote in `.gitmodules`; the pin is a local commit until the engine's remote has it.
+
+| Was | Is |
+| --- | --- |
+| `@neo4j-labs/cypherlite-wasm` | `@relate/relate-wasm` |
+| `CypherliteDb` | `RelateDb` |
+| `cypherlite.js`, `cypherlite_bg.wasm` | `relate.js`, `relate_bg.wasm` |
+| OPFS root directory `cypherlite/` (engine-managed stores) | `relate/` |
+| `vendor/cypherlite`, `vendor/cypherlite-wasm/pkg` | `vendor/relate`, `vendor/relate-wasm/pkg` |
+
+The engine's API is otherwise what the code already used: `new RelateDb()`, `RelateDb.open("opfs://...")`, `execute`, `executeScript`, `reset`, and `trap.js`. Prose that names CypherLite in the RFCs, ADRs and the earlier notes and spikes is historical and unchanged; `CLAUDE.md` and the package documentation use the new name.
+
+## No shims
 
 Nothing was published under any of these names, so no deprecation shims exist.
