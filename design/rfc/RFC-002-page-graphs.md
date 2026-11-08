@@ -45,7 +45,7 @@ What these do not give a site built on a web framework, and what the other two u
 - The hosting model itself (worker, recovery client, fault handling). That is settled for every instance elsewhere; this RFC takes it as given.
 - The site-wide graph: its schema, how site content becomes a graph, and vector embeddings.
 - The navigation element and its language interface.
-- Saving or sharing a visitor's work beyond the page view, such as saved notebooks or shareable links to an edited graph.
+- Saving or sharing a visitor's work beyond the page view, such as saved notebooks or shareable links to an edited graph. A graph that holds an application's data across visits is an application graph, taken up in RFC-006; this RFC covers graphs that live for one page view.
 - An editor, notebook runtime or dashboard framework. Existing frameworks host the cells and charts; the subject here is the graph under them.
 - Changes to CypherLite itself, including its cookbook. Needs are recorded and raised with its maintainers.
 
