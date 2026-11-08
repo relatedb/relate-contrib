@@ -34,7 +34,7 @@ The relate core team is building the common interface components and the agent i
 
 - **Inspire.** Each starter is a working application a participant can run, change and show within hours, not a fragment. Together the starters span application types (administrative tools, document editors, graph and data visualization, games, maps) so that most project ideas have a close example.
 - **Lower adoption friction.** The path from a clean checkout to a first query on screen takes minutes. The integration problem is already solved when a participant starts.
-- **Run locally first.** The first batch runs entirely in the browser with no server, so participants install nothing but the starter's own dependencies and share no data between visitors.
+- **Run locally first, and keep the data.** The first batch runs entirely in the browser with no server, so participants install nothing but the starter's own dependencies and share no data between visitors. A visitor's data persists across reloads and return visits: the starters are applications, and the persistence they rely on is the subject of RFC-006.
 - **Find the common needs.** Starters live in this repository so that repetition across them is visible. Result shaping, safe construction of queries from interface state, the asynchronous-to-synchronous bridge, stable record identity and data seeding are the expected candidates. A need is extracted into a shared library when starters demonstrate it, not before.
 - **Grow the ecosystem.** Starters depend on libraries from the wider open ecosystem. They do not depend on products owned by the engine's vendor, and they favour permissive licences that leave a participant's project free of obligations.
 - **Spend process in proportion.** This RFC covers the program. Each starter records its own decisions in a short ADR; a target that turns out to need real design gets a fuller treatment.
@@ -88,7 +88,7 @@ This RFC states the goals and the approach. Each starter, or family of starters 
 - **Licences** are checked before a library is adopted, including the terms of add-on packages.
 - **Safe queries.** Anything that builds a query from user interface state takes identifiers from a declared list and binds values as parameters.
 - **Identity.** The engine's internal ids can be reused, so starters give records an application-assigned stable id.
-- **Local data.** Starters seed their data, and say what survives a reload and what a visitor clearing browser storage loses.
+- **Local data.** Starters seed their data once, keep what the visitor writes, and say what a visitor clearing browser storage or opening a second tab loses or sees.
 
 ## 6. Alternatives Considered
 
@@ -105,7 +105,7 @@ This RFC states the goals and the approach. Each starter, or family of starters 
 
 7.3. Which shared libraries are likely, and what triggers an extraction: the second starter that needs it, or the third?
 
-7.4. What do local-first starters promise about persistence: seeded in-memory data that resets, or a browser file store that survives reloads? This touches the visitor-edit and recovery questions in RFC-002.
+7.4. Beyond what the core provides for application graphs (RFC-006), what do starters promise their visitors: a reset-demo-data control, an export, a notice when storage is unavailable?
 
 7.5. How are starters maintained after the hackathon, and how are updates and breakages in third-party libraries noticed?
 

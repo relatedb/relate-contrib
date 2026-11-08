@@ -48,6 +48,7 @@ Three constraints from the rest of the design apply:
 - A generative model. It may become an optional layer over the results; nothing here requires one.
 - The hosting model for the database instance (worker, recovery, lifetime). That is settled and taken as given.
 - Page graphs and their authoring.
+- Graphs that hold data the visitor writes and that must persist across visits (application graphs, RFC-006). The site graph is a content graph: built with the site, read-only, and replaced when a release changes it.
 - Changes to the database. Needs, such as a way to generate embeddings or to load a snapshot, are recorded and raised with its maintainers.
 - Sites whose content changes at request time, such as per-visitor or per-session content. The graph is built when the site is built.
 - Running search on a server.
