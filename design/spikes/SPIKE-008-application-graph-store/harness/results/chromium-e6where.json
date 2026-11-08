@@ -1,0 +1,23 @@
+{
+  "e6where": {
+    "whereClauseKilledAt400ms": {
+      "unlock": {
+        "ok": true,
+        "waitMs": 4599,
+        "tries": 20
+      },
+      "after": {
+        "c": 300000,
+        "v3": 300000
+      }
+    },
+    "rangeMigration": {
+      "steps": 30,
+      "ms": 6643
+    },
+    "afterRanges": {
+      "c": 300000,
+      "v3": 300000
+    }
+  }
+}

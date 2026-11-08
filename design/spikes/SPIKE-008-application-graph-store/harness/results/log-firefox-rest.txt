@@ -1,0 +1,51 @@
+firefox e6big done in 32s
+firefox e4 done in 0s
+firefox e5 done in 1s
+firefox e6 done in 5s
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: Target page, context or browser has been closed
+Browser logs:
+
+<launching> /Users/abk/Library/Caches/ms-playwright/firefox-1555/firefox/Nightly.app/Contents/MacOS/firefox -no-remote -headless -profile /var/folders/7_/5ck6t7mj77v8llrmfyychnp00000gn/T/playwright_firefoxdev_profile-u3A5Cd -juggler-pipe -silent
+<launched> pid=1010
+[pid=1010][err] *** You are running in headless mode.
+[pid=1010][err] JavaScript warning: resource://services-settings/Utils.sys.mjs, line 125: unreachable code after return statement
+[pid=1010][out] 
+[pid=1010][out] Juggler listening to the pipe
+[pid=1010][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+[pid=1010][out] console.warn: services.settings: #fetchAttachment: Forcing fallbackToDump to false due to Utils.LOAD_DUMPS being false
+[pid=1010][out] console.error: "Error fetching the wallpaper attachments URL" (new SyntaxError("JSON.parse: unexpected end of data at line 1 column 1 of the JSON data", ""))
+[pid=1010][out] console.error: (new NotFoundError("Could not find fa0fc42c-d91d-fca7-34eb-806ff46062dc in cache or dump", "resource://services-settings/Attachments.sys.mjs", 48))
+[pid=1010][out] console.warn: "Unable to find the attachment for" "fa0fc42c-d91d-fca7-34eb-806ff46062dc"
+[pid=1010][out] console.error: services.settings: 
+[pid=1010][out]   Message: EmptyDatabaseError: "main/nimbus-desktop-experiments" has not been synced yet
+[pid=1010][out]   Stack:
+[pid=1010][out]     EmptyDatabaseError@resource://services-settings/Database.sys.mjs:19:5
+[pid=1010][out] list@resource://services-settings/Database.sys.mjs:96:13
+[pid=1010][out] 
+[pid=1010][out] console.error: services.settings: 
+[pid=1010][out]   Message: EmptyDatabaseError: "main/nimbus-desktop-experiments" has not been synced yet
+[pid=1010][out]   Stack:
+[pid=1010][out]     EmptyDatabaseError@resource://services-settings/Database.sys.mjs:19:5
+[pid=1010][out] list@resource://services-settings/Database.sys.mjs:96:13
+[pid=1010][out] 
+[pid=1010][out] console.error: "Could not download new icon" (new ServerInfoError("Server response is invalid SyntaxError: JSON.parse: unexpected end of data at line 1 column 1 of the JSON data", "resource://services-settings/Attachments.sys.mjs", 40))
+[pid=1010][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+[pid=1010][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+[pid=1010][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+[pid=1010][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+[pid=1010][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+[pid=1010][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+[pid=1010][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+[pid=1010][err] JavaScript error: chrome://juggler/content/Helper.js, line 82: NS_ERROR_FAILURE: Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsIWebProgress.removeProgressListener]
+[pid=1010][out] Crash Annotation GraphicsCriticalError: |[0][GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt (t=39.8397) [GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+[pid=1010] <gracefully close start>
+    at Module.e7 (/Users/abk/Developer/akollegger/graph-web/design/spikes/SPIKE-008-application-graph-store/harness/exp.mjs:249:26)
+    at async file:///Users/abk/Developer/akollegger/graph-web/design/spikes/SPIKE-008-application-graph-store/harness/run.mjs:13:18 {
+  log: []
+}
+
+Node.js v24.14.1

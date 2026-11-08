@@ -1,0 +1,305 @@
+{
+  "e6big": [
+    {
+      "killAfterMs": 100,
+      "fullStatementMs": 2162,
+      "killedAtMs": 105,
+      "unlock": {
+        "ok": true,
+        "waitMs": 3967,
+        "tries": 1
+      },
+      "after": {
+        "c": 300000,
+        "v3": 0
+      }
+    },
+    {
+      "killAfterMs": 400,
+      "fullStatementMs": 2148,
+      "killedAtMs": 402,
+      "unlock": {
+        "ok": true,
+        "waitMs": 4137,
+        "tries": 1
+      },
+      "after": {
+        "c": 300000,
+        "v3": 50000
+      }
+    }
+  ],
+  "e4": [
+    {
+      "k": "int-small",
+      "lit": "42",
+      "createOk": true,
+      "wire": "[{\"v\":42}]",
+      "types": [
+        "INTEGER"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "int-big",
+      "lit": "9007199254740993",
+      "createOk": true,
+      "wire": "[{\"v\":9007199254740993}]",
+      "types": [
+        "INTEGER"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "int-max",
+      "lit": "9223372036854775807",
+      "createOk": true,
+      "wire": "[{\"v\":9223372036854775807}]",
+      "types": [
+        "INTEGER"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "float",
+      "lit": "1.5",
+      "createOk": true,
+      "wire": "[{\"v\":1.5}]",
+      "types": [
+        "FLOAT"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "float-whole",
+      "lit": "2.0",
+      "createOk": true,
+      "wire": "[{\"v\":2.0}]",
+      "types": [
+        "FLOAT"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "float-nan",
+      "lit": "0.0/0.0",
+      "createOk": true,
+      "wire": "[{\"v\":\"NaN\"}]",
+      "types": [
+        "FLOAT"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "string-unicode",
+      "lit": "'héllo ✓ 𝄞'",
+      "createOk": true,
+      "wire": "[{\"v\":\"héllo ✓ 𝄞\"}]",
+      "types": [
+        "STRING"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "string-empty",
+      "lit": "''",
+      "createOk": true,
+      "wire": "[{\"v\":\"\"}]",
+      "types": [
+        "STRING"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "bool",
+      "lit": "true",
+      "createOk": true,
+      "wire": "[{\"v\":true}]",
+      "types": [
+        "BOOLEAN"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "null",
+      "lit": "null",
+      "createOk": true,
+      "wire": "[{\"v\":null}]",
+      "types": [
+        "ANY"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "date",
+      "lit": "date('2026-11-08')",
+      "createOk": true,
+      "wire": "[{\"v\":\"2026-11-08\"}]",
+      "types": [
+        "DATE"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "datetime",
+      "lit": "datetime('2026-11-08T10:00:00Z')",
+      "createOk": true,
+      "wire": "[{\"v\":\"2026-11-08T10:00:00Z\"}]",
+      "types": [
+        "DATETIME"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "duration",
+      "lit": "duration('P1D')",
+      "createOk": true,
+      "wire": "[{\"v\":\"P1D\"}]",
+      "types": [
+        "DURATION"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "point-wgs84",
+      "lit": "point({latitude: 45.5, longitude: -122.6})",
+      "createOk": true,
+      "wire": "[{\"v\":{\"crs\":\"wgs-84\",\"latitude\":45.5,\"longitude\":-122.6,\"srid\":4326}}]",
+      "types": [
+        "POINT"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "list-int",
+      "lit": "[1, 2, 3]",
+      "createOk": true,
+      "wire": "[{\"v\":[1,2,3]",
+      "types": [
+        "LIST"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "list-float",
+      "lit": "[1.5, 2.5]",
+      "createOk": true,
+      "wire": "[{\"v\":[1.5,2.5]",
+      "types": [
+        "LIST"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "list-mixed",
+      "lit": "[1, 2.5]",
+      "createOk": true,
+      "wire": "[{\"v\":[1.0,2.5]",
+      "types": [
+        "LIST"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "list-string",
+      "lit": "['a', 'b']",
+      "createOk": true,
+      "wire": "[{\"v\":[\"a\",\"b\"]",
+      "types": [
+        "LIST"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "list-empty",
+      "lit": "[]",
+      "createOk": true,
+      "wire": "[{\"v\":[]",
+      "types": [
+        "LIST"
+      ],
+      "readErr": null
+    },
+    {
+      "k": "list-of-lists",
+      "lit": "[[1], [2]]",
+      "createOk": false,
+      "createError": "type error: InvalidPropertyType",
+      "wire": null,
+      "types": null,
+      "readErr": null
+    },
+    {
+      "k": "map",
+      "lit": "{a: 1}",
+      "createOk": false,
+      "createError": "type error: InvalidPropertyType",
+      "wire": null,
+      "types": null,
+      "readErr": null
+    }
+  ],
+  "e5": {
+    "name:64chars": {
+      "ok": true
+    },
+    "name:65chars": {
+      "ok": false,
+      "error": "OPFS name must be 1-64 characters from [A-Za-z0-9_-]"
+    },
+    "name:dot": {
+      "ok": false,
+      "error": "OPFS name must be 1-64 characters from [A-Za-z0-9_-]"
+    },
+    "name:space": {
+      "ok": false,
+      "error": "OPFS name must be 1-64 characters from [A-Za-z0-9_-]"
+    },
+    "name:empty": {
+      "ok": false,
+      "error": "OPFS name must be 1-64 characters from [A-Za-z0-9_-]"
+    },
+    "name:dash-underscore": {
+      "ok": true
+    },
+    "isolation": {
+      "openA": true,
+      "openB": true,
+      "countA": 5,
+      "countB": 0
+    }
+  },
+  "e6": {
+    "addProperty": {
+      "ok": true,
+      "ms": 280
+    },
+    "renameProperty": {
+      "ok": true,
+      "ms": 589
+    },
+    "relabel": {
+      "ok": true,
+      "ms": 664
+    },
+    "versionMarker": {
+      "ok": true,
+      "ms": 1
+    },
+    "killedMidMigration": {
+      "reopen": {
+        "ok": true,
+        "waitMs": 1336,
+        "tries": 1
+      },
+      "before": {
+        "c": 50000,
+        "v3": 0
+      },
+      "after": {
+        "c": 50000,
+        "v3": 0
+      }
+    }
+  }
+}
