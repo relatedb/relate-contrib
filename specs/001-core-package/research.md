@@ -98,7 +98,7 @@ build (ties the package to Vite).
   a worker error is the client terminating the worker through the same path a worker error uses, exercised
   with a worker script that throws on a marked message, supplied through an option the tests pass; a locked
   store is a second page holding the same store name; a stale store is a changed `revision`.
-- **Load-time baselines** are JSON files under `packages/core/tests/baselines/`, one per browser and
+- **Load-time baselines** are JSON files under `packages/web/tests/baselines/`, one per browser and
   environment name; a run fails above twice the baseline (FR-031). The first run on a new environment
   writes the baseline.
 

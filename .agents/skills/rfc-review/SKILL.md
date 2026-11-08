@@ -4,7 +4,7 @@ description: "Review a draft RFC for scope, clarity, and readiness to move to re
 argument-hint: "Reference the RFC to review (RFC-NNN, filename, or @design/rfc/RFC-NNN-*.md path)"
 compatibility: "Requires design/rfc/ (see design/rfc/README.md for format)"
 metadata:
-  author: "related-web"
+  author: "relate-contrib"
 user-invocable: true
 disable-model-invocation: false
 ---

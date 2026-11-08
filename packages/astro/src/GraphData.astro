@@ -1,7 +1,7 @@
 ---
 // A small graph written into the page (spec FR-013 to FR-015, ADR-004 2.2): no descriptor, no revision, no stored copy,
-// no extra request. The page's script asks for it by name through `@relate/web-astro/client`.
-import { graphs } from "virtual:relate-web/config";
+// no extra request. The page's script asks for it by name through `@relate/astro/client`.
+import { graphs } from "virtual:relate/config";
 import { checkInline, escapeJson } from "../dist/inline.js";
 import type { InlineConfig } from "../dist/inline.js";
 import { seenOn } from "../dist/seen.js";

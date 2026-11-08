@@ -6,7 +6,7 @@
 
 ## Summary
 
-`@relate/web-core` is a framework-agnostic TypeScript library that hosts a CypherLite browser database in
+`@relate/web` is a framework-agnostic TypeScript library that hosts a CypherLite browser database in
 a dedicated worker behind a small client. It loads graph data from the node-link document of ADR-002,
 with the optional descriptor of ADR-003 that lets a page restore a stored graph without fetching the data;
 it contains faults by replacing the worker (and stops after three failed attempts); and it provides the two
@@ -25,7 +25,7 @@ in the engine and found one point that changed ADR-002 (arrays of mixed whole an
 
 **Testing**: Vitest for unit tests in Node; Playwright test runner in Chromium, Firefox and WebKit for browser tests and the conformance check; load-time baselines kept in the repository (research R4)
 
-**Target Platform**: current desktop Chromium, Firefox and WebKit browsers; Node for `@relate/web-core/validate`
+**Target Platform**: current desktop Chromium, Firefox and WebKit browsers; Node for `@relate/web/validate`
 
 **Project Type**: library in a pnpm workspace, with an example site inside it for the conformance check
 
@@ -42,7 +42,7 @@ in the engine and found one point that changed ADR-002 (arrays of mixed whole an
 | Principle | Status | Basis in this plan |
 |---|---|---|
 | I. Decisions Before Code | Pass | The plan implements the accepted ADR-001, ADR-002 and ADR-003 and names them. The points that needed decision records were recorded on 2026-11-02: amendments to ADR-001 and ADR-002, and ADR-003 itself (next section). |
-| II. Core First, Thin Adapters | Pass | All behavior is in `packages/core`. No adapter code. The package is independently publishable (own `package.json`, peer dependency, no reference to `vendor/`). The conformance check ships as the `./conformance` export. |
+| II. Core First, Thin Adapters | Pass | All behavior is in `packages/web`. No adapter code. The package is independently publishable (own `package.json`, peer dependency, no reference to `vendor/`). The conformance check ships as the `./conformance` export. |
 | III. The Page Works Without the Graph | Pass | The client reports `loading`, `recovering` and `failed` as data; no render depends on the instance. The failure wording is text the page chooses where to show. |
 | IV. Faults Are Contained | Pass | Every client owns a worker; no main-thread instance exists. Traps, timeouts and worker errors replace the worker; `run()` gives visitor statements a timeout and `stop()`. |
 | V. Specified Behavior Is Tested and Measured | Pass | Test plan per behavior in [contracts/conformance.md](contracts/conformance.md); three browsers; baselines recorded; unmeasured items labeled. |
@@ -60,7 +60,7 @@ who owns the decisions; the two amendments have not been through `/adr-review`.
 3. **ADR-003 accepted**: the graph descriptor, the stored copy beside the store, and the start-up decision.
 
 Spec FR-029 says the package includes the example site and the conformance check; the plan delivers them as
-the `./conformance` export of `@relate/web-core` (fixtures and scenario definitions) with Playwright as an
+the `./conformance` export of `@relate/web` (fixtures and scenario definitions) with Playwright as an
 optional peer dependency for the runner, so the published tarball stays small.
 
 ## Project Structure
@@ -94,7 +94,7 @@ vendor/
 ├── cypherlite/                   # git submodule, pinned commit
 └── cypherlite-wasm/pkg/          # build output, gitignored
 
-packages/core/                    # @relate/web-core (working name)
+packages/web/                    # @relate/web
 ├── package.json                  # exports ".", "./validate", "./worker", "./conformance"
 ├── tsconfig.json
 ├── src/
@@ -114,7 +114,7 @@ packages/core/                    # @relate/web-core (working name)
     └── run.ts
 ```
 
-**Structure Decision**: one pnpm workspace with a single package, `packages/core`, as the constitution
+**Structure Decision**: one pnpm workspace with a single package, `packages/web`, as the constitution
 requires (core first), plus the vendored engine outside it. Adapters are future sibling packages in
 `packages/`. The example site lives inside the core package so adapters can run the same check.
 
@@ -143,7 +143,7 @@ Checked on 2026-11-02, with all 86 tasks done.
 | Principle | Result |
 |---|---|
 | I. Decisions Before Code | Pass for the design: everything implemented follows accepted ADR-001, ADR-002 and ADR-003. One miss: the commit messages name the user story and task numbers but not the ADR numbers, which principle I asks for. The merge commit or pull request for this branch must cite ADR-001, ADR-002 and ADR-003. |
-| II. Core First, Thin Adapters | Pass. All behavior is in `packages/core`; there is no adapter code. `test:package` installs the packed core in a clean project outside the repository and runs it, and the conformance check ships as the `./conformance` export. |
+| II. Core First, Thin Adapters | Pass. All behavior is in `packages/web`; there is no adapter code. `test:package` installs the packed core in a clean project outside the repository and runs it, and the conformance check ships as the `./conformance` export. |
 | III. The Page Works Without the Graph | Pass. Tests show links and the first render working before and while the graph loads, and in the `failed` state. |
 | IV. Faults Are Contained | Pass. Every instance is in a worker; the main thread never instantiates the engine (tested); a trap, a timeout and a worker error each replace the worker; `run()` has a timeout and `stop()`. |
 | V. Specified Behavior Is Tested and Measured | Pass. `test:trace` finds all 52 requirement and success-criterion ids tagged in tests whose results passed, in Chromium, Firefox and WebKit. Load and restore times are recorded against per-browser baselines. Unmeasured and labeled: validation cost on large documents with embeddings, the cost of reading a descriptor on every page, mobile and older browsers. |

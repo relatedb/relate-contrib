@@ -13,7 +13,7 @@ async function warningsFor(page: import("@playwright/test").Page, env: Record<st
   const dev = await spawnDev(site, env);
   try {
     const warnings: string[] = [];
-    page.on("console", (m) => m.type() === "warning" && m.text().includes("@relate/web-astro") && warnings.push(m.text()));
+    page.on("console", (m) => m.type() === "warning" && m.text().includes("@relate/astro") && warnings.push(m.text()));
     await page.goto(`${dev.url}/page-1.html`);
     // ready: the page keeps using the server until its graph has loaded
     await page.waitForFunction(() => document.documentElement.dataset.relState === "ready", undefined, { timeout: 120_000 });

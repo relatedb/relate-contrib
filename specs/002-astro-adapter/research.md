@@ -18,7 +18,7 @@ Findings that shaped the plan. "Verify" items are unmeasured assumptions; each b
 
 ## R-3. Sources and the virtual modules
 
-- **Decision**: a Vite plugin in the integration provides `virtual:relate-web/config` (names, descriptor URLs including `BASE_URL`, lifetimes, indexes, profile; imported by the client module) and `virtual:relate-web/sources` (imports each source module or JSON file; used only on the server by the route entrypoint). A source module default-exports a function; a JSON file is wrapped as a function returning its content.
+- **Decision**: a Vite plugin in the integration provides `virtual:relate/config` (names, descriptor URLs including `BASE_URL`, lifetimes, indexes, profile; imported by the client module) and `virtual:relate/sources` (imports each source module or JSON file; used only on the server by the route entrypoint). A source module default-exports a function; a JSON file is wrapped as a function returning its content.
 - **Rationale**: sources go through Vite so they can use `astro:content` (FR-003); keeping the sources module out of the client config keeps documents out of the page bundle.
 - **Finding (V-2, 2026-11-04)**: `getStaticPaths` runs on each request in the dev server and the source module is re-imported when its file changes, so no explicit invalidation is needed and the descriptor's revision follows an edit (test: `packages/astro/tests/build/dev.test.ts`). Test processes must not inherit `NODE_ENV=test` or the agent variables (`AI_AGENT`, `CLAUDECODE`): with the first the dev server serves nothing, with the second `astro dev` starts a background daemon.
 - **Verify (V-2, original statement)**: the dev server re-evaluates a source when a file it imports changes (Vite module invalidation of the sources module on watcher events) and the descriptor's revision follows.
@@ -35,9 +35,9 @@ Findings that shaped the plan. "Verify" items are unmeasured assumptions; each b
 
 ## R-5. The inline graph component
 
-- **Decision**: `GraphData.astro` (exported as `@relate/web-astro/graph-data`) takes `id`, `document` and optional `config` (`{ indexes }`). It validates with the core's validator at render, then writes `<script type="application/json" data-relate-graph="<id>">{document, config}</script>` with `<`, `>`, `&` and U+2028/2029 escaped. The duplicate-name check uses a per-render-request set; the registered-name check reads the integration's config.
+- **Decision**: `GraphData.astro` (exported as `@relate/astro/graph-data`) takes `id`, `document` and optional `config` (`{ indexes }`). It validates with the core's validator at render, then writes `<script type="application/json" data-relate-graph="<id>">{document, config}</script>` with `<`, `>`, `&` and U+2028/2029 escaped. The duplicate-name check uses a per-render-request set; the registered-name check reads the integration's config.
 - **Rationale**: inert data costs no request and cannot execute; escaping avoids closing the script early.
-- **Finding (V-3, linked, 2026-11-04)**: `GraphData.astro` imported from a workspace-linked `node_modules/@relate/web-astro` compiles in `astro build` with `ssr.noExternal` (build tests `tests/build/inline.test.ts`). The component imports its helpers from `../dist`, because only `src/GraphData.astro` and `dist` are published. A packed install is still to be checked (task T064).
+- **Finding (V-3, linked, 2026-11-04)**: `GraphData.astro` imported from a workspace-linked `node_modules/@relate/astro` compiles in `astro build` with `ssr.noExternal` (build tests `tests/build/inline.test.ts`). The component imports its helpers from `../dist`, because only `src/GraphData.astro` and `dist` are published. A packed install is still to be checked (task T064).
 - **Verify (V-3, original statement)**: the package's `.astro` file is compiled when installed under `node_modules`; the integration adds the package to `vite.ssr.noExternal` through `updateConfig`. Check in the clean-install test.
 - **Alternatives**: `define:vars` (executes script), a data attribute (size limits, escaping). Rejected.
 
@@ -72,7 +72,7 @@ Environment: macOS (Darwin 25.6.0, Apple silicon), Node 24.14.1, Astro 7.4.5, Pl
 - Conformance (`pnpm test:astro-conformance`): the core's scenarios C-01 to C-11 passed under `multi-page` (11 of 11) and under `client-routing` (8 of 8 that apply; C-07, C-08 and C-11 are multi-page scenarios) in Chromium, Firefox and WebKit: 6 of 6 runs passed, 1.3 minutes in total.
 - Browser suite (`pnpm test:astro-browsers`): 81 passed, 6 skipped (the development-check tests run in Chromium only), 1.1 minutes.
 - Unit and build suite (`pnpm test:astro`): 51 passed in 8 files.
-- Core regression after the runner parameters (`pnpm test:conformance` in `@relate/web-core`): 12 passed in three browsers.
+- Core regression after the runner parameters (`pnpm test:conformance` in `@relate/web`): 12 passed in three browsers.
 
 **Load figures** (`pnpm exec playwright test tests/browser/figures.spec.ts`, Chromium and Firefox, not WebKit; median of three cold loads in fresh browser contexts, the core's own `total` timing, milliseconds, one environment, single session):
 

@@ -1,11 +1,11 @@
-// The Vite plugin: the two virtual modules (spec FR-012). `virtual:relate-web/config` is what the client reads;
-// `virtual:relate-web/sources` holds the sources and is imported only by the injected route, on the server.
+// The Vite plugin: the two virtual modules (spec FR-012). `virtual:relate/config` is what the client reads;
+// `virtual:relate/sources` holds the sources and is imported only by the injected route, on the server.
 import type { Plugin } from "vite";
 import type { ResolvedOptions } from "./options.js";
 import { descriptorPath, withBase } from "./sources.js";
 
-const CONFIG = "virtual:relate-web/config";
-const SOURCES = "virtual:relate-web/sources";
+const CONFIG = "virtual:relate/config";
+const SOURCES = "virtual:relate/sources";
 
 export interface BuildContext {
   /** The site's `base` setting. */
@@ -14,9 +14,9 @@ export interface BuildContext {
   dev: boolean;
 }
 
-export function relateWebPlugin(options: ResolvedOptions, context: BuildContext): Plugin {
+export function relatePlugin(options: ResolvedOptions, context: BuildContext): Plugin {
   return {
-    name: "@relate/web-astro",
+    name: "@relate/astro",
     resolveId(id) {
       if (id === CONFIG || id === SOURCES) return `\0${id}`;
       return null;

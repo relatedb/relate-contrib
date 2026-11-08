@@ -1,25 +1,25 @@
 // The Astro integration (spec FR-001 to FR-012, ADR-004 2.1 and 2.2).
 import type { AstroIntegration } from "astro";
 import { fileURLToPath } from "node:url";
-import { resolveOptions, type RelateWebOptions } from "./options.js";
-import { relateWebPlugin } from "./plugin.js";
+import { resolveOptions, type RelateOptions } from "./options.js";
+import { relatePlugin } from "./plugin.js";
 
-export type { RelateWebOptions, GraphOption, Lifetime, Navigation } from "./options.js";
+export type { RelateOptions, GraphOption, Lifetime, Navigation } from "./options.js";
 
-export default function relateWeb(options?: RelateWebOptions): AstroIntegration {
+export default function relate(options?: RelateOptions): AstroIntegration {
   return {
-    name: "@relate/web-astro",
+    name: "@relate/astro",
     hooks: {
       "astro:config:setup": ({ command, config, injectRoute, updateConfig }) => {
         if (config.output !== "static") {
-          throw new Error(`@relate/web-astro: only static output is supported, but output is "${config.output}"`);
+          throw new Error(`@relate/astro: only static output is supported, but output is "${config.output}"`);
         }
         const resolved = resolveOptions(options, fileURLToPath(config.root));
         updateConfig({
           vite: {
-            plugins: [relateWebPlugin(resolved, { base: config.base, dev: command === "dev" })],
+            plugins: [relatePlugin(resolved, { base: config.base, dev: command === "dev" })],
             // The component is an .astro file in this package, which Vite must compile instead of externalizing.
-            ssr: { noExternal: ["@relate/web-astro"] },
+            ssr: { noExternal: ["@relate/astro"] },
             // The engine's binary is placed by the bundler; the dev server must not pre-bundle it.
             optimizeDeps: { exclude: ["@neo4j-labs/cypherlite-wasm"] },
           },

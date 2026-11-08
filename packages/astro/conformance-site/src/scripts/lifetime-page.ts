@@ -1,6 +1,6 @@
 // For the lifetime pages: a registered page-lifetime graph (`small`), with a log of what the adapter did, kept in module
 // state so it survives router navigations. The adapter's own tests read `window.__relLog`.
-import { onPage } from "@relate/web-astro/client";
+import { onPage } from "@relate/astro/client";
 
 const log: string[] = [];
 (window as unknown as { __relLog: string[] }).__relLog = log;

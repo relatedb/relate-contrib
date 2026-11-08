@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build `@relate/web-astro` (`packages/astro`): an Astro 7 integration that turns registered graph sources into revision-named static files and descriptors, an `.astro` component that carries a small graph inside a page, and a client module whose page entry ties each page's graph clients to the router's arrival and departure. Everything about instances, faults, loading and profiles stays in `@relate/web-core`. The adapter is checked by an unpublished conformance site (run with the core's runner in three browsers, both profiles), its own browser and build tests, and a clean-install test.
+Build `@relate/astro` (`packages/astro`): an Astro 7 integration that turns registered graph sources into revision-named static files and descriptors, an `.astro` component that carries a small graph inside a page, and a client module whose page entry ties each page's graph clients to the router's arrival and departure. Everything about instances, faults, loading and profiles stays in `@relate/web`. The adapter is checked by an unpublished conformance site (run with the core's runner in three browsers, both profiles), its own browser and build tests, and a clean-install test.
 
 Planning found two points where ADR-004 and the core's conformance runner did not fit Astro (section "Decisions needed"). Both were resolved on 2026-11-04 by an ADR-004 amendment and a spec amendment, as recommended there.
 
@@ -14,7 +14,7 @@ Planning found two points where ADR-004 and the core's conformance runner did no
 
 **Language/Version**: TypeScript 7 (as the core), Node 24 for build and tests, ES2022 browser target
 
-**Primary Dependencies**: peers `astro` ^7.4, `@relate/web-core`, `@neo4j-labs/cypherlite-wasm`; no other runtime dependency. Dev: `@playwright/test`, `vitest`, `typescript`.
+**Primary Dependencies**: peers `astro` ^7.4, `@relate/web`, `@neo4j-labs/cypherlite-wasm`; no other runtime dependency. Dev: `@playwright/test`, `vitest`, `typescript`.
 
 **Storage**: none of its own. Registered graphs are static files; the core's origin-private store is used through the core.
 
@@ -45,7 +45,7 @@ Planning found two points where ADR-004 and the core's conformance runner did no
 
 ## Decisions needed (resolved 2026-11-04 by the ADR-004 amendment)
 
-**D-1. Conformance of an id-bound, hashed-URL adapter against the core's runner.** The runner (`packages/core/conformance/scenarios.ts`) assumes the core's example site: fixed page paths (`/index.html`, `/page-1.html`, `/notes.html`, `/blank.html`), `variant=b|mismatch|broken` query values that select other descriptors, and request checks that look for the substrings `/graph.json` (C-11, positive) and `/graph-b.json` (C-07, positive). Two facts about the adapter break that:
+**D-1. Conformance of an id-bound, hashed-URL adapter against the core's runner.** The runner (`packages/web/conformance/scenarios.ts`) assumes the core's example site: fixed page paths (`/index.html`, `/page-1.html`, `/notes.html`, `/blank.html`), `variant=b|mismatch|broken` query values that select other descriptors, and request checks that look for the substrings `/graph.json` (C-11, positive) and `/graph-b.json` (C-07, positive). Two facts about the adapter break that:
 
 1. A registered graph's data URL is `/_relate/<id>/graph.<revision>.json` and contains neither substring, so C-07 and C-11 fail on the positive checks.
 2. A descriptor's `id` is the graph name, and the store is named by the descriptor `id`. C-07 needs the same `id` with a different `revision` (an older store replaced by a newer revision). One Astro build produces one revision per name, so a "variant b" of the same graph needs a second build, or a descriptor the adapter does not generate. C-03 (broken data URL) and C-10 (counts that disagree) likewise need descriptors the adapter never writes.
@@ -74,7 +74,7 @@ specs/002-astro-adapter/
 
 ```text
 packages/astro/
-├── package.json                  # @relate/web-astro; exports ".", "./graph-data", "./client", "./types"
+├── package.json                  # @relate/astro; exports ".", "./graph-data", "./client", "./types"
 ├── tsconfig.json
 ├── README.md                     # use, lifetimes, the placeholder-first rule for UI-framework wrappers
 ├── src/
@@ -82,8 +82,8 @@ packages/astro/
 │   ├── options.ts                # parse and validate `graphs`, `navigation`, lifetimes (FR-002 to FR-005)
 │   ├── sources.ts                # evaluate once, validate (core), canonical form, revision (FR-006 to FR-009)
 │   ├── routes/files.ts           # injected prerendered endpoint for descriptor.json and graph.<revision>.json
-│   ├── plugin.ts                 # Vite plugin: virtual:relate-web/config and /sources, dev re-evaluation (FR-011, FR-012)
-│   ├── GraphData.astro           # exported as @relate/web-astro/graph-data (FR-013 to FR-015)
+│   ├── plugin.ts                 # Vite plugin: virtual:relate/config and /sources, dev re-evaluation (FR-011, FR-012)
+│   ├── GraphData.astro           # exported as @relate/astro/graph-data (FR-013 to FR-015)
 │   ├── client/
 │   │   ├── index.ts              # onPage, graph (FR-016 to FR-024, FR-026)
 │   │   ├── page.ts               # page lifecycle: first load, arrival, departure, pagehide
@@ -105,7 +105,7 @@ pnpm-workspace.yaml               # unchanged: packages/* already includes packa
 package.json (root)               # scripts: test:astro, test:astro-conformance, test:astro-package, test:astro-trace
 ```
 
-**Structure Decision**: a second workspace package beside `packages/core`, with the conformance site inside the package (unpublished: excluded by `files`) as the core does for its example site. The site is an Astro project so it can be built twice from one source tree, once per profile.
+**Structure Decision**: a second workspace package beside `packages/web`, with the conformance site inside the package (unpublished: excluded by `files`) as the core does for its example site. The site is an Astro project so it can be built twice from one source tree, once per profile.
 
 ## Complexity Tracking
 

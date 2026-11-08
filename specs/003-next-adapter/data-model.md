@@ -33,8 +33,8 @@ Evaluated once per source per process in the production build and per request in
 
 | Path | Content |
 |---|---|
-| `/relate-web/<name>/descriptor.json` | the descriptor |
-| `/relate-web/<name>/graph.<revision>.json` | the canonical document |
+| `/relate/<name>/descriptor.json` | the descriptor |
+| `/relate/<name>/graph.<revision>.json` | the canonical document |
 
 Statically generated for export and for the production server; any other name or revision is not found (FR-006).
 

@@ -6,11 +6,11 @@
 
 **Status**: Implemented (ADR-004)
 
-**Input**: User description: "The relate-web Astro adapter (`@relate/web-astro`, a working name): a workspace package in `packages/astro` that implements accepted ADR-004 (and builds on ADR-001, ADR-002, ADR-003) so an Astro 7 static site can embed the browser graph database through the shared core package. It provides an integration that serves registered graphs, a component that puts a small graph into a page, a client module tied to the page's arrival and departure, a warning when the navigation setting disagrees with the router, a conformance site run in three browsers with adapter tests, and a package test in a clean project. Out of scope: output other than static, Astro versions other than 7, components for UI frameworks, a default content extractor or site-graph schema (RFC-003), the navigation element (RFC-004), dashboards that fetch data at load, main-thread instances, and changes to the core." (Condensed; the full request is in the conversation that created this specification.)
+**Input**: User description: "The relate-contrib Astro adapter (`@relate/astro`): a workspace package in `packages/astro` that implements accepted ADR-004 (and builds on ADR-001, ADR-002, ADR-003) so an Astro 7 static site can embed the browser graph database through the shared core package. It provides an integration that serves registered graphs, a component that puts a small graph into a page, a client module tied to the page's arrival and departure, a warning when the navigation setting disagrees with the router, a conformance site run in three browsers with adapter tests, and a package test in a clean project. Out of scope: output other than static, Astro versions other than 7, components for UI frameworks, a default content extractor or site-graph schema (RFC-003), the navigation element (RFC-004), dashboards that fetch data at load, main-thread instances, and changes to the core." (Condensed; the full request is in the conversation that created this specification.)
 
 ## Overview
 
-The shared core package (`@relate/web-core`, specification `specs/001-core-package/spec.md`) runs the embedded graph database in a page. It deliberately knows nothing about any site generator, so each generator needs a thin adapter that supplies the graph data at build time, chooses the navigation profile, and ties each page's graph work to that page's arrival and departure. This feature is that adapter for Astro, a site generator that builds pages from content at build time and optionally swaps pages in the browser with a client-side router.
+The shared core package (`@relate/web`, specification `specs/001-core-package/spec.md`) runs the embedded graph database in a page. It deliberately knows nothing about any site generator, so each generator needs a thin adapter that supplies the graph data at build time, chooses the navigation profile, and ties each page's graph work to that page's arrival and departure. This feature is that adapter for Astro, a site generator that builds pages from content at build time and optionally swaps pages in the browser with a client-side router.
 
 Three kinds of people depend on it:
 
@@ -180,7 +180,7 @@ The adapter and the core are packed as they would be published, installed into a
 
 **Package and integration**
 
-- **FR-001**: The package MUST be a workspace package `@relate/web-astro` that exposes an Astro integration, a component for inline graphs and a client module for pages and islands, and MUST declare Astro 7, the core package and the engine package as peer dependencies and no other runtime dependency.
+- **FR-001**: The package MUST be a workspace package `@relate/astro` that exposes an Astro integration, a component for inline graphs and a client module for pages and islands, and MUST declare Astro 7, the core package and the engine package as peer dependencies and no other runtime dependency.
 - **FR-002**: The integration MUST accept a `graphs` option that maps a graph name (following ADR-003's id rule) to a source, optional indexes and a lifetime of `page` or `visit`, with `page` the default.
 - **FR-003**: A source MUST be a module that returns an ADR-002 document, or a promise of one, or a JSON file that holds one. A module source MUST be able to read the site's content.
 - **FR-004**: The integration MUST accept a `navigation` option of `multi-page` or `client-routing`, with `multi-page` the default, and MUST pass it to the core as the profile.
@@ -256,4 +256,4 @@ The adapter and the core are packed as they would be published, installed into a
 - **Not measured**: the size above which an inline graph should be registered instead is not measured here; the conformance site records the load figures that a later decision can use. Dev-server behavior under file watching, and non-root base paths in production, are checked by the tests in this feature and are not otherwise verified.
 - **Graph contents**: the adapter does not decide what a graph contains. The conformance site uses small hand-written graphs, and RFC-003 and RFC-002's decisions will govern real ones.
 - **Out of scope**: output other than static, Astro versions other than 7, components for UI frameworks, a default content extractor or site-graph schema (RFC-003), the navigation element (RFC-004), dashboards that fetch their data at load, main-thread instances, and changes to the core other than the runner's additive parameters.
-- **Names**: `@relate/web-astro` is a working name that follows `@relate/web-core`; the engine's package name is its current one.
+- **Names**: `@relate/astro` follows the `@relate` namespace, as does the core `@relate/web`; the engine's package name is its current one.

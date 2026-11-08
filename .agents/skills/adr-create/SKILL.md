@@ -4,7 +4,7 @@ description: "Create or update an Architecture Decision Record: the technical HO
 argument-hint: "Reference one or more parent RFCs (RFC-NNN[, RFC-MMM, ...]) plus the decision to record, or 'update ADR-005 ...' to revise"
 compatibility: "Requires design/adr/ directory (created automatically on first use) and at least one existing parent RFC in design/rfc/"
 metadata:
-  author: "related-web"
+  author: "relate-contrib"
 user-invocable: true
 disable-model-invocation: false
 ---
