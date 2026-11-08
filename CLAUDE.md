@@ -11,7 +11,7 @@ Two uses of the embedded graph drive the work:
 1. **Per page** — a graph (almost notebook-like) embedded in an individual page, queried with Cypher.
 2. **Site-wide** — one shared graph across the whole website, with vector embeddings, powering a navigation element. The element is primarily visual with a minimal natural-language interface: language-driven navigation and search, **not a chatbot**.
 
-Planned integration order (subject to change as ADRs land): ObservableHQ, Astro, Next and SvelteKit (done) → Nuxt. Docs-oriented generators (Starlight, VitePress, Docusaurus) may jump the queue depending on what the relate website is built on.
+Planned integration order (subject to change as ADRs land): ObservableHQ, Astro, Next and SvelteKit (done) → Nuxt. Nuxt is deferred in favour of the community starters in RFC-005 (first: a react-admin data provider). Docs-oriented generators (Starlight, VitePress, Docusaurus) may jump the queue depending on what the relate website is built on.
 
 ## Project state
 
@@ -110,6 +110,7 @@ RFCs always come first; no ADR is written until a parent RFC exists. Candidate R
 2. RFC-002 (drafted, [design/rfc/RFC-002-page-graphs.md](design/rfc/RFC-002-page-graphs.md)): page graphs — per-page graphs unrelated to the site (cookbooks and notebooks, a page encoded as a graph, dashboards): where the data comes from, several graphs on a page, visitor edits and recovery, where small graphs run, and how a page graph relates to the site-wide graph.
 3. RFC-003: the site graph — how content becomes a site-wide graph, and shipping it to the browser with vector embeddings (including how a user's query gets embedded).
 4. RFC-004: the language-driven navigation element — primarily visual, minimal natural-language interface, not a chatbot.
+5. RFC-005 (drafted, [design/rfc/RFC-005-community-integrations.md](design/rfc/RFC-005-community-integrations.md)): integrations for community projects and hackathons — runnable local-first starters by application type (admin tools, editors, visualization, games, maps), shared libraries extracted from them, slim ADRs per starter. Written before RFC-004, which keeps its number for the navigation element.
 
 SPIKE-001 to SPIKE-005 (Observable, Astro build time, Astro navigation, worker hosting and faults, worker survival across navigation) are done and feed RFC-001; ADR-001 (the hosting model), ADR-002 (the graph data format) and ADR-003 (the graph descriptor) are accepted.
 
