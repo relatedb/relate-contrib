@@ -23,3 +23,8 @@ packages/*/conformance/*.js.map
 # These two declare the adapter's virtual modules and are source, not build output
 !packages/astro/src/types.d.ts
 !packages/astro/src/env.d.ts
+
+# Scratch projects made by the Observable adapter's build tests, its reports and build output
+packages/observable/.tmp/
+packages/observable/conformance-site/dist/
+packages/observable/conformance-site/docs/.observablehq/

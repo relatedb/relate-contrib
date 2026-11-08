@@ -1,6 +1,7 @@
 packages:
   - "packages/*"
   - "packages/nextjs/conformance-site"
+  - "packages/observable/conformance-site"
 allowBuilds:
   esbuild: true
 overrides:

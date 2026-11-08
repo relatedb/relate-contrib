@@ -48,7 +48,7 @@ Planning ran the whole path once with stand-ins (V-1 to V-8 in [research.md](res
 - **D-1.** Loaders resolve the engine and the core from the site's root, not from the adapter's location.
 - **D-2.** Loader tests run the loader scripts as processes; no output parameter is added to the helpers.
 - **D-3.** `open` resolves each attachment once per page, keyed by name.
-- **D-4.** The conformance site takes its packages as pnpm injected dependencies and refreshes them in `pretest`, with pack-and-unpack as the fallback (untested until the site exists; see the first implementation task).
+- **D-4.** The conformance site takes its packages as pnpm injected dependencies and refreshes the copies with a script before each build (a reinstall does not add new files; recorded in research.md D-4).
 - **D-5.** Graph sources are plain JavaScript or JSON modules.
 - **D-6.** Conformance variants are literal attachments chosen by a query parameter.
 

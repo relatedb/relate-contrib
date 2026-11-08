@@ -21,6 +21,11 @@
     "test:next-browsers": "pnpm --filter @relate/nextjs test:next-browsers",
     "test:next-conformance": "pnpm --filter @relate/nextjs test:next-conformance",
     "test:next-package": "pnpm --filter @relate/nextjs test:next-package",
-    "test:next-trace": "pnpm --filter @relate/nextjs test:next-trace"
+    "test:next-trace": "pnpm --filter @relate/nextjs test:next-trace",
+    "test:observable": "pnpm --filter @relate/observable test:observable",
+    "test:observable-browsers": "pnpm --filter @relate/observable test:observable-browsers",
+    "test:observable-conformance": "pnpm --filter @relate/observable test:observable-conformance",
+    "test:observable-package": "pnpm --filter @relate/observable test:observable-package",
+    "test:observable-trace": "pnpm --filter @relate/observable test:observable-trace"
   }
 }

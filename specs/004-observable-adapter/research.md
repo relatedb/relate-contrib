@@ -54,7 +54,7 @@ The loader helpers write to standard output and exit non-zero on failure, so tes
 
 ### D-4. The conformance site gets its packages as pnpm injected dependencies, and a refresh step
 
-The conformance site declares `@relate/observable` and `@relate/web` as injected workspace dependencies and the engine as a direct dependency (V-6). pnpm copies at install time, so a changed `dist` reaches the site only after the copy is refreshed. The site's `pretest` step runs the workspace build and `pnpm install --offline --frozen-lockfile`; if that does not refresh the copy, it falls back to `pnpm pack` and unpacking (the package test's machinery). Not yet tested: whether a reinstall refreshes an injected copy after a rebuild (checked when the site is made).
+The conformance site declares `@relate/observable` and `@relate/web` as injected workspace dependencies and the engine as a direct dependency (V-6). pnpm makes the injected copy at install time as hard links. Checked while implementing (single run, pnpm 11.7): an edit to an existing built file shows through the link at once; a file added to the package's `dist` does not appear in the copy, and neither `pnpm install --offline --frozen-lockfile` nor `--force` adds it. The site therefore runs `scripts/refresh-deps.mjs` before every build; it removes each published folder in the injected copy and copies the package's own over it (`files` from its manifest), and it also copies `package.json`. Rejected: relying on a reinstall (does not refresh) and on pack-and-unpack (the script copies the same files without a tarball).
 
 ### D-5. Graph sources are plain modules the loader imports
 
@@ -63,6 +63,10 @@ A source is any module the loader script can import: plain JavaScript or JSON. F
 ### D-6. Conformance variants are static attachments chosen by a page's query parameter
 
 The core's runner selects descriptor variants `b`, `mismatch` and `broken` by a query parameter. A cell cannot build an attachment name at run time (V-5 and ADR-006 §2.3), so the page contains one literal `FileAttachment` per variant and a lookup table, and the variants are plain files in the site (not loaders). Variant `a` is the loader-published pair.
+
+## Checks made while implementing
+
+- **V-9. The engine's envelope, against the results layer (T018).** At `@relate/relate-wasm` 0.16.1 the spike's findings still hold: rows are keyed alphabetically (`age`, `name` for columns `name`, `age`); an error arrives as `{ columns: [], error, rows: [], stats: {} }` with no column types; entities are tagged and paths are alternating arrays; column types are `STRING`, `INTEGER`, `NODE`, `RELATIONSHIP`, `PATH`. The successful envelope has gained `execute_ms`, `parse_ms` and `plan_ms`, which `normalize` ignores. Single run, Node 24.
 
 ## Consequences for ADR-006
 

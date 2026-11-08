@@ -1,0 +1,52 @@
+{
+  "name": "@relate/observable",
+  "version": "0.0.0",
+  "description": "Observable Framework helpers for @relate/web: loaders that place the engine and the worker and publish graph data, a call that ties a graph client to a cell, and result shaping for Framework's components.",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./loader": {
+      "types": "./dist/loader/index.d.ts",
+      "default": "./dist/loader/index.js"
+    },
+    "./results": {
+      "types": "./dist/results/index.d.ts",
+      "default": "./dist/results/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:observable": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json",
+    "test:observable-browsers": "playwright test --grep-invert \"@conformance|@figures\"",
+    "test:observable-conformance": "REL_REPORT=reports/conformance.json playwright test --grep @conformance",
+    "test:observable-package": "vitest run --config vitest.package.config.ts --reporter=default --reporter=json --outputFile.json=reports/package.json",
+    "test:observable-trace": "tsx tests/trace/check-trace.ts"
+  },
+  "peerDependencies": {
+    "@observablehq/framework": "^1.13.0",
+    "@relate/relate-wasm": "*",
+    "@relate/web": "*"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "devDependencies": {
+    "@observablehq/framework": "^1.13.4",
+    "@playwright/test": "^1.64.1",
+    "@relate/relate-wasm": "*",
+    "@relate/web": "workspace:*",
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}
