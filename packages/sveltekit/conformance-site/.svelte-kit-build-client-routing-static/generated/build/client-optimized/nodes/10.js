@@ -1,1 +1,0 @@
-export { default as component } from "../../../../../src/routes/lifetime-c.html/+page.svelte";

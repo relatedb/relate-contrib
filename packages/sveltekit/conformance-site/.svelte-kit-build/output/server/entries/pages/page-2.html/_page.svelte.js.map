@@ -1,1 +1,0 @@
-{"version":3,"file":"_page.svelte.js","names":[],"sources":["../../../../../../src/routes/page-2.html/+page.svelte"],"sourcesContent":["<script lang=\"ts\">\n  import RelPage from \"#lib/RelPage.svelte\";\n</script>\n\n<RelPage title=\"Example site: page 2\"><p>A page that queries the shared graph.</p></RelPage>\n"],"mappings":";;;AAAA,SAAA,MAAA,YAAA;;;;;;;;AAEQ"}

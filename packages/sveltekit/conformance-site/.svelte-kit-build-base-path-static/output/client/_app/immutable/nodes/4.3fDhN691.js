@@ -1,1 +1,0 @@
-import{j as e,k as t}from"../chunks/DXH-uOA6.js";import{t as n}from"../chunks/B1LnumqA.js";var r=e(`<p>Runs with a descriptor whose data cannot be fetched (variant broken).</p>`);function i(e){n(e,{title:`Example site: broken graph`,variant:`broken`,children:(e,n)=>{var i=r();t(e,i)},$$slots:{default:!0}})}export{i as component};

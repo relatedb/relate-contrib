@@ -1,1 +1,0 @@
-import"../chunks/k45OOpT8.js";import{t as e}from"../chunks/BcG8UOsK.js";function t(t){e(t,{title:`Blank`,bare:!0})}export{t as component};

@@ -34,3 +34,9 @@ packages/sveltekit/.tmp/
 packages/sveltekit/conformance-site/build*/
 packages/sveltekit/conformance-site/.svelte-kit/
 packages/sveltekit/conformance-site/.fixtures/
+
+# SvelteKit conformance site: per-build output, scratch fixture apps and the framework cache
+packages/sveltekit/conformance-site/.svelte-kit-build*/
+packages/sveltekit/conformance-site/.svelte-kit/
+packages/sveltekit/conformance-site/.fixtures/
+packages/sveltekit/conformance-site/build*/

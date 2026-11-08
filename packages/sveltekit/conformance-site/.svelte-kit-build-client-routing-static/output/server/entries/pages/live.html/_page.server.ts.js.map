@@ -1,1 +1,0 @@
-{"version":3,"file":"_page.server.ts.js","names":[],"sources":["../../../../../../src/routes/live.html/+page.server.ts"],"sourcesContent":["// Rendered on demand by the Node output; prerendered by the static output, which has no server.\nexport const prerender = process.env.ADAPTER === \"node\" ? false : true;\n"],"mappings":";AACA,IAAa,YAAY,QAAQ,IAAI,YAAY,SAAS,QAAQ"}
