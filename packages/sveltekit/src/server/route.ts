@@ -51,8 +51,8 @@ export function createGraphRoute(graphs: Graphs) {
     try {
       result = await evaluated(params.id);
     } catch (e) {
-      // The development server answers with the message; a build fails.
-      if (!isDevelopment()) throw e;
+      // `entries()` has already evaluated every source when a site is built, so a failure here happens when the server runs: in
+      // development, or for a page rendered on demand. Answer with the message; the build is what refuses a bad source.
       return new Response(e instanceof Error ? e.message : String(e), { status: 500, headers: { "content-type": "text/plain; charset=utf-8" } });
     }
     if (params.file === "descriptor.json") {

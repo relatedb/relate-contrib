@@ -84,8 +84,7 @@ describe("GET", () => {
     expect((await get(route, "a", `graph.${first}.json`)).status).toBe(404);
   });
 
-  it("in development answers a source that throws with an error status and its message", async () => {
-    process.env.NODE_ENV = "development";
+  it("answers a source that throws, when the server runs, with an error status and its message", async () => {
     const route = createGraphRoute({ a: { source: () => { throw new Error("empty pantry"); } } });
     const res = await get(route, "a", "descriptor.json");
     expect(res.status).toBe(500);

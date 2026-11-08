@@ -88,3 +88,34 @@ export async function serveNode(built: Built, port: number): Promise<{ origin: s
 }
 
 export const isDirectory = (path: string): boolean => existsSync(path) && statSync(path).isDirectory();
+
+/** Write a fixture app and start `vite dev` in it on a port; stop it with `stop()`. */
+export async function startDev(fixture: Fixture, port: number): Promise<{ dir: string; origin: string; write(path: string, text: string): void; stop(): void }> {
+  const dir = join(fixtures, `${fixture.name}-${process.pid}-${Math.random().toString(36).slice(2, 8)}`);
+  const files = { ...defaults, "vite.config.js": config(fixture.adapter ?? "static"), ...fixture.files };
+  for (const [path, text] of Object.entries(files)) {
+    mkdirSync(dirname(join(dir, path)), { recursive: true });
+    writeFileSync(join(dir, path), text);
+  }
+  const child: ChildProcess = spawn(vite, ["dev"], { cwd: dir, env: { ...process.env, NODE_ENV: "development", PORT: String(port), ...fixture.env }, stdio: "ignore" });
+  const origin = `http://127.0.0.1:${port}`;
+  for (let i = 0; i < 120; i++) {
+    try {
+      await fetch(origin + "/");
+      break;
+    } catch {
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  }
+  return {
+    dir,
+    origin,
+    write(path, text) {
+      writeFileSync(join(dir, path), text);
+    },
+    stop() {
+      child.kill();
+      rmSync(dir, { recursive: true, force: true });
+    },
+  };
+}

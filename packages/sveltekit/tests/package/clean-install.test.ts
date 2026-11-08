@@ -38,7 +38,7 @@ const adapter = process.env.ADAPTER === "node" ? adapterNode({ out }) : adapterS
 export default defineConfig({ plugins: [sveltekit({ adapter, outDir: ".svelte-kit-" + out })], server: { host: "127.0.0.1", port: Number(process.env.PORT ?? 5499) } });
 `,
   "tsconfig.json": `{ "extends": "$app/tsconfig", "include": ["src", "*"] }\n`,
-  "src/app.html": `<!doctype html><html lang="en"><head>%sveltekit.head%</head><body><div style="display: contents">%sveltekit.body%</div></body></html>\n`,
+  "src/app.html": `<!doctype html><html lang="en"><head><meta charset="utf-8" />%sveltekit.head%</head><body><div style="display: contents">%sveltekit.body%</div></body></html>\n`,
   "src/lib/graphs.ts": `export const graphs = { things: { source: () => ({ version: 1, nodes: Array.from({ length: 7 }, (_, i) => ({ id: "t" + i, labels: ["Thing"] })), links: [] }), indexes: [{ label: "Thing", property: "id" }] } };\n`,
   "src/routes/relate/[id]/[file]/+server.ts": `import { createGraphRoute } from "@relate/sveltekit/server";
 import { graphs } from "#lib/graphs.ts";
