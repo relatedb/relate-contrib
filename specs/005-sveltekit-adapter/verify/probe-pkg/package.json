@@ -1,0 +1,1 @@
+{ "name": "sk-probe", "version": "0.0.0", "type": "module", "svelte": "./src/index.ts", "exports": { ".": { "svelte": "./src/index.ts", "default": "./src/index.ts" } }, "files": ["src"], "peerDependencies": { "svelte": "^5", "@sveltejs/kit": "^3" } }
