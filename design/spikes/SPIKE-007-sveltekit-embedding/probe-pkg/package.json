@@ -1,0 +1,1 @@
+{ "name": "svelte-probe", "version": "0.0.0", "type": "module", "svelte": "./src/index.js", "exports": { ".": { "svelte": "./src/index.js", "default": "./src/index.js" } }, "files": ["src"], "peerDependencies": { "svelte": "^5" } }
