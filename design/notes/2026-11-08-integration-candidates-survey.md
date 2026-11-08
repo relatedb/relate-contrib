@@ -56,12 +56,22 @@ Only a few of these are packages in the sense `@relate/sveltekit` is. Most are s
 | Excalibur | 20.8k | TypeScript-first, ECS |
 | Kaplay (ex-Kaboom) | 9.7k (+3.1k `kaboom`) | very beginner-friendly; v3001 stable, v4000 in alpha |
 | melonJS | 1.9k | niche |
+| rot.js (`rot-js`) | 6.4k | roguelike toolkit; BSD-3-Clause; ~2.7k stars; latest 2.2.1 (2024-11-13), the release before it 2021-07-21; repo not archived (added later, §3.2.1) |
 
 Phaser is the main starter by audience; Kaplay is the low-friction second for short jams. No per-engine jam statistics were found (js13k mostly uses raw canvas or tiny libraries; Phaser sponsors js13k). Godot and Bevy web exports can reach a worker-hosted database only through fiddly interop and long builds; they were set aside (Bevy has its own note, `2026-11-08-bevy-integration.md`).
 
 **The pattern** is the real deliverable, and it is a recommendation, not a finding from sources: never await inside the frame loop; push `{id, cypher, params}` onto an outbox flushed once per frame or tick; resolve replies into typed events through the engine's emitter; let the frame loop read only a plain-JS cache that results patch; separate authoritative writes (applied to the cache optimistically), reads prefetched on scene entry, and slow analytics shown as "thinking"; batch statements per round trip and never block input on a reply.
 
 **Starter ideas that use Cypher, not just storage**: a quest and dialogue graph RPG (next-available choices, unfinished prerequisite chains); a social-sim village (gossip as a two-hop traversal); a crafting and tech tree (recipes whose inputs are all held; transitive unlocks); a roguelike map graph (shortest key-to-door path, unreachable rooms, loops); a detective mystery (the suspect with no alibi edge); a procedural world and faction war (influence spread by traversal). Prior art found: a dialogue-as-graph paper on Outer Worlds, a Godot quest-graph editor with optional Neo4j storage, a thesis on graph data for NPC acting.
+
+#### 3.2.1 rot.js: a turn-based starter (added after the survey)
+
+A side conversation proposed rot.js, which the games survey had not covered. Checked on 2026-11-08 against the npm registry, the GitHub API and the published 2.2.1 package's type declarations:
+
+- **Maintenance.** Stable and quiet, not abandoned: 6,369 downloads last week, 2.7k stars, BSD-3-Clause, not archived. The last release was 2.2.1 on 2024-11-13, two years ago, and the one before it was 2.2.0 in July 2021. A small ASCII toolkit that changes rarely suits a pinned hackathon starter, but there should be no expectation of fixes; it is far smaller than Phaser.
+- **Turn loop.** `Engine` has `lock()` and `unlock()` ("when this call returns, the loop is locked"), and the scheduler hands out actors with `next()`. An actor's turn can therefore wait on a worker query and call `unlock()` when the reply arrives. This replaces the outbox-and-cache workaround that a frame-based engine needs. The type declarations confirm the methods exist; the behaviour with a promise pending was not run.
+- **Graph shape.** `Digger` and `Uniform` extend `Dungeon`, which has `getRooms()` and `getCorridors()`; a `Room` has `getDoors()` and `getCenter()`. Rooms, corridors and doors map to nodes and edges, so Cypher can answer shortest key-to-door paths, unreachable rooms and loops (the roguelike-map idea in the list above). rot.js also ships A* and Dijkstra with unit edge costs, FOV, a display with ASCII and tile backends, and a seedable RNG, which makes demo worlds reproducible.
+- **Fit.** A good "turn-based" companion to Phaser and Kaplay: no art needed, small games with graph-driven mechanics (relationships, factions, dialogue, crafting). Graph-backed rooms and doors should live in the database, with rot.js doing display and field of view over a local array rebuilt from it.
 
 ### 3.3 Datagrids, and admin frameworks
 
@@ -129,7 +139,7 @@ Ranked by time to an impressive demo, reach and how little it depends on unresol
 2. **Graph visualization helpers** (result transform): Cytoscape.js, Sigma.js with graphology, force-graph, plus a d3-force layout helper; xyflow for schema and node-editor apps. NVL only after its licence is answered.
 3. **Notion-style editor starter** (pattern kit): BlockNote core, with the document-to-graph mapping above, backlinks and a live-query block; the grid below for database views.
 4. **TanStack Table with the grid-to-Cypher translator** (result transform), written so AG Grid can adopt the same translator later.
-5. **Phaser starter** (pattern kit) with the query-between-frames pattern, and one or two of the Cypher-heavy game ideas; Kaplay as a short-jam variant.
+5. **Phaser starter** (pattern kit) with the query-between-frames pattern, and one or two of the Cypher-heavy game ideas; Kaplay as a short-jam variant, and rot.js as the turn-based variant (§3.2.1) where the async query needs no frame-loop workaround.
 6. **Geo**: one example page with points on MapLibre, after the WASM check.
 
 Nuxt stays deferred; the framework-agnostic helpers above reach Vue users without it.
