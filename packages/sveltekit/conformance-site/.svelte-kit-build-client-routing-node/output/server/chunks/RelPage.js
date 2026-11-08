@@ -1,5 +1,5 @@
 import { l as escape_html, n as ensure_array_like, s as attr } from "./server2.js";
-import { r as mountedConfig, t as getConfig } from "./context.js";
+import { n as mountedConfig, t as getConfig } from "./context.js";
 import { ft as resolve } from "./internal.js";
 import { createClient, createSiteClient } from "@relate/web";
 // ../src/inline.js
@@ -154,6 +154,7 @@ function Nav($$renderer, $$props) {
 			["Lifetime B", "/lifetime-b.html"],
 			["Lifetime C", "/lifetime-c.html"],
 			["Direct", "/direct.html"],
+			["Switch", "/switch.html"],
 			["Live", "/live.html"]
 		];
 		$$renderer.push(`<nav><!--[-->`);

@@ -1,1 +1,0 @@
-import{D as e,H as t,U as n,W as r,X as i,Z as a,j as o,k as s,z as c}from"../chunks/BILRai64.js";import{n as l}from"../chunks/Dr8yCpRj.js";var u=o(`<h1> </h1> <p> </p>`,1);function d(o,d){a(d,!0);var f=u(),p=t(f),m=n(p,!0),h=r(p,2),g=n(h,!0);c(()=>{e(m,l.status),e(g,l.error?.message)}),s(o,f),i()}export{d as component};

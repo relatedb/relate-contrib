@@ -1,0 +1,1 @@
+import{j as e,k as t}from"../chunks/k45OOpT8.js";import{t as n}from"../chunks/BcG8UOsK.js";var r=e(`<p>A page that queries the shared graph.</p>`);function i(e){n(e,{title:`Example site: home`,children:(e,n)=>{var i=r();t(e,i)},$$slots:{default:!0}})}export{i as component};

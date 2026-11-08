@@ -187,7 +187,6 @@
     "isEntry": true,
     "imports": [
       "_server2.js",
-      "_index-server.js",
       "_context.js",
       "_navigation.js"
     ],
@@ -355,6 +354,16 @@
     "isEntry": true,
     "imports": [
       "_graphs.js"
+    ]
+  },
+  "src/routes/switch.html/+page.svelte": {
+    "file": "entries/pages/switch.html/_page.svelte.js",
+    "name": "entries/pages/switch.html/_page.svelte",
+    "src": "src/routes/switch.html/+page.svelte",
+    "isEntry": true,
+    "imports": [
+      "_server2.js",
+      "_RelPage.js"
     ]
   },
   "src/routes/two-graphs.html/+page.svelte": {

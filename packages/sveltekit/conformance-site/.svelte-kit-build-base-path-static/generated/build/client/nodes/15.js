@@ -1,1 +1,1 @@
-export { default as component } from "../../../../../src/routes/two-graphs.html/+page.svelte";
+export { default as component } from "../../../../../src/routes/switch.html/+page.svelte";

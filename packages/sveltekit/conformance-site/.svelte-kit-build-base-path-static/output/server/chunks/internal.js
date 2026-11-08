@@ -2324,7 +2324,7 @@ function redirect_response(status, location) {
 * @param {Response} response
 */
 function with_version_header(response) {
-	response.headers.set("x-sveltekit-version", "1794164265909");
+	response.headers.set("x-sveltekit-version", "1794165598338");
 	return response;
 }
 /**

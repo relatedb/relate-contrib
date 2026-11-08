@@ -9,7 +9,7 @@ return {
 	app_path: "_app",
 	assets: new Set(["descriptor-b.json","descriptor-broken.json","descriptor-mismatch.json","graph-a.json","graph-b.json"]),
 	mime_types: {".json":"application/json"},
-	client: {start:"_app/immutable/entry/start.DjwpkId8.js",app:"_app/immutable/entry/app.BwGYy0dc.js",imports:["_app/immutable/entry/start.DjwpkId8.js","_app/immutable/entry/payload.DSmR2FwN.js","_app/immutable/chunks/DclECHGd.js","_app/immutable/chunks/C7u4jK5h.js","_app/immutable/chunks/DPb86ueQ.js","_app/immutable/chunks/BILRai64.js","_app/immutable/chunks/Dr8yCpRj.js","_app/immutable/entry/app.BwGYy0dc.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
+	client: {start:"_app/immutable/entry/start.Dv5Xnt1-.js",app:"_app/immutable/entry/app.Dvef1iw0.js",imports:["_app/immutable/entry/start.Dv5Xnt1-.js","_app/immutable/entry/payload.DSmR2FwN.js","_app/immutable/chunks/DclECHGd.js","_app/immutable/chunks/Dnv1Z26g.js","_app/immutable/chunks/CSaxVGkT.js","_app/immutable/chunks/k45OOpT8.js","_app/immutable/chunks/Dj1kWg24.js","_app/immutable/entry/app.Dvef1iw0.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
 	
 	nodes: [
 		__memo(() => import('./nodes/0.js')),
@@ -27,7 +27,8 @@ return {
 		__memo(() => import('./nodes/12.js')),
 		__memo(() => import('./nodes/13.js')),
 		__memo(() => import('./nodes/14.js')),
-		__memo(() => import('./nodes/15.js'))
+		__memo(() => import('./nodes/15.js')),
+		__memo(() => import('./nodes/16.js'))
 	],
 	remotes: {
 		
@@ -132,10 +133,17 @@ return {
 			endpoint: __memo(() => import('./entries/endpoints/relate/_id_/_file_/_server.ts.js'))
 		},
 		{
+			id: "/switch.html",
+			pattern: /^\/switch\.html\/?$/,
+			params: [],
+			page: { layouts: [0,], errors: [1,], leaf: 15 },
+			endpoint: null
+		},
+		{
 			id: "/two-graphs.html",
 			pattern: /^\/two-graphs\.html\/?$/,
 			params: [],
-			page: { layouts: [0,], errors: [1,], leaf: 15 },
+			page: { layouts: [0,], errors: [1,], leaf: 16 },
 			endpoint: null
 		}
 	],

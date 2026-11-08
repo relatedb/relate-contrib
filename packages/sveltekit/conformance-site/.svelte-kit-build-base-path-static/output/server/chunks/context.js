@@ -12,18 +12,8 @@ var setConfig = (config) => setContext(KEY, config);
 var getConfig = () => getContext(KEY);
 /** @type {Config | null} */
 var mounted = null;
-/** The mounted provider's configuration, for code that lives across pages. Written only after mount, never during a render. */
+/** The mounted provider's configuration, for code that lives across pages. Written only in the browser, by an effect, never on the server. */
 var mountedConfig = () => mounted;
-/**
-* @param {Config} config
-* @returns {() => void} the cleanup
-*/
-function mount(config) {
-	mounted = config;
-	return () => {
-		if (mounted === config) mounted = null;
-	};
-}
-export { setConfig as i, mount as n, mountedConfig as r, getConfig as t };
+export { mountedConfig as n, setConfig as r, getConfig as t };
 
 //# sourceMappingURL=context.js.map

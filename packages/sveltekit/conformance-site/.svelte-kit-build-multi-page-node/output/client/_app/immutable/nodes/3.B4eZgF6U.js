@@ -1,1 +1,0 @@
-import"../chunks/BILRai64.js";import{t as e}from"../chunks/BM0NmhYS.js";function t(t){e(t,{title:`Blank`,bare:!0})}export{t as component};

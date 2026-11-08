@@ -57,6 +57,10 @@
 	"/relate/[id]/[file]": [
 		"src/routes/relate/[id]/[file]/+server.ts"
 	],
+	"/switch.html": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.server.ts"
+	],
 	"/two-graphs.html": [
 		"src/routes/+layout.ts",
 		"src/routes/+layout.server.ts"

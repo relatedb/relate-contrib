@@ -13,7 +13,7 @@ type OptionalUnion<U extends Record<string, any>, A extends keyof U = U extends 
 export type Snapshot<T = any> = Kit.Snapshot<T>;
 export type ErrorProps = { error: App.Error };
 type PageParentData = EnsureDefined<LayoutData>;
-type LayoutRouteId = RouteId | "/" | "/blank.html" | "/broken.html" | "/direct.html" | "/inline-a.html" | "/inline-b.html" | "/lifetime-a.html" | "/lifetime-b.html" | "/lifetime-c.html" | "/live.html" | "/notes.html" | "/page-1.html" | "/page-2.html" | "/two-graphs.html" | null
+type LayoutRouteId = RouteId | "/" | "/blank.html" | "/broken.html" | "/direct.html" | "/inline-a.html" | "/inline-b.html" | "/lifetime-a.html" | "/lifetime-b.html" | "/lifetime-c.html" | "/live.html" | "/notes.html" | "/page-1.html" | "/page-2.html" | "/switch.html" | "/two-graphs.html" | null
 type LayoutParams = RouteParams & {  }
 type LayoutServerParentData = EnsureDefined<{}>;
 type LayoutParentData = EnsureDefined<{}>;

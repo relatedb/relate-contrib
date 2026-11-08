@@ -1,4 +1,4 @@
-// covers: FR-017, FR-026, SC-008
+// covers: FR-017, FR-026, FR-027, SC-008
 import { builds, origin } from "./builds.js";
 import { expect, hydrationProblems, test } from "./fixtures.js";
 

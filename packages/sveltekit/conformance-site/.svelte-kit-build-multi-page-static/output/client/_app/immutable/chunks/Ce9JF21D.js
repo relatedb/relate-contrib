@@ -1,0 +1,1 @@
+import{$ as e,X as t}from"./k45OOpT8.js";var n=Symbol.for(`@relate/sveltekit/config`),r=t=>e(n,t),i=()=>t(n),a=null,o=()=>a;function s(e){return a=e,()=>{a===e&&(a=null)}}export{r as i,s as n,o as r,i as t};

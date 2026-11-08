@@ -1,4 +1,4 @@
-// covers: FR-018, FR-019, FR-020, FR-021, FR-022, FR-030
+// covers: FR-018, FR-019, FR-020, FR-021, FR-022, FR-027, FR-030
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { config, installDocument, stubClient } from "../helpers/stubs.js";
 
@@ -144,6 +144,17 @@ describe("a document that ends", () => {
     page.pagehide(false);
     expect(held.client.destroy).toHaveBeenCalledTimes(1);
     expect(visit.client.destroy).not.toHaveBeenCalled();
+  });
+});
+
+describe("the core's client is passed through unaltered (FR-027)", () => {
+  it("hands out the object the core made, and adds nothing to it", () => {
+    const made = stubClient();
+    createClient.mockReturnValueOnce(made);
+    const keys = Object.keys(made).sort();
+    const held = registry.hold(cfg, "small");
+    expect(held.client).toBe(made);
+    expect(Object.keys(made).sort()).toEqual(keys);
   });
 });
 

@@ -45,7 +45,6 @@ function createGraphRoute(graphs) {
 		try {
 			result = await evaluated(params.id);
 		} catch (e) {
-			if (!isDevelopment()) throw e;
 			return new Response(e instanceof Error ? e.message : String(e), {
 				status: 500,
 				headers: { "content-type": "text/plain; charset=utf-8" }

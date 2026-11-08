@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-08
 
-**Status**: Draft (ADR-007)
+**Status**: Implemented (ADR-007)
 
 **Input**: User description: "The SvelteKit adapter (`@relate/sveltekit`): a workspace package in `packages/sveltekit` that implements accepted ADR-007 (and builds on ADR-001 to ADR-006 and the SPIKE-007 findings) so a SvelteKit 3 / Svelte 5 site can embed the browser graph database through the shared core package. It publishes registered graphs from a prerendered route the site writes, writes inline page graphs into pages, supplies Svelte 5 helpers whose lifetimes follow components, and is checked with a conformance site and a package test."
 
@@ -236,7 +236,7 @@ The items ADR-007 left for implementation are tested, and the ADR is amended wit
 - **FR-019**: A visit-lifetime graph MUST be created once per id, held in module state, and MUST NOT be destroyed by navigation.
 - **FR-020**: A registered page-lifetime graph MUST be created by its first holder, shared by every holder, use the stored copy whenever it has a descriptor, and be destroyed one task after the last holder is removed, so that a graph used by two consecutive pages is kept although the router removes the old page's holders before the new page's holders appear.
 - **FR-021**: An inline graph MUST be keyed by its id and by the page element it was read from, so that a later page's graph with the same id is a new client, and the earlier client MUST be destroyed by the same rule as FR-020. When the document holds several elements for one id, the lookup MUST use the only one, else the first whose parent element is visible.
-- **FR-022**: A holder MUST acquire its graph in `onMount` and release it in that `onMount`'s cleanup, MUST acquire again when the id it was given changes, and MUST NOT acquire, count or create anything on the server. The adapter's module state MUST be touched only after mount.
+- **FR-022**: A holder MUST acquire its graph in an `$effect` (which runs only in the browser, after mount), release it in that effect's cleanup, and acquire again when the id it reads changes, and MUST NOT acquire, count or create anything on the server. The adapter's module state MUST be touched only after mount.
 - **FR-023**: The main entry MUST provide a direct lookup that accepts only visit-lifetime registered graphs and MUST fail, with a message that names the graph, for an inline graph or a page-lifetime graph, and fail, naming the registered ids, for an unknown id.
 - **FR-024**: Descriptor locations MUST be built with `resolve()` from SvelteKit's paths module so they include the base path in the browser and in the server render.
 - **FR-025**: The helpers and the direct lookup MUST accept options that override the profile and the descriptor location, documented as testing aids; each override MUST change only the profile, or the descriptor location, passed to the core.

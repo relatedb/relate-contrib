@@ -27,7 +27,10 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`<!----> `);
 				InlineCount($$renderer, { name: "first" });
 				$$renderer.push(`<!----> `);
-				InlineCount($$renderer, { name: "second" });
+				InlineCount($$renderer, {
+					name: "second",
+					label: "Page"
+				});
 				$$renderer.push(`<!----> <p><button type="button" data-trap-first="">Crash the first graph's engine</button></p>`);
 			},
 			$$slots: { default: true }
