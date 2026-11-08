@@ -6,10 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `relate-contrib` is the planning home for **RelateDB integrations**: web frameworks first, including static site generators, with agent frameworks considered next (`design/notes/2026-11-05-agentic-frameworks-survey.md`). The engine, RelateDB (`relate`, formerly CypherLite), is an embedded, in-memory property graph engine (openCypher), shipped for the browser as a WASM library. The integrations showcase the database and are meant to run on the dedicated website first (the separate `relatedb/relate-web` repository).
 
-Two uses of the embedded graph drive the work:
+Three uses of the embedded graph drive the work:
 
 1. **Per page** — a graph (almost notebook-like) embedded in an individual page, queried with Cypher.
 2. **Site-wide** — one shared graph across the whole website, with vector embeddings, powering a navigation element. The element is primarily visual with a minimal natural-language interface: language-driven navigation and search, **not a chatbot**.
+3. **Application** — one durable graph in the visitor's browser, shared by the pages of an application, holding data the visitor writes. Persistence is assumed (RFC-006); the site-graph cache of ADR-001 is a cache of shipped content and is wiped on a new revision, so it is not this.
 
 Planned integration order (subject to change as ADRs land): ObservableHQ, Astro, Next and SvelteKit (done) → Nuxt. Nuxt is deferred in favour of the community starters in RFC-005 (first: a react-admin data provider). Docs-oriented generators (Starlight, VitePress, Docusaurus) may jump the queue depending on what the relate website is built on.
 
@@ -111,6 +112,7 @@ RFCs always come first; no ADR is written until a parent RFC exists. Candidate R
 3. RFC-003: the site graph — how content becomes a site-wide graph, and shipping it to the browser with vector embeddings (including how a user's query gets embedded).
 4. RFC-004: the language-driven navigation element — primarily visual, minimal natural-language interface, not a chatbot.
 5. RFC-005 (drafted, [design/rfc/RFC-005-community-integrations.md](design/rfc/RFC-005-community-integrations.md)): integrations for community projects and hackathons — runnable local-first starters by application type (admin tools, editors, visualization, games, maps), shared libraries extracted from them, slim ADRs per starter. Written before RFC-004, which keeps its number for the navigation element.
+6. RFC-006 (drafted, [design/rfc/RFC-006-application-graphs.md](design/rfc/RFC-006-application-graphs.md)): application graphs — durable, visitor-written, one graph shared by a site's pages in the browser; lifecycle, migration, storage honesty, several tabs. Must come before ADR-008 (the react-admin provider) is accepted.
 
 SPIKE-001 to SPIKE-005 (Observable, Astro build time, Astro navigation, worker hosting and faults, worker survival across navigation) are done and feed RFC-001; ADR-001 (the hosting model), ADR-002 (the graph data format) and ADR-003 (the graph descriptor) are accepted.
 
