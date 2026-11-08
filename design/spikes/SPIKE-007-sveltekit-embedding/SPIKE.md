@@ -78,7 +78,9 @@ All runs are single runs on SvelteKit 3.1.1, Svelte 5.57.3, Vite 8.3.6, Node 24.
 
 Single runs, same environment.
 
-**5.9 Not checked.** The endpoint under `adapter-node` (its output was not requested); a build that fails when a source throws; rendering on demand (SSR, not prerendered) and its hydration; the serverless and edge adapters; `vite dev` publishing of the endpoint; hash-based routing; view transitions; cold-network cost; and
+**5.9 Correction (2026-11-08, from the plan for the adapter).** Finding 5.7 and the `.svelte.ts` result in 5.8 hold for production builds only: `vite dev` failed in dependency optimization (`Unexpected token`) on a `.svelte.ts` module in a packed package, and worked with the same module as `.svelte.js`.
+
+**5.10 Not checked.** The endpoint under `adapter-node` (its output was not requested); a build that fails when a source throws; rendering on demand (SSR, not prerendered) and its hydration; the serverless and edge adapters; `vite dev` publishing of the endpoint; hash-based routing; view transitions; cold-network cost; and
 
 ## 6. Conclusion
 
