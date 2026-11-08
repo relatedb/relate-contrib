@@ -1,10 +1,10 @@
 # Contract: conformance site
 
-An unpublished Next app in `packages/next/conformance-site`, built once per profile and in each form below, driven by the core's conformance runner (`packages/core/conformance/run.ts`) in Chromium, Firefox and WebKit.
+An unpublished Next app in `packages/nextjs/conformance-site`, built once per profile and in each form below, driven by the core's conformance runner (`packages/web/conformance/run.ts`) in Chromium, Firefox and WebKit.
 
 ## Markup
 
-The pages reproduce the `data-rel-*` markup the runner reads, as defined by the core's example site (`packages/core/conformance/example-site/rel-page.ts`) and as the Astro conformance site does.
+The pages reproduce the `data-rel-*` markup the runner reads, as defined by the core's example site (`packages/web/conformance/example-site/rel-page.ts`) and as the Astro conformance site does.
 
 ## Pages
 

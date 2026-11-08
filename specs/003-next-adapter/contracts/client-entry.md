@@ -1,10 +1,10 @@
-# Contract: client entry (`@relate/web-next/client`)
+# Contract: client entry (`@relate/nextjs/client`)
 
 A `'use client'` module. Hook names and result shapes may change when tasks are written (ADR-005 §2.4).
 
 ## Provider
 
-`RelateWebProvider({ catalog, engineUrl, children })`: puts the catalog and the profile in context for the hooks, mirrors the catalog to module state in an effect, creates no client and starts no worker (FR-016, FR-024). `engineUrl` is the binary's URL, given by the site and passed to the core unchanged.
+`RelateProvider({ catalog, engineUrl, children })`: puts the catalog and the profile in context for the hooks, mirrors the catalog to module state in an effect, creates no client and starts no worker (FR-016, FR-024). `engineUrl` is the binary's URL, given by the site and passed to the core unchanged.
 
 ## Hooks
 

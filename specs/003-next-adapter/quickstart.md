@@ -36,7 +36,7 @@ pnpm test:astro
 pnpm test:astro-conformance
 ```
 
-Expect: the core's tests for `@relate/web-core/build` pass and the Astro adapter's tests pass unchanged.
+Expect: the core's tests for `@relate/web/build` pass and the Astro adapter's tests pass unchanged.
 
 ## 5. Package test
 

@@ -1,13 +1,13 @@
 // Evaluating a registered graph's source for this adapter (spec FR-006 to FR-009). The canonical text, revision, document
-// preparation and descriptor construction live in `@relate/web-core/build`; this file binds them to the adapter's name and paths.
-import { descriptorOf as coreDescriptorOf, evaluate as coreEvaluate, prepare as corePrepare } from "@relate/web-core/build";
-import type { Evaluated } from "@relate/web-core/build";
-import type { IndexSpec } from "@relate/web-core/validate";
+// preparation and descriptor construction live in `@relate/web/build`; this file binds them to the adapter's name and paths.
+import { descriptorOf as coreDescriptorOf, evaluate as coreEvaluate, prepare as corePrepare } from "@relate/web/build";
+import type { Evaluated } from "@relate/web/build";
+import type { IndexSpec } from "@relate/web/validate";
 
-export { canonicalText, revisionOf, withBase } from "@relate/web-core/build";
-export type { Evaluated } from "@relate/web-core/build";
+export { canonicalText, revisionOf, withBase } from "@relate/web/build";
+export type { Evaluated } from "@relate/web/build";
 
-const OWNER = "@relate/web-astro";
+const OWNER = "@relate/astro";
 
 export const prepare = (name: string, raw: unknown): Promise<Evaluated> => corePrepare(OWNER, name, raw);
 

@@ -1,10 +1,10 @@
-# Contract: server entry (`@relate/web-next/server`)
+# Contract: server entry (`@relate/nextjs/server`)
 
 Imported only from server code. Needs no browser and no binary (FR-003).
 
 ## Route builder
 
-`createGraphRoute(graphs)` returns `{ GET, generateStaticParams }`, meant to be exported by a route file the site writes at `app/relate-web/[id]/[file]/route.ts`:
+`createGraphRoute(graphs)` returns `{ GET, generateStaticParams }`, meant to be exported by a route file the site writes at `app/relate/[id]/[file]/route.ts`:
 
 ```ts
 export const dynamic = "force-static";
@@ -36,6 +36,6 @@ The two `export const` lines are literal in the route file because Next reads ro
 
 A server component with props `id`, `document` and optional `config: { indexes? }`. It validates with the core's inline check (research D-2) and renders the `data-relate-graph` script with escaped JSON. It fails the render, naming the page, for an invalid document or `config`, a second use of the same id in one render, and an id that is also registered (FR-013, FR-014). Per-render bookkeeping of ids uses a request-scoped store so concurrent renders do not share it.
 
-## Configuration wrapper (`@relate/web-next`)
+## Configuration wrapper (`@relate/nextjs`)
 
-`withRelateWeb(nextConfig, { navigation? })` returns the configuration with `env` values for the base path and the profile and nothing else changed. `navigation` is `"client-routing"` (default) or `"multi-page"` (FR-002).
+`withRelate(nextConfig, { navigation? })` returns the configuration with `env` values for the base path and the profile and nothing else changed. `navigation` is `"client-routing"` (default) or `"multi-page"` (FR-002).

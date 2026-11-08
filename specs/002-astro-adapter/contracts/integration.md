@@ -1,8 +1,8 @@
-# Contract: the integration (`@relate/web-astro`)
+# Contract: the integration (`@relate/astro`)
 
 ```ts
-import relateWeb from "@relate/web-astro";
-relateWeb(options?: {
+import relate from "@relate/astro";
+relate(options?: {
   graphs?: Record<string, {
     source: string;                       // path to a module (default export: () => Doc | Promise<Doc>) or a .json file
     indexes?: Array<{ label: string; property: string }>;
@@ -25,4 +25,4 @@ A document that fails the core's validator fails the build with the path of the 
 
 **Dev server**: the same paths; a source that throws or is invalid leaves the server running, prints the error, and the two paths answer `500` until the next successful evaluation.
 
-**Provided to the build**: virtual modules `virtual:relate-web/config` (client) and `virtual:relate-web/sources` (server only); `vite.ssr.noExternal` for the package; `optimizeDeps.exclude` for the engine.
+**Provided to the build**: virtual modules `virtual:relate/config` (client) and `virtual:relate/sources` (server only); `vite.ssr.noExternal` for the package; `optimizeDeps.exclude` for the engine.

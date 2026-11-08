@@ -1,6 +1,6 @@
 // The development-time check that the configured navigation setting agrees with the router (spec FR-026). The router
 // marks a page that has it with a meta tag; nothing here runs in a production build.
-import { navigation } from "virtual:relate-web/config";
+import { navigation } from "virtual:relate/config";
 import { profileWarning } from "./warning.js";
 
 let checked = false;

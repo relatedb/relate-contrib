@@ -1,1 +1,1 @@
-{ "name": "@relate/web-astro-conformance-site", "private": true, "type": "module" }
+{ "name": "@relate/astro-conformance-site", "private": true, "type": "module" }

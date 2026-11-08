@@ -4,7 +4,7 @@ description: "Review a draft ADR for decision clarity, consistency with its pare
 argument-hint: "Reference the ADR to review (ADR-NNN, filename, or @design/adr/ADR-NNN-*.md path)"
 compatibility: "Requires design/adr/ (see design/adr/README.md for format)"
 metadata:
-  author: "related-web"
+  author: "relate-contrib"
 user-invocable: true
 disable-model-invocation: false
 ---

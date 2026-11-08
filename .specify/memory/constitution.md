@@ -1,4 +1,4 @@
-# relate-web Constitution
+# relate-contrib Constitution
 
 ## Core Principles
 
@@ -64,7 +64,7 @@ Rationale: the engine has its own contribution rules, and a rename should stay a
 ## Technical Constraints
 
 - The repository is a pnpm workspace; the core package is its first module.
-- The project is `relate-web` and the packages are `@relate/web-core`, `@relate/web-astro` and `@relate/web-next` (renamed 2026-11-05), chosen to match the engine's
+- The project is `relate-contrib` and the packages are `@relate/web`, `@relate/astro` and `@relate/nextjs` (renamed 2026-11-08; earlier `relate-web` with `@relate/web-core`, `@relate/web-astro` and `@relate/web-next`, and before that `related-web`), chosen to match the engine's
   announced new name, `relate` (see `design/notes/2026-11-02-project-name.md`). The internal prefix is `rel-`
   (`data-rel-*` attributes, `rel-<id>` store names, `REL_*` environment values), adopted 2026-11-05 in place of
   `gw-`.

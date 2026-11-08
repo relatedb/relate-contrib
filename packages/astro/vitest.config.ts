@@ -6,7 +6,7 @@ const here = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 export default defineConfig({
   resolve: {
     alias: {
-      "virtual:relate-web/config": here("tests/helpers/virtual-config.ts"),
+      "virtual:relate/config": here("tests/helpers/virtual-config.ts"),
       "@neo4j-labs/cypherlite-wasm/cypherlite_bg.wasm?url": here("tests/helpers/engine-url.ts"),
     },
   },

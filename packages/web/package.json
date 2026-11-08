@@ -1,0 +1,61 @@
+{
+  "name": "@relate/web",
+  "version": "0.0.0",
+  "description": "Hosts an embedded graph database in a web page: a worker client, graph loading, fault containment and navigation profiles.",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "conformance"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./validate": {
+      "types": "./dist/validate.d.ts",
+      "default": "./dist/validate.js"
+    },
+    "./build": {
+      "types": "./dist/build/index.d.ts",
+      "default": "./dist/build/index.js"
+    },
+    "./worker": {
+      "types": "./dist/worker/worker.d.ts",
+      "default": "./dist/worker/worker.js"
+    },
+    "./conformance": {
+      "types": "./dist/conformance/run.d.ts",
+      "default": "./dist/conformance/run.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.conformance.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:unit": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json",
+    "test:browsers": "playwright test --grep-invert @conformance",
+    "test:conformance": "REL_REPORT=reports/conformance.json playwright test --grep @conformance",
+    "test:package": "vitest run --config vitest.package.config.ts --reporter=default --reporter=json --outputFile.json=reports/package.json",
+    "test:trace": "tsx tests/trace/check-trace.ts"
+  },
+  "peerDependencies": {
+    "@neo4j-labs/cypherlite-wasm": "*",
+    "@playwright/test": "*"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.6",
+    "ajv": "^8.20.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}

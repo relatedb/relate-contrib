@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Purpose
 
-`relate-web` is the planning home for **CypherLite integrations with web frameworks**, including static site generators. CypherLite is Neo4j Labs' embedded, in-memory property graph engine (openCypher), shipped for the browser as a WASM library. The integrations showcase the database and are meant to run on the dedicated CypherLite website first.
+`relate-contrib` is the planning home for **CypherLite integrations**: web frameworks first, including static site generators, with agent frameworks considered next (`design/notes/2026-11-05-agentic-frameworks-survey.md`). The engine has since been renamed RelateDB (`relate`); the vendored copy here still carries the old name. CypherLite is Neo4j Labs' embedded, in-memory property graph engine (openCypher), shipped for the browser as a WASM library. The integrations showcase the database and are meant to run on the dedicated website first (the separate `relatedb/relate-web` repository).
 
 Two uses of the embedded graph drive the work:
 
@@ -15,9 +15,9 @@ Planned integration order (subject to change as ADRs land): ObservableHQ (spiked
 
 ## Project state
 
-The first package, `packages/core` (`@relate/web-core`), is implemented from `specs/001-core-package/`
-(see its `tasks.md`). The Astro adapter, `packages/astro` (`@relate/web-astro`), is implemented from `specs/002-astro-adapter/`
-(ADR-004). The Next adapter, `packages/next` (`@relate/web-next`), is implemented from `specs/003-next-adapter/` (ADR-005) under the `@relate` namespace; the core and Astro adapter were renamed into the same namespace (`@relate/web-core`, `@relate/web-astro`). Design documents are in `design/`. Further adapters come next.
+The first package, `packages/web` (`@relate/web`), is implemented from `specs/001-core-package/`
+(see its `tasks.md`). The Astro adapter, `packages/astro` (`@relate/astro`), is implemented from `specs/002-astro-adapter/`
+(ADR-004). The Next adapter, `packages/nextjs` (`@relate/nextjs`), is implemented from `specs/003-next-adapter/` (ADR-005) under the `@relate` namespace, like the core and the Astro adapter (all three renamed on 2026-11-08, see `design/notes/2026-11-08-relate-contrib-rename.md`). Design documents are in `design/`. Further adapters come next.
 
 ## Commands
 
@@ -41,15 +41,15 @@ pnpm test:astro-package        # packs the adapter and core, installs them in a 
 pnpm test:astro-trace          # every adapter requirement and success criterion has a passing, tagged test
 pnpm test:next                 # the Next adapter: unit, build (next build under both bundlers) and development-server tests
 pnpm test:next-browsers        # lifecycle, store, inline graphs, profile, hydration, direct lookup in Chromium, Firefox, WebKit
-pnpm test:next-conformance     # the core's conformance runner over packages/next/conformance-site (server and export, both profiles)
+pnpm test:next-conformance     # the core's conformance runner over packages/nextjs/conformance-site (server and export, both profiles)
 pnpm test:next-package         # packs the adapter and core, installs them in a clean Next project, builds under Turbopack and webpack, runs a page
 pnpm test:next-trace           # every adapter requirement and success criterion has a passing, tagged test
 ```
 
-Layout: `packages/core/src` (client, worker, data validators, profiles), `tests/` (unit, browser, package,
+Layout: `packages/web/src` (client, worker, data validators, profiles), `tests/` (unit, browser, package,
 fixtures, load-time baselines), `conformance/` (example site, scenarios, runner). Read
-`packages/core/README.md` for the API. The adapter: `packages/astro/src` (integration, injected route, component, client
-module), `tests/`, `conformance-site/` (an unpublished Astro site built once per profile); read `packages/astro/README.md`. The Next adapter: `packages/next/src` (config wrapper, server entry, client entry), `tests/`, `conformance-site/` (an unpublished Next app); read `packages/next/README.md`.
+`packages/web/README.md` for the API. The adapter: `packages/astro/src` (integration, injected route, component, client
+module), `tests/`, `conformance-site/` (an unpublished Astro site built once per profile); read `packages/astro/README.md`. The Next adapter: `packages/nextjs/src` (config wrapper, server entry, client entry), `tests/`, `conformance-site/` (an unpublished Next app); read `packages/nextjs/README.md`.
 
 ## Intended architecture (working assumptions, not yet decided by ADRs)
 
@@ -107,5 +107,5 @@ ADRs (snapshot format, embedding model and query-time strategy, runtime targets,
 
 ## Conventions
 
-- The repository is a pnpm workspace with the core package (`@relate/web-core`) as its first module, independently publishable. Until `@neo4j-labs/cypherlite-wasm` is published, a pinned build is vendored in and the core declares it a peer dependency.
+- The repository is a pnpm workspace with the core package (`@relate/web`) as its first module, independently publishable. Until `@neo4j-labs/cypherlite-wasm` is published, a pinned build is vendored in and the core declares it a peer dependency.
 - Keep documents in `design/` written for a newcomer to this repo: name project artifacts on first use rather than assuming the reader has seen sibling documents (the review skills check this).
