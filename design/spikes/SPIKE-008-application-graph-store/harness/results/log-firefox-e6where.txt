@@ -1,0 +1,24 @@
+firefox e6where done in 19s
+{
+ "e6where": {
+  "whereClauseKilledAt400ms": {
+   "unlock": {
+    "ok": true,
+    "waitMs": 1630,
+    "tries": 1
+   },
+   "after": {
+    "c": 300000,
+    "v3": 0
+   }
+  },
+  "rangeMigration": {
+   "steps": 30,
+   "ms": 9798
+  },
+  "afterRanges": {
+   "c": 300000,
+   "v3": 300000
+  }
+ }
+}

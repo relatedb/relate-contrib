@@ -1,0 +1,11 @@
+{
+  "e7": {
+    "quotaMB": 10737,
+    "usageMB": 0,
+    "persistedBefore": false,
+    "persistReturned": "no answer in 3 s",
+    "persistError": null,
+    "persistedAfter": false,
+    "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:157.0) Gecko/20100101 Firefox/1"
+  }
+}
