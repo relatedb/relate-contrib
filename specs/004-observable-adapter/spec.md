@@ -41,7 +41,7 @@ A site author adds two small loaders, one for the engine's binary and one for th
 
 1. **Given** the two loaders and a page that opens a graph from a document held in a cell, **When** the site is built, **Then** the engine's binary and the worker script are published under content-hashed names and the page loads them from there, with no copying step in the site's scripts.
 2. **Given** the same site in the preview server, **When** the page is loaded, **Then** the same call works with no build.
-3. **Given** a page that opens the graph, **When** it loads, **Then** the call returns before the graph is ready, the page's other cells render, and `ready` resolves when the instance is ready.
+3. **Given** a page that opens the graph, **When** it loads, **Then** the call's promise resolves before the graph is ready, the page's other cells render, and `ready` resolves when the instance is ready.
 4. **Given** a document that is not valid for the data format, **When** the cell opens it, **Then** the client reports `failed` with the core's diagnostic naming the first problem, and `ready` rejects with it.
 5. **Given** a graph that never loads (an unreachable worker location), **When** the cell opens it, **Then** `ready` rejects after the core's three attempts and the page's other cells are unaffected.
 6. **Given** an engine upgrade in the site's dependencies, **When** the site is built, **Then** the worker bundle and the binary come from the same installed version (the bundle is made at the site's build from the installed engine).
@@ -189,7 +189,7 @@ The items ADR-006 left for implementation are tested, and the ADR is amended wit
 
 **Build time: graphs**
 
-- **FR-006**: The loader entry MUST provide a helper that takes a graph id (ADR-003's id rule) and a source (a module whose default export is a function returning an ADR-002 document or a promise of one), validates the document with the core's validator, and writes its canonical text to standard output.
+- **FR-006**: The loader entry MUST provide a helper that takes a graph id (ADR-003's id rule) and a source (a module whose default export is a function returning an ADR-002 document or a promise of one), validates the document with the core's validator, and writes its canonical text, with the revision it hashes to carried in the document's `revision` key, to standard output.
 - **FR-007**: The loader entry MUST provide a helper that takes a graph id, a source and optional indexes, and writes the ADR-003 descriptor with a revision of the first 12 hexadecimal digits of the SHA-256 of the canonical text, the document's node and link counts, the indexes, and a data location holding the data file's logical name.
 - **FR-008**: The revision MUST NOT depend on the order of object keys or items in the source, and MUST equal the revision the other adapters produce for the same document (it uses the core's build code, not a copy).
 - **FR-009**: An invalid document, an id that breaks ADR-003's id rule, or a source that throws MUST fail the build, naming the graph and the path of the first problem.
@@ -197,7 +197,7 @@ The items ADR-006 left for implementation are tested, and the ADR is amended wit
 
 **Browser entry**
 
-- **FR-011**: The browser entry MUST provide a call that takes the engine and worker file attachments, a graph input, and the cell's invalidation, and returns immediately an object with the core's client, a promise that resolves when the instance is ready and rejects when the client reaches `failed`, a tagged template, a query function and a function that turns a result into nodes and links.
+- **FR-011**: The browser entry MUST provide a call that takes the engine and worker file attachments, a graph input, and the cell's invalidation, and returns a promise of an object, resolved as soon as the client exists (not when the graph is ready), with the core's client, a promise that resolves when the instance is ready and rejects when the client reaches `failed`, a tagged template, a query function and a function that turns a result into nodes and links.
 - **FR-012**: The graph input MUST be either a descriptor attachment and a data attachment, or a document (a file attachment, or an object the cell holds) with optional indexes. The call MUST take attachments and not locations, and MUST resolve each attachment's published location once per page.
 - **FR-013**: For a descriptor input, the call MUST read the descriptor and set its data location to the data attachment's published location before the core sees it, and the graph MUST be eligible for the stored copy the per-page profile allows. A document input has no revision and no stored copy.
 - **FR-014**: The call MUST create the core's client with the per-page profile, the engine's published location and a worker constructed from the published worker location as a module, and MUST decide no fault handling, status, recovery or data loading of its own (the core's client, status and events pass through unaltered).

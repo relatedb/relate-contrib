@@ -1,7 +1,7 @@
 // pnpm injects workspace packages into this site as hard-linked copies made at install time (research D-4). An edit to an
 // existing built file shows through the link; a new or removed file does not, and a reinstall does not add it. So the
 // site copies the packages' published files over the injected copies before every build.
-import { cpSync, existsSync, readFileSync, realpathSync, rmSync } from "node:fs";
+import { cpSync, existsSync, readFileSync, realpathSync, rmSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,6 +17,8 @@ for (const [name, folder] of [["web", "web"], ["observable", "observable"]]) {
     rmSync(join(target, entry), { recursive: true, force: true });
     cpSync(join(source, entry), join(target, entry), { recursive: true });
   }
-  cpSync(join(source, "package.json"), join(target, "package.json"));
+  // the manifest is a hard link to the package's own when pnpm made the copy; copying a file onto itself is an error
+  const [from, to] = [join(source, "package.json"), join(target, "package.json")];
+  if (!existsSync(to) || statSync(from).ino !== statSync(to).ino) cpSync(from, to);
 }
 console.log("refresh-deps: injected copies of @relate/web and @relate/observable refreshed");

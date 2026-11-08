@@ -20,7 +20,7 @@ The same page, loaded by Playwright's headless Chromium, Firefox and WebKit (not
 
 ### V-4. A loader's cached output is not refreshed by what it reads
 
-`observable build` twice on a page whose loader imported `../../src/s.js`: after the imported module changed from `one` to `two`, the second build reported `[fresh]` and published `one`. Touching the loader script and building again reported `[using stale]` and still published `one`. Framework's `loader.js` (lines 322–345) shows why: output is fresh when the cache file is newer than the loader script, and `build` passes `useStale: true`, so it runs a loader only when no cached output exists. The preview server runs a loader again when the script is newer than its output. Consequence: ADR-006 §2.2's freshness rule (the site's scripts run `observable clean` first).
+`observable build` twice on a page whose loader imported `../../src/s.js`: after the imported module changed from `one` to `two`, the second build reported `[fresh]` and published `one`. Touching the loader script and building again reported `[using stale]` and still published `one`. Framework's `loader.js` (lines 322–345) shows why: output is fresh when the cache file is newer than the loader script, and `build` passes `useStale: true`, so it runs a loader only when no cached output exists. The preview server runs a loader again when the script is newer than its output. Consequence: ADR-006 §2.2's freshness rule (the site's scripts run a clean of `docs/.observablehq/cache` first).
 
 ### V-5. A loader that exits with an error stops the build; a cell error does not
 
@@ -48,9 +48,9 @@ The cell's `import {createClient} from "@relate/web"` was bundled by Framework i
 
 The loader helpers write to standard output and exit non-zero on failure, so tests run small loader scripts with Node and read the output and exit code, as Framework does. Rejected: adding an output-stream parameter to the helpers for tests (public API for a test's convenience).
 
-### D-3. Attachments are resolved once per page by name
+### D-3. Attachments are resolved once per page by object, and `open` is asynchronous
 
-`FileAttachment("x")` returns a new object on each call; `open` keeps a map from attachment name to its resolved location (and, for a descriptor, its parsed content) for the page. Several opens on one page therefore request each location once (spec FR-012, US3 scenario 6).
+`FileAttachment(name)` returns the same object each time for one file on one page (Framework's `fileAttachment.js` keeps a map by path), so `open` keeps each attachment's location (and, for a descriptor, its parsed content) in a weak map keyed by the object. Several opens on one page therefore request each location once (spec FR-012, US3 scenario 6). A name is not a key: it is the last path segment, and two files in different folders can share it. An attachment's location is available only through a promise (`url()`; `href` exists on Framework's object but is undocumented), and the core's client needs the engine's location at creation, so `open` returns a promise of the opened object, resolved when the client exists. ADR-006 §6 records the change from "returns immediately".
 
 ### D-4. The conformance site gets its packages as pnpm injected dependencies, and a refresh step
 
@@ -67,6 +67,8 @@ The core's runner selects descriptor variants `b`, `mismatch` and `broken` by a 
 ## Checks made while implementing
 
 - **V-9. The engine's envelope, against the results layer (T018).** At `@relate/relate-wasm` 0.16.1 the spike's findings still hold: rows are keyed alphabetically (`age`, `name` for columns `name`, `age`); an error arrives as `{ columns: [], error, rows: [], stats: {} }` with no column types; entities are tagged and paths are alternating arrays; column types are `STRING`, `INTEGER`, `NODE`, `RELATIONSHIP`, `PATH`. The successful envelope has gained `execute_ms`, `parse_ms` and `plan_ms`, which `normalize` ignores. Single run, Node 24.
+
+- **V-10. Framework 1.13.4 has no `clean` command.** `observable clean` answers "unknown command"; `observable help` lists create, preview, build, login, logout, deploy, whoami, convert, help and version. The loader cache is `<root>/.observablehq/cache` (`docs/.observablehq/cache`); Framework's own templates clear it with a `clean` script. ADR-006 and the planning documents had assumed the command; the ADR's §6 corrects it. The `cleanUrls` option is deprecated in this version, so the site sets `preserveExtension: true` to keep `/page-1.html`.
 
 ## Consequences for ADR-006
 

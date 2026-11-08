@@ -32,6 +32,8 @@ For a descriptor input, the descriptor is read and its `data.url` replaced by th
 
 ## Opened graph
 
+The resolved value of `open`'s promise.
+
 | Member | Meaning |
 |---|---|
 | `client` | the core's client, created with the per-page profile |

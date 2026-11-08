@@ -22,4 +22,4 @@ Cells write the `data-rel-*` markup the runner reads, as defined by the core's e
 
 ## Build and serve
 
-`observable clean && observable build`, then a static file server (`serve.mjs`, as the Astro site's). The site's packages are pnpm injected workspace dependencies (research D-4, V-6); `pretest` refreshes them.
+remove `docs/.observablehq/cache`, then `observable build`, then a static file server (`serve.mjs`, as the Astro site's). The site's packages are pnpm injected workspace dependencies (research D-4, V-6); `pretest` refreshes them.

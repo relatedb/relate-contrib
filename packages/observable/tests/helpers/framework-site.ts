@@ -1,7 +1,7 @@
 // A throwaway Framework project for build tests: a folder under packages/observable/.tmp with the adapter's published files
 // copied in (real directories, since Framework's bundler fails on a symlink to a plain directory outside the project;
 // research V-6), the engine and Framework linked, and the files a test gives it.
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
@@ -28,7 +28,9 @@ export interface Site {
   exists(path: string): boolean;
   /** Run the Framework CLI in the site, with telemetry off. */
   run(args: string[], env?: Record<string, string>): Promise<Result>;
-  /** `observable clean`, then `observable build`. */
+  /** Run a data loader script as Framework does: Node, the site as working directory. */
+  loader(path: string, cwd?: string): { status: number | null; stdout: Buffer; stderr: string };
+  /** Remove the loader cache (Framework has no clean command), then `observable build`. */
   build(): Promise<Result>;
   remove(): void;
 }
@@ -38,7 +40,7 @@ const copyPackage = (name: string, source: string, target: string, entries: stri
   for (const entry of entries) if (existsSync(join(source, entry))) cpSync(join(source, entry), join(target, "node_modules/@relate", name, entry), { recursive: true });
 };
 
-const baseConfig = `export default { title: "t", root: "docs", pages: [], toc: false, footer: "", sidebar: false, header: "", cleanUrls: false, telemetry: false };\n`;
+const baseConfig = `export default { title: "t", root: "docs", pages: [], toc: false, footer: "", sidebar: false, header: "", preserveExtension: true, telemetry: false };\n`;
 
 /** Make a site named `name` with `files` (paths relative to the site) in addition to a package.json and a Framework config. */
 export function makeSite(name: string, files: Record<string, string>): Site {
@@ -71,8 +73,13 @@ export function makeSite(name: string, files: Record<string, string>): Site {
         child.on("close", (status) => resolve({ status, output }));
       });
     },
+    loader(path, cwd = dir) {
+      const run = spawnSync(process.execPath, [join(dir, path)], { cwd, maxBuffer: 64 * 1024 * 1024 });
+      return { status: run.status, stdout: run.stdout, stderr: run.stderr.toString() };
+    },
     async build() {
-      await site.run(["clean"]);
+      rmSync(join(dir, "docs/.observablehq/cache"), { recursive: true, force: true });
+      rmSync(join(dir, "dist"), { recursive: true, force: true });
       return site.run(["build"]);
     },
     remove: () => rmSync(dir, { recursive: true, force: true }),

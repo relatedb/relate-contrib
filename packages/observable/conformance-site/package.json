@@ -3,8 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/refresh-deps.mjs && observable clean && observable build",
-    "dev": "node scripts/refresh-deps.mjs && observable clean && observable preview"
+    "clean": "rm -rf docs/.observablehq/cache dist",
+    "build": "node scripts/refresh-deps.mjs && pnpm run clean && observable build",
+    "dev": "node scripts/refresh-deps.mjs && pnpm run clean && observable preview"
   },
   "dependencies": {
     "@observablehq/framework": "^1.13.4",
