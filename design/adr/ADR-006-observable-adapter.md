@@ -1,7 +1,7 @@
 ---
 id: ADR-006
 title: The Observable Framework Adapter as a Helper Package over the Core
-status: proposed
+status: accepted
 rfcs: [RFC-001, RFC-002]
 created: 2026-11-08
 ---
