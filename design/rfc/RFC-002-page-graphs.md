@@ -118,4 +118,4 @@ Three candidates: keep them apart, with nothing in common; keep them apart but l
 - [ADR-004](../adr/ADR-004-astro-adapter.md): The Astro adapter, which declares page graphs inline and shared graphs as files (accepted)
 - [ADR-005](../adr/ADR-005-next-adapter.md): The Next.js adapter, which serves registered graphs from a route handler and reads inline graphs from the page (accepted)
 - [ADR-006](../adr/ADR-006-observable-adapter.md): The Observable Framework adapter, which reads page graphs from data loaders or from cells (accepted)
-- [ADR-007](../adr/ADR-007-sveltekit-adapter.md): The SvelteKit adapter, which publishes registered graphs from a prerendered route and writes inline graphs into the page (proposed)
+- [ADR-007](../adr/ADR-007-sveltekit-adapter.md): The SvelteKit adapter, which publishes registered graphs from a prerendered route and writes inline graphs into the page (accepted)
