@@ -12,6 +12,6 @@
   <GraphData id="first" document={first} page="/two-graphs.html" />
   <GraphData id="second" document={second} page="/two-graphs.html" />
   <InlineCount name="first" />
-  <InlineCount name="second" />
+  <InlineCount name="second" label="Page" />
   <p><button type="button" data-trap-first onclick={() => (window as any).__relClients?.first.query(trap).catch(() => undefined)}>Crash the first graph's engine</button></p>
 </RelPage>

@@ -1,0 +1,1 @@
+import{j as e,k as t}from"../chunks/k45OOpT8.js";import{t as n}from"../chunks/sFmj_03C.js";var r=e(`<p>A page with its own data over the shared graph.</p>`);function i(e){n(e,{title:`Example site: notes`,notesPage:!0,children:(e,n)=>{var i=r();t(e,i)},$$slots:{default:!0}})}export{i as component};

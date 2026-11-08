@@ -4,10 +4,10 @@
   import { useGraph, useQuery } from "@relate/sveltekit";
   import type { Client } from "@relate/web";
 
-  let { name }: { name: string } = $props();
+  let { name, label = "Item" }: { name: string; label?: string } = $props();
   const handle = useGraph(name);
-  const count = useQuery(name, "MATCH (n:Item) RETURN count(n) AS c");
-  const note = useQuery(name, "MATCH (n:Item) WHERE n.note IS NOT NULL RETURN n.note AS note LIMIT 1");
+  const count = useQuery(name, () => `MATCH (n:${label}) RETURN count(n) AS c`);
+  const note = useQuery(name, () => `MATCH (n:${label}) WHERE n.note IS NOT NULL RETURN n.note AS note LIMIT 1`);
   $effect(() => {
     const client = handle.client;
     if (!client) return;

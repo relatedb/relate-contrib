@@ -1,6 +1,5 @@
 import "../../chunks/server2.js";
-import "../../chunks/index-server.js";
-import { i as setConfig } from "../../chunks/context.js";
+import { r as setConfig } from "../../chunks/context.js";
 import { n as goto } from "../../chunks/navigation.js";
 // ../../../vendor/relate-wasm/pkg/relate_bg.wasm?url
 var relate_bg_default = "/_app/immutable/assets/relate_bg.kL_VQXVI.wasm";
