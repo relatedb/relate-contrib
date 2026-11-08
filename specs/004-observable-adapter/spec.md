@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-08
 
-**Status**: Draft (ADR-006)
+**Status**: Implemented (ADR-006)
 
 **Input**: User description: "The Observable Framework adapter (`@relate/observable`): a workspace package in `packages/observable` that implements accepted ADR-006 (and builds on ADR-001 to ADR-005 and the SPIKE-001 findings) so an Observable Framework 1.x site can embed the browser graph database through the shared core package `@relate/web`. It supplies loaders that place the engine and the worker and publish graph data, a browser call that ties a client to a notebook cell, the result shaping and tagged template carried over from SPIKE-001, a conformance site, adapter tests, and a package test."
 
