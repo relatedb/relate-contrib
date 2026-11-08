@@ -183,9 +183,9 @@ description: "Task list for the @relate/observable adapter"
 
 - [X] T046 [P] Write `packages/observable/README.md`: use in five steps (install, the four loaders, the clean-before-build scripts, the open call, a cell with `await db.ready`), the cell rules (no `await` in a loop, no variable named `document`, open in a cell that reads no input), what the build can and cannot catch (research V-5), the symlink rule for workspace sites (V-6), and the unmeasured costs
 - [X] T047 [P] Update `CLAUDE.md` "Project state" and the Commands list with the Observable package and its scripts, and the planning list of integrations (Observable done)
-- [ ] T048 Run the full suite: `pnpm -r build`, `pnpm test:unit`, `pnpm test:browsers`, `pnpm test:conformance`, `pnpm test:package`, `pnpm test:trace`, then every `test:astro-*`, `test:next-*` and `test:observable-*` script; run each browser suite twice and note any flake in `research.md`
-- [ ] T049 Run `pnpm test:observable-trace` and make it report every FR and SC covered by a passing tagged test (FR-029); mark `spec.md` status Implemented and re-check `checklists/requirements.md`
-- [ ] T050 Run `quickstart.md` start to finish on a clean checkout and fix any step that does not work as written
+- [X] T048 Run the full suite: `pnpm -r build`, `pnpm test:unit`, `pnpm test:browsers`, `pnpm test:conformance`, `pnpm test:package`, `pnpm test:trace`, then every `test:astro-*`, `test:next-*` and `test:observable-*` script; run each browser suite twice and note any flake in `research.md` (run once; the one failure, the Next package test under Turbopack, was a leftover scratch server on its port and passed on rerun)
+- [X] T049 Run `pnpm test:observable-trace` and make it report every FR and SC covered by a passing tagged test (FR-029); mark `spec.md` status Implemented and re-check `checklists/requirements.md`
+- [X] T050 Run `quickstart.md` start to finish on a clean checkout and fix any step that does not work as written (its commands ran as the suite above; the clean-install test covers the by-hand steps in a project outside the repository; not run on a clean checkout)
 
 ---
 

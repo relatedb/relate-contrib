@@ -13,7 +13,8 @@ const pkg = resolve(here, "../..");
 const repo = resolve(pkg, "../..");
 const staticOnly = process.argv.includes("--static");
 
-const spec = readFileSync(join(repo, "specs/004-observable-adapter/spec.md"), "utf8");
+// TRACE_SPEC names another specification (the check's own test uses it to see an untagged id reported)
+const spec = readFileSync(process.env.TRACE_SPEC ?? join(repo, "specs/004-observable-adapter/spec.md"), "utf8");
 const required = new Set<string>();
 for (const m of spec.matchAll(/\*\*((?:FR|SC)-\d+)\*\*/g)) required.add(m[1]!);
 

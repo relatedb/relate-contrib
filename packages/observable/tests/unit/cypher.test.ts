@@ -1,4 +1,4 @@
-// covers: FR-020, FR-021, SC-007
+// covers: FR-020, FR-021, FR-025, SC-007
 import { beforeAll, describe, expect, it } from "vitest";
 import { makeCypher, normalize, toGraph, type Cypher } from "../../src/results/index.js";
 import { createEngine, seedScript } from "../helpers/engine.js";

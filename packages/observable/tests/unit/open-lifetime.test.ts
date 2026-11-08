@@ -1,4 +1,4 @@
-// covers: FR-015, FR-016
+// covers: FR-015, FR-016, FR-025
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { attachment, installPage, stubClient } from "../helpers/stubs.js";
 

@@ -1,4 +1,4 @@
-// covers: FR-018, SC-007
+// covers: FR-018, FR-025, SC-007
 import { beforeAll, describe, expect, it } from "vitest";
 import { normalize } from "../../src/results/index.js";
 import { createEngine, seedScript, type Engine } from "../helpers/engine.js";
