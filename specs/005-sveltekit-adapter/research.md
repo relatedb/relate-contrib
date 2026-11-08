@@ -68,6 +68,12 @@ Counting holders, the deferred destroy, the visit clients, the inline-element lo
 
 `GET` takes everything in `url.pathname` before `/relate/` as the base, so it needs no `$app` module and no site setting (ADR-007 §2.2). A path without `/relate/` answers 404.
 
+## Checks made while implementing
+
+- **D-7 (T025). The adapter's own Svelte source, linked from the workspace, compiles in the conformance site.** The site's static build compiled `packages/sveltekit/src` through the workspace link (the provider, the helpers and the rune module included) and `vite dev` is configured with `server.fs.allow` for the repository root; no injected copy is needed. Single run.
+- **V-10. Route folders named `*.html` prerender to `<name>.html` and a server load adds `<name>.html__data.json`.** The conformance pages are routes named `page-1.html` and so on, because the core's scenarios open `/page-1.html`; SvelteKit writes `page-1.html` (it does not double the extension). A route named `index.html` is reported as an unseen route by the prerenderer even as an explicit entry, so the home page is the root route: `/index.html` then serves the root page in the static output and hydrates without error, and the Node server answers it 404, so the site's `handle` hook redirects `/index.html` to `/` there.
+- **V-11. The core's scenarios pass against the conformance site.** In Chromium, single runs: `client-routing-static`, `multi-page-static`, `client-routing-node`, `multi-page-node` and `base-path-static` pass every scenario that applies (C-07, C-08 and C-11 need a store and are skipped under `client-routing`, as for the other adapters). The page's `instance` has to be one per document (module scope), as in the other sites.
+
 ## Consequences for ADR-007
 
 The amendment of 2026-11-08 in ADR-007 §6 records D-1, the changed `resolve()` statement and D-3, and the items V-4 to V-8 settle.

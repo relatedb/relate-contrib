@@ -1,0 +1,1 @@
+{"version":3,"file":"_page.svelte.js","names":[],"sources":["../../../../../../src/routes/blank.html/+page.svelte"],"sourcesContent":["<script lang=\"ts\">\n  import RelPage from \"#lib/RelPage.svelte\";\n</script>\n\n<RelPage title=\"Blank\" bare />\n"],"mappings":";;;AAAA,SAAA,MAAA,YAAA;;;;;AAEQ"}

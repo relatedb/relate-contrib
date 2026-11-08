@@ -28,3 +28,9 @@ packages/*/conformance/*.js.map
 packages/observable/.tmp/
 packages/observable/conformance-site/dist/
 packages/observable/conformance-site/docs/.observablehq/
+
+# Scratch projects made by the SvelteKit adapter's build tests, its reports and the conformance site's build output
+packages/sveltekit/.tmp/
+packages/sveltekit/conformance-site/build*/
+packages/sveltekit/conformance-site/.svelte-kit/
+packages/sveltekit/conformance-site/.fixtures/

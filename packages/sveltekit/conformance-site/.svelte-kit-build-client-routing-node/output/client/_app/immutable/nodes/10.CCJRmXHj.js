@@ -1,0 +1,1 @@
+import"../chunks/BILRai64.js";import{t as e}from"../chunks/DAMlk2gm.js";import{t}from"../chunks/C5rfo6_G.js";function n(n){e(n,{title:`Example site: lifetime C`,bare:!0,children:(e,n)=>{t(e,{name:`other`,label:`Page`,title:`lifetime C`})},$$slots:{default:!0}})}export{n as component};

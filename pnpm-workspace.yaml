@@ -2,6 +2,7 @@ packages:
   - "packages/*"
   - "packages/nextjs/conformance-site"
   - "packages/observable/conformance-site"
+  - "packages/sveltekit/conformance-site"
 allowBuilds:
   esbuild: true
 overrides:
