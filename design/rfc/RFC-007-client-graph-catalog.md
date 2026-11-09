@@ -14,7 +14,7 @@ A web origin can persist several graphs in a visitor's browser: a cached copy of
 
 The organizing claim is that persisted graphs need a catalog because the bookkeeping is currently scattered, and the scattered form cannot answer the questions a site, a visitor and the core package itself need answered: what is stored here, is each graph whole, which ones are orphaned, and what can be cleared. The hardest part is keeping an entry consistent with the data it describes, because the two are written at different times and either can be lost.
 
-This RFC states what a catalog has to do, what it must stay consistent with, and which directions are worth measuring. It replaces nothing yet; it frames the decision that would replace the per-graph bookkeeping of the two existing kinds of store.
+A catalog has to do four things: enumerate the graphs, say whether each is whole, stay consistent with the data it describes, and allow cleanup. The sections below set out the candidates for each, the measurements that would choose between them, and the questions that remain open.
 
 ## 2. Problem / Motivation
 
@@ -23,17 +23,17 @@ The core package (the library that hosts the database in a page, `@relate/web`) 
 - **A content cache** is a store named `rel-<id>` for a graph the site ships, with a small file, outside the store, at the root of the origin's private storage (`relate-web/<id>.json`). The file holds the graph descriptor, which carries the revision. It is written last after a complete load and removed before a reset, so a file that is present describes a complete store. A different revision in the file means the store is stale and is wiped.
 - **An application graph** is a store named `app-<name>` for a graph the visitor writes, with a marker node labelled `_RelateApplication` inside the graph. The marker holds the store's format, schema version and state (`seeding`, `ready`, `importing`).
 
-Neither can be listed. The engine keeps a store as a directory of 65 fixed-size files (`relate/<name>/slot-N` in the browser tests' file listing), and the only way to learn that a store exists is to know its name. A page that has two application graphs, or a content cache for a graph it no longer ships, has no call that returns them.
+Neither can be listed through the core. The browser can list the directories in the origin's private storage, but the engine keeps each store as a directory of fixed-size slot files (`relate/<name>/slot-N`) whose layout belongs to the engine and says nothing about what the store holds, and the core offers no call that lists stores. A page that has two application graphs, or a content cache for a graph it no longer ships, cannot ask what it has.
 
 The scattered bookkeeping has costs that are already visible.
 
 - **The marker is data.** It is counted by `MATCH (n) RETURN count(n)`, drawn by a graph visualisation, and removed by a statement such as `MATCH (n) DETACH DELETE n`. A store with its marker removed fails to open as `store-unmarked`, because the core cannot tell it from a store it never created.
-- **The two records are not written with the data.** A cache's descriptor file and a store's contents are two writes; the file is ordered last so that a crash leaves a store that looks stale, not one that looks complete. An application import resets the store and then writes the new marker as separate steps; a crash between them leaves an empty store with no marker, which opens as a first run and seeds again (found while implementing application graphs).
+- **The two records are not written with the data.** A cache's descriptor file and a store's contents are two writes; the file is ordered last so that a crash leaves a store that looks stale, not one that looks complete. An application import resets the store and then writes the new marker as separate steps; a crash between them leaves an empty store with no marker, which opens as a first run and seeds again.
 - **Nothing detects a name collision.** Two applications on one origin that pick the same name share one store, and nothing records that the name was taken.
 - **Nothing finds leftovers.** A site that renames a descriptor `id` or an application leaves the old store in the visitor's storage with no way for the page, the site or the visitor to find it.
 - **The visitor cannot be told anything.** Whether a site's data is durable, how many graphs it holds, and what clearing one would cost are all unanswerable, so the application cannot give a visitor an honest account of what is stored (RFC-006's privacy question on shared devices has no home).
 
-Two further facts shape the problem. The browser can evict an origin's storage under pressure, so a catalog stored beside the graphs may lose entries and graphs together, or one without the other. And a store serves one holder at a time, so a catalog that is itself a store of the same kind is unreadable from every other tab while one tab holds it.
+Two further facts shape the problem. The browser can evict an origin's storage under pressure, so a catalog stored beside the graphs may lose entries and graphs together, or one without the other. And a store serves one holder at a time (a second tab's attempt to open it waits until the first releases it), so a catalog that is itself a store of the same kind is unreadable from every other tab while one tab holds it.
 
 ## 3. Goals
 
@@ -55,6 +55,7 @@ Two further facts shape the problem. The browser can evict an origin's storage u
 - A query interface over graph contents. The catalog describes graphs, not what is in them.
 - Catalogs spanning origins. A browser keeps each origin's storage apart.
 - Catalogs of graphs that are not persisted (an in-memory page graph has no entry).
+- A ready-made visitor interface for listing and clearing graphs. The catalog supplies the data and the calls; a page builds its own surface.
 
 ## 5. Proposed Approach (high-level)
 
@@ -68,7 +69,8 @@ Candidates, each with a different consequence for access from several tabs and f
 
 - **In the engine.** A catalog, or a per-store metadata slot committed with the store's data, provided by the engine. This is the only candidate that can make an entry atomic with its data. It needs the engine to offer it, and a per-store slot does not by itself enumerate stores.
 - **A store of the engine's kind**, with a reserved name, holding the catalog as a small graph. It enumerates and is written transactionally, but it serves one holder at a time and so is not readable from other tabs while one tab holds it.
-- **One small file per graph** in the origin's private storage, replaced atomically, listed by directory. It enumerates cheaply, needs no store to be open, and works across tabs; it is a second write beside the store's data.
+- **One small file per graph** in the origin's private storage, replaced atomically, listed by directory. It enumerates cheaply, needs no store to be open, and works across tabs; it is a second write beside the store's data. The content cache already works this way: its stored-copy file is such a file, written last and removed before a reset, so its cost is known in outline (a crash between the two writes is survivable only because the order makes the store look stale).
+- **State carried in the store's own name**, for example a directory name that encodes kind, revision and state. It enumerates for free and needs no second file, but changing state means renaming a directory, which the browser's storage interface does not do atomically.
 - **A browser database designed for several tabs** (IndexedDB, or a shared key-value store), which gives cross-tab transactions and a coordinated writer but is neither atomic with the engine's files nor guaranteed to be evicted together with them.
 
 A choice can combine them: an engine-provided slot for state that must be atomic with the data, and a cross-tab list for enumeration.
@@ -93,11 +95,19 @@ Every tab needs to read the catalog, and every tab can change it (a tab opens a 
 
 ### 5.6 What the page and the visitor see
 
-The core reports the catalog to the page: a listing, a change notification, and the storage facts the browser gives (persistence, usage, quota). A page can show a visitor what it holds and offer to clear it. Whether the core also supplies a ready-made surface, or only the data, is open.
+The core reports the catalog to the page: a listing, a change notification, and the storage facts the browser gives (persistence, usage, quota). A page can show a visitor what it holds and offer to clear it.
 
 ### 5.7 Relationship to descriptors, application options and existing stores
 
 A descriptor still names a graph and its revision as the site ships it; the catalog records what the browser holds. An application's name and version stay the application's declaration. Stores created before a catalog exists carry a marker or a stored-copy file; they have to be recognised and either adopted into the catalog or rebuilt.
+
+### 5.8 What to measure
+
+Three short measurements, each in Chromium, Firefox and WebKit, would choose between the candidates:
+
+- **A small file in the origin's private storage:** whether it can be replaced atomically, and whether every tab can read it while another tab holds a store. This answers the file candidate of 5.2 and the cross-tab question of 5.5.
+- **Eviction:** what remains, and what the page can observe, after the browser clears an origin's storage or part of it. This bears on the detection asked for in 7.5.
+- **Enumeration through the engine:** whether the engine can list its own stores or expose a per-store metadata slot, and at what cost. This bears on 7.1.
 
 ## 6. Alternatives Considered
 
@@ -108,28 +118,24 @@ A descriptor still names a graph and its revision as the site ships it; the cata
 
 ## 7. Open Questions
 
-7.1. Will the engine provide a per-store metadata slot committed with the store's data, or a catalog of its stores? If so, the catalog's consistency problem is solved by the engine and this RFC reduces to enumeration and cleanup; if not, which of the remaining candidates is acceptable?
+7.1. Where does the catalog live (5.2)? If the engine can provide a per-store metadata slot committed with the store's data, or a catalog of its stores, the consistency problem is solved there and the RFC reduces to enumeration and cleanup. If not, which of the remaining candidates is acceptable, and what does each give up: cross-tab reads, atomicity with the data, or survival of eviction together with the stores?
 
-7.2. Where does the catalog live (5.2), and what does each candidate give up: cross-tab reads, atomicity with the data, or survival of eviction together with the stores?
+7.2. Which consistency protocol (5.3), and which failure is acceptable when no candidate closes every crash window: a detected and reported mismatch, or an automatic repair?
 
-7.3. Which consistency protocol (5.3), and which failure is acceptable when no candidate closes every crash window: a detected and reported mismatch, or an automatic repair?
+7.3. What identifies a graph across kinds and sites on one origin? A content cache and an application can currently choose the same text for different stores; two applications can choose one name and share data. Does the catalog refuse a name that is taken, and by whom is it "taken"?
 
-7.4. What identifies a graph across kinds and sites on one origin? A content cache and an application can currently choose the same text for different stores; two applications can choose one name and share data. Does the catalog refuse a name that is taken, and by whom is it "taken"?
+7.4. What can be learned about size? The engine has no call for a store's size (RFC-006 7.5), and the browser reports usage and quota per origin, not per directory. Is an approximate or origin-level figure enough, or is the engine call a prerequisite?
 
-7.5. What can be learned about size? The engine has no call for a store's size (RFC-006 7.5), and the browser reports usage and quota per origin, not per directory. Is an approximate or origin-level figure enough, or is the engine call a prerequisite?
+7.5. How are eviction and partial loss detected and reported (some stores gone, entries intact, or the reverse), and what does the core do with an application graph whose store has vanished: report, or seed again?
 
-7.6. How are eviction and partial loss detected and reported (some stores gone, entries intact, or the reverse), and what does the core do with an application graph whose store has vanished: report, or seed again?
+7.6. Who may remove a graph and when: the site's code, the visitor through a page the site provides, or the core on its own for leftover content caches? Is there an automatic age or count limit for caches?
 
-7.7. Who may remove a graph and when: the site's code, the visitor through a page the site provides, or the core on its own for leftover content caches? Is there an automatic age or count limit for caches?
+7.7. What happens to stores that already exist with a marker or a stored-copy file: adopted in place, rebuilt from the data, or required to be reset? Is a window of support for both forms needed?
 
-7.8. What happens to stores that already exist with a marker or a stored-copy file: adopted in place, rebuilt from the data, or required to be reset? Is a window of support for both forms needed?
-
-7.9. Does the core supply a ready-made surface for listing and clearing, or only the data and the calls?
-
-7.10. What does the catalog say about privacy on a shared device (RFC-006 7.11), and can a visitor clear everything the origin persisted from inside the application?
-
-7.11. How do the existing decisions change: is the stored-copy rule of the descriptor decision superseded for caches, and is the marker of the application-graph decision replaced, amended or kept for stores without a catalog?
+7.8. What does the catalog say about privacy on a shared device (RFC-006 7.11), and can a visitor clear everything the origin persisted from inside the application?
 
 ## 8. ADRs
 
 _(none yet)_
+
+The first ADR also settles how the existing decisions change: whether the descriptor decision's stored-copy rule is superseded for content caches, and whether the application-graph decision's marker node is replaced, amended or kept for stores without a catalog.
