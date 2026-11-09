@@ -69,3 +69,4 @@ Use `/rfc-review` before moving a draft to `review`/`accepted`.
 | [RFC-003](RFC-003-site-graph.md) | The Site Graph | draft | |
 | [RFC-005](RFC-005-community-integrations.md) | Integrations for Community Projects and Hackathons | draft | ADR-008 |
 | [RFC-006](RFC-006-application-graphs.md) | Application Graphs | draft | ADR-008, ADR-009 |
+| [RFC-007](RFC-007-client-graph-catalog.md) | The Client-Side Graph Catalog | draft | |
