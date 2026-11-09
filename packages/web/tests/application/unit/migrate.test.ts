@@ -50,4 +50,38 @@ describe("migrations", () => {
     openApplication(e, input({ version: 2, migrations: { "2": ["MATCH (p:Person) SET p.never = 1"] } }));
     expect(rec.statements.some((s) => s.includes("never"))).toBe(false);
   });
+
+  it("fails, naming the version, when the application gives no migration for a version the store needs, and does not advance the marker", async () => {
+    const e = await realEngine();
+    openApplication(e, input({ version: 1 }));
+    const r = openApplication(e, input({ version: 3, migrations: { "3": ["MATCH (p:Person) SET p.x = 1"] } }));
+    expect(r).toMatchObject({ ok: false, reason: "migration-failed" });
+    expect((r as { message: string }).message).toContain("version 2");
+    expect(readMarkers(e)[0]!.version).toBe(1);
+    expect(openApplication(e, input({ version: 3, migrations: {} }))).toMatchObject({ ok: false, reason: "migration-failed" });
+    expect(readMarkers(e)[0]!.version).toBe(1);
+  });
+
+  it("a step that changes or deletes the marker fails, and the marker is put back", async () => {
+    for (const statement of ["MATCH (n) SET n.touched = 1", "MATCH (n) WHERE n:_RelateApplication DETACH DELETE n", "MATCH (m:_RelateApplication) SET m.state = 'importing'"]) {
+      const e = await realEngine();
+      openApplication(e, input({ version: 1 }));
+      const r = openApplication(e, input({ version: 2, migrations: { "2": [statement] } }));
+      expect(r, statement).toMatchObject({ ok: false, reason: "migration-failed" });
+      expect((r as { message: string }).message).toContain("application marker");
+      expect(readMarkers(e)).toEqual([{ format: 1, version: 1, state: "ready" }]);
+    }
+  });
+
+  it("a range step whose statement reaches the marker fails the same way", async () => {
+    const { inRanges } = await import("../../../src/application/ranges.js");
+    const e = await realEngine();
+    openApplication(e, input({ version: 1 }));
+    query(e, "MATCH (m:_RelateApplication) SET m.n = 1"); // the marker carries the ranged property, so the statement reaches it
+    const step = inRanges({ label: "Person", property: "n", step: 10, statement: "MATCH (x) WHERE x.n >= $from AND x.n < $to SET x.touched = true" });
+    const r = openApplication(e, input({ version: 2, migrations: { "2": [step] } }));
+    expect(r).toMatchObject({ ok: false, reason: "migration-failed" });
+    expect(readMarkers(e)).toEqual([{ format: 1, version: 1, state: "ready" }]);
+    expect(query(e, "MATCH (m:_RelateApplication) RETURN m.touched AS t, m.n AS n").rows[0]).toEqual({ t: null, n: null });
+  });
 });

@@ -32,18 +32,25 @@ export function classify(facts: StoreFacts, code: { version: number; format?: nu
       message: `the store holds ${facts.nodeCount} nodes and no marker; it was not created by this application or its marker was deleted`,
     };
   }
+  // A marker whose fields are missing or not positive integers cannot be compared with this code's, so the store is
+  // refused as unreadable before anything is recovered, reset or migrated.
+  const positive = (n: unknown): boolean => typeof n === "number" && Number.isInteger(n) && n >= 1;
+  if (!positive(marker.format) || !positive(marker.version) || typeof marker.state !== "string") {
+    return { action: "fail", reason: "store-unreadable", message: "the marker's format, version or state is missing or not valid" };
+  }
+  // A newer release's store is refused whatever state it is in, so older code never resets it.
+  if (marker.format > format) {
+    return { action: "fail", reason: "store-newer", message: `the store's format ${marker.format} is newer than this code's ${format}` };
+  }
+  if (marker.version > code.version) {
+    return { action: "fail", reason: "store-newer", message: `the store is at version ${marker.version}, newer than this code's ${code.version}` };
+  }
   if (marker.state === "seeding") return { action: "reset-and-seed" };
   if (marker.state === "importing") {
     return { action: "fail", reason: "import-interrupted", message: "an import into this store did not finish" };
   }
   if (marker.state !== "ready") {
     return { action: "fail", reason: "store-unreadable", message: `the marker's state "${String(marker.state)}" is not one this code knows` };
-  }
-  if (marker.format > format) {
-    return { action: "fail", reason: "store-newer", message: `the store's format ${marker.format} is newer than this code's ${format}` };
-  }
-  if (marker.version > code.version) {
-    return { action: "fail", reason: "store-newer", message: `the store is at version ${marker.version}, newer than this code's ${code.version}` };
   }
   if (marker.version < code.version) return { action: "migrate", from: marker.version };
   return { action: "open" };

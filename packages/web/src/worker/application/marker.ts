@@ -31,3 +31,14 @@ export function setState(engine: Engine, state: MarkerState): void {
 export function setVersion(engine: Engine, version: number): void {
   run(engine, `MATCH (m:${MARKER_LABEL}) SET m.version = $version`, { version });
 }
+
+/** Put the marker back as it was: used when a migration step changed it, which only the core may do. */
+export function restoreMarker(engine: Engine, marker: Marker): void {
+  run(engine, `MATCH (m:${MARKER_LABEL}) DETACH DELETE m`);
+  run(engine, `CREATE (:${MARKER_LABEL} {format: $format, version: $version, state: $state})`, marker);
+}
+
+/** Every property of every marker, as text, so that a change to any of them (an added property too) can be seen. */
+export function markerSnapshot(engine: Engine): string {
+  return JSON.stringify(run(engine, `MATCH (m:${MARKER_LABEL}) RETURN properties(m) AS p ORDER BY elementId(m)`).rows.map((r) => r.p));
+}

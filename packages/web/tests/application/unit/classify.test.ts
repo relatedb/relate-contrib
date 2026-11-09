@@ -28,4 +28,21 @@ describe("classifying an opened store", () => {
     }
     expect(classify(facts({ nodeCount: 4 }), { version: 3 }).action).toBe("fail");
   });
+
+  it("a newer release's store is refused whatever its state, so older code never resets it", () => {
+    for (const state of ["seeding", "importing", "ready"]) {
+      expect(classify(facts({ markers: [marker({ state, version: 9 })], nodeCount: 4 }), { version: 3 })).toMatchObject({ reason: "store-newer" });
+      expect(classify(facts({ markers: [marker({ state, format: 2 })], nodeCount: 4 }), { version: 3 })).toMatchObject({ reason: "store-newer" });
+    }
+  });
+
+  it("a marker whose fields are missing or not positive integers is store-unreadable, never opened or migrated", () => {
+    const bad = [{ version: undefined }, { version: 0 }, { version: -1 }, { version: 1.5 }, { version: "2" }, { format: undefined }, { format: 0 }, { state: undefined }, { state: 7 }];
+    for (const fields of bad) {
+      for (const state of ["seeding", "importing", "ready"]) {
+        const m = { ...marker({ state }), ...fields } as never;
+        expect(classify(facts({ markers: [m], nodeCount: 4 }), { version: 3 }), JSON.stringify(fields)).toMatchObject({ action: "fail", reason: "store-unreadable" });
+      }
+    }
+  });
 });

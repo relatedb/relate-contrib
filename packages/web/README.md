@@ -125,7 +125,7 @@ range helper skip it.
 | `import-interrupted` | an import did not finish |
 | `store-unreadable` | the store could not be opened (or holds two markers) |
 | `unavailable` | no browser store and `onUnavailable: "fail"` |
-| `migration-failed` | a step failed; the message names the version and statement, and the store is at the last completed version |
+| `migration-failed` | a step failed, a version has no migration, or a step changed the marker; the message names the version, and the store is at the last completed version |
 
 None of them is retried automatically. `client.resetApplication()` discards the stored data and seeds again; it is
 the only call that does (besides the recovery of a first run that never finished). Offer an export before it.
@@ -154,7 +154,10 @@ export first, and the core never calls it.
 if the worker is stopped. Write each step bounded, each safe to run again (a `WHERE` that skips what is done), and rely
 on the core to write the version last. `inRanges` runs your statement over windows `[$from, $to)` of a numeric
 property; the statement must carry its own filter. A failing step leaves the store at the last completed version and
-the next load resumes there.
+the next load resumes there. Two rules are checked when a store is migrated: every version from the stored one up to the
+application's needs an entry (a missing one fails with `migration-failed` naming the version, and the version is not
+advanced), and a step may not change the marker. A step that does is failed and the marker is put back, so a statement
+that reaches every node, such as `MATCH (n) SET …`, needs `WHERE NOT n:_RelateApplication`.
 
 **A content graph and an application graph on one page** use two clients, each with its own worker and store; no
 statement spans them.

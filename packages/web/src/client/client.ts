@@ -51,6 +51,8 @@ class GraphClient implements Client {
   private replacing: Events["replaced"]["reason"] | null = null;
   private readonly scopes = new Set<string>();
   private destroyed = false;
+  /** Counts the times a worker was ended; a start that began before the latest one has been superseded. */
+  private epoch = 0;
   private waiters: Array<{ resolve: () => void; reject: (e: GraphError) => void }> = [];
 
   private readonly application: ApplicationSupport | null;
@@ -284,9 +286,11 @@ class GraphClient implements Client {
   private async start(): Promise<void> {
     if (this.destroyed) return;
     const attempt = this.failures.failures + 1;
+    const epoch = this.epoch;
     try {
       const init = await this.prepare();
-      if (this.destroyed) return;
+      // A page hidden, a reset or a destroy while the seed was being resolved supersedes this start.
+      if (this.destroyed || epoch !== this.epoch) return;
       const worker = this.options.workerFactory ? this.options.workerFactory() : defaultWorker();
       this.worker = worker;
       worker.onmessage = (e: MessageEvent<WorkerMessage>) => {
@@ -350,7 +354,7 @@ class GraphClient implements Client {
   }
 
   private onReady(restored: boolean, timings: Timings): void {
-    if (this.application) this.application.intent = "open";
+    this.application?.confirmed();
     this.failures.ready();
     this.diagnostic = null;
     this.machine.markReady();
@@ -454,6 +458,7 @@ class GraphClient implements Client {
   }
 
   private terminateWorker(): void {
+    this.epoch++;
     const worker = this.worker;
     this.worker = null;
     worker?.terminate();

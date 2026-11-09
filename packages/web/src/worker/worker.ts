@@ -7,6 +7,7 @@ import { openStore } from "./store.js";
 import { readStoredCopy, removeStoredCopy, writeStoredCopy } from "./stored-copy.js";
 import { initApplication } from "./application/init.js";
 import { MigrationError } from "./application/migrate.js";
+import { SeedError, seedDescriptor } from "./application/seed.js";
 import { ImportRejected, exportApplication, importApplication } from "./application/transfer.js";
 import { isEmpty, nodeCount, sweepScoped } from "./sweep.js";
 import type {
@@ -149,7 +150,7 @@ function scopedDrop(msg: ScopedDropMessage): void {
 
 function transferError(id: number, e: unknown): void {
   if (e instanceof MigrationError) send({ type: "error", id, reason: "migration-failed", message: e.message });
-  else if (e instanceof ImportRejected || e instanceof LoadError) send({ type: "error", id, reason: "rejected", message: e.message });
+  else if (e instanceof ImportRejected || e instanceof LoadError || e instanceof SeedError) send({ type: "error", id, reason: "rejected", message: e.message });
   else send({ type: "error", id, reason: "trap", message: messageOf(e) });
 }
 
@@ -163,10 +164,11 @@ function exportApp(msg: ExportApplicationMessage): void {
   }
 }
 
-function importApp(msg: ImportApplicationMessage): void {
+async function importApp(msg: ImportApplicationMessage): Promise<void> {
   try {
     if (!engine || !application) throw new TrapError("no application instance");
-    const indexes = application.seed.descriptor?.indexes ?? application.indexes;
+    // the indexes of a seed given as a URL are in its descriptor, which a restored store never fetched
+    const indexes = (await seedDescriptor(application.seed))?.indexes ?? application.indexes;
     importApplication(engine, { name: application.name, version: application.version, indexes, migrations: application.migrations }, msg.envelope);
     send({ type: "done", id: msg.id });
   } catch (e) {
@@ -181,5 +183,5 @@ scope.onmessage = (e) => {
   else if (msg.type === "scoped-add") scopedAdd(msg);
   else if (msg.type === "scoped-drop") scopedDrop(msg);
   else if (msg.type === "export-application") exportApp(msg);
-  else if (msg.type === "import-application") importApp(msg);
+  else if (msg.type === "import-application") void importApp(msg);
 };

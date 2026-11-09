@@ -18,23 +18,19 @@ export class SeedProblem extends Error {
   }
 }
 
-/** Where the seed is: a document (inline), or a descriptor whose data the worker fetches. */
-async function resolveSeed(seed: NormalisedApplication["seed"]): Promise<ApplicationInit["seed"]> {
-  let value: unknown = seed;
-  let base = location.href;
-  if (typeof value === "string") {
-    base = absolute(value, location.href);
-    const response = await fetch(base);
-    if (!response.ok) throw new SeedProblem("worker-error", `the seed could not be fetched: ${response.status}`);
-    value = await response.json();
+/**
+ * Where the seed is. Inline data is checked here; a URL is passed on unresolved, because fetching it on every start would
+ * download a seed that a ready store never uses. The worker fetches it only when the store needs it.
+ */
+function resolveSeed(seed: NormalisedApplication["seed"]): ApplicationInit["seed"] {
+  if (typeof seed === "string") return { document: null, dataUrl: null, descriptor: null, url: absolute(seed, location.href) };
+  if (seed && typeof seed === "object" && "nodes" in seed) {
+    return { document: seed as GraphDocument, dataUrl: null, descriptor: null, url: null };
   }
-  if (value && typeof value === "object" && "nodes" in value) {
-    return { document: value as GraphDocument, dataUrl: null, descriptor: null };
-  }
-  const checked = validateDescriptor(value);
+  const checked = validateDescriptor(seed);
   if (!checked.ok) throw new SeedProblem("invalid-descriptor", `${checked.path}: ${checked.message}`);
   const descriptor: Descriptor = checked.descriptor;
-  return { document: null, dataUrl: absolute(descriptor.data.url, base), descriptor };
+  return { document: null, dataUrl: absolute(descriptor.data.url, location.href), descriptor, url: null };
 }
 
 export class ApplicationSupport {
@@ -55,19 +51,25 @@ export class ApplicationSupport {
   /** The application part of the init message; `seed` is resolved here, on the page. */
   async init(): Promise<ApplicationInit> {
     const { app } = this;
+    // The reset intent stays until the instance is ready (the client calls `confirmed()`), so a start that fails after a
+    // reset was asked for is retried as a reset, not as an open that would pass for success.
     const intent = this.intent;
-    this.intent = "open"; // a reset is asked for once; a later retry or replaced worker opens
     return {
       name: app.name,
       version: app.version,
       intent,
-      seed: await resolveSeed(app.seed),
+      seed: resolveSeed(app.seed),
       indexes: app.indexes,
       migrations: app.migrations,
       onUnavailable: app.onUnavailable,
       onError: app.onError,
       whenLocked: app.whenLocked,
     };
+  }
+
+  /** The instance is ready: a reset, if one was asked for, has happened. Later starts open. */
+  confirmed(): void {
+    this.intent = "open";
   }
 
   /** A storage report from the worker; the page adds what only it can ask the browser. */

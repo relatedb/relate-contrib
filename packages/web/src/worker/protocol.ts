@@ -8,7 +8,11 @@ export interface ApplicationInit {
   version: number;
   /** `reset` is `resetApplication()`: open the store, reset it and seed it. */
   intent: "open" | "reset";
-  seed: { document: GraphDocument | null; dataUrl: string | null; descriptor: Descriptor | null };
+  /**
+   * The seed. `document`: inline data. `descriptor` with `dataUrl`: an inline descriptor whose data the worker fetches when
+   * needed. `url`: an absolute URL of a document or a descriptor, fetched by the worker only when the store needs a seed.
+   */
+  seed: { document: GraphDocument | null; dataUrl: string | null; descriptor: Descriptor | null; url: string | null };
   indexes: IndexSpec[];
   migrations: Record<string, MigrationStep[]>;
   onUnavailable: "memory" | "fail";
