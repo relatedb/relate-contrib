@@ -3,7 +3,7 @@ id: RFC-006
 title: Application Graphs
 status: draft
 created: 2026-11-08
-adrs: []
+adrs: [ADR-009]
 ---
 
 # RFC-006: Application Graphs
@@ -24,12 +24,12 @@ The hosting model treats stored data as a cache.
 
 Applications need the opposite. An administrative tool, a notes editor and a task tracker lose their purpose when a reload empties them, and the example applications that RFC-005 plans for a hackathon include the first two. Games vary: a save slot or a persistent world needs a durable graph, a short session does not.
 
-The engine supports more than the core exposes. Its browser store commits each acknowledged write to a log before returning, so an edit survives a reload or a terminated worker. It opens only in a dedicated worker and serves one holder at a time. What an application needs on top of that is a contract, and four properties of the browser make the contract more than a flag:
+The engine supports more than the core exposes. Its browser store commits each acknowledged write to a log before returning. In a browser spike (SPIKE-008), no acknowledged write was lost in 24 runs that terminated the worker or closed the tab in the middle of a write, in Chromium, Firefox and WebKit, and stores of up to two million nodes (424 MB) reopened in about 6 s with no limit reached. The store opens only in a dedicated worker and serves one holder at a time. What an application needs on top of that is a contract, and four properties of the browser make the contract more than a flag:
 
-- **Another tab can hold the store.** A second tab finds it locked. A worker terminated while running a query kept the store locked for about 2.3 s in earlier measurements. A cache can fall back to memory; an application that does the same silently writes data the visitor believes is saved.
+- **Another tab can hold the store.** A second tab finds it locked. A worker terminated while running a query kept the store locked for about 2.3 s in earlier measurements; the spike saw about 3 s in Chromium and under 0.5 s in Firefox and WebKit. A cache can fall back to memory; an application that does the same silently writes data the visitor believes is saved.
 - **Storage can be absent or lost.** Some contexts offer no store (the WebKit default test profile, for example), a browser can evict a site's storage under pressure unless the site has been granted persistence, and a visitor can clear site data.
-- **Applications change.** A release adds a property, renames a label or splits a relationship type. Stored data from the previous release has to be carried forward.
-- **A copy of the data has to leave the browser.** The graph data format has no `null`, nested values or dates beyond strings, and it infers integer or float from the written number. A graph written by Cypher statements can contain values that format cannot carry. A backup in that format may therefore lose information.
+- **Applications change.** A release adds a property, renames a label or splits a relationship type. Stored data from the previous release has to be carried forward, and a statement that rewrites many nodes can be applied in part if the worker is terminated part-way: the engine commits large statements of the form "match every node with a label and set a property" in batches, and in the spike a terminated statement over 300,000 nodes left 50,000 of them updated.
+- **A copy of the data has to leave the browser.** The graph data format has no `null`, nested values or dates beyond strings, requires every node to have a string `id`, and infers integer or float from the written number. A graph written by Cypher statements can contain values that format cannot carry: integers beyond 2^53, whole-number floats, dates and durations (which load back as strings), points, and empty lists. A backup in that format loses information, and the browser build offers no way to export the engine's own snapshot.
 
 Sites that hold visitor data typically keep it in one graph shared by all their pages; a graph per page is the exception. That shape makes the long-lived, site-wide application graph the case to design for.
 
@@ -82,11 +82,11 @@ The page gets a durable-or-not state in addition to the instance's loading, read
 
 ### 5.4 More than one tab
 
-The store serves one holder at a time. Candidates: the first tab owns the store and later tabs work from a read-only view; later tabs wait and retry with a visible message; later tabs run in memory with a warning that their changes are not saved; one tab is elected to own the store and serves the others by messages. A shared worker is excluded, since it cannot open the store.
+The store serves one holder at a time, refuses a second holder within milliseconds, and is free again within about half a second of its holder's tab closing. Candidates: the first tab owns the store and later tabs wait and retry with a visible message; later tabs run in memory with a warning that their changes are not saved; one tab is elected to own the store and serves the others by messages. A shared worker is excluded, since it cannot open the store, and so is a read-only view in a second tab, since no tab can open a store another holds.
 
 ### 5.5 Migration
 
-Candidates: a numbered series of migration statements kept with the application and run in order against stored data; rebuilding from an export (export, reset, transform, import), which is slower and heavier but needs no migration code; and none, where an incompatible release asks the visitor to reset. The first is the usual shape; the second is a fallback, and the third is a policy choice an application may make explicitly.
+Candidates: a numbered series of migration statements kept with the application and run in order against stored data; rebuilding from an export (export, reset, transform, import), which is slower and heavier but needs no migration code; and none, where an incompatible release asks the visitor to reset. The first is the usual shape; the second is a fallback, and the third is a policy choice an application may make explicitly. Whichever shape is chosen, a migration over many nodes has to be safe to interrupt: written in bounded steps, each filtered so that it can run again, with the schema version written last, because an unbounded statement can be applied in part.
 
 ### 5.6 Relationship to content and page graphs
 
@@ -103,28 +103,30 @@ A site may need both: a read-only content graph that is replaced at each release
 
 ## 7. Open Questions
 
-7.1. What is the multi-tab policy: owner and read-only views, wait and retry, in-memory with a warning, or an elected owner?
+7.1. What is the multi-tab policy: the first tab owns the store and later tabs wait and retry, later tabs run in memory with a warning, or an elected owner serves the others? A read-only view in a second tab is not available.
 
-7.2. What is the migration mechanism, and who writes migrations: the application, a helper in the core, or both? How is a failed migration undone?
+7.2. What is the migration mechanism, and who writes migrations: the application, a helper in the core, or both? Given that an interrupted bulk statement can be partly applied, what rule do migrations follow (bounded, rerunnable steps with the version written last), and does the core enforce it or only document it? How is a failed migration reported?
 
 7.3. Does an application with both a content graph and an application graph use one instance with a marked namespace, or two instances? What does the engine's namespace support allow in the browser build?
 
 7.4. What does the core promise when storage is unavailable: memory with a signal, a refusal to start, or a choice made by the application?
 
-7.5. How large does a store grow, how long does recovery take after many writes, and who triggers a checkpoint, given that the browser build has no background timer? This needs measurement and may need an engine request.
+7.5. Who triggers a checkpoint, and can the page learn the size of its store? In the spike no limit appeared up to two million nodes and the file count stayed fixed, but the browser build offers no call to checkpoint or measure, and long runs showed rare write stalls of 35 to 421 ms whose cause is not known. Does the core need an engine request?
 
-7.6. What format carries an export: the graph data format (with the loss described above), the engine's own snapshot, or both? How is fidelity checked on a round trip?
+7.6. What format carries an export, given the losses described above and that the browser build cannot produce the engine's snapshot? Candidates: the graph data format with a report of what it could not carry, a richer format, or an engine request for snapshot export. How is fidelity checked on a round trip?
 
-7.7. Does the core request persistent storage on its own, or leave that to the application? When does it ask?
+7.7. Does the core request persistent storage on its own, or leave that to the application? When does it ask? In the spike a request was refused in Chromium and WebKit and waited on a permission prompt in Firefox, so a request must never block startup.
 
 7.8. How is a damaged or unreadable store reported to the visitor, and what can be recovered from it?
 
-7.9. How is an application graph's store named and isolated on one origin, given that the current store takes its name from a descriptor an application graph may not have, and two applications on one origin must not open each other's data?
+7.9. How is an application graph's store named, given that a name is one segment of 1 to 64 characters from letters, digits, dash and underscore, that two names on one origin are independent, and that the current store takes its name from a descriptor an application graph may not have? What happens when two applications on one origin choose the same name?
 
-7.10. What are the quota and size limits on a stored graph, and what does the page do as it nears them?
+7.10. What does the page do as a store nears the browser's quota? The browsers in the spike offered 10 to 20 GB and no limit appeared at 424 MB; what a write does when the quota is exceeded was not tested.
 
 7.11. What does persistence mean for privacy on a shared device: data written to a browser store outlives the visitor's session, so does the application say so, and can a visitor clear it from inside the application?
 
+7.12. Which engine changes does an application graph need, and who raises them: a call to trigger a checkpoint and report the store's size, and export of a snapshot from the browser build?
+
 ## 8. ADRs
 
-_(none yet)_
+- [ADR-009](../adr/ADR-009-application-graphs-in-the-core.md): Application graphs in the core as a named durable store with schema versions (proposed)

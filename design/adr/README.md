@@ -65,5 +65,6 @@ Use `/adr-review` before moving a draft to `accepted`.
 | [ADR-005](ADR-005-next-adapter.md) | The Next.js Adapter as React Bindings over the Core | accepted (amended 2026-11-05) | RFC-001, RFC-002 |
 | [ADR-006](ADR-006-observable-adapter.md) | The Observable Framework Adapter as a Helper Package over the Core | accepted (amended 2026-11-08) | RFC-001, RFC-002 |
 | [ADR-007](ADR-007-sveltekit-adapter.md) | The SvelteKit Adapter as Svelte 5 Helpers over the Core | accepted (amended 2026-11-08) | RFC-001, RFC-002 |
+| [ADR-009](ADR-009-application-graphs-in-the-core.md) | Application Graphs in the Core as a Named Durable Store with Schema Versions | proposed | RFC-006, RFC-001 |
 
 Package names: on 2026-11-05 the core and the Astro adapter were renamed from `related-web-core` and `related-web-astro` to `@relate/web-core` and `@relate/web-astro`, joining `@relate/web-next`. The ADRs use the new names throughout; the decisions are unchanged. On 2026-11-08 the project became `relate-contrib` and the packages `@relate/web`, `@relate/astro` and `@relate/nextjs`; the same holds for the decisions and the text of the ADRs (see `design/notes/2026-11-08-relate-contrib-rename.md`).
