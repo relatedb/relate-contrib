@@ -1,0 +1,58 @@
+// The start-up of an application graph in the worker (ADR-009 2.2, 2.4): load the engine, fetch the seed, open the
+// store, run the lifecycle, and report storage and readiness. A failure is reported and the store is left alone.
+import type { Engine } from "../engine.js";
+import { Engine as EngineClass } from "../engine.js";
+import type { InitFailedMessage, InitMessage, Timings, WorkerMessage } from "../protocol.js";
+import { openApplication } from "./lifecycle.js";
+import { openApplicationStore } from "./open-store.js";
+
+const since = (t0: number): number => Math.round((performance.now() - t0) * 10) / 10;
+const messageOf = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
+/** Returns the engine to serve queries with, or null after sending `init-failed`. */
+export async function initApplication(msg: InitMessage, send: (m: WorkerMessage) => void): Promise<Engine | null> {
+  const app = msg.application!;
+  const t0 = performance.now();
+  const timings: Timings = { total: 0 };
+  const fail = (reason: InitFailedMessage["reason"], message: string): null => {
+    send({ type: "init-failed", reason, message });
+    return null;
+  };
+
+  let t = performance.now();
+  await EngineClass.load(msg.engineUrl);
+  timings.init = since(t);
+
+  let seed: unknown = app.seed.document;
+  if (seed === null) {
+    if (!app.seed.dataUrl) return fail("worker-error", "no seed location was given");
+    const response = await fetch(app.seed.dataUrl);
+    if (!response.ok) return fail("worker-error", `the seed could not be fetched: ${response.status} ${response.statusText}`);
+    seed = await response.json();
+  }
+
+  t = performance.now();
+  const outcome = await openApplicationStore(app, { report: (r) => send({ type: "storage", ...r }) });
+  timings.open = since(t);
+  if ("fail" in outcome) return fail(outcome.fail, outcome.message);
+
+  t = performance.now();
+  const result = openApplication(outcome.engine, {
+    version: app.version,
+    intent: app.intent,
+    seed,
+    descriptor: app.seed.descriptor,
+    indexes: app.indexes,
+    migrations: app.migrations,
+  });
+  if (!result.ok) {
+    outcome.engine.release();
+    return fail(result.reason, result.message);
+  }
+  if (result.restored) timings.restore = since(t);
+  else timings.load = since(t);
+  timings.total = since(t0);
+  send({ type: "storage", ...outcome.storage });
+  send({ type: "ready", restored: result.restored, timings });
+  return outcome.engine;
+}

@@ -1,10 +1,12 @@
 // A small typed event emitter. With no listener for an event, nothing is built or delivered (FR-036), and events
 // are delivered only to listeners registered in this page.
+import type { StorageStatus } from "../application/types.js";
 import type { Status } from "./status.js";
 
 export interface Events {
   status: { status: Status; generation: number };
   replaced: { reason: "trap" | "timeout" | "worker-error" | "stopped"; generation: number };
+  storage: StorageStatus;
   timing: { phase: "init" | "open" | "load" | "restore" | "total"; ms: number; restored: boolean };
 }
 

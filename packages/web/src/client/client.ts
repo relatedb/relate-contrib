@@ -6,6 +6,8 @@ import { VISITOR_TIMEOUT_MS } from "../config.js";
 import { GraphError } from "../errors.js";
 import { encodeParams } from "../worker/encode.js";
 import type { ClientMessage, InitFailReason, InitMessage, Timings, WorkerMessage } from "../worker/protocol.js";
+import type { ExportEnvelope, LossReport, StorageStatus } from "../application/types.js";
+import { ApplicationSupport, SeedProblem } from "./application.js";
 import { diagnosticMessage } from "./diagnostic.js";
 import { Emitter, type Events } from "./events.js";
 import { FailureCounter } from "./failure.js";
@@ -51,8 +53,75 @@ class GraphClient implements Client {
   private destroyed = false;
   private waiters: Array<{ resolve: () => void; reject: (e: GraphError) => void }> = [];
 
+  private readonly application: ApplicationSupport | null;
+
   constructor(private readonly options: ClientOptions) {
+    if (options.application) {
+      this.application = new ApplicationSupport(options, (status) => this.emitter.emit("storage", () => status));
+    } else {
+      if (!options.graph) throw new Error("createClient takes exactly one of `graph` and `application`");
+      this.application = null;
+    }
     this.machine = new StatusMachine((status, generation) => this.onStatus(status, generation));
+    this.application?.watchPage(
+      () => this.release(),
+      () => this.restore(),
+    );
+    void this.start();
+  }
+
+  get storage(): StorageStatus {
+    return this.application?.holder.value ?? { kind: "memory", persisted: null };
+  }
+
+  // ---- application mode (ADR-009) ----------------------------------------------------------------------------
+  /** Reset the store and seed it again, on a new worker (the only call that discards stored data). */
+  resetApplication(): Promise<void> {
+    const application = this.application;
+    if (!application) return Promise.reject(new Error("resetApplication is for a client created with `application`"));
+    if (this.destroyed) return Promise.reject(new GraphError("lost", "the client was destroyed"));
+    this.terminateWorker();
+    this.rejectPending(new GraphError("lost", "the instance was reset"));
+    application.intent = "reset";
+    application.released = false;
+    this.diagnostic = null;
+    this.failures.reset();
+    this.machine.markLoading();
+    const done = new Promise<void>((resolve, reject) => this.waiters.push({ resolve, reject }));
+    void this.start();
+    return done;
+  }
+
+  requestPersistence(): Promise<boolean> {
+    return this.application ? this.application.requestPersistence() : Promise.resolve(false);
+  }
+
+  storageEstimate(): Promise<{ usage: number | null; quota: number | null }> {
+    return this.application ? this.application.storageEstimate() : Promise.resolve({ usage: null, quota: null });
+  }
+
+  exportApplication(_opts: { allowLoss?: boolean } = {}): Promise<{ envelope: ExportEnvelope; losses: LossReport }> {
+    return Promise.reject(new Error("exportApplication is not implemented yet"));
+  }
+
+  importApplication(_envelope: ExportEnvelope): Promise<void> {
+    return Promise.reject(new Error("importApplication is not implemented yet"));
+  }
+
+  /** The page is leaving: end the worker so that the next page finds the store free (ADR-009 2.2). */
+  private release(): void {
+    if (this.destroyed || !this.application) return;
+    this.application.released = true;
+    this.terminateWorker();
+  }
+
+  /** A page restored from the back-forward cache starts its instance again. */
+  private restore(): void {
+    const application = this.application;
+    if (this.destroyed || !application?.released) return;
+    application.released = false;
+    this.rejectPending(new GraphError("lost", "the page was restored"));
+    this.machine.markRecovering();
     void this.start();
   }
 
@@ -148,6 +217,7 @@ class GraphClient implements Client {
 
   destroy(): void {
     this.destroyed = true;
+    this.application?.unwatchPage();
     this.terminateWorker();
     this.rejectPending(new GraphError("lost", "the client was destroyed"));
     this.rejectWaiters(new GraphError("lost", "the client was destroyed"));
@@ -156,7 +226,18 @@ class GraphClient implements Client {
   // ---- starting an instance ---------------------------------------------------------------------------------
   private async prepare(): Promise<Omit<InitMessage, "type" | "attempt">> {
     const engineUrl = absolute(this.options.engineUrl, location.href);
-    const graph = this.options.graph;
+    if (this.application) {
+      return {
+        engineUrl,
+        descriptor: null,
+        dataUrl: null,
+        document: null,
+        indexes: [],
+        useStore: false,
+        application: await this.application.init(),
+      };
+    }
+    const graph = this.options.graph!;
     if ("descriptor" in graph) {
       let value: unknown = graph.descriptor;
       let base = location.href;
@@ -203,7 +284,7 @@ class GraphClient implements Client {
       };
       worker.postMessage({ type: "init", ...init, attempt } satisfies ClientMessage);
     } catch (e) {
-      if (e instanceof StartFailure) this.attemptFailed(e.reason, e.message);
+      if (e instanceof StartFailure || e instanceof SeedProblem) this.attemptFailed(e.reason, e.message);
       else this.attemptFailed("worker-error", e instanceof Error ? e.message : String(e));
     }
   }
@@ -237,10 +318,16 @@ class GraphClient implements Client {
       }
       case "store-retry":
         break;
+      case "storage":
+        this.application?.onStorage(msg);
+        break;
+      case "application-exported":
+        break;
     }
   }
 
   private onReady(restored: boolean, timings: Timings): void {
+    if (this.application) this.application.intent = "open";
     this.failures.ready();
     this.diagnostic = null;
     this.machine.markReady();

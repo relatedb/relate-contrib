@@ -1,9 +1,11 @@
-export type Reason = "trap" | "timeout" | "lost" | "stopped" | "failed" | "unsupported" | "worker-error" | "invalid-document";
+export type Reason = "trap" | "timeout" | "lost" | "stopped" | "failed" | "unsupported" | "worker-error" | "invalid-document" | "export-loss";
 
 /** Why a call to the client did not produce a result. Engine errors are not GraphErrors: they arrive in the envelope. */
 export class GraphError extends Error {
   readonly reason: Reason;
   readonly engineError: string | undefined;
+  /** Set for `export-loss`: what the export format could not carry. */
+  losses?: import("./application/types.js").LossReport;
 
   constructor(reason: Reason, message?: string, engineError?: string) {
     super(message ?? reason);

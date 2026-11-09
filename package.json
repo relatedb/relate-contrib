@@ -31,6 +31,9 @@
     "test:sveltekit-browsers": "pnpm --filter @relate/sveltekit test:sveltekit-browsers",
     "test:sveltekit-conformance": "pnpm --filter @relate/sveltekit test:sveltekit-conformance",
     "test:sveltekit-package": "pnpm --filter @relate/sveltekit test:sveltekit-package",
-    "test:sveltekit-trace": "pnpm --filter @relate/sveltekit test:sveltekit-trace"
+    "test:sveltekit-trace": "pnpm --filter @relate/sveltekit test:sveltekit-trace",
+    "test:application": "pnpm --filter @relate/web test:application",
+    "test:application-browsers": "pnpm --filter @relate/web test:application-browsers",
+    "test:application-trace": "pnpm --filter @relate/web test:application-trace"
   }
 }

@@ -6,6 +6,16 @@ export type { Client, ClientOptions, Diagnostic, GraphSource, Run } from "./clie
 export type { Events } from "./client/events.js";
 export type { Status } from "./client/status.js";
 export type { Unsubscribe, Update } from "./client/subscriptions.js";
+export { inRanges } from "./application/ranges.js";
+export type {
+  ApplicationOptions,
+  ExportEnvelope,
+  LossKind,
+  LossReport,
+  MigrationStep,
+  RangeStep,
+  StorageStatus,
+} from "./application/types.js";
 export { GraphError } from "./errors.js";
 export type { Reason } from "./errors.js";
 export { validate, validateDescriptor, checkAgreement } from "./validate.js";

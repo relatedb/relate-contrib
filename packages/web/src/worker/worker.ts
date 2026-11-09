@@ -5,6 +5,7 @@ import { Engine, TrapError } from "./engine.js";
 import { dropScope, EngineError, LoadError, loadDocument, loadGraph, prepare } from "./loader.js";
 import { openStore } from "./store.js";
 import { readStoredCopy, removeStoredCopy, writeStoredCopy } from "./stored-copy.js";
+import { initApplication } from "./application/init.js";
 import { isEmpty, nodeCount, sweepScoped } from "./sweep.js";
 import type {
   ClientMessage,
@@ -38,6 +39,14 @@ function failure(e: unknown): InitFailedMessage {
 
 /** The start-up of contracts/worker-protocol.md: restore from a store when its stored copy matches, else load. */
 async function init(msg: InitMessage): Promise<void> {
+  if (msg.application) {
+    try {
+      engine = await initApplication(msg, send);
+    } catch (e) {
+      send(failure(e));
+    }
+    return;
+  }
   const t0 = performance.now();
   const timings: Timings = { total: 0 };
   try {

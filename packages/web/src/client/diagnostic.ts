@@ -6,10 +6,29 @@ export interface DiagnosticLike {
   engineError: string | null;
 }
 
+const UNCHANGED = "The stored data was not changed.";
+const RESET = "Calling resetApplication() discards it and starts again from the seed.";
+
+/** What each application failure means for the visitor's data (ADR-009 2.2, 2.4). */
+const LIFECYCLE: Record<string, string> = {
+  "store-unmarked": `The browser holds data for this application that the page cannot identify (its marker is missing). ${UNCHANGED} ${RESET}`,
+  "store-newer": `The browser holds data written by a newer version of this application than this page. ${UNCHANGED} ${RESET}`,
+  "import-interrupted": `An import into this application did not finish. ${UNCHANGED} ${RESET}`,
+  "store-unreadable": `The browser's stored data for this application could not be opened. ${UNCHANGED} ${RESET}`,
+  unavailable: "This browser offers no storage for the application's data, and the application does not run without it.",
+  "migration-failed": "Updating the stored data to this version of the application failed. The data is at the last version completed.",
+};
+
 export function diagnosticMessage(diagnostic: DiagnosticLike | null, issueUrl?: string): string {
   if (!diagnostic) return "";
   if (diagnostic.reason === "unsupported") {
     return `This browser cannot run the graph (${diagnostic.engineError ?? "unsupported"}).`;
+  }
+  const lifecycle = LIFECYCLE[diagnostic.reason];
+  if (lifecycle) {
+    const lines = [lifecycle];
+    if (diagnostic.engineError) lines.push(`Details: ${diagnostic.engineError}`);
+    return lines.join("\n");
   }
   const attempts = diagnostic.failures === 1 ? "1 attempt" : `${diagnostic.failures} attempts`;
   const lines = [`The graph could not be loaded after ${attempts} (${diagnostic.reason}).`];
