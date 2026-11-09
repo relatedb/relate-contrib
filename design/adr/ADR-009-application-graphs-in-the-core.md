@@ -113,3 +113,11 @@ The package's tests, in all three browsers, cover: a worker terminated and a tab
 - RFCs: RFC-006, RFC-001
 - ADR-001 (hosting, the cache store, profiles, retry), ADR-002 (the graph data format), ADR-003 (the descriptor), ADR-008 (the first consumer)
 - SPIKE-008 (the measurements)
+
+## 6. Amendments
+
+### 2026-11-09, planning the implementation (specs/006-application-graphs)
+
+- **Typed detection reads each value, not each column (amends 2.5).** The engine's `columnTypes` names one type per column from one row. A column holding an integer, a string and a float reported `INTEGER`, so a property whose type differs across nodes cannot be classified from it. Reading `valueType(n[k])` and `toString(n[k])` for each key of each node returns the type of every value and the exact text of an integer: `9007199254740993` read as a number came back as `9007199254740992`, and as text came back exact; `2.0` read as a number came back as `2` and as text as `2.0`; `[]` is `LIST<NOTHING>`, a date is `DATE`, a datetime `ZONED DATETIME`, a duration `DURATION`, a point `POINT`. Every loss kind in 2.5 is detected this way. One run on Node 24.14.1 with `@relate/relate-wasm` 0.16.1 in memory; details in `specs/006-application-graphs/research.md` (P-1). The "to confirm" item in section 4 about typed reads is therefore answered for the listed kinds; lists whose elements are themselves losses, and nested values, remain to be tested at implementation.
+- **Range helper syntax (settles 2.3).** A migration step is a Cypher string or a plain-data range step made by `inRanges({ label, property, step, statement })`. The statement carries `$from` (inclusive) and `$to` (exclusive) and the author's own filter that makes a rerun harmless; the property is numeric; the helper reads its minimum and maximum over the label, skips the marker, and walks windows of `step`.
+- **Lifecycle failures are not retried.** `store-unmarked`, `store-newer`, `import-interrupted`, `store-unreadable`, a failed migration, and `unavailable` with `onUnavailable: "fail"` fail the client at once, without the core's three-attempt rule of ADR-001, because a repeat cannot change the answer. `retry()` still starts again.
