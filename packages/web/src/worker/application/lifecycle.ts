@@ -29,7 +29,7 @@ const count = (engine: Engine, statement: string): number => {
 };
 
 /** A seed may not contain the marker's label (ADR-009 2.2). Checked before any statement runs. */
-function rejectMarkerLabel(seed: unknown): void {
+export function rejectMarkerLabel(seed: unknown): void {
   const nodes = (seed as { nodes?: Array<{ labels?: unknown }> } | null)?.nodes;
   if (!Array.isArray(nodes)) return;
   for (const [i, node] of nodes.entries()) {

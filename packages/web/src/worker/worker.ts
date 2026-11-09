@@ -6,9 +6,13 @@ import { dropScope, EngineError, LoadError, loadDocument, loadGraph, prepare } f
 import { openStore } from "./store.js";
 import { readStoredCopy, removeStoredCopy, writeStoredCopy } from "./stored-copy.js";
 import { initApplication } from "./application/init.js";
+import { MigrationError } from "./application/migrate.js";
+import { ImportRejected, exportApplication, importApplication } from "./application/transfer.js";
 import { isEmpty, nodeCount, sweepScoped } from "./sweep.js";
 import type {
   ClientMessage,
+  ExportApplicationMessage,
+  ImportApplicationMessage,
   InitFailedMessage,
   InitMessage,
   QueryMessage,
@@ -24,6 +28,8 @@ const scope = self as unknown as {
 };
 
 let engine: Engine | null = null;
+/** The application this worker serves, when it was started in application mode. */
+let application: InitMessage["application"] = undefined;
 
 const send = (message: WorkerMessage): void => scope.postMessage(message);
 const since = (t0: number): number => Math.round((performance.now() - t0) * 10) / 10;
@@ -40,6 +46,7 @@ function failure(e: unknown): InitFailedMessage {
 /** The start-up of contracts/worker-protocol.md: restore from a store when its stored copy matches, else load. */
 async function init(msg: InitMessage): Promise<void> {
   if (msg.application) {
+    application = msg.application;
     try {
       engine = await initApplication(msg, send);
     } catch (e) {
@@ -140,10 +147,39 @@ function scopedDrop(msg: ScopedDropMessage): void {
   }
 }
 
+function transferError(id: number, e: unknown): void {
+  if (e instanceof MigrationError) send({ type: "error", id, reason: "migration-failed", message: e.message });
+  else if (e instanceof ImportRejected || e instanceof LoadError) send({ type: "error", id, reason: "rejected", message: e.message });
+  else send({ type: "error", id, reason: "trap", message: messageOf(e) });
+}
+
+function exportApp(msg: ExportApplicationMessage): void {
+  try {
+    if (!engine || !application) throw new TrapError("no application instance");
+    const { envelope, losses } = exportApplication(engine, application, msg.allowLoss);
+    send({ type: "application-exported", id: msg.id, envelope, losses });
+  } catch (e) {
+    transferError(msg.id, e);
+  }
+}
+
+function importApp(msg: ImportApplicationMessage): void {
+  try {
+    if (!engine || !application) throw new TrapError("no application instance");
+    const indexes = application.seed.descriptor?.indexes ?? application.indexes;
+    importApplication(engine, { name: application.name, version: application.version, indexes, migrations: application.migrations }, msg.envelope);
+    send({ type: "done", id: msg.id });
+  } catch (e) {
+    transferError(msg.id, e);
+  }
+}
+
 scope.onmessage = (e) => {
   const msg = e.data;
   if (msg.type === "init") void init(msg);
   else if (msg.type === "query") query(msg);
   else if (msg.type === "scoped-add") scopedAdd(msg);
   else if (msg.type === "scoped-drop") scopedDrop(msg);
+  else if (msg.type === "export-application") exportApp(msg);
+  else if (msg.type === "import-application") importApp(msg);
 };

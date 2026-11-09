@@ -100,12 +100,28 @@ class GraphClient implements Client {
     return this.application ? this.application.storageEstimate() : Promise.resolve({ usage: null, quota: null });
   }
 
-  exportApplication(_opts: { allowLoss?: boolean } = {}): Promise<{ envelope: ExportEnvelope; losses: LossReport }> {
-    return Promise.reject(new Error("exportApplication is not implemented yet"));
+  /** Read the whole graph into an export envelope, with what the data format could not carry. */
+  async exportApplication(opts: { allowLoss?: boolean } = {}): Promise<{ envelope: ExportEnvelope; losses: LossReport }> {
+    if (!this.application) throw new Error("exportApplication is for a client created with `application`");
+    await this.whenReady();
+    const answer = (await this.request((id) => ({ type: "export-application", id, allowLoss: opts.allowLoss === true }), undefined)) as unknown as {
+      envelope: ExportEnvelope | null;
+      losses: LossReport;
+    };
+    if (!answer.envelope) {
+      const kinds = answer.losses.map((l) => `${l.count} ${l.kind}`).join(", ");
+      const error = new GraphError("export-loss", `the export format cannot carry some values (${kinds}); pass allowLoss: true to export without them`);
+      error.losses = answer.losses;
+      throw error;
+    }
+    return { envelope: answer.envelope, losses: answer.losses };
   }
 
-  importApplication(_envelope: ExportEnvelope): Promise<void> {
-    return Promise.reject(new Error("importApplication is not implemented yet"));
+  /** Replace the stored data with an envelope's document. The page exports the current data first; this does not. */
+  async importApplication(envelope: ExportEnvelope): Promise<void> {
+    if (!this.application) throw new Error("importApplication is for a client created with `application`");
+    await this.whenReady();
+    await this.request((id) => ({ type: "import-application", id, envelope }), undefined);
   }
 
   /** The page is leaving: end the worker so that the next page finds the store free (ADR-009 2.2). */
@@ -311,6 +327,10 @@ class GraphClient implements Client {
         if (msg.reason === "trap") {
           this.take(msg.id)?.reject(new GraphError("trap", msg.message));
           this.fault("trap");
+        } else if (msg.reason === "migration-failed") {
+          // the store is at the last completed version; start again so the client fails with the diagnostic
+          this.take(msg.id)?.reject(new GraphError("failed", msg.message));
+          this.fault("worker-error");
         } else {
           this.take(msg.id)?.reject(new GraphError("invalid-document", msg.message));
         }
@@ -321,8 +341,11 @@ class GraphClient implements Client {
       case "storage":
         this.application?.onStorage(msg);
         break;
-      case "application-exported":
+      case "application-exported": {
+        // an export's answer is not an engine envelope; `exportApplication` reads it as what it is
+        this.take(msg.id)?.resolve(msg as unknown as Envelope);
         break;
+      }
     }
   }
 

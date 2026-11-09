@@ -144,7 +144,7 @@ export interface DoneMessage {
 export interface ErrorMessage {
   type: "error";
   id: number;
-  reason: "trap" | "invalid-document" | "rejected";
+  reason: "trap" | "invalid-document" | "rejected" | "migration-failed";
   message: string;
 }
 
