@@ -28,26 +28,29 @@ What is missing is a contract in the core: a store that is not a cache, a versio
 
 ### 2.1 Application mode
 
-`createClient` accepts an `application` option in place of a graph source: `{ name, version, seed, migrations, onUnavailable, whenLocked }`.
+`createClient` accepts an `application` option in place of a graph source: `{ name, version, seed, indexes, migrations, onUnavailable, onError, whenLocked }`.
 
 - `name` is the application's name. The core validates it against `[A-Za-z0-9_-]{1,60}` and throws at creation if it fails. The store is named `app-<name>`, which keeps application stores apart from the cache stores (`rel-<id>`). Two applications on one origin that choose the same name share data; the name is the application's to choose.
 - `version` is a positive integer, the schema version the code expects.
 - `seed` is a graph data document, or a descriptor, loaded once (ADR-002, ADR-003). Indexes come from the descriptor, or from an `indexes` option when the seed is a plain document (ADR-003). The engine's store keeps its indexes, so they are created on first run only. A migration that needs a new index creates it with an ordinary statement in its list.
 - `migrations` is described in 2.3.
-- `onUnavailable` is `"memory"` (default) or `"fail"`; `whenLocked` is `"wait"` (default) or `"memory"`.
+- `onUnavailable` is `"memory"` (default) or `"fail"`; `onError` is `"fail"` (default) or `"memory"`; `whenLocked` is `"wait"` (default) or `"memory"`.
 
 Application mode is independent of the navigation profile. The instance's lifetime still follows the profile (ADR-001): one for the visit under client-side routing, one per page under multi-page navigation, reopening the same store each time.
 
 ### 2.2 Lifecycle
 
-The store records its state in one node, labelled `_RelateApplication`, with `format` (1) and `version`. The label is reserved; a seed or an application that creates it is an error.
+The store records its state in one node, labelled `_RelateApplication`, with `format` (1), `version` and `state` (`seeding`, `ready` or `importing`). The label belongs to the core and is documented as reserved. The core does not intercept application statements, so it cannot prevent one from deleting the marker; a seed that contains the label is rejected at load. The marker is an ordinary node: queries return it, and the documentation says so. Export, import and the migration range helper skip nodes with this label.
 
 1. **Open** with the bounded retry of ADR-001 (100 ms rising to 500 ms, up to 5 s).
-2. **No marker, store empty**: first run. Load the seed as ordinary nodes (not as the page-scoped data of ADR-001, which is dropped on departure), create the indexes, then create the marker with `version` last. A store that has data but no marker holds an interrupted first run and no visitor data, since the application is not ready until the marker exists; the core resets it and seeds again.
-3. **Marker equal to `version`**: ready; no replay, no seed.
-4. **Marker below `version`**: run the migrations in order (2.3), then ready.
+2. **No marker, store empty**: first run. Create the marker with `state: "seeding"`, load the seed as ordinary nodes (not as the page-scoped data of ADR-001, which is dropped on departure), create the indexes, then set `state: "ready"` as the last statement.
+   **Marker with `state: "seeding"`**: an interrupted first run. No visitor data can exist, since the application was never ready; the core resets the store and seeds again.
+   **Marker with `state: "importing"`**: an interrupted import (2.5). The client fails with `import-interrupted` and leaves the store as it is.
+   **Data but no marker**: the client fails with `store-unmarked` and leaves the store as it is. This is also the state after an application statement deleted the marker. Only `resetApplication()` clears it.
+3. **Marker `ready` and equal to `version`**: ready; no replay, no seed.
+4. **Marker `ready` and below `version`**: run the migrations in order (2.3), then ready.
 5. **Marker above `version`**, or a marker `format` above the one the code knows (an older code version running against newer data): the client fails with the diagnostic `store-newer` and does not touch the store.
-6. **Reset** happens only through an explicit call, `client.resetApplication()`, which resets the store and seeds again. The core never resets a store that has a marker.
+6. **Reset** happens only through an explicit call, `client.resetApplication()`, which resets the store and seeds again, and through the `seeding` recovery above. The core never resets a store with a `ready` marker or one it cannot classify.
 
 A replaced worker (ADR-001) reopens the same store through step 1 and continues. Under multi-page navigation the departing page closes the store from `pagehide` so the next page does not find it locked; a busy Chromium worker can still hold it for about 3 s, which the next page's retry absorbs.
 
@@ -61,7 +64,8 @@ The core cannot make a migration atomic. A statement over many nodes can be part
 
 The client has a `storage` property and an event for changes to it: `{ kind: "durable" | "memory" | "waiting", reason?: "unavailable" | "locked" | "error", persisted: boolean | null }`.
 
-- **Unavailable** (no store support, an open error other than a lock): with `onUnavailable: "memory"` the instance runs in memory, `storage.kind` is `"memory"` and the reason is given; with `"fail"` the client fails.
+- **Unavailable** (the browser offers no store): with `onUnavailable: "memory"` (default) the instance runs in memory, loading the seed on each start, `storage.kind` is `"memory"` and the reason is `unavailable`; with `"fail"` the client fails.
+- **Open error** (an error other than a lock on a store that should exist, possibly a damaged one): the client fails with `store-unreadable` and the engine's message, and leaves the store alone. The page can offer an export attempt and `resetApplication()`. Memory is entered on an error only when the application sets `onError: "memory"`; the default never hides existing data behind a fresh seed.
 - **Locked after the bounded retry** (this replaces ADR-001's in-memory fallback for application mode): with `whenLocked: "wait"` the client stays `loading`, `storage.kind` is `"waiting"` with reason `locked`, and it retries every second until the holder lets go; queries made meanwhile stay pending and do not reject. With `"memory"` it runs in memory with reason `locked`.
 - `persisted` follows `navigator.storage.persisted()`, and is `null` where the browser offers no such call. The core never calls `persist()`. `client.requestPersistence()` calls it, returns a promise, and never delays startup; the application calls it from a user action.
 - `client.storageEstimate()` returns the browser's usage and quota.
@@ -72,7 +76,7 @@ A client in memory never writes to the store, and never turns into a durable one
 
 `client.exportApplication({ allowLoss })` reads all nodes and relationships and returns `{ envelope, losses }`. The envelope is `{ format: "relate-application-export", version: 1, application: { name, version }, document }`, where `document` is an ADR-002 graph data document. Node values in the result envelope carry labels and properties but no property types, and numbers pass through JSON, so the exporter reads each label's properties with typed queries and uses the result's per-column `columnTypes` (INTEGER, FLOAT, date and so on) to detect losses. Integers beyond 2^53 are detected by reading the value as text. The exporter reads in batches, not one envelope per statement, but the returned envelope is held whole in memory, so export has a practical size limit that is measured at implementation. `losses` lists what the format cannot carry, by kind and count: integers beyond 2^53, whole-number floats, dates and durations, points, empty lists, and nodes without a string `id`. Without `allowLoss: true` the call rejects when `losses` is not empty.
 
-`client.importApplication(envelope)` rejects an envelope whose application name differs or whose version is above the code's, and otherwise resets the store, loads the document, writes the marker with the envelope's version and then runs any migrations to the current version. It is explicit and is never invoked by the core.
+`client.importApplication(envelope)` rejects an envelope whose application name differs or whose version is above the code's, and otherwise validates the whole document first, then sets the marker to `state: "importing"`, resets the store, loads the document, writes the marker with the envelope's version and `state: "ready"`, and runs any migrations to the current version. An interruption leaves the `importing` marker, handled in 2.2. The page should export the current data first; `importApplication` does not do so. It is explicit and is never invoked by the core.
 
 ### 2.6 Content graphs and application graphs together
 
@@ -80,7 +84,7 @@ A page that needs both uses two clients, each with its own instance and store: t
 
 ### 2.7 Checks
 
-The package's tests, in all three browsers, cover: a worker terminated and a tab closed mid-write leave every acknowledged write and no gaps; a second tab waits and then proceeds after the first closes; a client in `memory` does not write to the store; the first-run marker is written last, and an interrupted first run seeds again; a marker above the code's version fails with `store-newer` and leaves the data; a migration whose statement is interrupted resumes at the last completed version and ends with the same data as an uninterrupted one; `resetApplication` is the only path that discards data; names outside the rule throw; the export reports each kind of loss and rejects without `allowLoss`; import then export of a graph the format can carry is identical; the departing page releases the store so the next page of a multi-page site opens it within the retry; and restoring an application store of a given size takes no longer than restoring a content store of that size (a measurement recorded with the tests). Test names carry the identifiers of the requirements they cover.
+The package's tests, in all three browsers, cover: a worker terminated and a tab closed mid-write leave every acknowledged write and no gaps; a second tab waits and then proceeds after the first closes; a client in `memory` does not write to the store; export skips the marker; the marker's `ready` state is written last, and an interrupted first run seeds again; a store whose marker was deleted by an application statement fails with `store-unmarked` and keeps its data; an interrupted import fails with `import-interrupted`; an open error on an existing store fails with `store-unreadable` and does not enter memory by default; a marker above the code's version fails with `store-newer` and leaves the data; a migration whose statement is interrupted resumes at the last completed version and ends with the same data as an uninterrupted one; `resetApplication` is the only path that discards data; names outside the rule throw; the export reports each kind of loss and rejects without `allowLoss`; import then export of a graph the format can carry is identical; the departing page releases the store so the next page of a multi-page site opens it within the retry; and restoring an application store of a given size takes no longer than restoring a content store of that size (a measurement recorded with the tests). Test names carry the identifiers of the requirements they cover.
 
 ## 3. Alternatives Considered
 
