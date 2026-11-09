@@ -34,6 +34,14 @@
     "test:sveltekit-trace": "pnpm --filter @relate/sveltekit test:sveltekit-trace",
     "test:application": "pnpm --filter @relate/web test:application",
     "test:application-browsers": "pnpm --filter @relate/web test:application-browsers",
-    "test:application-trace": "pnpm --filter @relate/web test:application-trace"
+    "test:application-trace": "pnpm --filter @relate/web test:application-trace",
+    "typecheck": "pnpm -r typecheck",
+    "test:units": "pnpm run test:unit && pnpm run test:application && pnpm run test:astro && pnpm run test:next && pnpm run test:observable && pnpm run test:sveltekit",
+    "test:conformance-all": "pnpm run test:conformance && pnpm run test:astro-conformance && pnpm run test:next-conformance && pnpm run test:observable-conformance && pnpm run test:sveltekit-conformance",
+    "test:drift": "pnpm run build && pnpm run typecheck && pnpm run test:units && pnpm run test:conformance-all",
+    "test:browsers-all": "pnpm run test:browsers && pnpm run test:application-browsers && pnpm run test:astro-browsers && pnpm run test:next-browsers && pnpm run test:observable-browsers && pnpm run test:sveltekit-browsers",
+    "test:packages-all": "pnpm run test:package && pnpm run test:astro-package && pnpm run test:next-package && pnpm run test:observable-package && pnpm run test:sveltekit-package",
+    "test:traces-all": "pnpm run test:trace && pnpm run test:application-trace && pnpm run test:astro-trace && pnpm run test:next-trace && pnpm run test:observable-trace && pnpm run test:sveltekit-trace",
+    "test:all": "pnpm run test:drift && pnpm run test:browsers-all && pnpm run test:packages-all && pnpm run test:traces-all"
   }
 }

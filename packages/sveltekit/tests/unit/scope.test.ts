@@ -1,24 +1,28 @@
 // covers: FR-033, FR-003, FR-002
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const pkg = fileURLToPath(new URL("../..", import.meta.url));
-const repo = join(pkg, "../..");
-/** The commit of the plan: where this feature started. */
-const BASE = "1994c3c";
-/** The last commit of the work on main before later features changed the core (application graphs, ADR-009). */
-const END = "7740205";
 
 const walk = (dir: string): string[] => (existsSync(dir) ? readdirSync(dir).flatMap((n) => (statSync(join(dir, n)).isDirectory() ? walk(join(dir, n)) : [join(dir, n)])) : []);
 const sources = (): string[] => walk(join(pkg, "src"));
 
 describe("what this feature leaves alone (FR-033)", () => {
-  it("changes nothing in the core's or the other adapters' sources since the plan", () => {
-    const changed = execFileSync("git", ["diff", "--name-only", `${BASE}..${END}`, "--", "packages/web/src", "packages/astro/src", "packages/nextjs/src", "packages/observable/src"], { cwd: repo, encoding: "utf8" });
-    expect(changed.trim()).toBe("");
+  // The package touches the core and the other adapters only through the core's published entry points, so a core
+  // change shows up as a type error or a conformance failure (`pnpm test:drift`), not as a silent dependency on internals.
+  it("imports the core only through its exported entry points and nothing from another adapter", () => {
+    const exported = new Set([".", "/validate", "/build", "/worker", "/conformance"]);
+    for (const file of walk(join(pkg, "src")).filter((f) => /\.(js|ts|svelte)$/.test(f))) {
+      const text = readFileSync(file, "utf8");
+      for (const m of text.matchAll(/from\s+["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)/g)) {
+        const spec = (m[1] ?? m[2])!;
+        expect(spec, file).not.toMatch(/packages\/|@relate\/(astro|nextjs|observable|sveltekit)\b/);
+        const core = /^@relate\/web(\/.*)?$/.exec(spec);
+        if (core) expect(exported.has(core[1] ?? "."), `${file}: ${spec}`).toBe(true);
+      }
+    }
   });
 });
 
