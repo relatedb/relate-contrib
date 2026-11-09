@@ -38,7 +38,10 @@
     "test:browsers": "playwright test --grep-invert @conformance",
     "test:conformance": "REL_REPORT=reports/conformance.json playwright test --grep @conformance",
     "test:package": "vitest run --config vitest.package.config.ts --reporter=default --reporter=json --outputFile.json=reports/package.json",
-    "test:trace": "tsx tests/trace/check-trace.ts"
+    "test:trace": "tsx tests/trace/check-trace.ts",
+    "test:application": "vitest run --config vitest.application.config.ts --reporter=default --reporter=json --outputFile.json=reports/application-vitest.json",
+    "test:application-browsers": "playwright test --config playwright.application.config.ts",
+    "test:application-trace": "tsx tests/application/trace/check-trace-application.ts"
   },
   "peerDependencies": {
     "@relate/relate-wasm": "*",

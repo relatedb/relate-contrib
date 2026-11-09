@@ -18,7 +18,7 @@ Planned integration order (subject to change as ADRs land): ObservableHQ, Astro,
 
 The first package, `packages/web` (`@relate/web`), is implemented from `specs/001-core-package/`
 (see its `tasks.md`). The Astro adapter, `packages/astro` (`@relate/astro`), is implemented from `specs/002-astro-adapter/`
-(ADR-004). The Next adapter, `packages/nextjs` (`@relate/nextjs`), is implemented from `specs/003-next-adapter/` (ADR-005) under the `@relate` namespace, like the core and the Astro adapter (all three renamed on 2026-11-08, see `design/notes/2026-11-08-relate-contrib-rename.md`). The Observable Framework adapter, `packages/observable` (`@relate/observable`), is implemented from `specs/004-observable-adapter/` (ADR-006). The SvelteKit adapter, `packages/sveltekit` (`@relate/sveltekit`), is implemented from `specs/005-sveltekit-adapter/` (ADR-007). Design documents are in `design/`. Further adapters come next.
+(ADR-004). The Next adapter, `packages/nextjs` (`@relate/nextjs`), is implemented from `specs/003-next-adapter/` (ADR-005) under the `@relate` namespace, like the core and the Astro adapter (all three renamed on 2026-11-08, see `design/notes/2026-11-08-relate-contrib-rename.md`). The Observable Framework adapter, `packages/observable` (`@relate/observable`), is implemented from `specs/004-observable-adapter/` (ADR-006). The SvelteKit adapter, `packages/sveltekit` (`@relate/sveltekit`), is implemented from `specs/005-sveltekit-adapter/` (ADR-007). Application mode of the core, an application graph in `createClient` (`application` option: named durable store `app-<name>`, schema version, migrations, storage status, export and import), is implemented from `specs/006-application-graphs/` (ADR-009). Design documents are in `design/`. Further adapters come next.
 
 ## Commands
 
@@ -35,6 +35,9 @@ pnpm test:browsers             # Playwright: Chromium, Firefox, WebKit
 pnpm test:conformance          # the conformance check over the example site, both profiles
 pnpm test:package              # packs the core, installs it in a clean project, bundles and runs a page
 pnpm test:trace                # every requirement and success criterion has a passing, tagged test
+pnpm test:application          # application graphs in the core: unit tests against the real engine in Node
+pnpm test:application-browsers # application graphs in Chromium, Firefox, WebKit (durability, second tab, recovery, restore)
+pnpm test:application-trace    # every requirement of specs/006 has a passing, tagged test (tags are `covers-app:`)
 pnpm test:astro                # the Astro adapter: unit and build tests
 pnpm test:astro-browsers       # the adapter in Chromium, Firefox, WebKit (lifecycle, store, inline graphs, profile check)
 pnpm test:astro-conformance    # the core's conformance runner over packages/astro/conformance-site, both profiles

@@ -1,0 +1,40 @@
+# Everything: the drift check, then every browser suite, every clean-install package test and every traceability
+# check. Slower than the drift check (the browser suites take most of an hour), so it runs on main and nightly, not on
+# every pull request. The same command runs locally: `pnpm test:all`.
+name: full
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: full-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  all:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
+      - run: pnpm run test:all
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reports
+          path: |
+            packages/*/reports
+            packages/*/test-results
+          if-no-files-found: ignore

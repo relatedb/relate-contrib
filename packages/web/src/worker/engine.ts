@@ -36,10 +36,15 @@ export class Engine {
     return new Engine(new RelateDb());
   }
 
-  /** Open the durable store `rel-<id>`. Works only in a dedicated worker. */
-  static async store(id: string): Promise<Engine> {
+  /** Wrap an engine instance that is already initialised (a seam for tests; not part of the package interface). */
+  static fromDb(db: RelateDb): Engine {
+    return new Engine(db);
+  }
+
+  /** Open the durable store `<prefix><id>` (`rel-` for a content cache, `app-` for an application). Works only in a dedicated worker. */
+  static async store(id: string, prefix: string = STORE_PREFIX): Promise<Engine> {
     try {
-      return new Engine(await RelateDb.open(`opfs://${STORE_PREFIX}${id}`));
+      return new Engine(await RelateDb.open(`opfs://${prefix}${id}`));
     } catch (e) {
       if (/storage locked/i.test(messageOf(e))) throw new StorageLockedError(messageOf(e));
       throw e;
@@ -58,6 +63,17 @@ export class Engine {
   /** Drop the database; for a store this wipes it and reopens it. */
   reset(): void {
     this.guard(() => this.db.reset());
+  }
+
+  /** Let the database go (it releases a store's lock) and refuse every later call. */
+  release(): void {
+    if (this.dead) return;
+    this.dead = true;
+    try {
+      this.db.free();
+    } catch {
+      /* the instance was already unusable */
+    }
   }
 
   private guard<T>(call: () => T): T {

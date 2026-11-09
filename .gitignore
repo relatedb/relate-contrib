@@ -13,6 +13,11 @@ reports/
 packages/*/src/**/*.js
 packages/*/src/**/*.d.ts
 packages/*/src/**/*.js.map
+
+# The SvelteKit package ships its rune modules, registry and type declarations as hand-written JavaScript source
+# (ADR-007); they are sources, not compiled output.
+!packages/sveltekit/src/**/*.js
+!packages/sveltekit/src/**/*.d.ts
 packages/*/tests/**/*.js
 packages/*/tests/**/*.d.ts
 packages/*/tests/**/*.js.map

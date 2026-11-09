@@ -1,5 +1,6 @@
 // The public types of the client (specs contracts/client-api.md).
 import type { Descriptor, Envelope, GraphDocument, IndexSpec } from "../data/types.js";
+import type { ApplicationOptions, ExportEnvelope, LossReport, StorageStatus } from "../application/types.js";
 import type { Reason } from "../errors.js";
 import type { Events } from "./events.js";
 import type { Status } from "./status.js";
@@ -14,8 +15,10 @@ export type GraphSource =
 export interface ClientOptions {
   /** URL of the engine binary, handed to the engine's init (FR-007). */
   engineUrl: string | URL;
-  /** The graph to load. */
-  graph: GraphSource;
+  /** The graph to load. Exactly one of `graph` and `application` is given. */
+  graph?: GraphSource;
+  /** Application mode (ADR-009): one named, durable, versioned graph written by the visitor. */
+  application?: ApplicationOptions;
   /** Profile. "client-routing" is `persistent`; "multi-page" is `per-page` (FR-028). */
   navigation: "client-routing" | "multi-page";
   /** Use the store (needs a descriptor, FR-023). Default: false for client-routing, true for multi-page. */
@@ -29,7 +32,18 @@ export interface ClientOptions {
 }
 
 export interface Diagnostic {
-  reason: Reason | "invalid-document" | "invalid-descriptor" | "mismatch" | "store";
+  reason:
+    | Reason
+    | "invalid-document"
+    | "invalid-descriptor"
+    | "mismatch"
+    | "store"
+    | "store-unmarked"
+    | "store-newer"
+    | "import-interrupted"
+    | "store-unreadable"
+    | "unavailable"
+    | "migration-failed";
   failures: number;
   engineError: string | null;
 }
@@ -53,6 +67,15 @@ export interface Client {
   /** Drop every scope this client added (a page leaving). */
   dropAllScopes(): Promise<void>;
   on<E extends keyof Events>(event: E, listener: (payload: Events[E]) => void): Unsubscribe;
+  /** What the page can say about whether its data is stored (application mode; otherwise memory-only values). */
+  readonly storage: StorageStatus;
+  /** Reset the store and seed it again: the only call that discards stored data (application mode). */
+  resetApplication(): Promise<void>;
+  exportApplication(opts?: { allowLoss?: boolean }): Promise<{ envelope: ExportEnvelope; losses: LossReport }>;
+  importApplication(envelope: ExportEnvelope): Promise<void>;
+  /** Ask the browser for persistent storage, from a user action. Never called by the core itself. */
+  requestPersistence(): Promise<boolean>;
+  storageEstimate(): Promise<{ usage: number | null; quota: number | null }>;
   retry(): void;
   failureMessage(): string;
   destroy(): void;

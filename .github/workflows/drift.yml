@@ -1,0 +1,39 @@
+# The drift check: does everything still agree with the core? Builds every package, type-checks adapters against the
+# core's published types, runs every package's unit tests, and runs the core's conformance check over every adapter's
+# conformance site. The same command runs locally: `pnpm test:drift`.
+name: drift
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: drift-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0 # the Next adapter's scope test reads commit ranges
+      - uses: ./.github/actions/setup
+        with:
+          engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
+      - run: pnpm run test:drift
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: drift-reports
+          path: |
+            packages/*/reports
+            packages/*/test-results
+          if-no-files-found: ignore

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://relate-contrib.invalid/schemas/relate-application-export-1.json",
+  "title": "relate-application-export, version 1",
+  "description": "The envelope around an ADR-002 graph data document that exportApplication returns and importApplication accepts. The document's own rules (ADR-002) are checked by the core's validator, not restated here.",
+  "type": "object",
+  "required": ["format", "version", "application", "document"],
+  "additionalProperties": false,
+  "properties": {
+    "format": { "const": "relate-application-export" },
+    "version": { "const": 1 },
+    "application": {
+      "type": "object",
+      "required": ["name", "version"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,60}$" },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "document": {
+      "type": "object",
+      "required": ["nodes", "links"],
+      "properties": {
+        "nodes": { "type": "array" },
+        "links": { "type": "array" }
+      }
+    }
+  },
+  "$defs": {
+    "lossKind": {
+      "enum": ["integer-beyond-2^53", "whole-number-float", "date", "duration", "point", "empty-list", "node-without-string-id"]
+    },
+    "lossReport": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "count"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": { "$ref": "#/$defs/lossKind" },
+          "count": { "type": "integer", "minimum": 1 },
+          "droppedLinks": { "type": "integer", "minimum": 1 }
+        }
+      }
+    }
+  }
+}
