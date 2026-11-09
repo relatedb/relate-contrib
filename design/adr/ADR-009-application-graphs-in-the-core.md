@@ -1,7 +1,7 @@
 ---
 id: ADR-009
 title: Application Graphs in the Core as a Named Durable Store with Schema Versions
-status: proposed
+status: accepted
 rfcs: [RFC-006, RFC-001]
 created: 2026-11-08
 ---

@@ -129,4 +129,4 @@ A site may need both: a read-only content graph that is replaced at each release
 
 ## 8. ADRs
 
-- [ADR-009](../adr/ADR-009-application-graphs-in-the-core.md): Application graphs in the core as a named durable store with schema versions (proposed)
+- [ADR-009](../adr/ADR-009-application-graphs-in-the-core.md): Application graphs in the core as a named durable store with schema versions (accepted)
