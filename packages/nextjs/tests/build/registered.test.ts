@@ -37,8 +37,10 @@ for (const bundler of ["turbopack", "webpack"] as Bundler[]) {
       expect(b.output).toMatch(/graph "g": nodes\[1\]/);
     });
 
+    // The check compares two processes' evaluations (ADR-005), so the build is given several worker processes. With one
+    // (Next's default on a machine with few cores, such as a CI runner) the source is evaluated once and nothing differs.
     it("fails the build, naming the graph, for a source that gives different content on each call", () => {
-      const b = build({ bundler, files: { "lib/graphs.js": `export const graphs = { g: { source: () => ({ version: 1, nodes: [{ id: "a" }, { id: String(Math.random()) }], links: [] }) } };\n` } });
+      const b = build({ bundler, config: "experimental: { cpus: 4 },", files: { "lib/graphs.js": `export const graphs = { g: { source: () => ({ version: 1, nodes: [{ id: "a" }, { id: String(Math.random()) }], links: [] }) } };\n` } });
       expect(b.status).not.toBe(0);
       expect(b.output).toMatch(/graph "g": revision mismatch/);
     });
