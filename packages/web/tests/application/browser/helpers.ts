@@ -1,4 +1,6 @@
-import { expect, type Page } from "@playwright/test";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { expect, type Page, type TestInfo } from "@playwright/test";
 
 export const seed = {
   version: 1,
@@ -59,3 +61,21 @@ export const makeBulk = (page: Page): Promise<unknown> =>
   rows(page, "UNWIND range(1, 1000) AS i CREATE (:Bulk {id: 'b' + toString(i)})");
 
 export { expect };
+
+/** A seed document of `n` Item nodes numbered 0..n-1, built in the page. */
+export const itemSeed = (n: number) => ({
+  version: 1,
+  nodes: Array.from({ length: n }, (_, i) => ({ id: `i${i}`, labels: ["Item"], properties: { n: i } })),
+  links: [],
+});
+
+/** Merge `data` into `reports/application-<name>.json` under this browser's name (single worker, so no race). */
+export function record(info: TestInfo, name: string, key: string, data: unknown): void {
+  const dir = join(process.cwd(), "reports");
+  mkdirSync(dir, { recursive: true });
+  const file = join(dir, `application-${name}.json`);
+  const all = existsSync(file) ? (JSON.parse(readFileSync(file, "utf8")) as Record<string, Record<string, unknown>>) : {};
+  const browser = info.project.name;
+  all[browser] = { ...(all[browser] ?? {}), [key]: data, environment: `${browser}, single run, one machine, ${new Date().toISOString().slice(0, 10)}` };
+  writeFileSync(file, JSON.stringify(all, null, 2) + "\n");
+}
