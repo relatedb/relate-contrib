@@ -3,7 +3,7 @@ id: RFC-005
 title: Integrations for Community Projects and Hackathons
 status: draft
 created: 2026-11-08
-adrs: []
+adrs: [ADR-008]
 ---
 
 # RFC-005: Integrations for Community Projects and Hackathons
@@ -117,4 +117,4 @@ This RFC states the goals and the approach. Each starter, or family of starters 
 
 ## 8. ADRs
 
-_(none yet)_
+- ADR-008: a react-admin data provider over the core, with a local-first starter
