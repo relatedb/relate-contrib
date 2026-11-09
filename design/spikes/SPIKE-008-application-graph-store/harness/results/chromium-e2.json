@@ -1,0 +1,120 @@
+{
+  "e2": {
+    "bulk": [
+      {
+        "total": 1000,
+        "reopenMs": 15,
+        "summaryMsAtOpen": null,
+        "countAtOpen": 0,
+        "writeOk": true,
+        "writeMs": 34,
+        "perStatement": {
+          "n": 2,
+          "mean": 16.865000009536743,
+          "p50": 27.055000007152557,
+          "p95": 27.055000007152557,
+          "max": 27.055000007152557
+        },
+        "count": 1000,
+        "opfsBytes": 218910,
+        "opfsFiles": 65
+      },
+      {
+        "total": 5000,
+        "reopenMs": 27,
+        "summaryMsAtOpen": 22,
+        "countAtOpen": 1000,
+        "writeOk": true,
+        "writeMs": 48,
+        "perStatement": {
+          "n": 8,
+          "mean": 5.9525000005960464,
+          "p50": 5.435000002384186,
+          "p95": 11.024999976158142,
+          "max": 11.024999976158142
+        },
+        "count": 5000,
+        "opfsBytes": 1103224,
+        "opfsFiles": 65
+      },
+      {
+        "total": 20000,
+        "reopenMs": 65,
+        "summaryMsAtOpen": 32,
+        "countAtOpen": 5000,
+        "writeOk": true,
+        "writeMs": 138,
+        "perStatement": {
+          "n": 30,
+          "mean": 4.594499997297922,
+          "p50": 4.349999964237213,
+          "p95": 5.590000033378601,
+          "max": 10.009999990463257
+        },
+        "count": 20000,
+        "opfsBytes": 4439454,
+        "opfsFiles": 65
+      },
+      {
+        "total": 50000,
+        "reopenMs": 161,
+        "summaryMsAtOpen": 68,
+        "countAtOpen": 20000,
+        "writeOk": true,
+        "writeMs": 260,
+        "perStatement": {
+          "n": 60,
+          "mean": 4.333500000834465,
+          "p50": 4.129999995231628,
+          "p95": 5.169999957084656,
+          "max": 10.035000026226044
+        },
+        "count": 50000,
+        "opfsBytes": 11131916,
+        "opfsFiles": 65
+      },
+      {
+        "total": 100000,
+        "reopenMs": 332,
+        "summaryMsAtOpen": 128,
+        "countAtOpen": 50000,
+        "writeOk": true,
+        "writeMs": 428,
+        "perStatement": {
+          "n": 100,
+          "mean": 4.273949999809265,
+          "p50": 4.2049999833106995,
+          "p95": 5.375,
+          "max": 9.685000002384186
+        },
+        "count": 100000,
+        "opfsBytes": 22286216,
+        "opfsFiles": 65
+      }
+    ],
+    "singles": {
+      "total": 20000,
+      "writeOk": true,
+      "totalMs": 10581,
+      "first1000": {
+        "n": 1000,
+        "mean": 0.6329449998140335,
+        "p50": 0.5799999833106995,
+        "p95": 0.8050000071525574,
+        "max": 18.365000009536743
+      },
+      "last1000": {
+        "n": 1000,
+        "mean": 0.5143999999761582,
+        "p50": 0.4699999690055847,
+        "p95": 0.51500004529953,
+        "max": 40.62999999523163
+      },
+      "count": 20000,
+      "reopenMs": 107,
+      "summaryMs": 71,
+      "opfsBytesAllStores": 28364632,
+      "opfsFilesAllStores": 130
+    }
+  }
+}

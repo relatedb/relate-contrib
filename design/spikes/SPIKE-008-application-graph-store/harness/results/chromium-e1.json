@@ -1,0 +1,101 @@
+{
+  "e1": {
+    "terminate": [
+      {
+        "cycle": 0,
+        "delay": 1021,
+        "completedByEngine": 2550,
+        "recovered": 5997,
+        "hi": 5996,
+        "lo": 0,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 3215,
+        "tries": 18
+      },
+      {
+        "cycle": 1,
+        "delay": 1336,
+        "completedByEngine": 3202,
+        "recovered": 6647,
+        "hi": 6646,
+        "lo": 0,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 3334,
+        "tries": 18
+      },
+      {
+        "cycle": 2,
+        "delay": 1104,
+        "completedByEngine": 2702,
+        "recovered": 6177,
+        "hi": 6176,
+        "lo": 0,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 3269,
+        "tries": 18
+      },
+      {
+        "cycle": 3,
+        "delay": 1411,
+        "completedByEngine": 3161,
+        "recovered": 6465,
+        "hi": 6464,
+        "lo": 0,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 3442,
+        "tries": 18
+      },
+      {
+        "cycle": 4,
+        "delay": 529,
+        "completedByEngine": 1467,
+        "recovered": 4833,
+        "hi": 4832,
+        "lo": 0,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 2983,
+        "tries": 18
+      }
+    ],
+    "pageClose": [
+      {
+        "cycle": 0,
+        "delay": 936,
+        "completedBeforeClose": 1758,
+        "recovered": 1760,
+        "hi": 1759,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 464,
+        "tries": 1
+      },
+      {
+        "cycle": 1,
+        "delay": 748,
+        "completedBeforeClose": 1385,
+        "recovered": 1386,
+        "hi": 1385,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 363,
+        "tries": 1
+      },
+      {
+        "cycle": 2,
+        "delay": 1467,
+        "completedBeforeClose": 2834,
+        "recovered": 2835,
+        "hi": 2834,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 735,
+        "tries": 1
+      }
+    ]
+  }
+}

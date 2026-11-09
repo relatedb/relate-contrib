@@ -1,0 +1,134 @@
+{
+  "e1": {
+    "terminate": [
+      {
+        "cycle": 0,
+        "delay": 597,
+        "completedByEngine": 2155,
+        "recovered": 2156,
+        "hi": 2155,
+        "lo": 0,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 211,
+        "tries": 1
+      },
+      {
+        "cycle": 1,
+        "delay": 1458,
+        "completedByEngine": 5444,
+        "recovered": 5444,
+        "hi": 5443,
+        "lo": 0,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 476,
+        "tries": 1
+      },
+      {
+        "cycle": 2,
+        "delay": 1283,
+        "completedByEngine": 4912,
+        "recovered": 4912,
+        "hi": 4911,
+        "lo": 0,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 448,
+        "tries": 1
+      },
+      {
+        "cycle": 3,
+        "delay": 643,
+        "completedByEngine": 2689,
+        "recovered": 2689,
+        "hi": 2688,
+        "lo": 0,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 279,
+        "tries": 1
+      },
+      {
+        "cycle": 4,
+        "delay": 1065,
+        "completedByEngine": 3976,
+        "recovered": 3976,
+        "hi": 3975,
+        "lo": 0,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 347,
+        "tries": 1
+      }
+    ],
+    "pageClose": [
+      {
+        "cycle": 0,
+        "delay": 463,
+        "completedBeforeClose": 1131,
+        "recovered": 1152,
+        "hi": 1151,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 172,
+        "tries": 1
+      },
+      {
+        "cycle": 1,
+        "delay": 940,
+        "completedBeforeClose": 4174,
+        "recovered": 4196,
+        "hi": 4195,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 310,
+        "tries": 1
+      },
+      {
+        "cycle": 2,
+        "delay": 1174,
+        "completedBeforeClose": 1706,
+        "recovered": 1716,
+        "hi": 1715,
+        "gapFree": true,
+        "lostAcked": false,
+        "unlockWaitMs": 380,
+        "tries": 1
+      }
+    ]
+  },
+  "e3": {
+    "sameTabSecondWorker": {
+      "ok": false,
+      "error": "storage locked: opfs://e3",
+      "ms": 3
+    },
+    "afterKill": {
+      "ok": true,
+      "waitMs": 91,
+      "tries": 1,
+      "row": {
+        "c": 10,
+        "hi": 9,
+        "lo": 0
+      }
+    },
+    "twoTabsRefused": {
+      "ok": false,
+      "tries": 15,
+      "error": "storage locked: opfs://e3b"
+    },
+    "twoTabsAfterHolderClosed": {
+      "ok": true,
+      "waitMs": 121,
+      "tries": 1,
+      "row": {
+        "c": 10,
+        "hi": 9,
+        "lo": 0
+      },
+      "wallMsSinceClose": 186
+    }
+  }
+}

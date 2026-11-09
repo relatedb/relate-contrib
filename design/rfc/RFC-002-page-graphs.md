@@ -70,7 +70,7 @@ A page carries one graph or several independent ones (several notebooks, or a no
 
 ### 5.3 Visitor work and recovery
 
-Read-only graphs (dashboards, a page as a graph) recover by loading their data again. Where a graph's state is the result of authored cells run in order, as in the cookbook, recovery can replay the earlier cells. Where visitors type statements, three candidates: lose the work and tell the visitor, replay the statements the visitor ran after the seed data, or offer an explicit reset and keep nothing. Replay is only sound for statements that give the same result when run again.
+Read-only graphs (dashboards, a page as a graph) recover by loading their data again. Where a graph's state is the result of authored cells run in order, as in the cookbook, recovery can replay the earlier cells. Where visitors type statements, three candidates: lose the work and tell the visitor, replay the statements the visitor ran after the seed data, or offer an explicit reset and keep nothing. Replay is only sound for statements that give the same result when run again. These candidates apply to graphs that live for one page view; for a graph that holds an application's data, losing the work is not an option, and RFC-006 takes up how it persists.
 
 ### 5.4 When and where an instance runs
 

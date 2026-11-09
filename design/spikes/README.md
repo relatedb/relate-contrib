@@ -78,3 +78,4 @@ into the RFC rather than copied verbatim.
 | [SPIKE-005](SPIKE-005-worker-survival-across-navigation/SPIKE.md) | Worker Survival Across Route Changes in Astro | done | RFC-001 |
 | [SPIKE-006](SPIKE-006-nextjs-embedding/SPIKE.md) | Embedding the Core in Next.js | done | RFC-001 |
 | [SPIKE-007](SPIKE-007-sveltekit-embedding/SPIKE.md) | Embedding the Core in SvelteKit | done | RFC-001 |
+| [SPIKE-008](SPIKE-008-application-graph-store/SPIKE.md) | The Engine's Browser Store as a Durable Application Store | done | RFC-006 |

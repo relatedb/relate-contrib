@@ -1,0 +1,35 @@
+{
+  "e3": {
+    "sameTabSecondWorker": {
+      "ok": false,
+      "error": "storage locked: opfs://e3",
+      "ms": 1
+    },
+    "afterKill": {
+      "ok": true,
+      "waitMs": 19,
+      "tries": 1,
+      "row": {
+        "c": 10,
+        "hi": 9,
+        "lo": 0
+      }
+    },
+    "twoTabsRefused": {
+      "ok": false,
+      "tries": 15,
+      "error": "storage locked: opfs://e3b"
+    },
+    "twoTabsAfterHolderClosed": {
+      "ok": true,
+      "waitMs": 19,
+      "tries": 1,
+      "row": {
+        "c": 10,
+        "hi": 9,
+        "lo": 0
+      },
+      "wallMsSinceClose": 52
+    }
+  }
+}
