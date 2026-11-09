@@ -3,7 +3,7 @@
 import type { Engine } from "../engine.js";
 import { Engine as EngineClass } from "../engine.js";
 import type { InitFailedMessage, InitMessage, Timings, WorkerMessage } from "../protocol.js";
-import { openApplication } from "./lifecycle.js";
+import { needsSeed, openApplication } from "./lifecycle.js";
 import { openApplicationStore } from "./open-store.js";
 
 const since = (t0: number): number => Math.round((performance.now() - t0) * 10) / 10;
@@ -23,18 +23,27 @@ export async function initApplication(msg: InitMessage, send: (m: WorkerMessage)
   await EngineClass.load(msg.engineUrl);
   timings.init = since(t);
 
-  let seed: unknown = app.seed.document;
-  if (seed === null) {
-    if (!app.seed.dataUrl) return fail("worker-error", "no seed location was given");
-    const response = await fetch(app.seed.dataUrl);
-    if (!response.ok) return fail("worker-error", `the seed could not be fetched: ${response.status} ${response.statusText}`);
-    seed = await response.json();
-  }
-
   t = performance.now();
   const outcome = await openApplicationStore(app, { report: (r) => send({ type: "storage", ...r }) });
   timings.open = since(t);
   if ("fail" in outcome) return fail(outcome.fail, outcome.message);
+
+  // The seed is fetched only when it will be used: a ready store restores without it.
+  let seed: unknown = app.seed.document;
+  if (seed === null && needsSeed(outcome.engine, app.version, app.intent)) {
+    if (!app.seed.dataUrl) {
+      outcome.engine.release();
+      return fail("worker-error", "no seed location was given");
+    }
+    try {
+      const response = await fetch(app.seed.dataUrl);
+      if (!response.ok) throw new Error(`the seed could not be fetched: ${response.status} ${response.statusText}`);
+      seed = await response.json();
+    } catch (e) {
+      outcome.engine.release();
+      return fail("worker-error", messageOf(e));
+    }
+  }
 
   t = performance.now();
   const result = openApplication(outcome.engine, {

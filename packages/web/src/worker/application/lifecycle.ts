@@ -5,7 +5,7 @@ import { MARKER_LABEL, MARKER_FORMAT } from "../../config.js";
 import type { Descriptor, IndexSpec } from "../../data/types.js";
 import type { Engine } from "../engine.js";
 import { LoadError, loadGraph, prepare, run } from "../loader.js";
-import { classify, type FailureReason } from "./classify.js";
+import { classify, type Action, type FailureReason } from "./classify.js";
 import { createMarker, readMarkers, setState } from "./marker.js";
 import { migrate, MigrationError } from "./migrate.js";
 
@@ -48,6 +48,27 @@ function firstRun(engine: Engine, input: LifecycleInput): void {
   setState(engine, "ready");
 }
 
+/** Classify the opened store. The counts only matter without a marker, so a ready store is not scanned (SC-007). */
+function inspect(engine: Engine, version: number): Action {
+  const markers = readMarkers(engine);
+  const unmarked = markers.length === 0;
+  return classify(
+    {
+      markers,
+      nodeCount: unmarked ? count(engine, "MATCH (n) RETURN count(n) AS c") : 0,
+      indexCount: unmarked ? run(engine, "SHOW INDEXES").rows.length : 0,
+    },
+    { version, format: MARKER_FORMAT },
+  );
+}
+
+/** Whether opening this store will load the seed, so a ready store does not fetch it. */
+export function needsSeed(engine: Engine, version: number, intent: "open" | "reset"): boolean {
+  if (intent === "reset") return true;
+  const action = inspect(engine, version).action;
+  return action === "first-run" || action === "reset-and-seed";
+}
+
 export function openApplication(engine: Engine, input: LifecycleInput): LifecycleResult {
   try {
     if (input.intent === "reset") {
@@ -55,14 +76,7 @@ export function openApplication(engine: Engine, input: LifecycleInput): Lifecycl
       firstRun(engine, input);
       return { ok: true, restored: false };
     }
-    const action = classify(
-      {
-        markers: readMarkers(engine),
-        nodeCount: count(engine, "MATCH (n) RETURN count(n) AS c"),
-        indexCount: run(engine, "SHOW INDEXES").rows.length,
-      },
-      { version: input.version, format: MARKER_FORMAT },
-    );
+    const action = inspect(engine, input.version);
     switch (action.action) {
       case "fail":
         return { ok: false, reason: action.reason, message: action.message };

@@ -41,6 +41,18 @@ function patchedWorker(patch: string): () => Worker {
 /** Run a client's worker with `navigator.storage.getDirectory` removed: a browser with no store. */
 const noStoreWorker = (): (() => Worker) => patchedWorker("Object.defineProperty(navigator.storage, 'getDirectory', { value: undefined });");
 
-export const app = { core, engineUrl, generateGraph, make, patchedWorker, noStoreWorker, workerUrl };
+/** A worker factory that keeps every worker it makes on `window.workers`, so a test can end one part-way. */
+const trackedWorker = (): (() => Worker) => {
+  const w = window as unknown as { workers?: Worker[] };
+  w.workers = [];
+  const make = patchedWorker("");
+  return () => {
+    const worker = make();
+    w.workers!.push(worker);
+    return worker;
+  };
+};
+
+export const app = { trackedWorker, core, engineUrl, generateGraph, make, patchedWorker, noStoreWorker, workerUrl };
 window.app = app;
 document.documentElement.dataset.harness = "ready";
