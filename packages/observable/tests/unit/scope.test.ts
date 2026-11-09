@@ -9,13 +9,15 @@ const pkg = fileURLToPath(new URL("../..", import.meta.url));
 const repo = join(pkg, "../..");
 /** The commit of the plan: where this feature started. */
 const BASE = "5ad5466";
+/** The last commit of the work on main before later features changed the core (application graphs, ADR-009). */
+const END = "7740205";
 
 const walk = (dir: string): string[] => (existsSync(dir) ? readdirSync(dir).flatMap((n) => (statSync(join(dir, n)).isDirectory() ? walk(join(dir, n)) : [join(dir, n)])) : []);
 const sources = (sub: string): string[] => walk(join(pkg, "src", sub)).filter((f) => f.endsWith(".ts"));
 
 describe("what this feature leaves alone (FR-028)", () => {
   it("changes nothing in the core's or the other adapters' sources since the plan", () => {
-    const changed = execFileSync("git", ["diff", "--name-only", BASE, "--", "packages/web/src", "packages/astro/src", "packages/nextjs/src"], { cwd: repo, encoding: "utf8" });
+    const changed = execFileSync("git", ["diff", "--name-only", `${BASE}..${END}`, "--", "packages/web/src", "packages/astro/src", "packages/nextjs/src"], { cwd: repo, encoding: "utf8" });
     expect(changed.trim()).toBe("");
   });
 });

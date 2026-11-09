@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-09
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Application graphs in the core package (`@relate/web`, `packages/web`): implement accepted ADR-009 (and build on ADR-001 to ADR-003 and the SPIKE-008 findings; parent RFC-006) so a page can open one named, durable, versioned graph in the visitor's browser through `createClient`: seeded once, carried forward by migrations, honest about whether it is stored, and exportable. It is checked in Chromium, Firefox and WebKit, and the open items in ADR-009 §4 are tested and the ADR amended with what is found."
 
