@@ -1,0 +1,20 @@
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+const req = createRequire(new URL("../../../packages/web/package.json", import.meta.url));
+const dir = dirname(req.resolve("@relate/relate-wasm"));
+const mod = await import(join(dir, "relate.js"));
+await mod.default({ module_or_path: readFileSync(join(dir, "relate_bg.wasm")) });
+const db = new mod.RelateDb();
+const run = (label, q, p) => {
+  const env = JSON.parse(db.execute(q, p ? JSON.stringify(p) : null));
+  console.log(`\n## ${label}\n->`, env.error ? "ERROR: " + env.error : JSON.stringify(env.rows).slice(0, 500), env.stats ? JSON.stringify(env.stats) : "");
+};
+run("seed", `CREATE (:Company {id:'c1'}), (:Company {id:'c2'}), (:Person {id:'p1', name:'A'}), (:Person {id:'p2', name:'B'})`);
+run("rels (p1 has TWO companies: invariant broken)", `MATCH (p:Person {id:'p1'}), (c:Company) CREATE (p)-[:WORKS_AT]->(c)`);
+run("index", `CREATE INDEX FOR (p:Person) ON (p.id)`);
+run("show indexes", `SHOW INDEXES`);
+run("explain", `EXPLAIN MATCH (p:Person {id:'p1'}) RETURN p`);
+run("collect/head fill (no row multiplication)", `MATCH (p:Person) OPTIONAL MATCH (p)-[:WORKS_AT]->(c:Company) WITH p, head(collect(c.id)) AS company RETURN p.id AS id, company ORDER BY p.id`);
+run("plain fill (row multiplication?)", `MATCH (p:Person) OPTIONAL MATCH (p)-[:WORKS_AT]->(c:Company) RETURN p.id AS id, c.id AS company ORDER BY p.id`);
+run("page with fill", `MATCH (p:Person) WITH p ORDER BY p.id SKIP 0 LIMIT 5 OPTIONAL MATCH (p)-[:WORKS_AT]->(c:Company) WITH p, head(collect(c.id)) AS company RETURN p.id AS id, company ORDER BY id`);
