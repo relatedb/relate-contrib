@@ -4,9 +4,13 @@
 name: drift
 
 on:
+  # Changes that cannot affect a package (design documents, specifications, prose) skip the check; a change that
+  # also touches code still runs it. Nothing requires this check to merge, so a skipped run blocks nothing.
   pull_request:
+    paths-ignore: ["design/**", "specs/**", "**/*.md"]
   push:
     branches: [main]
+    paths-ignore: ["design/**", "specs/**", "**/*.md"]
   workflow_dispatch:
 
 concurrency:
