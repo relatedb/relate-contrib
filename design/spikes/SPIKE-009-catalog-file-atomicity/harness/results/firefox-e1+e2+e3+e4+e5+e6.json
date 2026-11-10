@@ -1,0 +1,214 @@
+{
+  "e1": {
+    "caps": {
+      "worker": {
+        "createWritable": true,
+        "createSyncAccessHandle": true,
+        "move": true,
+        "locks": true,
+        "storageBuckets": false
+      },
+      "page": {
+        "createWritable": true,
+        "move": true,
+        "locks": true,
+        "storageBuckets": false
+      }
+    },
+    "modes": {
+      "swap": "ok",
+      "sync": "ok",
+      "move": "ok"
+    }
+  },
+  "e2": {
+    "mode": "swap",
+    "holder": {
+      "init": true,
+      "open": true,
+      "create": "ok"
+    },
+    "write": {
+      "ok": true,
+      "v": {}
+    },
+    "read": {
+      "ok": true,
+      "v": {
+        "text": "{\"graphs\":[\"a\"]}"
+      }
+    },
+    "rewrite": {
+      "ok": true,
+      "v": {}
+    },
+    "read2": {
+      "ok": true,
+      "v": {
+        "text": "{\"graphs\":[\"a\",\"b\"]}"
+      }
+    },
+    "list": {
+      "ok": true,
+      "v": {
+        "names": [
+          "catalog.json",
+          "relate"
+        ]
+      }
+    },
+    "holderQuery": "ok",
+    "secondOpen": {
+      "ok": false,
+      "err": "page.evaluate: storage locked: opfs://catalog-e2"
+    }
+  },
+  "e3": {
+    "modes": {
+      "swap": "ok",
+      "sync": "ok",
+      "move": "ok"
+    },
+    "swap": {
+      "write": {
+        "done": 300,
+        "errors": {}
+      },
+      "writeMs": 1124,
+      "read": {
+        "reads": 753,
+        "torn": 0,
+        "tornEmpty": 0,
+        "missing": 0,
+        "backwards": 0,
+        "lastGen": 300,
+        "errors": {}
+      }
+    },
+    "sync": {
+      "write": {
+        "done": 300,
+        "errors": {}
+      },
+      "writeMs": 667,
+      "read": {
+        "reads": 771,
+        "torn": 12,
+        "tornEmpty": 10,
+        "missing": 0,
+        "backwards": 0,
+        "lastGen": 300,
+        "errors": {}
+      }
+    },
+    "move": {
+      "write": {
+        "done": 300,
+        "errors": {}
+      },
+      "writeMs": 1825,
+      "read": {
+        "reads": 1058,
+        "torn": 0,
+        "tornEmpty": 0,
+        "missing": 0,
+        "backwards": 0,
+        "lastGen": 300,
+        "errors": {}
+      }
+    }
+  },
+  "e4": {
+    "modes": {
+      "swap": "ok",
+      "sync": "ok",
+      "move": "ok"
+    },
+    "swap": {
+      "cycles": 20,
+      "unreadable": 0,
+      "torn": 0,
+      "ok": 20,
+      "extraEntries": [],
+      "maxWaitMs": 10,
+      "errs": []
+    },
+    "sync": {
+      "cycles": 20,
+      "unreadable": 0,
+      "torn": 1,
+      "ok": 19,
+      "extraEntries": [],
+      "maxWaitMs": 44,
+      "errs": []
+    },
+    "move": {
+      "cycles": 20,
+      "unreadable": 0,
+      "torn": 0,
+      "ok": 20,
+      "extraEntries": [
+        "catalog.json.tmp"
+      ],
+      "maxWaitMs": 84,
+      "errs": []
+    }
+  },
+  "e5": {
+    "mode": "swap",
+    "withoutLock": {
+      "final": "104",
+      "expected": 300,
+      "results": [
+        {
+          "done": 100,
+          "errors": {}
+        },
+        {
+          "done": 100,
+          "errors": {}
+        },
+        {
+          "done": 100,
+          "errors": {}
+        }
+      ],
+      "ms": 1027
+    },
+    "withLock": {
+      "final": "300",
+      "expected": 300,
+      "results": [
+        {
+          "done": 100,
+          "errors": {}
+        },
+        {
+          "done": 100,
+          "errors": {}
+        },
+        {
+          "done": 100,
+          "errors": {}
+        }
+      ],
+      "ms": 1161
+    }
+  },
+  "e6": {
+    "terminate": [
+      2,
+      2,
+      2,
+      2,
+      1
+    ],
+    "close": [
+      8,
+      98,
+      7,
+      8,
+      9
+    ]
+  }
+}

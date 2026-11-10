@@ -1,0 +1,50 @@
+firefox e7 done in 5s
+{
+ "e7": {
+  "swap": {
+   "write": {
+    "done": 300,
+    "errors": {}
+   },
+   "read": {
+    "reads": 446,
+    "torn": 0,
+    "tornEmpty": 0,
+    "missing": 0,
+    "backwards": 0,
+    "lastGen": 300,
+    "errors": {}
+   }
+  },
+  "sync": {
+   "write": {
+    "done": 300,
+    "errors": {}
+   },
+   "read": {
+    "reads": 463,
+    "torn": 0,
+    "tornEmpty": 0,
+    "missing": 0,
+    "backwards": 0,
+    "lastGen": 300,
+    "errors": {}
+   }
+  },
+  "move": {
+   "write": {
+    "done": 300,
+    "errors": {}
+   },
+   "read": {
+    "reads": 457,
+    "torn": 0,
+    "tornEmpty": 0,
+    "missing": 0,
+    "backwards": 0,
+    "lastGen": 300,
+    "errors": {}
+   }
+  }
+ }
+}

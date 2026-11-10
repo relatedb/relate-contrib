@@ -1,0 +1,168 @@
+{
+  "e1": {
+    "api": {
+      "static": [
+        "length",
+        "name",
+        "prototype",
+        "__wrap",
+        "open"
+      ],
+      "instance": [
+        "__destroy_into_raw",
+        "free",
+        "executeScript",
+        "execute",
+        "reset"
+      ],
+      "exports": [
+        "init",
+        "RelateDb"
+      ]
+    },
+    "dtsKeywordHits": {
+      "list": [],
+      "size": [
+        "export function slotSize(id: number): number;"
+      ],
+      "metadata": [],
+      "checkpoint": [],
+      "catalog": [
+        "export function prepareOpfs(name: string): Promise<{ catalog: number; slots: number[] }>;"
+      ],
+      "stat": [
+        "* Run a script of one or more statements (`relate::run_script_wire`,",
+        "* ADR-0131): one envelope per statement run, stopping after the first",
+        "* Run one statement (`relate::execute_wire`): its wire envelope.",
+        "static open(uri: string, read_only?: boolean | null): Promise<RelateDb>;"
+      ],
+      "exists": [],
+      "delete": [],
+      "remove": [],
+      "destroy": [
+        "readonly __wbindgen_destroy_closure: (a: number, b: number) => void;"
+      ],
+      "drop": [
+        "readonly __externref_drop_slice: (a: number, b: number) => void;"
+      ]
+    }
+  },
+  "e2": {
+    "layout": {
+      "ms": 85.12,
+      "stores": [
+        {
+          "name": "other",
+          "files": 65,
+          "bytes": 4439454,
+          "nonEmpty": 2,
+          "unreadable": 0,
+          "newest": 1794247547000
+        },
+        {
+          "name": "rel-a",
+          "files": 65,
+          "bytes": 52,
+          "nonEmpty": 2,
+          "unreadable": 0,
+          "newest": 1794247546000
+        },
+        {
+          "name": "app-b",
+          "files": 65,
+          "bytes": 218910,
+          "nonEmpty": 2,
+          "unreadable": 0,
+          "newest": 1794247546000
+        }
+      ]
+    },
+    "estimate": {
+      "usage": 13631488,
+      "quota": 20615843021,
+      "persisted": false,
+      "onquotachange": false
+    },
+    "sumBytes": 4658416
+  },
+  "e4": {
+    "1": {
+      "made": "ok",
+      "stores": 1,
+      "workerMs": [
+        37.02,
+        24.72,
+        24.72
+      ],
+      "pageMs": [
+        21.74000000000001,
+        21.079999999999927,
+        20.700000000000045
+      ]
+    },
+    "10": {
+      "made": "ok",
+      "stores": 10,
+      "workerMs": [
+        246.68,
+        234.26000000000005,
+        227.66000000000003
+      ],
+      "pageMs": [
+        220.15999999999985,
+        216.53999999999996,
+        219.65999999999985
+      ]
+    },
+    "100": {
+      "made": "ok",
+      "stores": 100,
+      "workerMs": [
+        2317.18,
+        2309.28,
+        2320.1400000000003
+      ],
+      "pageMs": [
+        2189.0200000000004,
+        2190.9600000000028,
+        2191.9799999999996
+      ]
+    }
+  },
+  "e5": {
+    "layout": {
+      "ms": 70.54,
+      "stores": [
+        {
+          "name": "h-0",
+          "files": 65,
+          "bytes": 795,
+          "nonEmpty": 5,
+          "unreadable": 0,
+          "newest": 1794247570000
+        },
+        {
+          "name": "h-1",
+          "files": 65,
+          "bytes": 917,
+          "nonEmpty": 5,
+          "unreadable": 0,
+          "newest": 1794247571000
+        },
+        {
+          "name": "h-2",
+          "files": 65,
+          "bytes": 795,
+          "nonEmpty": 5,
+          "unreadable": 0,
+          "newest": 1794247570000
+        }
+      ]
+    },
+    "pageLayout": {
+      "ms": 62.819999999999936,
+      "stores": 3,
+      "bytes": 2507
+    }
+  }
+}
