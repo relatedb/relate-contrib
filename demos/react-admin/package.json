@@ -9,7 +9,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5190 --strictPort",
     "seed": "tsx scripts/make-seed.ts",
-    "test:react-admin-browsers": "playwright test"
+    "test:react-admin-browsers": "playwright test",
+    "test:react-admin-demo": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json"
   },
   "dependencies": {
     "@relate/react-admin": "workspace:*",
