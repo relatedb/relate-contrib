@@ -63,7 +63,9 @@ RETURN n.id AS id
 
 A reference supplied as `null` or empty drops its target match and its `CREATE`, keeping the `DELETE` (verified: "clear ref"). A write with no reference is `MATCH (n:`Label` {id: $id}) SET n += $props RETURN n.id AS id`. `updateMany` uses `n.`id` IN $ids` in place of the equality, and the same statement then applies to every matched node. A `null` in `$props` removes the property (verified).
 
-**Delete**: `MATCH (n:`Label`) WHERE n.`id` IN $ids DETACH DELETE n RETURN count(n) AS n` (verified, including a missing id giving 0).
+A `create` or `update` is followed by one read of the record (the one-and-many form), so the answer carries the references as they are stored; the write itself is one statement.
+
+**Delete**: `MATCH (n:`Label`) WHERE n.`id` IN $ids WITH n, n.`id` AS removed DETACH DELETE n RETURN removed` (verified: it answers the ids removed, leaves out ids that do not exist, and removes the node's relationships; `probes/writes-forms.mjs`).
 
 ## Cause statements (after a write returns no rows)
 

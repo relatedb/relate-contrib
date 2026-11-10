@@ -61,3 +61,78 @@ export function constraintStatement(label: string, name: string): Statement {
     params: {},
   };
 }
+
+// ---- writes (contracts/statements.md "Writes") ----
+
+type Ref = { field: string; type: string; direction: "out" | "in"; target: NormalizedResource };
+
+/** The resource's references that the data supplies, in schema order, with their target resources. */
+function supplied(schema: NormalizedSchema, resource: NormalizedResource, refs: Map<string, string | null>): Ref[] {
+  return [...resource.references.values()]
+    .filter((r) => refs.has(r.field))
+    .map((r) => ({ field: r.field, type: r.type, direction: r.direction, target: schema.resources.get(r.resource)! }));
+}
+
+const edge = (r: Ref, from: string, to: string, name = ""): string =>
+  r.direction === "out" ? `(${from})-[${name}:${quote(r.type)}]->${to}` : `(${from})<-[${name}:${quote(r.type)}]-${to}`;
+
+/**
+ * Create a node with a given id, its properties, and a relationship to each supplied target. Each target is matched
+ * first, so a missing target creates nothing; a duplicate `id` is refused by the uniqueness constraint.
+ * Returns the new id; no row means a target is missing.
+ */
+export function createStatement(schema: NormalizedSchema, resource: NormalizedResource, id: string, props: Params, refs: Map<string, string | null>): Statement {
+  const params: Params = { id, props };
+  const targets = supplied(schema, resource, refs).filter((r) => refs.get(r.field) !== null);
+  const parts: string[] = [];
+  targets.forEach((r, i) => {
+    params[`r${i}`] = refs.get(r.field);
+    parts.push(`MATCH (t${i}:${quote(r.target.label)} {id: $r${i}})`);
+  });
+  parts.push(`CREATE (${NODE}:${quote(resource.label)} {id: $id})`);
+  parts.push(`SET ${NODE} += $props`);
+  targets.forEach((r, i) => parts.push(`CREATE ${edge(r, NODE, `(t${i})`)}`));
+  parts.push(`RETURN ${NODE}.${quote("id")} AS id`);
+  return { statement: parts.join("\n"), params };
+}
+
+/**
+ * Update the nodes with the given ids: match the nodes and every non-null target first (a missing target matches
+ * nothing and changes nothing), set the properties, remove the old relationship of each supplied reference, then create
+ * the new ones. Returns the ids changed; no row means no node matched or a target is missing.
+ */
+export function updateStatement(schema: NormalizedSchema, resource: NormalizedResource, ids: string[], props: Params, refs: Map<string, string | null>): Statement {
+  const params: Params = { ids, props };
+  const all = supplied(schema, resource, refs);
+  const targets = all.filter((r) => refs.get(r.field) !== null);
+  const parts: string[] = [`MATCH (${NODE}:${quote(resource.label)}) WHERE ${NODE}.${quote("id")} IN $ids`];
+  targets.forEach((r, i) => {
+    params[`r${i}`] = refs.get(r.field);
+    parts.push(`MATCH (t${i}:${quote(r.target.label)} {id: $r${i}})`);
+  });
+  parts.push(`SET ${NODE} += $props`);
+  if (all.length > 0) {
+    const carried = [NODE, ...targets.map((_, i) => `t${i}`)].join(", ");
+    parts.push(`WITH ${carried}`);
+    all.forEach((r, k) => {
+      parts.push(`OPTIONAL MATCH ${edge(r, NODE, `(:${quote(r.target.label)})`, `o${k}`)} DELETE o${k}`);
+      parts.push(`WITH DISTINCT ${carried}`);
+    });
+    targets.forEach((r, i) => parts.push(`CREATE ${edge(r, NODE, `(t${i})`)}`));
+  }
+  parts.push(`RETURN ${NODE}.${quote("id")} AS id`);
+  return { statement: parts.join("\n"), params };
+}
+
+/** Detach-delete the nodes with the given ids; answers the ids removed. */
+export function deleteStatement(resource: NormalizedResource, ids: string[]): Statement {
+  return {
+    statement: `MATCH (${NODE}:${quote(resource.label)}) WHERE ${NODE}.${quote("id")} IN $ids WITH ${NODE}, ${NODE}.${quote("id")} AS removed DETACH DELETE ${NODE} RETURN removed`,
+    params: { ids },
+  };
+}
+
+/** Whether a node with a label and id exists: the cause read after a write that matched nothing. */
+export function existsStatement(label: string, id: string): Statement {
+  return { statement: `MATCH (x:${quote(label)} {id: $id}) RETURN count(x) AS n`, params: { id } };
+}

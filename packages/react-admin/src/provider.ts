@@ -1,5 +1,4 @@
-// createDataProvider: react-admin's data provider over a core client (contracts/provider-api.md). Reads here; the write
-// calls are added next. Every statement goes through `execute`, and nothing is sent before the filter, sort and page
+// createDataProvider: react-admin's data provider over a core client (contracts/provider-api.md). Every statement goes through `execute`, and nothing is sent before the filter, sort and page
 // have been checked against the schema.
 import type { DataProvider } from "react-admin";
 import { badRequest, fromClientFailure, fromEnvelope, notFound } from "./errors.js";
@@ -8,7 +7,8 @@ import { execute, type ResultEnvelope } from "./exec.js";
 import { buildFilter, buildOrder, buildPage, type Params } from "./filter.js";
 import { toRecord, type RaRecord } from "./record.js";
 import { validateSchema, type NormalizedResource, type Schema } from "./schema.js";
-import { countStatement, selectStatement } from "./statements.js";
+import { countStatement, createStatement, deleteStatement, existsStatement, selectStatement, updateStatement } from "./statements.js";
+import { splitData } from "./write.js";
 import type { ProviderClient, ProviderOptions } from "./types.js";
 
 export function createDataProvider(client: ProviderClient, schema: Schema, options: ProviderOptions = {}): DataProvider {
@@ -57,9 +57,25 @@ export function createDataProvider(client: ProviderClient, schema: Schema, optio
     return (await send(resource, statement, params)).rows.map((row) => toRecord(resource, row));
   };
 
-  const notYet = (name: string) => async (): Promise<never> => {
-    throw new Error(`${name} is not implemented yet`);
+  /** After a write that matched nothing: name a missing target (400) before the caller reports anything else. */
+  const checkTargets = async (resource: NormalizedResource, refs: Map<string, string | null>): Promise<void> => {
+    for (const [field, id] of refs) {
+      if (id === null) continue;
+      const reference = resource.references.get(field)!;
+      const target = normalized.resources.get(reference.resource)!;
+      const { statement, params } = existsStatement(target.label, id);
+      const found = (await send(resource, statement, params)).rows[0]?.n;
+      if (!found) throw badRequest(`reference "${field}" on "${resource.name}": no "${reference.resource}" record with id ${JSON.stringify(id)}`);
+    }
   };
+
+  const nodeExists = async (resource: NormalizedResource, id: string): Promise<boolean> => {
+    const { statement, params } = existsStatement(resource.label, id);
+    return Number((await send(resource, statement, params)).rows[0]?.n ?? 0) > 0;
+  };
+
+  /** The ids of a write's rows, once, in order. */
+  const idsOf = (rows: Array<Record<string, any>>, column: string): string[] => rows.map((r) => String(r[column]));
 
   const provider = {
     async getList(name: string, params: any) {
@@ -91,11 +107,66 @@ export function createDataProvider(client: ProviderClient, schema: Schema, optio
       return list(resource, { ...params, filter: { ...(params.filter ?? {}), [params.target]: params.id } });
     },
 
-    create: notYet("create"),
-    update: notYet("update"),
-    updateMany: notYet("updateMany"),
-    delete: notYet("delete"),
-    deleteMany: notYet("deleteMany"),
+    async create(name: string, params: { data?: Record<string, unknown> }) {
+      const resource = resourceOf(name);
+      const data = splitData(resource, params.data, true);
+      const id = data.id ?? crypto.randomUUID();
+      const { statement, params: bound } = createStatement(normalized, resource, id, data.props, data.refs);
+      const rows = (await send(resource, statement, bound)).rows;
+      if (rows.length === 0) {
+        await checkTargets(resource, data.refs);
+        throw badRequest(`could not create a "${name}" record`);
+      }
+      const [record] = await byIds(resource, [id]);
+      return { data: record! };
+    },
+
+    async update(name: string, params: { id: unknown; data?: Record<string, unknown> }) {
+      const resource = resourceOf(name);
+      const id = String(params.id);
+      const data = splitData(resource, params.data, false);
+      const { statement, params: bound } = updateStatement(normalized, resource, [id], data.props, data.refs);
+      const rows = (await send(resource, statement, bound)).rows;
+      if (rows.length === 0) {
+        if (!(await nodeExists(resource, id))) throw notFound(`no "${name}" record with id ${JSON.stringify(id)}`);
+        await checkTargets(resource, data.refs);
+        throw badRequest(`could not update the "${name}" record ${JSON.stringify(id)}`);
+      }
+      const [record] = await byIds(resource, [id]);
+      return { data: record! };
+    },
+
+    async updateMany(name: string, params: { ids: unknown[]; data?: Record<string, unknown> }) {
+      const resource = resourceOf(name);
+      const data = splitData(resource, params.data, false);
+      if (params.ids.length === 0) {
+        if (client.status === "failed") throw fromClientFailure(client);
+        return { data: [] };
+      }
+      const { statement, params: bound } = updateStatement(normalized, resource, params.ids.map(String), data.props, data.refs);
+      const rows = (await send(resource, statement, bound)).rows;
+      if (rows.length === 0) await checkTargets(resource, data.refs);
+      return { data: idsOf(rows, "id") };
+    },
+
+    async delete(name: string, params: { id: unknown }) {
+      const resource = resourceOf(name);
+      const id = String(params.id);
+      const { statement, params: bound } = deleteStatement(resource, [id]);
+      const rows = (await send(resource, statement, bound)).rows;
+      if (rows.length === 0) throw notFound(`no "${name}" record with id ${JSON.stringify(id)}`);
+      return { data: { id } };
+    },
+
+    async deleteMany(name: string, params: { ids: unknown[] }) {
+      const resource = resourceOf(name);
+      if (params.ids.length === 0) {
+        if (client.status === "failed") throw fromClientFailure(client);
+        return { data: [] };
+      }
+      const { statement, params: bound } = deleteStatement(resource, params.ids.map(String));
+      return { data: idsOf((await send(resource, statement, bound)).rows, "removed") };
+    },
   };
   return provider as unknown as DataProvider;
 }

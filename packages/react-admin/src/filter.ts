@@ -22,10 +22,10 @@ export const quote = (name: string): string => TICK + name.split(TICK).join(TICK
 const SUFFIXES: Record<string, string> = { gte: ">=", lte: "<=", neq: "<>", lt: "<", gt: ">" };
 const SUFFIX = /^(.+)_(gte|lte|neq|lt|gt)$/;
 
-/** Convert a filter value to the field's declared type, or reject with 400 (FR-008). */
-export function coerce(resource: string, field: FieldSchema, value: unknown): string | number | boolean {
+/** Convert a filter or written value to the field's declared type, or reject with 400 (FR-008). */
+export function coerce(resource: string, field: FieldSchema, value: unknown, what: "filter" | "value" = "filter"): string | number | boolean {
   const fail = (): never => {
-    throw badRequest(`filter on "${resource}.${field.name}": expected a ${field.type}, got ${JSON.stringify(value)}`);
+    throw badRequest(`${what} on "${resource}.${field.name}": expected a ${field.type}, got ${JSON.stringify(value)}`);
   };
   switch (field.type) {
     case "string":
