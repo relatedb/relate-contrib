@@ -83,11 +83,24 @@ export async function writeCatalogText(page: Page, text: string): Promise<void> 
   );
 }
 
-/** Remove the engine's store directory for the demo's graph, leaving the catalog as it is (a store whose data is gone). */
+/**
+ * Remove the engine's store directory for the demo's graph, leaving the catalog as it is (a store whose data is gone).
+ * A closing page's worker may still hold the store for a moment, and a held directory cannot be removed, so this retries.
+ */
 export async function removeStoreDirectory(page: Page, store = STORE): Promise<void> {
-  await page.evaluate(async (s) => {
-    const root = await navigator.storage.getDirectory();
-    const base = await root.getDirectoryHandle("relate");
-    await base.removeEntry(s, { recursive: true });
-  }, store);
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const removed = await page.evaluate(async (s) => {
+      try {
+        const root = await navigator.storage.getDirectory();
+        const base = await root.getDirectoryHandle("relate");
+        await base.removeEntry(s, { recursive: true });
+        return true;
+      } catch {
+        return false;
+      }
+    }, store);
+    if (removed) return;
+    await page.waitForTimeout(300);
+  }
+  throw new Error(`the store ${store} stayed held`);
 }

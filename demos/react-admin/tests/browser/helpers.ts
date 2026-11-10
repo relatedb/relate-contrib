@@ -16,12 +16,16 @@ export async function names(page: Page): Promise<string[]> {
   return (await rows(page)).map((cells) => cells[0] ?? "");
 }
 
-/** The total of the list on screen, from "1-10 of 50". */
+/** The total of the list on screen, from "1-10 of 50", 0 when the list says there are no results, or -1 before the list has rendered. */
 export async function total(page: Page): Promise<number> {
-  const text = (await page.locator(".MuiTablePagination-displayedRows").first().textContent()) ?? "";
+  const pagination = page.locator(".MuiTablePagination-displayedRows").first();
+  if ((await pagination.count()) === 0) {
+    if ((await page.getByText(/found using the current filters|No results found/i).count()) > 0) return 0;
+    return -1;
+  }
+  const text = (await pagination.textContent()) ?? "";
   const m = /of\s+(\d+)/.exec(text);
-  if (!m) throw new Error(`no total in ${JSON.stringify(text)}`);
-  return Number(m[1]);
+  return m ? Number(m[1]) : -1;
 }
 
 /** Wait until the list on screen shows this total (a hash change keeps the old rows on screen until the new ones arrive). */
