@@ -30,8 +30,17 @@ export const MARKER_FORMAT = 1;
 /** Wait between attempts at a store another holder has locked, after the bounded retry (ADR-009 2.4). */
 export const WAIT_RETRY_MS = 1000;
 
-/** Directory at the origin-private root that holds the stored copy of each descriptor. */
-export const STORED_COPY_DIR = "relate-web";
+/** Directory at the origin-private root that holds the catalog (and, before it, the stored copies of descriptors). */
+export const CATALOG_DIR = "relate-web";
+
+/** The catalog file inside {@link CATALOG_DIR} (ADR-010 2.1). */
+export const CATALOG_FILE = "catalog.json";
+
+/** The Web Lock that orders every read and write of the catalog: exclusive to write, shared to read (ADR-010 2.2). */
+export const CATALOG_LOCK = "relate-web:catalog";
+
+/** The catalog file format this code writes and understands. */
+export const CATALOG_FORMAT = 1;
 
 /** The descriptor `id`: 1 to 48 characters from A-Z a-z 0-9 _ - (so the store name stays within 64). */
 export const ID_PATTERN = /^[A-Za-z0-9_-]{1,48}$/;

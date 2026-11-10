@@ -41,7 +41,10 @@
     "test:trace": "tsx tests/trace/check-trace.ts",
     "test:application": "vitest run --config vitest.application.config.ts --reporter=default --reporter=json --outputFile.json=reports/application-vitest.json",
     "test:application-browsers": "playwright test --config playwright.application.config.ts",
-    "test:application-trace": "tsx tests/application/trace/check-trace-application.ts"
+    "test:application-trace": "tsx tests/application/trace/check-trace-application.ts",
+    "test:catalog": "vitest run --config vitest.catalog.config.ts --reporter=default --reporter=json --outputFile.json=reports/catalog-vitest.json",
+    "test:catalog-browsers": "playwright test --config playwright.catalog.config.ts",
+    "test:catalog-trace": "tsx tests/catalog/trace/check-trace-catalog.ts"
   },
   "peerDependencies": {
     "@relate/relate-wasm": "*",

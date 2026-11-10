@@ -1,14 +1,14 @@
 // The stored copy of a descriptor (ADR-003 2.5): a small file at the origin-private root, outside the directory
 // the engine manages for its store, that records which graph the store holds. It is removed before a store is
 // reset and written last after a complete load, so a copy that is present describes a complete store.
-import { STORED_COPY_DIR } from "../config.js";
+import { CATALOG_DIR } from "../config.js";
 import { validateDescriptor } from "../data/descriptor.js";
 import type { Descriptor } from "../data/types.js";
 
 async function directory(create: boolean): Promise<FileSystemDirectoryHandle | null> {
   try {
     const root = await navigator.storage.getDirectory();
-    return await root.getDirectoryHandle(STORED_COPY_DIR, { create });
+    return await root.getDirectoryHandle(CATALOG_DIR, { create });
   } catch {
     return null;
   }
