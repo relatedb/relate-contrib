@@ -65,7 +65,7 @@ Use `/adr-review` before moving a draft to `accepted`.
 | [ADR-005](ADR-005-next-adapter.md) | The Next.js Adapter as React Bindings over the Core | accepted (amended 2026-11-05) | RFC-001, RFC-002 |
 | [ADR-006](ADR-006-observable-adapter.md) | The Observable Framework Adapter as a Helper Package over the Core | accepted (amended 2026-11-08) | RFC-001, RFC-002 |
 | [ADR-007](ADR-007-sveltekit-adapter.md) | The SvelteKit Adapter as Svelte 5 Helpers over the Core | accepted (amended 2026-11-08) | RFC-001, RFC-002 |
-| [ADR-008](ADR-008-react-admin-provider.md) | A react-admin Data Provider over the Core, with a Local-First Starter | proposed | RFC-005, RFC-006 |
+| [ADR-008](ADR-008-react-admin-provider.md) | A react-admin Data Provider over the Core, with a Local-First Starter | accepted | RFC-005, RFC-006 |
 | [ADR-009](ADR-009-application-graphs-in-the-core.md) | Application Graphs in the Core as a Named Durable Store with Schema Versions | accepted (amended 2026-11-10) | RFC-006, RFC-001 |
 | [ADR-010](ADR-010-graph-catalog-file.md) | A Catalog File Beside the Stores, Ordered by a Web Lock | accepted | RFC-007 |
 

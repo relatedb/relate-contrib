@@ -1,7 +1,7 @@
 ---
 id: ADR-008
 title: A react-admin Data Provider over the Core, with a Local-First Starter
-status: proposed
+status: accepted
 rfcs: [RFC-005, RFC-006]
 created: 2026-11-08
 ---
@@ -30,15 +30,21 @@ The caller declares every resource. A resource entry names its node label and li
 
 The record's `id` is the node's `id` property. `create` generates one (`crypto.randomUUID()`) when the data has none. Element ids never appear in records.
 
+`id` is implicitly declared on every resource as a string field that is sortable and filterable; it is not listed. react-admin's default list sort is `id` ascending and `getMany` filters on it, so a resource would otherwise fail its first request.
+
+Every lookup by `id` needs an index, or each `getOne`, `getMany`, `update` and `delete` scans its label. The package does not create indexes, since the store belongs to the application. It exports `schemaIndexes(schema)`, which returns a `{ label, property: "id" }` entry per resource in the form the core's application `indexes` option takes, and the caller passes it there. Indexes on other fields stay the caller's choice.
+
 ### 2.3 Reads
 
 `getList` builds one data statement and one count statement from the request. Sort and filter field names are accepted only if the schema declares them, and are interpolated, quoted, only after that check; every value is a bound parameter. An undeclared field rejects the request with a 400 error. Conventions:
 
 - A plain key is equality; an array value is membership.
-- Suffixes `_gte`, `_lte`, `_neq` and `_lt`, `_gt` are comparisons on a declared filterable field.
+- Suffixes `_gte`, `_lte`, `_neq`, `_lt` and `_gt` are comparisons on a declared filterable field. A key that is itself a declared field is never split; otherwise the suffix is removed only if the rest is a declared filterable field.
+- Values are coerced to the declared field type (filter values often arrive as strings, for example from a URL); a value that does not convert rejects with 400.
 - `q` is a case-insensitive contains over the resource's searchable fields, joined by OR.
 - A reference field as a filter key tests the relationship's target id.
-- Paging is `SKIP` and `LIMIT` from the request's page; `total` is the count statement's value.
+- The requested sort is followed by `id` as a final key, so paging stays stable when the sort field has ties.
+- Paging is `SKIP` and `LIMIT` from the request's page; `total` is the count statement's value. If the engine does not accept parameters there, the provider validates a non-negative integer and interpolates it.
 
 `getOne` and `getMany` match on `id` (a single value or a list). `getManyReference` is `getList` with the reference field's filter fixed to the given target id. A record is the node's properties, plus each declared reference field filled from the relationship's target id.
 
@@ -50,7 +56,7 @@ Each write is a single statement, so it is atomic without a transaction.
 - `update` sets the supplied declared fields on the node found by `id`. For a supplied reference it removes the existing relationship of that type and creates the new one, in the same statement. `updateMany` applies the same data to every id.
 - `delete` and `deleteMany` detach-delete the nodes.
 
-Fields not in the schema are ignored on write and reported to the caller in the error text if they were the only data. A write that matches no node answers 404. Relationship properties and many-to-many relationships are not supported in this version.
+Fields not in the schema are ignored on write and reported to the caller in the error text if they were the only data. A write that matches no node answers 404. A reference whose target does not exist rejects the write with 400, naming the field. `update` with `null` or an empty value for a reference removes the relationship. `delete` detaches the node, so records that referenced it show an empty reference afterwards. Relationship properties and many-to-many relationships are not supported in this version.
 
 ### 2.5 Errors and failure
 
@@ -58,18 +64,19 @@ An engine error in the envelope, a missing record, and an undeclared field becom
 
 ### 2.6 The starter
 
-The starter has three resources: companies, people (each works at one company) and projects (each owned by one company, led by one person). Data of about 50 people and a few companies and projects is loaded on first run from a graph data document given as the seed of the client's application mode (ADR-009), as the other starters will, and never reapplied over stored data. The starter's graph is an application graph (RFC-006, ADR-009), in a store named `react-admin-starter` at schema version 1 with no migrations yet: the visitor's records survive reloads and return visits, in the one graph that all of the starter's pages share. The interface has sortable, filterable, paged lists, edit forms with relation pickers, a company page listing its people and projects through `getManyReference`, and a panel showing the statements the provider ran. A "reset demo data" control offers an export (`exportApplication`, whose seed data the format carries without loss) and, after confirmation, calls `resetApplication`. The interface reads `client.storage` and says whether the data is stored durably, in memory only, or waiting on another tab; it offers `requestPersistence` from a button, and it shows the `store-newer`, `store-unmarked` and `store-unreadable` failures with the choice to export or reset. The starter carries a schema version, and its README describes what a visitor loses by clearing site data.
+The starter has three resources: companies, people (each works at one company) and projects (each owned by one company, led by one person). Data of about 50 people and a few companies and projects is loaded on first run from a graph data document given as the seed of the client's application mode (ADR-009), as the other starters will, and never reapplied over stored data. The starter's graph is an application graph (RFC-006, ADR-009), in a store named `react-admin-starter` at schema version 1 with no migrations yet: the visitor's records survive reloads and return visits, in the one graph that all of the starter's pages share. It passes `schemaIndexes(schema)` as the application's `indexes`. Its data uses only string, number and boolean properties, so export needs no `allowLoss`; a field type beyond those is added together with its loss behaviour. It pins `react-admin` to an exact version. The interface has sortable, filterable, paged lists, edit forms with relation pickers, a company page listing its people and projects through `getManyReference`, and a panel showing the statements the provider ran. A "reset demo data" control offers an export (`exportApplication`, whose seed data the format carries without loss) and, after confirmation, calls `resetApplication`. The interface reads `client.storage` and says whether the data is stored durably, in memory only, or waiting on another tab; it offers `requestPersistence` from a button, and it shows each failure reason the client reports (`store-newer`, `store-lost`, `store-unmarked`, `store-unreadable`, `import-interrupted`, `migration-failed`) with the choice to reset, and to export first where the store is readable; `store-lost` offers reset only. Its README describes what a visitor loses by clearing site data. The default `whenLocked: "wait"` of the core applies: a second tab waits and says so.
 
 ### 2.7 Checks
 
-A contract test runs every provider method against the real engine through the core and asserts the shapes react-admin expects, including the rejection of undeclared fields and injection attempts in sort and filter values. A browser test runs the starter in Chromium, Firefox and WebKit through create, filter, sort, paging, changing a reference, delete, reload (the records remain), a second tab, and reset. A package test installs the packed package into a clean project. Test names carry the identifiers of the requirements they cover, as the other packages' tests do.
+A contract test runs every provider method against the real engine through the core and asserts the shapes react-admin expects, including the rejection of undeclared fields and injection attempts in sort and filter values. A browser test runs the starter in Chromium, Firefox and WebKit through create, filter, sort, paging, changing a reference, delete, reload (the records remain), a second tab, and reset. A package test installs the packed package into a clean project. Test names carry the identifiers of the requirements they cover, as the other packages' tests do. The unit, browser, package and trace checks run in the repository's `test:drift` and in the full workflow, so the starter does not decay between launches.
 
 ## 3. Alternatives Considered
 
-- **A Refine data provider first.** Rejected for the first starter: its structured filters would map to Cypher more cleanly, but its repository's maintenance in late 2026 could not be established, and react-admin's reference components give relationships on screen with no extra work. Nothing here prevents a Refine provider that reuses the schema and the translation later.
+- **A Refine data provider first.** Rejected for the first starter: its structured filters would map to Cypher more cleanly, but it was not evaluated for maintenance or licence terms, and react-admin's reference components give relationships on screen with no extra work. Nothing here prevents a Refine provider that reuses the schema and the translation later.
+- **A local-only provider from react-admin's ecosystem (fake REST, local storage).** Rejected for the starter: it holds flat records, so the relationships, neighbourhoods and aggregates the starter exists to show would be plain fields. It remains the comparison for the starter's load time.
 - **Put a mock REST server in front of react-admin's stock provider.** Rejected: it adds a layer that serializes everything through URLs and JSON, discards the graph semantics the demo exists to show, and still needs an implementation of every endpoint.
 - **Derive the schema from the graph.** Rejected: a declared list is what makes the field-name whitelist safe, and the graph cannot say which relationship type is a reference, which direction it runs, or which fields users may filter. A helper that proposes a schema from a sample graph can come later.
-- **Use the engine's element ids as record ids.** Rejected: they are internal, and records would not survive a reload that rebuilds the graph from the seed document. The `id` property is already part of the data format.
+- **Use the engine's element ids as record ids.** Rejected: they are internal, can be reused after a deletion, and change on export and import, so a record's id would not survive a restore. The `id` property is already part of the data format.
 - **Keep the provider inside the starter.** Rejected: people adopting it want a dependency they can update, not roughly four hundred lines to copy.
 
 ## 4. Consequences
@@ -78,7 +85,8 @@ A contract test runs every provider method against the real engine through the c
 - Many-to-one references only. A person assigned to several projects, or a relationship that carries data, does not fit; the starter avoids them and the README says so.
 - A list costs two statements (data and count). The graphs involved are small, and the cost is stated, not measured.
 - Data is per browser and persists. A visitor cannot share a record with another visitor or another device, and clearing site data erases it, which the export control and the starter's notice address.
-- The starter depends on the core's application mode (ADR-009), which is accepted but not yet implemented, so the starter and package are built after it. ADR-009 allows only one open tab to use the store at a time, so a second tab of the starter waits and says so. Later amendments to ADR-009 may change 2.6 and 2.7.
+- The starter builds on the core's application mode (ADR-009) and its catalog (ADR-010), both implemented. Only one open tab uses the store at a time, so a second tab of the starter waits and says so.
+- A store name is one segment of an origin's namespace, and two applications on one origin that choose the same name share a store (RFC-007 7.3 leaves collisions open). The starter's name is fixed, so a project that copies the starter renames it.
 - The package fixes one interpretation of react-admin's filter conventions. Another set of conventions needs a schema or a provider option, not a second package.
 - The starter pulls in react-admin's component library and its bundle; its paid add-on modules are not used.
 - To confirm at implementation, and amend this ADR with the results: that a single statement can remove and create a relationship in one pass; that `SKIP` and `LIMIT` accept parameters; that case-insensitive contains and comparisons behave as assumed for strings, numbers and mixed types; that `RETURN n` yields properties in the envelope's node value as described; and that a statement issued while the client is `loading` resolves once it is ready.
@@ -86,6 +94,6 @@ A contract test runs every provider method against the real engine through the c
 
 ## 5. Related
 
-- RFCs: RFC-005, RFC-006
+- RFCs: RFC-005, RFC-006. For this starter the ADR settles RFC-005 7.4 (a reset control, an export and a storage notice) and 7.6 (the `id` property as the stable record id), and RFC-006 7.1 (the default policy: a second tab waits).
 - ADR-009 (application graphs in the core)
 - ADR-001 (worker hosting), ADR-002 (the `id` property and graph data format), ADR-003 (the descriptor the starter loads)
