@@ -72,7 +72,7 @@ description: "Task list for the graph catalog in the core package"
 
 **Checkpoint**: US1 tests pass in Node and in the three browsers; the application unit suite passes with entries.
 
-> Implementation note (2026-11-10): the lifecycle is one switch over the classification, so the code for US2's rows (`seeding`/`resetting` recovery, `importing`, `removing`, `migrating`, the async `migrate` and `importApplication`, deleting the marker) and the browser storage of US3 (`OpfsCatalogStorage`, Web Locks required) was written with US1 (T024 to T028, T032, T033). Their dedicated tests (T021 to T023, T029 to T031) are still to write in their phases.
+> Implementation note (2026-11-10): the lifecycle is one switch over the classification, so the code for US2's rows (`seeding`/`resetting` recovery, `importing`, `removing`, `migrating`, the async `migrate` and `importApplication`, deleting the marker) and the browser storage of US3 (`OpfsCatalogStorage`, Web Locks required) was written with US1 (T024 to T028, T032, T033). Their dedicated tests (T021 to T023, T029 to T031) were then written as Phases 4 and 5.
 
 ---
 
@@ -84,9 +84,9 @@ description: "Task list for the graph catalog in the core package"
 
 ### Tests for User Story 2 ⚠️ write first, they must fail
 
-- [ ] T021 [P] [US2] Write `packages/web/tests/catalog/unit/recovery.test.ts` (`// covers-cat: FR-007, FR-008, FR-010, FR-014`, SC-004, SC-005): `seeding` and `resetting` reset and seed again; `importing` fails `import-interrupted` and changes nothing; `removing` finishes and runs a first run; `migrating` resumes from `version` and ends equal to an uninterrupted run; `resetApplication()` writes `resetting` first; each write ordering is asserted by recording the entry before and after the data step with a failing engine at each step
-- [ ] T022 [P] [US2] Write `packages/web/tests/catalog/unit/transfer.test.ts` (`// covers-cat: FR-007, FR-004`, SC-005): import writes `importing` before `engine.reset()`, the entry ends `ready` with the envelope's version and `seeded`, migrates when below the code's version, and a failure injected between the reset and the load leaves `importing` (so the next open fails `import-interrupted`, not a silent first run); export contains every node and no bookkeeping filter remains
-- [ ] T023 [P] [US2] Write `packages/web/tests/catalog/browser/recovery.spec.ts` (`// covers-cat: FR-007, FR-010, FR-014`, SC-004, SC-005), all three browsers: worker terminated mid-seed, mid-migration, mid-import and mid-reset, then reopened, matching the table; the data of a resumed migration equals an uninterrupted run's
+- [X] T021 [P] [US2] Write `packages/web/tests/catalog/unit/recovery.test.ts` (`// covers-cat: FR-007, FR-008, FR-010, FR-014`, SC-004, SC-005): `seeding` and `resetting` reset and seed again; `importing` fails `import-interrupted` and changes nothing; `removing` finishes and runs a first run; `migrating` resumes from `version` and ends equal to an uninterrupted run; `resetApplication()` writes `resetting` first; each write ordering is asserted by recording the entry before and after the data step with a failing engine at each step
+- [X] T022 [P] [US2] Write `packages/web/tests/catalog/unit/transfer.test.ts` (`// covers-cat: FR-007, FR-004`, SC-005): import writes `importing` before `engine.reset()`, the entry ends `ready` with the envelope's version and `seeded`, migrates when below the code's version, and a failure injected between the reset and the load leaves `importing` (so the next open fails `import-interrupted`, not a silent first run); export contains every node and no bookkeeping filter remains
+- [X] T023 [P] [US2] Write `packages/web/tests/catalog/browser/recovery.spec.ts` (`// covers-cat: FR-007, FR-010, FR-014`, SC-004, SC-005), all three browsers: worker terminated mid-seed, mid-migration, mid-import and mid-reset, then reopened, matching the table; the data of a resumed migration equals an uninterrupted run's
 
 ### Implementation for User Story 2
 
@@ -108,15 +108,15 @@ description: "Task list for the graph catalog in the core package"
 
 ### Tests for User Story 3 ⚠️ write first, they must fail
 
-- [ ] T029 [P] [US3] Write `packages/web/tests/catalog/browser/tabs.spec.ts` (`// covers-cat: FR-005, FR-006`, SC-002, SC-003), all three browsers: three tabs each making 100 `Catalog.update` calls end with all 300 changes; a reader looping while a writer replaces 300 times sees no torn, missing or failed read; the catalog is readable and another graph's entry writable while one tab holds a store and its queries continue
-- [ ] T030 [P] [US3] Write `packages/web/tests/catalog/browser/lock-release.spec.ts` (`// covers-cat: FR-005`, SC-002): a worker holding the exclusive lock is terminated, and separately its tab closed, in the three browsers; a waiting tab reads a whole catalog and acquires the lock within 100 ms
-- [ ] T031 [P] [US3] Write `packages/web/tests/catalog/unit/storage-fallback.test.ts` (`// covers-cat: FR-006, FR-009`): with a fake file handle without `createWritable`, the replace goes through the sync access handle; `storageAvailable` is false when `navigator.locks` is absent and true with both APIs
+- [X] T029 [P] [US3] Write `packages/web/tests/catalog/browser/tabs.spec.ts` (`// covers-cat: FR-005, FR-006`, SC-002, SC-003), all three browsers: three tabs each making 100 `Catalog.update` calls end with all 300 changes; a reader looping while a writer replaces 300 times sees no torn, missing or failed read; the catalog is readable and another graph's entry writable while one tab holds a store and its queries continue
+- [X] T030 [P] [US3] Write `packages/web/tests/catalog/browser/lock-release.spec.ts` (`// covers-cat: FR-005`, SC-002): a worker holding the exclusive lock is terminated, and separately its tab closed, in the three browsers; a waiting tab reads a whole catalog and acquires the lock within 100 ms
+- [X] T031 [P] [US3] Write `packages/web/tests/catalog/unit/storage-fallback.test.ts` (`// covers-cat: FR-006, FR-009`): with a fake file handle without `createWritable`, the replace goes through the sync access handle; `storageAvailable` is false when `navigator.locks` is absent and true with both APIs
 
 ### Implementation for User Story 3
 
 - [X] T032 [US3] Create `packages/web/src/catalog/opfs-storage.ts`: `OpfsCatalogStorage` implementing the seam over `relate-web/catalog.json` — `read` via `getFile().text()` (null when absent), `replace` via `createWritable()` with a fallback to `createSyncAccessHandle()` (truncate, write, flush, close), `remove` via `removeEntry`, `withLock` via `navigator.locks.request(CATALOG_LOCK, { mode }, fn)`; creates `relate-web/` on write
 - [X] T033 [US3] Edit `packages/web/src/worker/application/open-store.ts`: `storageAvailable()` requires `navigator.storage.getDirectory` and `navigator.locks`; the `onUnavailable` rule is applied as before when either is missing; update `tests/application/unit/open-store.test.ts` for the new requirement
-- [ ] T034 [US3] Edit `packages/web/src/worker/application/init.ts` and `src/worker/worker.ts` to construct `OpfsCatalogStorage` once per worker and share it between the lifecycle and the cache path; export `Catalog` construction through one function `openCatalog()` in `src/catalog/index.ts`
+- [X] T034 [US3] Edit `packages/web/src/worker/application/init.ts` and `src/worker/worker.ts` to construct `OpfsCatalogStorage` once per worker and share it between the lifecycle and the cache path; export `Catalog` construction through one function `openCatalog()` in `src/catalog/index.ts`
 
 **Checkpoint**: tabs, locks and fallbacks pass in the three browsers.
 

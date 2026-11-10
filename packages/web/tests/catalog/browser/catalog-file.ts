@@ -77,3 +77,33 @@ export async function writeCatalogText(page: Page, text: string): Promise<void> 
     text,
   );
 }
+
+/**
+ * Watch the catalog until `store`'s entry is in one of `states`, and end the page's client at that moment, which stops
+ * its worker the way a closed tab or a terminated worker does. Resolves to the state seen, or null when it never was.
+ */
+export function endWhenState(page: Page, store: string, states: string[], timeoutMs = 90_000): Promise<string | null> {
+  return page.evaluate(
+    async ([s, wanted, timeout]) => {
+      const started = performance.now();
+      while (performance.now() - started < (timeout as number)) {
+        const state = await navigator.locks.request("relate-web:catalog", { mode: "shared" }, async () => {
+          try {
+            const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle("relate-web");
+            const file = JSON.parse(await (await (await dir.getFileHandle("catalog.json")).getFile()).text());
+            return (file.graphs[s as string]?.state as string | undefined) ?? null;
+          } catch {
+            return null;
+          }
+        });
+        if (state && (wanted as string[]).includes(state)) {
+          window.client!.destroy();
+          return state;
+        }
+        await new Promise((r) => setTimeout(r, 2));
+      }
+      return null;
+    },
+    [store, states, timeoutMs] as const,
+  );
+}

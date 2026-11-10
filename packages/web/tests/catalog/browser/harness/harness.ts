@@ -3,6 +3,7 @@
 import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
 import workerUrl from "../../../../dist/worker/worker.js?worker&url";
 import * as core from "../../../../dist/index.js";
+import { Catalog, OpfsCatalogStorage } from "../../../../dist/catalog/index.js";
 import { generateGraph } from "../../../fixtures/generate-graph.js";
 
 declare global {
@@ -73,6 +74,6 @@ document.getElementById("list")?.addEventListener("click", () => {
   list({ sizes: true }).then((r) => text("listing", JSON.stringify(r, null, 2)), (e) => text("listing", `listing failed: ${String(e)}`));
 });
 
-export const app = { catalog, core, engineUrl, generateGraph, make, noLocksWorker, noStoreWorker, patchedWorker, trackedWorker, workerUrl };
+export const app = { catalog, Catalog, OpfsCatalogStorage, core, engineUrl, generateGraph, make, noLocksWorker, noStoreWorker, patchedWorker, trackedWorker, workerUrl };
 window.app = app;
 document.documentElement.dataset.harness = "ready";

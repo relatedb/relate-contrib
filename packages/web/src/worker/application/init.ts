@@ -1,9 +1,8 @@
 // The start-up of an application graph in the worker (ADR-010 2.3, ADR-009 2.4): load the engine, fetch the seed, open the
 // store, run the lifecycle against the catalog, and report storage and readiness. A failure is reported and the store is
 // left alone. A client that runs in memory keeps its catalog in memory too and writes nothing durable.
-import { Catalog } from "../../catalog/catalog.js";
-import { MemoryCatalogStorage } from "../../catalog/memory-storage.js";
-import { OpfsCatalogStorage } from "../../catalog/opfs-storage.js";
+import type { Catalog } from "../../catalog/catalog.js";
+import { openCatalog } from "../../catalog/index.js";
 import { APP_STORE_PREFIX } from "../../config.js";
 import type { Engine } from "../engine.js";
 import { Engine as EngineClass } from "../engine.js";
@@ -43,7 +42,7 @@ export async function initApplication(msg: InitMessage, send: (m: WorkerMessage)
   if ("fail" in outcome) return fail(outcome.fail, outcome.message);
 
   const store = `${APP_STORE_PREFIX}${app.name}`;
-  const catalog = new Catalog(outcome.storage.kind === "durable" ? new OpfsCatalogStorage() : new MemoryCatalogStorage());
+  const catalog = openCatalog(outcome.storage.kind === "durable");
   const lifecycle = { catalog, store, name: app.name, version: app.version, intent: app.intent };
 
   // The seed is fetched only when it will be used: a ready store restores without it.
