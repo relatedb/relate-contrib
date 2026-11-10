@@ -79,3 +79,38 @@ export function reconcile(read: ReadResult, directories: string[]): ListingItem[
     return { ...base, kind: e.kind, name: e.name, state: e.state, ...(e.kind === "application" ? { version: e.version } : e.revision !== undefined ? { revision: e.revision } : {}) };
   });
 }
+
+/** Why a store directory could not be removed: another tab holds its files. */
+export class StoreHeldError extends Error {
+  constructor(store: string) {
+    super(`the files of ${store} are held by another tab`);
+    this.name = "StoreHeldError";
+  }
+}
+
+/** What removal needs of the directories; the browser's is {@link opfsDirectories}, tests give their own. */
+export interface StoreDirectories {
+  exists(store: string): Promise<boolean>;
+  /** Remove `relate/<store>` and everything in it. Resolves false when there was none; throws {@link StoreHeldError} when it is held. */
+  remove(store: string): Promise<boolean>;
+}
+
+export const opfsDirectories: StoreDirectories = {
+  async exists(store) {
+    return (await listStoreDirectories()).includes(store);
+  },
+  async remove(store) {
+    const base = await engineDirectory();
+    if (!base) return false;
+    try {
+      await base.removeEntry(store, { recursive: true });
+      return true;
+    } catch (e) {
+      const name = typeof e === "object" && e !== null ? (e as { name?: string }).name : undefined;
+      if (name === "NotFoundError") return false;
+      // The browser refuses to remove files another tab holds open (measured in Chromium, Firefox and WebKit).
+      if (name === "NoModificationAllowedError" || name === "InvalidStateError") throw new StoreHeldError(store);
+      throw e;
+    }
+  },
+};

@@ -97,9 +97,13 @@ export class Catalog {
     await this.update(store, () => null);
   }
 
-  /** Delete the catalog file and nothing else (ADR-010 2.5). Works on an unreadable file. */
-  reset(): Promise<void> {
-    return this.storage.withLock("exclusive", () => this.storage.remove());
+  /** Delete the catalog file and nothing else (ADR-010 2.5). Works on an unreadable file. Resolves to whether there was a file. */
+  reset(): Promise<boolean> {
+    return this.storage.withLock("exclusive", async () => {
+      const had = (await this.storage.read()) !== null;
+      await this.storage.remove();
+      return had;
+    });
   }
 
   /** The entry with the time of this write, strictly later than the entry it replaces, and any field this code does not know kept. */

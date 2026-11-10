@@ -5,8 +5,8 @@ import { OpfsCatalogStorage } from "./opfs-storage.js";
 export { Catalog, CatalogUnavailable } from "./catalog.js";
 export { MemoryCatalogStorage } from "./memory-storage.js";
 export { OpfsCatalogStorage, catalogSupported } from "./opfs-storage.js";
-export { CatalogError, listGraphs } from "./api.js";
-export type { CatalogErrorReason, ListOptions, Listing } from "./api.js";
+export { CatalogError, listGraphs, removeGraph, resetCatalog } from "./api.js";
+export type { CatalogErrorReason, ListOptions, Listing, RemoveOptions, RemoveResult } from "./api.js";
 export type { CatalogStorage, LockMode } from "./storage.js";
 export type { ApplicationEntry, ApplicationState, CacheEntry, CacheState, Entry, EntryInput, ListingItem, State } from "./types.js";
 

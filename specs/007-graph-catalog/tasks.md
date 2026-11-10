@@ -169,13 +169,13 @@ description: "Task list for the graph catalog in the core package"
 
 ### Tests for User Story 6 ⚠️ write first, they must fail
 
-- [ ] T044 [P] [US6] Write `packages/web/tests/catalog/unit/remove.test.ts` (`// covers-cat: FR-019, FR-020, FR-021, FR-022`): `kind-mismatch` and the application-kind requirement; the entry written `removing` before the directory removal; the restore only when the entry still says `removing` with the same `updatedAt`, with a concurrent holder write interleaved by the memory storage; `resetCatalog` deleting only the file; the core never calling remove for an application graph (a spy on the cache's stale path)
-- [ ] T045 [P] [US6] Write `packages/web/tests/catalog/browser/remove.spec.ts` (`// covers-cat: FR-019, FR-020, FR-021, FR-022`), all three browsers: removal of an idle cache and application graph removes directory and entry; a held store rejects `locked` and its entry is as the holder left it; a holder writing a new state during the removal is not overwritten; a tab opening a store left `removing` holds it before finishing; a corrupt catalog fails application opens with `store-unreadable` naming the catalog, `resetCatalog()` recovers it, and a store with data and no entry then fails `store-unmarked`
+- [X] T044 [P] [US6] Write `packages/web/tests/catalog/unit/remove.test.ts` (`// covers-cat: FR-019, FR-020, FR-021, FR-022`): `kind-mismatch` and the application-kind requirement; the entry written `removing` before the directory removal; the restore only when the entry still says `removing` with the same `updatedAt`, with a concurrent holder write interleaved by the memory storage; `resetCatalog` deleting only the file; the core never calling remove for an application graph (a spy on the cache's stale path)
+- [X] T045 [P] [US6] Write `packages/web/tests/catalog/browser/remove.spec.ts` (`// covers-cat: FR-019, FR-020, FR-021, FR-022`), all three browsers: removal of an idle cache and application graph removes directory and entry; a held store rejects `locked` and its entry is as the holder left it; a holder writing a new state during the removal is not overwritten; a tab opening a store left `removing` holds it before finishing; a corrupt catalog fails application opens with `store-unreadable` naming the catalog, `resetCatalog()` recovers it, and a store with data and no entry then fails `store-unmarked`
 
 ### Implementation for User Story 6
 
-- [ ] T046 [US6] Edit `packages/web/src/catalog/api.ts`: `removeGraph(store, { kind })` and `resetCatalog()` per contracts/catalog-api.md and research R9 (shaped by T012's result); typed rejections `locked`, `kind-mismatch`, `unavailable`
-- [ ] T047 [US6] Edit `packages/web/src/catalog/index.ts` and `src/index.ts` to export `removeGraph` and `resetCatalog`; add remove and reset buttons to the harness page; add the page-callable operations to the README stub for T052
+- [X] T046 [US6] Edit `packages/web/src/catalog/api.ts`: `removeGraph(store, { kind })` and `resetCatalog()` per contracts/catalog-api.md and research R9 (shaped by T012's result); typed rejections `locked`, `kind-mismatch`, `unavailable`
+- [X] T047 [US6] Edit `packages/web/src/catalog/index.ts` and `src/index.ts` to export `removeGraph` and `resetCatalog`; add remove and reset buttons to the harness page; add the page-callable operations to the README stub for T052
 
 ---
 

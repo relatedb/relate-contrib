@@ -7,8 +7,8 @@ export type { Events } from "./client/events.js";
 export type { Status } from "./client/status.js";
 export type { Unsubscribe, Update } from "./client/subscriptions.js";
 export { inRanges } from "./application/ranges.js";
-export { CatalogError, listGraphs } from "./catalog/api.js";
-export type { CatalogErrorReason, ListOptions, Listing } from "./catalog/api.js";
+export { CatalogError, listGraphs, removeGraph, resetCatalog } from "./catalog/api.js";
+export type { CatalogErrorReason, ListOptions, Listing, RemoveOptions, RemoveResult } from "./catalog/api.js";
 export type { ListingItem } from "./catalog/types.js";
 export type {
   ApplicationOptions,

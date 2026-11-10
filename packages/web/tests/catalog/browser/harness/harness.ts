@@ -74,6 +74,20 @@ document.getElementById("list")?.addEventListener("click", () => {
   list({ sizes: true }).then((r) => text("listing", JSON.stringify(r, null, 2)), (e) => text("listing", `listing failed: ${String(e)}`));
 });
 
+const show = (p: Promise<unknown>): void => void p.then((r) => text("result", JSON.stringify(r, null, 2)), (e) => text("result", `refused: ${(e as { reason?: string }).reason ?? ""} ${String(e)}`));
+document.getElementById("remove")?.addEventListener("click", () => {
+  const store = (document.getElementById("store") as HTMLInputElement).value;
+  const kind = (document.getElementById("kind") as HTMLSelectElement).value;
+  const remove = catalog().removeGraph;
+  if (!remove) return text("result", "removal: not available yet");
+  show(remove(store, { kind }));
+});
+document.getElementById("reset")?.addEventListener("click", () => {
+  const reset = catalog().resetCatalog;
+  if (!reset) return text("result", "reset: not available yet");
+  show(reset());
+});
+
 export const app = { catalog, Catalog, OpfsCatalogStorage, core, engineUrl, generateGraph, make, noLocksWorker, noStoreWorker, patchedWorker, trackedWorker, workerUrl };
 window.app = app;
 document.documentElement.dataset.harness = "ready";

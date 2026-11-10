@@ -15,7 +15,7 @@ All three run on the page's main thread or in any worker of the origin, need the
 
 ## `removeGraph(store, options)`
 
-`store`: the store name (`app-<name>` or `rel-<id>`). `options`: `{ kind: "application" | "cache" }`, required. Resolves to `{ removed: { store, kind, name, state, version?, revision? }, discarded: "application data" | "cache" | "unregistered directory" }`.
+`store`: the store name (`app-<name>` or `rel-<id>`). `options`: `{ kind: "application" | "cache" }`, required. Resolves to `{ store, kind, entry, discarded }`: `entry` is the entry as it was (null when the store had none) and `discarded` is `"application data"`, `"cache"`, `"unregistered directory"` or `"nothing"`.
 
 1. Under the exclusive lock, read the entry. If it exists and its `kind` differs from `options.kind`, reject `kind-mismatch`. If it does not exist and the directory does, `options.kind` must be `"application"` or `"cache"` and is recorded only in the result.
 2. Write the entry `removing` with a new `updatedAt` (if there was an entry).
@@ -29,6 +29,8 @@ Removing an application graph is allowed only when `kind` is stated as `"applica
 
 Deletes `relate-web/catalog.json` under the exclusive lock and nothing else. Resolves to `{ deleted: boolean }`. Afterwards a store holding data and no entry opens as `store-unmarked` (application) or rebuilds (cache).
 
+The call also refuses a name that is not a store the core keeps (`app-<name>` or `rel-<id>`) with `not-a-store`, so a directory the core did not create is never removed by it. A catalog that cannot be used does not stop a removal the caller asked for: the directory goes and no entry is written or deleted.
+
 ## Failure names added or changed
 
-`store-lost` (an application entry `ready` with `seeded: true` over an empty store; recovery `resetApplication()`); `store-unmarked` (data and no entry); `store-unreadable` (also an unreadable catalog or malformed entry); `store-newer` (also a catalog `format` above 1). Reasons for the page-callable operations: `unavailable`, `locked`, `kind-mismatch`.
+`store-lost` (an application entry `ready` with `seeded: true` over an empty store; recovery `resetApplication()`); `store-unmarked` (data and no entry); `store-unreadable` (also an unreadable catalog or malformed entry); `store-newer` (also a catalog `format` above 1). Reasons for the page-callable operations: `unavailable`, `locked`, `kind-mismatch`, `not-a-store`.
