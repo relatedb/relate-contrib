@@ -152,12 +152,12 @@ description: "Task list for the graph catalog in the core package"
 
 ### Tests for User Story 5 ⚠️ write first, they must fail
 
-- [ ] T041 [P] [US5] Write `packages/web/tests/catalog/browser/list.spec.ts` (`// covers-cat: FR-017, FR-018`, SC-007), all three browsers: items for an application and a cache with kind, name, state, version or revision and `present`; an unregistered directory; a missing directory; no store file read without `sizes` (spy on `getFile`); sizes and modification times with `sizes: true` for 10 stores (time recorded in `reports/catalog-list.json`); listing beside a held store, opening none; an empty origin lists nothing; an unreadable or newer catalog lists directories as `unregistered`
+- [X] T041 [P] [US5] Write `packages/web/tests/catalog/browser/list.spec.ts` (`// covers-cat: FR-017, FR-018`, SC-007), all three browsers: items for an application and a cache with kind, name, state, version or revision and `present`; an unregistered directory; a missing directory; no store file read without `sizes` (spy on `getFile`); sizes and modification times with `sizes: true` for 10 stores (time recorded in `reports/catalog-list.json`); listing beside a held store, opening none; an empty origin lists nothing; an unreadable or newer catalog lists directories as `unregistered`
 
 ### Implementation for User Story 5
 
-- [ ] T042 [US5] Create `packages/web/src/catalog/directory.ts`: list the directories under `relate/` (names only), sum a store's slot files' sizes and newest `lastModified` (only when asked), tolerate a missing `relate/`
-- [ ] T043 [US5] Create `packages/web/src/catalog/api.ts` with `listGraphs(options?)` per contracts/catalog-api.md, and export it from `src/catalog/index.ts` and `src/index.ts`; add it to the harness page (T004)
+- [X] T042 [US5] Create `packages/web/src/catalog/directory.ts`: list the directories under `relate/` (names only), sum a store's slot files' sizes and newest `lastModified` (only when asked), tolerate a missing `relate/`
+- [X] T043 [US5] Create `packages/web/src/catalog/api.ts` with `listGraphs(options?)` per contracts/catalog-api.md, and export it from `src/catalog/index.ts` and `src/index.ts`; add it to the harness page (T004)
 
 ---
 
