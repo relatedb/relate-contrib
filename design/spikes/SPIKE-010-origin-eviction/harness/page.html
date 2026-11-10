@@ -1,0 +1,45 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>SPIKE-010 harness</title>
+<script type="module">
+  const W = new Map();
+  window.spawn = (key) => {
+    const w = new Worker("/worker.js", { type: "module" });
+    const st = { w, pending: new Map(), n: 0 };
+    w.onmessage = (e) => {
+      const m = e.data;
+      const p = st.pending.get(m.id);
+      if (!p) return;
+      st.pending.delete(m.id);
+      m.ok ? p.resolve(m.val) : p.reject(new Error(m.err));
+    };
+    W.set(key, st);
+  };
+  window.call = (key, cmd, args = {}) => {
+    const st = W.get(key);
+    const id = ++st.n;
+    return new Promise((resolve, reject) => {
+      st.pending.set(id, { resolve, reject });
+      st.w.postMessage({ id, cmd, args });
+    });
+  };
+  window.kill = (key) => { W.get(key)?.w.terminate(); W.delete(key); };
+  window.clearRoot = async () => {
+    const root = await navigator.storage.getDirectory();
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const names = []; for await (const [n] of root.entries()) names.push(n);
+      let left = 0;
+      for (const n of names) { try { await root.removeEntry(n, { recursive: true }); } catch { left++; } }
+      if (left === 0) return true;
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    return false;
+  };
+  window.pageCaps = () => ({
+    createWritable: typeof FileSystemFileHandle !== "undefined" && "createWritable" in FileSystemFileHandle.prototype,
+    move: typeof FileSystemFileHandle !== "undefined" && "move" in FileSystemFileHandle.prototype,
+    locks: typeof navigator.locks !== "undefined",
+    storageBuckets: typeof navigator.storageBuckets !== "undefined",
+  });
+  window.ready = true;
+</script>

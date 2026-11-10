@@ -1,0 +1,234 @@
+chromium e1 done in 0s
+chromium e2 done in 1s
+chromium e3 done in 2s
+chromium e4 done in 20s
+chromium e5 done in 1s
+chromium e6 done in 4s
+{
+ "e1": {
+  "caps": {
+   "worker": {
+    "createWritable": true,
+    "createSyncAccessHandle": true,
+    "move": true,
+    "locks": true,
+    "storageBuckets": true
+   },
+   "page": {
+    "createWritable": true,
+    "move": true,
+    "locks": true,
+    "storageBuckets": true
+   }
+  },
+  "modes": {
+   "swap": "ok",
+   "sync": "ok",
+   "move": "ok"
+  }
+ },
+ "e2": {
+  "mode": "swap",
+  "holder": {
+   "init": true,
+   "open": true,
+   "create": "ok"
+  },
+  "write": {
+   "ok": true,
+   "v": {}
+  },
+  "read": {
+   "ok": true,
+   "v": {
+    "text": "{\"graphs\":[\"a\"]}"
+   }
+  },
+  "rewrite": {
+   "ok": true,
+   "v": {}
+  },
+  "read2": {
+   "ok": true,
+   "v": {
+    "text": "{\"graphs\":[\"a\",\"b\"]}"
+   }
+  },
+  "list": {
+   "ok": true,
+   "v": {
+    "names": [
+     "relate",
+     "catalog.json"
+    ]
+   }
+  },
+  "holderQuery": "ok",
+  "secondOpen": {
+   "ok": false,
+   "err": "page.evaluate: Error: storage locked: opfs://catalog-e2"
+  }
+ },
+ "e3": {
+  "modes": {
+   "swap": "ok",
+   "sync": "ok",
+   "move": "ok"
+  },
+  "swap": {
+   "write": {
+    "done": 300,
+    "errors": {}
+   },
+   "writeMs": 182,
+   "read": {
+    "reads": 778,
+    "torn": 0,
+    "tornEmpty": 0,
+    "missing": 37,
+    "backwards": 0,
+    "lastGen": 300,
+    "errors": {
+     "NotReadableError": 71
+    }
+   }
+  },
+  "sync": {
+   "write": {
+    "done": 300,
+    "errors": {}
+   },
+   "writeMs": 162,
+   "read": {
+    "reads": 811,
+    "torn": 207,
+    "tornEmpty": 155,
+    "missing": 0,
+    "backwards": 0,
+    "lastGen": 300,
+    "errors": {
+     "NotReadableError": 56
+    }
+   }
+  },
+  "move": {
+   "write": {
+    "done": 300,
+    "errors": {}
+   },
+   "writeMs": 257,
+   "read": {
+    "reads": 1004,
+    "torn": 0,
+    "tornEmpty": 0,
+    "missing": 48,
+    "backwards": 0,
+    "lastGen": 300,
+    "errors": {
+     "NotReadableError": 45
+    }
+   }
+  }
+ },
+ "e4": {
+  "modes": {
+   "swap": "ok",
+   "sync": "ok",
+   "move": "ok"
+  },
+  "swap": {
+   "cycles": 20,
+   "unreadable": 0,
+   "torn": 0,
+   "ok": 20,
+   "extraEntries": [],
+   "maxWaitMs": 8,
+   "errs": []
+  },
+  "sync": {
+   "cycles": 20,
+   "unreadable": 0,
+   "torn": 0,
+   "ok": 20,
+   "extraEntries": [],
+   "maxWaitMs": 9,
+   "errs": []
+  },
+  "move": {
+   "cycles": 20,
+   "unreadable": 0,
+   "torn": 0,
+   "ok": 20,
+   "extraEntries": [
+    "catalog.json.tmp"
+   ],
+   "maxWaitMs": 10,
+   "errs": []
+  }
+ },
+ "e5": {
+  "mode": "swap",
+  "withoutLock": {
+   "final": "98",
+   "expected": 291,
+   "results": [
+    {
+     "done": 98,
+     "errors": {
+      "NotReadableError": 1,
+      "NotFoundError": 1
+     }
+    },
+    {
+     "done": 97,
+     "errors": {
+      "NotReadableError": 2,
+      "NotFoundError": 1
+     }
+    },
+    {
+     "done": 96,
+     "errors": {
+      "NotReadableError": 4
+     }
+    }
+   ],
+   "ms": 101
+  },
+  "withLock": {
+   "final": "300",
+   "expected": 300,
+   "results": [
+    {
+     "done": 100,
+     "errors": {}
+    },
+    {
+     "done": 100,
+     "errors": {}
+    },
+    {
+     "done": 100,
+     "errors": {}
+    }
+   ],
+   "ms": 263
+  }
+ },
+ "e6": {
+  "terminate": [
+   3,
+   2,
+   4,
+   3,
+   3
+  ],
+  "close": [
+   6,
+   6,
+   6,
+   5,
+   5
+  ]
+ }
+}

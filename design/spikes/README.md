@@ -79,3 +79,6 @@ into the RFC rather than copied verbatim.
 | [SPIKE-006](SPIKE-006-nextjs-embedding/SPIKE.md) | Embedding the Core in Next.js | done | RFC-001 |
 | [SPIKE-007](SPIKE-007-sveltekit-embedding/SPIKE.md) | Embedding the Core in SvelteKit | done | RFC-001 |
 | [SPIKE-008](SPIKE-008-application-graph-store/SPIKE.md) | The Engine's Browser Store as a Durable Application Store | done | RFC-006 |
+| [SPIKE-009](SPIKE-009-catalog-file-atomicity/SPIKE.md) | A Catalog File in Origin-Private Storage | done | RFC-007 |
+| [SPIKE-010](SPIKE-010-origin-eviction/SPIKE.md) | Eviction and Clearing of an Origin's Stored Graphs | done | RFC-007 |
+| [SPIKE-011](SPIKE-011-engine-store-enumeration/SPIKE.md) | Enumerating the Engine's Browser Stores | done | RFC-007 |

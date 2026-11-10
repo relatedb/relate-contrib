@@ -1,0 +1,49 @@
+{
+  "e7": {
+    "swap": {
+      "write": {
+        "done": 300,
+        "errors": {}
+      },
+      "read": {
+        "reads": 619,
+        "torn": 0,
+        "tornEmpty": 0,
+        "missing": 0,
+        "backwards": 0,
+        "lastGen": 300,
+        "errors": {}
+      }
+    },
+    "sync": {
+      "write": {
+        "done": 300,
+        "errors": {}
+      },
+      "read": {
+        "reads": 616,
+        "torn": 0,
+        "tornEmpty": 0,
+        "missing": 0,
+        "backwards": 0,
+        "lastGen": 300,
+        "errors": {}
+      }
+    },
+    "move": {
+      "write": {
+        "done": 300,
+        "errors": {}
+      },
+      "read": {
+        "reads": 616,
+        "torn": 0,
+        "tornEmpty": 0,
+        "missing": 0,
+        "backwards": 0,
+        "lastGen": 300,
+        "errors": {}
+      }
+    }
+  }
+}

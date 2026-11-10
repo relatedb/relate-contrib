@@ -1,0 +1,208 @@
+{
+  "e0": {
+    "createWritable": true,
+    "move": true,
+    "locks": true,
+    "storageBuckets": true
+  },
+  "e1": {
+    "before": {
+      "tree": {
+        "top": [
+          "relate",
+          "catalog.json"
+        ],
+        "dirs": 3,
+        "files": 131,
+        "bytes": 1596
+      },
+      "estimate": {
+        "usage": 23036,
+        "quota": 10737441276,
+        "persisted": false,
+        "onquotachange": false
+      }
+    },
+    "beforeA": {
+      "opened": true,
+      "rows": [
+        {
+          "c": 5
+        }
+      ]
+    },
+    "after": {
+      "tree": {
+        "top": [],
+        "dirs": 0,
+        "files": 0,
+        "bytes": 0
+      },
+      "estimate": {
+        "usage": 0,
+        "quota": 10737418240,
+        "persisted": false,
+        "onquotachange": false
+      }
+    },
+    "catalog": "page.evaluate: Error: A requested file or directory could not be found at the time an operation was processed.",
+    "afterA": {
+      "opened": true,
+      "rows": [
+        {
+          "c": 0
+        }
+      ]
+    },
+    "afterB": {
+      "opened": true,
+      "rows": [
+        {
+          "c": 0
+        }
+      ]
+    }
+  },
+  "e2": {
+    "open": true,
+    "before": [
+      {
+        "c": 7
+      }
+    ],
+    "cleared": "ok",
+    "holderWrite": "page.evaluate: Error: storage error: uncertain WAL outcome after safe LSN 7 / timestamp 7; close and reopen",
+    "holderCount": "page.evaluate: Error: storage error: uncertain WAL outcome after safe LSN 7 / timestamp 7; close and reopen",
+    "treeWhileHeld": {
+      "tree": {
+        "top": [],
+        "dirs": 0,
+        "files": 0,
+        "bytes": 0
+      },
+      "estimate": {
+        "usage": 0,
+        "quota": 10737418240,
+        "persisted": false,
+        "onquotachange": false
+      }
+    },
+    "reopened": {
+      "opened": true,
+      "rows": [
+        {
+          "c": 0
+        }
+      ]
+    },
+    "afterEnd": {
+      "tree": {
+        "top": [
+          "relate"
+        ],
+        "dirs": 2,
+        "files": 65,
+        "bytes": 52
+      },
+      "estimate": {
+        "usage": 10766,
+        "quota": 10737429006,
+        "persisted": false,
+        "onquotachange": false
+      }
+    }
+  },
+  "e3": {
+    "before": {
+      "tree": {
+        "top": [
+          "relate",
+          "catalog.json"
+        ],
+        "dirs": 3,
+        "files": 131,
+        "bytes": 1596
+      },
+      "estimate": {
+        "usage": 23036,
+        "quota": 10737441276,
+        "persisted": false,
+        "onquotachange": false
+      }
+    },
+    "after": {
+      "tree": {
+        "top": [],
+        "dirs": 0,
+        "files": 0,
+        "bytes": 0
+      },
+      "estimate": {
+        "usage": 0,
+        "quota": 10737418240,
+        "persisted": false,
+        "onquotachange": false
+      }
+    },
+    "later": {
+      "tree": {
+        "top": [],
+        "dirs": 0,
+        "files": 0,
+        "bytes": 0
+      },
+      "estimate": {
+        "usage": 0,
+        "quota": 10737418240,
+        "persisted": false,
+        "onquotachange": false
+      }
+    },
+    "clearedMs": 1
+  },
+  "e4": {
+    "storageBuckets": true,
+    "written": {
+      "ok": true,
+      "v": {
+        "keys": [
+          "catalog"
+        ]
+      }
+    },
+    "before": {
+      "ok": true,
+      "v": {
+        "keys": [
+          "catalog"
+        ],
+        "names": [
+          "catalog.json"
+        ]
+      }
+    },
+    "after": {
+      "ok": true,
+      "v": {
+        "keys": [
+          "catalog"
+        ],
+        "names": []
+      }
+    },
+    "rootAfter": {
+      "tree": {
+        "top": [],
+        "dirs": 0,
+        "files": 0,
+        "bytes": 0
+      },
+      "estimate": {
+        "usage": 172,
+        "quota": 10737418412,
+        "persisted": false,
+        "onquotachange": false
+      }
+    }
+  }
+}

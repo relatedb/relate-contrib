@@ -1,0 +1,8 @@
+{
+  "e0": {
+    "createWritable": true,
+    "move": true,
+    "locks": true,
+    "storageBuckets": false
+  }
+}
