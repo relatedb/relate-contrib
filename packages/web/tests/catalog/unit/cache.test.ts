@@ -11,13 +11,20 @@ const PAGES = 60;
 const graph = (revision = "r1") => generateGraph(PAGES, { id: "docs", revision });
 const STORE = cacheStoreName("docs");
 
-/** Open a cache the way the worker does: restore, or write loading, reset, load, write ready. */
-async function open(e: Awaited<ReturnType<typeof realEngine>>, catalog: Catalog, revision = "r1"): Promise<{ restored: boolean }> {
+/**
+ * Open a cache the way the worker does: restore, or write loading, reset, load, write ready; when the catalog cannot take the
+ * loading write, the durable store is left alone and the graph loads into a memory engine, returned as `memory`.
+ */
+async function open(e: Awaited<ReturnType<typeof realEngine>>, catalog: Catalog, revision = "r1"): Promise<{ restored: boolean; memory?: Awaited<ReturnType<typeof realEngine>> }> {
   const { descriptor, document } = graph(revision);
   if (await canRestore(e, catalog, descriptor)) return { restored: true };
-  const writable = await beginRebuild(e, catalog, descriptor);
+  if (!(await beginRebuild(e, catalog, descriptor))) {
+    const memory = await realEngine();
+    loadDocument(memory, document, { descriptor });
+    return { restored: false, memory };
+  }
   loadDocument(e, document, { descriptor });
-  if (writable) await finishRebuild(catalog, descriptor);
+  await finishRebuild(catalog, descriptor);
   return { restored: false };
 }
 
@@ -121,23 +128,42 @@ describe("a catalog that cannot be used", () => {
   it.each([
     ["does not parse", "{truncated"],
     ["is of a newer format", JSON.stringify({ format: 2, graphs: {} })],
-  ])("a catalog that %s does not fail the open: the cache rebuilds and the file is not written over", async (_name, text) => {
+  ])("a catalog that %s does not fail the open: the graph loads in memory and the durable store and the file are left as they were", async (_name, text) => {
     const e = await realEngine();
+    loadDocument(e, generateGraph(30, { id: "docs", revision: "old" }).document); // what the durable store holds
     const storage = new MemoryCatalogStorage(text);
-    const catalog = new Catalog(storage);
-    expect(await open(e, catalog)).toEqual({ restored: false });
-    expect(nodes(e)).toBe(PAGES);
+    const result = await open(e, new Catalog(storage));
+    expect(result.restored).toBe(false);
+    expect(nodes(result.memory!)).toBe(PAGES);
+    expect(nodes(e)).toBe(30); // not reset, not rewritten
     expect(await storage.read()).toBe(text);
-    expect(await open(e, catalog)).toEqual({ restored: false }); // and it rebuilds again next time
   });
 
-  it("a storage error on a write does not fail the open either", async () => {
+  it("a storage error on the loading write loads in memory and leaves the store and its entry as they were", async () => {
     const e = await realEngine();
     const storage = new MemoryCatalogStorage();
+    const catalog = new Catalog(storage);
+    await open(e, catalog, "r1"); // ready at r1
+    const replace = storage.replace.bind(storage);
     storage.replace = async () => {
       throw new Error("the file storage failed");
     };
-    expect(await open(e, new Catalog(storage))).toEqual({ restored: false });
+    const result = await open(e, catalog, "r2");
+    storage.replace = replace;
+    expect(nodes(result.memory!)).toBe(PAGES);
     expect(nodes(e)).toBe(PAGES);
+    expect(await catalog.lookup(STORE)).toMatchObject({ entry: { state: "ready", revision: "r1" } });
+    // a later r1 visit restores r1 data, not data of another revision
+    expect(await open(e, catalog, "r1")).toEqual({ restored: true });
+  });
+
+  it("a failure of the catalog's file storage while looking up the entry rebuilds instead of failing", async () => {
+    const e = await realEngine();
+    const storage = new MemoryCatalogStorage();
+    storage.read = async () => {
+      throw new Error("the file storage failed");
+    };
+    const { descriptor } = graph();
+    expect(await canRestore(e, new Catalog(storage), descriptor)).toBe(false);
   });
 });

@@ -15,7 +15,14 @@ const cacheEntry = (): EntryInput => ({ kind: "cache", name: "docs", state: "rea
 function directories(names: string[], opts: { held?: boolean; during?: () => Promise<void> } = {}) {
   const present = new Set(names);
   const log: string[] = [];
+  const locks = new Map<string, Promise<unknown>>();
   const dirs: StoreDirectories = {
+    // one removal of a store at a time, as the browser lock gives
+    serialize: (store, job) => {
+      const run = (locks.get(store) ?? Promise.resolve()).then(job, job);
+      locks.set(store, run.catch(() => undefined));
+      return run;
+    },
     exists: async (store) => present.has(store),
     remove: async (store) => {
       log.push(`remove ${store}`);
@@ -56,6 +63,20 @@ describe("what may be removed", () => {
     await expect(performRemoval(catalog, dirs, "app-orders", {} as never)).rejects.toMatchObject({ reason: "kind-mismatch" });
     expect(log).toEqual([]);
     expect(storage.replaced).toBe(replaced);
+  });
+
+  it("refuses a kind that differs from the store's name before it reads the catalog: no entry, an unreadable catalog, any state", async () => {
+    // an application graph's directory, with no entry and with a catalog that does not parse
+    for (const storage of [new MemoryCatalogStorage(), new MemoryCatalogStorage("{truncated"), new MemoryCatalogStorage(JSON.stringify({ format: 2, graphs: {} }))]) {
+      const catalog = new Catalog(storage);
+      const { dirs, present, log } = directories(["app-orders"]);
+      await expect(performRemoval(catalog, dirs, "app-orders", { kind: "cache" })).rejects.toMatchObject({ reason: "kind-mismatch" });
+      expect(present.has("app-orders")).toBe(true);
+      expect(log).toEqual([]);
+    }
+    const { dirs, present } = directories(["rel-docs"]);
+    await expect(performRemoval(new Catalog(new MemoryCatalogStorage()), dirs, "rel-docs", { kind: "application" })).rejects.toMatchObject({ reason: "kind-mismatch" });
+    expect(present.has("rel-docs")).toBe(true);
   });
 
   it("refuses when the kind stated differs from the entry's, in both directions, and writes nothing", async () => {
@@ -151,6 +172,59 @@ describe("a store another tab holds", () => {
     const { dirs } = directories(["app-orders"], { during: async () => void (await catalog.set("app-orders", appEntry({ version: 3 }))) });
     await performRemoval(catalog, dirs, "app-orders", { kind: "application" });
     expect(await catalog.lookup("app-orders")).toMatchObject({ entry: { version: 3 } });
+  });
+});
+
+describe("two removals of one held store", () => {
+  it("both reject locked and leave the entry as it was, never in the state removing", async () => {
+    const { catalog } = setup();
+    await catalog.set("app-orders", appEntry({ version: 2 }));
+    const { dirs } = directories(["app-orders"], { held: true, during: () => new Promise((r) => setTimeout(r, 5)) });
+    const outcomes = await Promise.allSettled([
+      performRemoval(catalog, dirs, "app-orders", { kind: "application" }),
+      performRemoval(catalog, dirs, "app-orders", { kind: "application" }),
+      performRemoval(catalog, dirs, "app-orders", { kind: "application" }),
+    ]);
+    expect(outcomes.every((o) => o.status === "rejected" && (o.reason as { reason: string }).reason === "locked")).toBe(true);
+    expect(await catalog.lookup("app-orders")).toMatchObject({ status: "entry", entry: { state: "ready", version: 2 } });
+  });
+
+  it("the second removal after an interrupted first one sees removing and puts back removing, not a state of its own", async () => {
+    const { catalog } = setup();
+    await catalog.set("app-orders", appEntry());
+    await catalog.update("app-orders", () => ({ kind: "application", name: "orders", state: "removing", version: 2, seeded: true }));
+    const { dirs } = directories(["app-orders"], { held: true });
+    await expect(performRemoval(catalog, dirs, "app-orders", { kind: "application" })).rejects.toMatchObject({ reason: "locked" });
+    expect(await catalog.lookup("app-orders")).toMatchObject({ entry: { state: "removing" } });
+  });
+});
+
+describe("an entry that is not valid", () => {
+  const bad = JSON.stringify({ format: 1, graphs: { "app-orders": { kind: "application", name: "orders", state: "paused" } } });
+
+  it("is deleted with its store after a successful removal, and the result says the data was discarded", async () => {
+    const storage = new MemoryCatalogStorage(bad);
+    const catalog = new Catalog(storage);
+    const { dirs, present } = directories(["app-orders"]);
+    const result = await performRemoval(catalog, dirs, "app-orders", { kind: "application" });
+    expect(result).toMatchObject({ discarded: "application data", entry: null });
+    expect(present.has("app-orders")).toBe(false);
+    expect(JSON.parse((await storage.read())!).graphs).toEqual({});
+  });
+
+  it("is kept when the removal fails", async () => {
+    const storage = new MemoryCatalogStorage(bad);
+    const { dirs } = directories(["app-orders"], { held: true });
+    await expect(performRemoval(new Catalog(storage), dirs, "app-orders", { kind: "application" })).rejects.toMatchObject({ reason: "locked" });
+    expect(await storage.read()).toBe(bad);
+  });
+
+  it("is not deleted when someone wrote it again in the meantime", async () => {
+    const storage = new MemoryCatalogStorage(bad);
+    const catalog = new Catalog(storage);
+    const { dirs } = directories(["app-orders"], { during: async () => void (await catalog.set("app-orders", appEntry({ version: 4 }))) });
+    await performRemoval(catalog, dirs, "app-orders", { kind: "application" });
+    expect(await catalog.lookup("app-orders")).toMatchObject({ entry: { version: 4 } });
   });
 });
 

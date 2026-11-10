@@ -106,7 +106,7 @@ A site that ships a graph with a descriptor keeps getting a cache that restores 
 1. **Given** an entry `ready` with the descriptor's revision and a store whose node count equals the descriptor's, **When** a client opens, **Then** the store is restored and the data is not fetched.
 2. **Given** no entry, an entry `loading`, a different revision, a count mismatch, or an empty store, **When** a client opens, **Then** the entry is written `loading`, the store is reset if not empty, the data is loaded, the indexes are created, and the entry is written `ready` with the revision last.
 3. **Given** a leftover `relate-web/<id>.json` from an earlier build, **When** the cache is next opened, **Then** the file is removed and the cache is rebuilt.
-4. **Given** a catalog that does not parse, **When** a cache is opened, **Then** the cache rebuilds and the page does not fail.
+4. **Given** a catalog that does not parse, or one whose `loading` write fails, **When** a cache is opened, **Then** the graph loads in memory, the durable store and the file are left as they were, and the page does not fail.
 5. **Given** a restore of 5,000 pages, **When** it completes, **Then** its time is within the baseline the core already records, and no request for the data was made.
 
 ---
@@ -193,7 +193,7 @@ The change touches the core's open path for both kinds of graph. The existing co
 
 - **FR-005**: Every read and write of the catalog MUST go through the Web Lock `relate-web:catalog`, exclusive for writing and shared for reading. A write MUST be a read-modify-write inside the exclusive lock that applies one change and replaces the file; the lock MUST be held for the replace only, never for the data operation it brackets.
 - **FR-006**: The replace MUST write through a writable stream so the file is swapped on close, and MUST fall back to a synchronous access handle where the stream is absent.
-- **FR-007**: A lifecycle operation MUST write its intent to the entry before it changes data and its outcome after, as in ADR-010 §2.2: first run `seeding` then `ready`; migration `migrating` (with `target`) then `ready` after each version's last statement; import `importing` then `ready` with the envelope's version (then `migrating` if below the code's); `resetApplication()` `resetting` then `ready`; cache load `loading` then `ready` with the revision; removal `removing` then the entry deleted. The worker MUST perform lifecycle writes, and only the tab holding a store MUST write that graph's entry, except removal.
+- **FR-007**: A lifecycle operation MUST write its intent to the entry before it changes data and its outcome after, as in ADR-010 §2.2: first run `seeding` then `ready`; migration `migrating` (with `target`) then `ready` after each version's last statement; import `importing` then `ready` with the envelope's version (then `migrating` if below the code's); `resetApplication()` `resetting` then `ready`; cache load `loading` then `ready` with the revision; removal `removing` then the entry deleted. The worker MUST perform lifecycle writes, and only the tab holding a store MUST write that graph's entry, except removal. Messages that use the store (queries, scoped data, export, import) MUST run one at a time in arrival order, so no request runs inside an import.
 - **FR-008**: A migration MUST record `version` after each version's last statement so a failed migration resumes from the last completed version.
 - **FR-009**: Where the browser offers the file storage without Web Locks, the core MUST treat storage as unavailable and apply the `onUnavailable` rule.
 
@@ -209,6 +209,7 @@ The change touches the core's open path for both kinds of graph. The existing co
 | `resetting` | any | reset and seed again |
 | `importing` | any | `import-interrupted` |
 | `removing` | any | finish the removal, then first run |
+| `migrating`, `target` above the code's version | any | `store-newer` |
 | `migrating` | any | resume migrations from `version` |
 | `ready`, version equal | has nodes or indexes, or `seeded: false` | open |
 | `ready`, version below the code's | has nodes or indexes, or `seeded: false` | migrate |
@@ -222,7 +223,7 @@ The change touches the core's open path for both kinds of graph. The existing co
 
 **Opening a cache**
 
-- **FR-015**: A cache entry `ready` with the descriptor's revision and a store node count equal to the descriptor's `data.nodes` MUST restore with no fetch of the data. Any other case (no entry, `loading`, `removing`, a different revision, a count mismatch, an empty store, or an unreadable catalog) MUST write `loading`, reset the store if not empty, load the data, create the indexes, and write `ready` with the revision last, and MUST NOT fail the page.
+- **FR-015**: A cache entry `ready` with the descriptor's revision and a store node count equal to the descriptor's `data.nodes` MUST restore with no fetch of the data. Any other case (no entry, `loading`, `removing`, a different revision, a count mismatch, an empty store) MUST write `loading`, reset the store if not empty, load the data, create the indexes, and write `ready` with the revision last. When the catalog cannot be read, or cannot take the `loading` write, the core MUST leave the durable store and the file as they are and load the graph in memory; it MUST NOT fail the page.
 - **FR-016**: A leftover `relate-web/<id>.json` MUST be removed when its cache is next opened.
 
 **Listing, removal and reset**
@@ -230,6 +231,7 @@ The change touches the core's open path for both kinds of graph. The existing co
 - **FR-017**: The core MUST export a catalog interface with three calls (names chosen at implementation): list, remove and reset.
 - **FR-018**: List MUST return the entries and the stores present in `relate/`, each with kind, name, state, version or revision and whether its store exists; MUST report a directory with no entry as `unregistered` and an entry with no directory as `missing`; MUST, on request only, add a store's size and last-modified time from its files; MUST open no store; and MUST succeed while another tab holds a store.
 - **FR-019**: Remove MUST take a store name (with or without an entry), write `removing`, remove the directory `relate/<store>`, then delete the entry. When the files are held it MUST reject with `locked` and MUST restore the entry only if it still says `removing` with the `updatedAt` this call wrote, checked and written inside one exclusive lock. Removing an application graph MUST require the caller to state it is one, and the result MUST report what was discarded.
+- **FR-019a**: Removal MUST check the stated kind against the store's name before it reads the catalog, so that removing an application graph's data always takes an explicit `application`; two removals of one store MUST NOT overlap (a lock of its own, never the catalog lock held across a directory operation); and an entry that is present but not valid MUST be deleted with the store after a successful removal, unless it was written again meanwhile.
 - **FR-020**: A tab that opens a store and finds `removing` MUST hold the store before finishing the removal.
 - **FR-021**: Reset MUST delete `catalog.json` and nothing else.
 - **FR-022**: The core MUST remove a graph by itself only for a stale cache and a leftover stored-copy file; it MUST NOT remove an application graph and MUST apply no age or count limit.

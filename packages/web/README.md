@@ -175,7 +175,7 @@ but no Web Locks counts as having no storage. An entry has a `kind` (`applicatio
 (`ready`, or `seeding`, `migrating`, `importing`, `resetting`, `loading` or `removing` for an operation started and not yet
 confirmed), `updatedAt`, and, for an application, `version` and `seeded`, or, for a cache, `revision`. A cache restores only
 from a `ready` entry at the descriptor's revision over a store with all its nodes; anything else rebuilds, and a catalog that
-cannot be used never fails the page, it only means the cache rebuilds. The core removes only a stale cache's contents and a
+cannot be used never fails the page: the cache is loaded in memory, leaving the durable store and the catalog as they were. The core removes only a stale cache's contents and a
 leftover `relate-web/<id>.json`; it never removes an application graph.
 
 Three calls are exported. None opens a store, and each needs the origin-private storage and Web Locks (`CatalogError` with
@@ -195,9 +195,9 @@ await resetCatalog();                                       // deletes the file;
 
 `listGraphs` works while another tab holds a store; sizes and modification times cost a file read per slot file, so ask for
 them only when needed (about 6 ms per store in Chromium, 20 ms in Firefox and WebKit, in the spike's runs). `removeGraph`
-refuses a name that is not an `app-<name>` or `rel-<id>` store (`not-a-store`), a `kind` that disagrees with the entry or is
-missing (`kind-mismatch`), and a store another tab holds (`locked`, with its entry left as its holder wrote it). Removing a
-graph the catalog does not know (`unregistered`) needs only its name and kind. `resetCatalog()` is the way out of a catalog that
+refuses a name that is not an `app-<name>` or `rel-<id>` store (`not-a-store`), a `kind` that disagrees with the store's name or is
+missing (`kind-mismatch`: removing an application graph always takes an explicit `application`), and a store another tab holds (`locked`, with its entry left as its holder wrote it). Removing a
+graph the catalog does not know (`unregistered`) needs only its name and kind. Two removals of one store never overlap, in one tab or several. `resetCatalog()` is the way out of a catalog that
 does not parse; afterwards a store with data and no entry fails `store-unmarked` until you import an export or call
 `resetApplication()`.
 

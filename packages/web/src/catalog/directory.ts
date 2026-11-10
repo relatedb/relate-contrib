@@ -90,12 +90,20 @@ export class StoreHeldError extends Error {
 
 /** What removal needs of the directories; the browser's is {@link opfsDirectories}, tests give their own. */
 export interface StoreDirectories {
+  /**
+   * Run `job` while holding the right to remove or roll back this store, so two removals of one store never overlap, in
+   * this tab or another. It is a lock of its own: the catalog lock is never held across a directory operation.
+   */
+  serialize<T>(store: string, job: () => Promise<T>): Promise<T>;
   exists(store: string): Promise<boolean>;
   /** Remove `relate/<store>` and everything in it. Resolves false when there was none; throws {@link StoreHeldError} when it is held. */
   remove(store: string): Promise<boolean>;
 }
 
 export const opfsDirectories: StoreDirectories = {
+  serialize(store, job) {
+    return navigator.locks.request(`relate-web:remove:${store}`, { mode: "exclusive" }, job) as Promise<never>;
+  },
   async exists(store) {
     return (await listStoreDirectories()).includes(store);
   },

@@ -148,6 +148,20 @@ describe("an interrupted migration", () => {
   });
 });
 
+describe("a migration older code cannot finish", () => {
+  it("does not report a half-migrated store ready: store-newer, untouched, however the older code's version compares with the entry's", async () => {
+    const w = await world();
+    await w.open({ version: 1 });
+    await w.put({ state: "migrating", version: 1, target: 2 });
+    const rec = recording(w.e);
+    const replaced = w.storage.replaced;
+    expect(await w.open({ version: 1 })).toMatchObject({ ok: false, reason: "store-newer" });
+    expect(writes(rec)).toEqual([]);
+    expect(w.storage.replaced).toBe(replaced);
+    expect(await w.entry()).toMatchObject({ state: "migrating", version: 1, target: 2 });
+  });
+});
+
 describe("failures write nothing (FR-014)", () => {
   it.each([
     ["importing", { state: "importing" }, "import-interrupted"],

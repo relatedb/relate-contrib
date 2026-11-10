@@ -73,7 +73,7 @@ async function init(msg: InitMessage): Promise<void> {
     timings.init = since(t);
 
     // With a store: open it (retrying a locked one), and restore if its catalog entry has this revision.
-    let rebuild: { catalog: ReturnType<typeof openCatalog>; writable: boolean } | null = null;
+    let rebuild: { catalog: ReturnType<typeof openCatalog> } | null = null;
     if (msg.useStore && descriptor) {
       t = performance.now();
       const opened = await openStore(descriptor.id, (attempt, waitMs) => send({ type: "store-retry", attempt, waitMs }));
@@ -89,7 +89,13 @@ async function init(msg: InitMessage): Promise<void> {
           send({ type: "ready", restored: true, timings });
           return;
         }
-        rebuild = { catalog, writable: await beginRebuild(opened, catalog, descriptor) };
+        if (await beginRebuild(opened, catalog, descriptor)) {
+          rebuild = { catalog };
+        } else {
+          // The catalog cannot record the rebuild, so the durable store is not touched: load in memory instead.
+          opened.release();
+          engine = null;
+        }
       }
     }
     engine ??= Engine.memory();
@@ -103,7 +109,7 @@ async function init(msg: InitMessage): Promise<void> {
       input = await response.json();
     }
     loadDocument(engine, input, { descriptor, indexes: msg.indexes });
-    if (rebuild?.writable && descriptor) await finishRebuild(rebuild.catalog, descriptor);
+    if (rebuild && descriptor) await finishRebuild(rebuild.catalog, descriptor);
     timings.load = since(t);
     timings.total = since(t0);
     send({ type: "ready", restored: false, timings });
@@ -175,12 +181,19 @@ async function importApp(msg: ImportApplicationMessage): Promise<void> {
   }
 }
 
+// Messages that use the store run one at a time, in arrival order. An import awaits the catalog between engine steps, and
+// without this a query, an export or another import could run inside it and see (or change) a half-imported store.
+let chain: Promise<void> = Promise.resolve();
+const serially = (job: () => void | Promise<void>): void => {
+  chain = chain.then(job).catch(() => undefined);
+};
+
 scope.onmessage = (e) => {
   const msg = e.data;
   if (msg.type === "init") void init(msg);
-  else if (msg.type === "query") query(msg);
-  else if (msg.type === "scoped-add") scopedAdd(msg);
-  else if (msg.type === "scoped-drop") scopedDrop(msg);
-  else if (msg.type === "export-application") exportApp(msg);
-  else if (msg.type === "import-application") void importApp(msg);
+  else if (msg.type === "query") serially(() => query(msg));
+  else if (msg.type === "scoped-add") serially(() => scopedAdd(msg));
+  else if (msg.type === "scoped-drop") serially(() => scopedDrop(msg));
+  else if (msg.type === "export-application") serially(() => exportApp(msg));
+  else if (msg.type === "import-application") serially(() => importApp(msg));
 };

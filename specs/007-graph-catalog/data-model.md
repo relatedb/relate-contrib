@@ -58,7 +58,7 @@ Inputs: the entry (or none), `hasNodes`, `hasIndexes` (read from the node count 
 1. Catalog unreadable → `store-unreadable`. Catalog `format` above 1 → `store-newer`.
 2. No entry: store empty → first run; store has nodes or indexes → `store-unmarked` (message names the `_RelateApplication` label if a node carries it).
 3. Entry with an unknown `state` or a malformed field → `store-unreadable`.
-4. Entry `version` above the code's → `store-newer`.
+4. Entry `version` above the code's, or a `migrating` entry whose `target` is above it (a migration this code cannot finish, possibly part applied) → `store-newer`.
 5. By `state`: `seeding`, `resetting` → reset and seed; `importing` → `import-interrupted`; `removing` → finish removal, first run; `migrating` → resume from `version`; `ready` → `seeded: true` over an empty store is `store-lost`, otherwise open (equal) or migrate (below).
 
 ## Listing item

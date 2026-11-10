@@ -17,10 +17,11 @@ All three run on the page's main thread or in any worker of the origin, need the
 
 `store`: the store name (`app-<name>` or `rel-<id>`). `options`: `{ kind: "application" | "cache" }`, required. Resolves to `{ store, kind, entry, discarded }`: `entry` is the entry as it was (null when the store had none) and `discarded` is `"application data"`, `"cache"`, `"unregistered directory"` or `"nothing"`.
 
-1. Under the exclusive lock, read the entry. If it exists and its `kind` differs from `options.kind`, reject `kind-mismatch`. If it does not exist and the directory does, `options.kind` must be `"application"` or `"cache"` and is recorded only in the result.
+0. Check `options.kind` against the store's name (`app-` is an application graph, `rel-` a cache) and reject `kind-mismatch` on a difference, before the catalog is read: removing an application graph's data always takes an explicit `"application"`. Then hold the lock `relate-web:remove:<store>` for the rest of the call, so two removals of one store never overlap in any tab; the catalog lock is never held across a directory operation.
+1. Under the exclusive catalog lock, read the entry (an entry that is present but not valid is remembered as raw text).
 2. Write the entry `removing` with a new `updatedAt` (if there was an entry).
 3. Remove `relate/<store>` recursively. If the files are held, go to the restore step; if the directory does not exist, continue.
-4. Under the exclusive lock, delete the entry, if it still says `removing` with the `updatedAt` written in step 2.
+4. Under the exclusive lock, delete the entry, if it still says `removing` with the `updatedAt` written in step 2; an entry that was not valid is deleted if its text is unchanged.
 5. Restore step: under the exclusive lock, put the entry back as it was before step 2 only if it still says `removing` with that `updatedAt`; otherwise leave the holder's newer entry. Reject `locked`.
 
 Removing an application graph is allowed only when `kind` is stated as `"application"`; the result's `discarded` says so.

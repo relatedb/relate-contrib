@@ -151,3 +151,13 @@ No deployed store exists. A store with an `_RelateApplication` node and no entry
 - RFCs: RFC-007. Settles its open questions 7.1 (a file, ordered by a Web Lock), 7.2 (intent first, a reported mismatch), 7.4 (sizes read from the directory, opt-in), 7.5 (`store-lost` for an entry that outlives its store; a full clear looks like a first visit), 7.6 (removal by call only) and 7.7 and 7.8 (no adoption of old forms; remove each graph to clear everything). Leaves 7.3 open.
 - ADRs: ADR-001 (worker hosting, the store and its retry rule), ADR-003 (the descriptor and its stored copy), ADR-009 (application graphs and the marker)
 - Evidence: `design/spikes/SPIKE-009-catalog-file-atomicity/SPIKE.md`, `design/spikes/SPIKE-010-origin-eviction/SPIKE.md`, `design/spikes/SPIKE-011-engine-store-enumeration/SPIKE.md`
+
+## 6. Amendments
+
+- 2026-11-10 (review of the implementation, specs/007-graph-catalog):
+  - **2.3, a migration the code cannot finish.** A `migrating` entry whose `target` is above the code's version fails `store-newer`: the migration may be part applied, so older code must not open the store as ready at the version it recorded.
+  - **2.4, a cache whose record cannot be written.** When the catalog cannot be read, or cannot take the `loading` write, the cache is loaded in memory and the durable store and the file are left as they are. Resetting and reloading a store whose entry still said `ready` at an older revision would let a later visit at that revision restore data of another revision. (The text of 2.4 that said a rebuild then writes no entry is replaced.)
+  - **2.4, the legacy file.** `relate-web/catalog.json` is never treated as a leftover stored copy, which a descriptor `id` of `catalog` would otherwise name.
+  - **2.5, removal.** The stated kind is checked against the store's name before the catalog is read, so an application graph is never removed without an explicit `application`, whether or not the catalog has an entry or can be read. Removals of one store are serialized by a lock of their own (`relate-web:remove:<store>`) across tabs, so overlapping removals cannot leave a `removing` entry behind; the catalog lock is still never held across a directory operation. An entry that is present but not valid is deleted with its store after a successful removal, unless it was written again meanwhile.
+  - **2.2, the worker.** Messages that use the store (queries, scoped data, export, import) run one at a time in arrival order, because an import awaits the catalog between engine steps and nothing may run inside it.
+

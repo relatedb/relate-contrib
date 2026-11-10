@@ -43,17 +43,28 @@ export async function performRemoval(catalog: Catalog, directories: StoreDirecto
   if (options?.kind !== "application" && options?.kind !== "cache") {
     throw new RemoveRefused("kind-mismatch", 'say what is being removed: { kind: "application" } or { kind: "cache" }');
   }
+  // The stated kind must match the store's name before anything is read, so removing an application graph's data
+  // always takes an explicit "application", whatever the catalog holds or whether it can be read.
+  if (parts.kind !== options.kind) {
+    const named = parts.kind === "application" ? "an application graph" : "a cache";
+    throw new RemoveRefused("kind-mismatch", `${store} is named as ${named}; say so to remove it (kind: "${parts.kind}")`);
+  }
+  return directories.serialize(store, () => removeStore(catalog, directories, store, parts.kind));
+}
 
-  // Intent first, inside one exclusive lock with the check of the kind. A catalog that cannot be used does not stop a removal the caller asked for.
+async function removeStore(catalog: Catalog, directories: StoreDirectories, store: string, kind: "application" | "cache"): Promise<RemoveResult> {
+  // Intent first. A catalog that cannot be used does not stop a removal the caller asked for.
   let previous: Entry | undefined;
   let written: Entry | undefined;
+  let malformed: string | undefined; // the stored text of an entry that is there but not valid
   let usable = true;
   try {
     const result = await catalog.update(store, (current, raw) => {
-      if (current && current.kind !== options.kind) throw new RemoveRefused("kind-mismatch", `${store} is ${current.kind === "application" ? "an application graph" : "a cache"}, not ${options.kind === "application" ? "an application graph" : "a cache"}`);
-      if (!current && raw !== undefined && parts.kind !== options.kind) throw new RemoveRefused("kind-mismatch", `${store} is named as ${parts.kind === "application" ? "an application graph" : "a cache"}`);
       previous = current;
-      if (!current) return undefined;
+      if (!current) {
+        malformed = raw !== undefined ? JSON.stringify(raw) : undefined;
+        return undefined;
+      }
       // `target` belongs to a migrating entry only; an entry that kept it would not be valid in the state `removing`.
       const { target: _target, ...rest } = withoutTime(current) as EntryInput & { target?: number };
       void _target;
@@ -76,10 +87,14 @@ export async function performRemoval(catalog: Catalog, directories: StoreDirecto
 
   if (usable && written) {
     await catalog.update(store, (current) => (current && current.state === "removing" && current.updatedAt === written!.updatedAt ? null : undefined));
+  } else if (usable && malformed !== undefined) {
+    // An entry that was not valid goes with its store, unless someone has written it since.
+    await catalog.update(store, (current, raw) => (current === undefined && raw !== undefined && JSON.stringify(raw) === malformed ? null : undefined));
   }
 
-  const discarded: RemoveResult["discarded"] = previous ? (previous.kind === "application" ? "application data" : "cache") : hadDirectory ? "unregistered directory" : "nothing";
-  return { store, kind: previous?.kind ?? parts.kind, entry: previous ?? null, discarded };
+  const discarded: RemoveResult["discarded"] =
+    previous || malformed !== undefined ? (kind === "application" ? "application data" : "cache") : hadDirectory ? "unregistered directory" : "nothing";
+  return { store, kind, entry: previous ?? null, discarded };
 }
 
 /** Put the entry back as it was, but only if nobody has changed it since the removal wrote `removing`. */

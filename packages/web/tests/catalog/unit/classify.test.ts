@@ -49,6 +49,19 @@ describe("every row of the application classification (FR-010)", () => {
   });
 });
 
+describe("a migration the code cannot finish", () => {
+  it("fails store-newer when a migrating entry's target is above the code's version, whatever its version", () => {
+    for (const version of [1, 2, 3]) {
+      const a = classify(entry({ state: "migrating", version, target: 4 }), reader({ nodeCount: 4 }).read, code);
+      expect(a, `version ${version}`).toMatchObject({ action: "fail", reason: "store-newer", message: expect.stringContaining("version 4") });
+    }
+  });
+
+  it("resumes a migration whose target is the code's version", () => {
+    expect(classify(entry({ state: "migrating", version: 2, target: 3 }), reader().read, code)).toEqual({ action: "migrate", from: 2 });
+  });
+});
+
 describe("the catalog's own states (FR-011, FR-012)", () => {
   it("an unreadable catalog fails the open as store-unreadable and names the catalog", () => {
     expect(classify({ status: "catalog-unreadable", message: "not valid JSON" }, reader().read, code)).toMatchObject({

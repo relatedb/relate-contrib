@@ -53,6 +53,11 @@ export function classify(lookup: Lookup, readFacts: () => StoreFacts, code: { ve
   if (entry.version > code.version) {
     return { action: "fail", reason: "store-newer", message: `the store is at version ${entry.version}, newer than this code's ${code.version}` };
   }
+  // A migration to a version above this code's has started, and some of its changes may already be applied: this code
+  // cannot finish it, and must not report the data ready.
+  if (entry.state === "migrating" && entry.target !== undefined && entry.target > code.version) {
+    return { action: "fail", reason: "store-newer", message: `a migration of this store to version ${entry.target} started and did not finish; this code is at version ${code.version}` };
+  }
   switch (entry.state) {
     case "seeding":
       return { action: "reset-and-seed", intent: "seeding" };
