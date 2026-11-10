@@ -1,7 +1,7 @@
 ---
 id: RFC-007
 title: The Client-Side Graph Catalog
-status: draft
+status: accepted
 created: 2026-11-09
 adrs: [ADR-010]
 ---
