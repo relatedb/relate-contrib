@@ -13,7 +13,7 @@ export function createDataProvider(
   options?: { onStatement?: (statement: string, params: object) => void; timeoutMs?: number },
 ): DataProvider;                         // react-admin's DataProvider type
 
-export function ensureSchema(client: ProviderClient, schema: Schema): Promise<void>;
+export function ensureSchema(client: ProviderClient, schema: Schema, options?: ProviderOptions): Promise<void>;
 
 export type ProviderClient = Pick<Client, "query" | "status" | "diagnostic">;   // Client from @relate/web
 export interface Schema { resources: Record<string, ResourceSchema>; }
@@ -33,7 +33,7 @@ Parameters and results are react-admin's own for each method; this table gives o
 |---|---|---|---|
 | `getList(resource, { pagination, sort, filter })` | `page`, `perPage`; `field`, `order`; filter object | `{ data, total }` | 400: undeclared sort or filter name, value that does not convert |
 | `getOne(resource, { id })` | `id` | `{ data }` | 404 |
-| `getMany(resource, { ids })` | `ids` | `{ data }` (found records, in the order of the engine's result) | |
+| `getMany(resource, { ids })` | `ids` | `{ data }` (the records found, ordered by `id`) | |
 | `getManyReference(resource, { target, id, pagination, sort, filter })` | as `getList`, `target` is a reference field | `{ data, total }` | 400: `target` is not a declared reference |
 | `create(resource, { data })` | `data` | `{ data }` (the created record) | 400: only undeclared fields, missing target, duplicate `id` (constraint violation) |
 | `update(resource, { id, data, previousData })` | `data` (`previousData` ignored) | `{ data }` (the updated record) | 404, 400 |
@@ -42,6 +42,10 @@ Parameters and results are react-admin's own for each method; this table gives o
 | `deleteMany(resource, { ids })` | | `{ data: ids }` (ids removed) | |
 
 Every call first checks `client.status`: `failed` rejects 503 with `client.diagnostic` text and no statement is sent. Other statuses send the statement; the core's client holds it until it is ready.
+
+## Paging and sorting
+
+`pagination` is `{ page, perPage }`, both positive integers (a missing one defaults to page 1 and 25 per page); anything else rejects 400. The sort field must be declared `sortable` (`id` always is) and the order `ASC` or `DESC` (case-insensitive); a missing sort orders by `id` ascending. Whatever the sort, `id` ascending is the last key.
 
 ## Filter conventions
 
