@@ -1,4 +1,4 @@
-// covers-cat: FR-007, FR-010, FR-014, SC-004, SC-005
+// covers-cat: FR-007, FR-010, FR-014, SC-004, SC-005, SC-006
 import { endWhenState, entry, putEntry } from "./catalog-file.js";
 import { expect, test } from "./fixtures.js";
 import { count, diagnostic, itemSeed, makeClient, openHarness, openReady, rows, status, waitStatus } from "./helpers.js";

@@ -185,13 +185,13 @@ description: "Task list for the graph catalog in the core package"
 
 **Independent Test**: run the suites in quickstart.md; read the two ADRs and the README.
 
-- [ ] T048 [US7] Run `pnpm test:unit`, `test:application`, `test:catalog`, `test:browsers`, `test:application-browsers`, `test:catalog-browsers`, `test:conformance`, `test:drift`, and the traces; fix only what the change broke, and record any restore-baseline difference against SC-008 in `reports/catalog-restore.json`
-- [ ] T049 [P] [US7] Amend `design/adr/ADR-009-application-graphs-in-the-core.md` §6 with a dated entry: the marker replaced by the catalog entry, the lifecycle table of §2.2 superseded by ADR-010 §2.3, `store-lost` added to the failure reasons of §2.4, the migration guard against changing the marker removed, the findings of T011 and T012; change its status line to note the amendment
-- [ ] T050 [P] [US7] Amend `design/adr/ADR-003-graph-descriptor.md` with a dated amendments section: §2.4 and §2.5 replaced by the entry, `relate-web/<id>.json` removed on the next open, the descriptor itself unchanged
-- [ ] T051 [P] [US7] Add a note under the Overview of `specs/006-application-graphs/spec.md` that FR-006 to FR-009 and FR-027 are superseded where they name the marker or the cache's stored copy, pointing to `specs/007-graph-catalog/spec.md`; change nothing else there
-- [ ] T052 [US7] Update `packages/web/README.md`: remove the marker description and the migration rule about excluding it; add a catalog section (the file, the entry states, `store-lost`, `listGraphs`, `removeGraph`, `resetCatalog`, what a full clear looks like to a page, the empty-seed limit); update `tests/application/unit/docs.test.ts` to check the new text
-- [ ] T053 [US7] Update the root `CLAUDE.md` project-state paragraph and command list for the catalog (specification 007, ADR-010, the three new scripts) and mark the spec Implemented
-- [ ] T054 [US7] Run `pnpm test:catalog-trace` and `pnpm test:application-trace`; make every FR and SC of this specification report a passing, tagged test (FR-027)
+- [X] T048 [US7] Run `pnpm test:unit`, `test:application`, `test:catalog`, `test:browsers`, `test:application-browsers`, `test:catalog-browsers`, `test:conformance`, `test:drift`, and the traces; fix only what the change broke, and record any restore-baseline difference against SC-008 in `reports/catalog-restore.json`
+- [X] T049 [P] [US7] Amend `design/adr/ADR-009-application-graphs-in-the-core.md` §6 with a dated entry: the marker replaced by the catalog entry, the lifecycle table of §2.2 superseded by ADR-010 §2.3, `store-lost` added to the failure reasons of §2.4, the migration guard against changing the marker removed, the findings of T011 and T012; change its status line to note the amendment
+- [X] T050 [P] [US7] Amend `design/adr/ADR-003-graph-descriptor.md` with a dated amendments section: §2.4 and §2.5 replaced by the entry, `relate-web/<id>.json` removed on the next open, the descriptor itself unchanged
+- [X] T051 [P] [US7] Add a note under the Overview of `specs/006-application-graphs/spec.md` that FR-006 to FR-009 and FR-027 are superseded where they name the marker or the cache's stored copy, pointing to `specs/007-graph-catalog/spec.md`; change nothing else there
+- [X] T052 [US7] Update `packages/web/README.md`: remove the marker description and the migration rule about excluding it; add a catalog section (the file, the entry states, `store-lost`, `listGraphs`, `removeGraph`, `resetCatalog`, what a full clear looks like to a page, the empty-seed limit); update `tests/application/unit/docs.test.ts` to check the new text
+- [X] T053 [US7] Update the root `CLAUDE.md` project-state paragraph and command list for the catalog (specification 007, ADR-010, the three new scripts) and mark the spec Implemented
+- [X] T054 [US7] Run `pnpm test:catalog-trace` and `pnpm test:application-trace`; make every FR and SC of this specification report a passing, tagged test (FR-027)
 
 ---
 

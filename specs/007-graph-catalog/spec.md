@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-10
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Graph catalog in the core package (`@relate/web`, `packages/web`): implement accepted ADR-010 (parent RFC-007; builds on ADR-001, ADR-003, ADR-009 and SPIKE-009 to SPIKE-011) so the core records every persisted graph in one catalog file, ordered by a Web Lock, instead of a marker node inside application graphs and a stored-copy file beside content caches. A page can list what the origin has stored, remove a graph, and recover from a damaged catalog. It is checked in Chromium, Firefox and WebKit, and ADR-009 and ADR-003 are amended with what changed."
 

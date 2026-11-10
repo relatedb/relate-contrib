@@ -1,4 +1,4 @@
-// covers-cat: FR-007, FR-008, FR-010, FR-014, SC-004, SC-005
+// covers-cat: FR-007, FR-008, FR-010, FR-014, SC-004, SC-005, SC-006
 import { describe, expect, it } from "vitest";
 import { query, recording, timeline, world, type World } from "../../application/unit/helpers.js";
 

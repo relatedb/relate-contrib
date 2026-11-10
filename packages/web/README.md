@@ -67,7 +67,7 @@ engine's JSON envelope, unaltered (`columns`, `rows`, `stats`, `error`, ...); an
   Properties live only under `properties`. Validate in a build step with `import { validate } from "@relate/web/validate"`.
 - **Descriptor** (`graph-descriptor.schema.json`): `{ version: 1, id, revision, data: { url, nodes, links }, indexes? }`, served beside the
   data. With a descriptor, a store can be restored without fetching the data when the `revision` has not
-  changed. Without one there is no store and no revision.
+  changed (the cache's record is its entry in the catalog, below). Without one there is no store and no revision.
 
 ## Failure
 
@@ -79,8 +79,8 @@ sent by the package), and `client.retry()` starts again.
 
 A graph the visitor writes (an admin tool's records, a notes editor, a game save) is an *application graph*: one
 named, durable graph in the browser, seeded once and carried forward by migrations. It is a different mode of
-`createClient`, with its own store (`app-<name>`); the content graph and its cache above are unchanged. Decided in
-ADR-009; the tests are in `tests/application/`.
+`createClient`, with its own store (`app-<name>`). Decided in ADR-009; the record of what the store holds is a catalog
+entry (ADR-010, below); the tests are in `tests/application/` and `tests/catalog/`.
 
 ```ts
 import { createClient, inRanges } from "@relate/web";
@@ -111,24 +111,28 @@ const client = createClient({
 Options are checked when the client is created; a bad name, version, migration key or step throws and starts
 nothing. Query results are the engine's envelope, unaltered.
 
-**The marker.** The store records its format, schema version and state in one node labelled `_RelateApplication`
-(`state` is `seeding`, `ready` or `importing`). It is an ordinary node: queries return it, and a statement can delete
-it, which makes the store `store-unmarked`. The label is reserved; a seed that contains it is rejected. Export and the
-range helper skip it.
+**What the store holds.** The graph holds only your data: no bookkeeping node, so a count of all nodes is the seed's plus
+the visitor's. The core records the application's schema version and state in its entry in the catalog (see *The
+catalog*), written before data changes and confirmed after, so an interrupted first run, migration, import or reset is
+recognised on the next open.
 
 **Failures.** The client is `failed` with `client.diagnostic.reason` one of these, and the stored data is left as it is:
 
 | Reason | Meaning |
 |---|---|
-| `store-unmarked` | data with no marker (not created by this application, or the marker was deleted) |
-| `store-newer` | written by a newer version or format than this code |
+| `store-unmarked` | data with no catalog entry (not created by this application, or its entry was removed); a node labelled `_RelateApplication`, the record an earlier form kept in the graph, is named in the message |
+| `store-newer` | written by a newer version than this code, or the catalog is of a newer format |
 | `import-interrupted` | an import did not finish |
-| `store-unreadable` | the store could not be opened (or holds two markers) |
-| `unavailable` | no browser store and `onUnavailable: "fail"` |
-| `migration-failed` | a step failed, a version has no migration, or a step changed the marker; the message names the version, and the store is at the last completed version |
+| `store-lost` | the entry says the store was filled and it is empty: its data is gone |
+| `store-unreadable` | the store could not be opened, or the catalog does not parse, or this application's entry is malformed; for a catalog, see `resetCatalog()` |
+| `unavailable` | no browser store (or no Web Locks) and `onUnavailable: "fail"` |
+| `migration-failed` | a step failed or a version has no migration; the message names the version, and the store is at the last completed version |
 
 None of them is retried automatically. `client.resetApplication()` discards the stored data and seeds again; it is
-the only call that does (besides the recovery of a first run that never finished). Offer an export before it.
+the only call that does (besides the recovery of a first run or reset that never finished). Offer an export before it.
+A catalog that does not parse, or is of a newer format, is never written over, so `resetApplication()` cannot recover
+from it either: use `resetCatalog()` for a catalog that does not parse (see below). An application whose seed had no
+nodes records that, and its empty store is valid; it cannot notice that the records the visitor added are gone.
 
 **Storage.** `client.storage` is `{ kind, reason?, persisted }` and `client.on("storage", fn)` hears changes.
 `durable`: writes reach the store. `waiting` with reason `locked`: another tab holds the store; the client stays
@@ -148,19 +152,59 @@ stores, so the report counts, by kind: `integer-beyond-2^53` (written as the nea
 `allowLoss: true` the call rejects with a `GraphError` of reason `export-loss` that carries the report. `await
 client.importApplication(envelope)` rejects an envelope for another name or a newer version, validates the whole
 document, then marks the store `importing`, resets it, loads the document, marks it `ready` and migrates. It does not
-export first, and the core never calls it.
+export first, and the core never calls it. A page stopped between the reset and the load leaves `importing`, so the next
+open fails `import-interrupted` and never seeds over the emptied store.
 
 **The rule for migrations.** The core cannot make a migration atomic: a statement over many nodes can be partly applied
 if the worker is stopped. Write each step bounded, each safe to run again (a `WHERE` that skips what is done), and rely
-on the core to write the version last. `inRanges` runs your statement over windows `[$from, $to)` of a numeric
-property; the statement must carry its own filter. A failing step leaves the store at the last completed version and
-the next load resumes there. Two rules are checked when a store is migrated: every version from the stored one up to the
-application's needs an entry (a missing one fails with `migration-failed` naming the version, and the version is not
-advanced), and a step may not change the marker. A step that does is failed and the marker is put back, so a statement
-that reaches every node, such as `MATCH (n) SET …`, needs `WHERE NOT n:_RelateApplication`.
+on the core to record the version after each version's last step. `inRanges` runs your statement over windows
+`[$from, $to)` of a numeric property; the statement must carry its own filter. A failing step leaves the store at the last
+completed version and the next load resumes there. Every version from the stored one up to the application's needs an
+entry: a missing one fails with `migration-failed` naming the version, and the version is not advanced. The core keeps
+nothing in the graph, so a statement that reaches every node, such as `MATCH (n) SET …`, is valid as it stands.
 
 **A content graph and an application graph on one page** use two clients, each with its own worker and store; no
 statement spans them.
+
+## The catalog
+
+The core keeps one record per persisted graph, content caches and application graphs alike, in one file,
+`relate-web/catalog.json`, beside the engine's `relate/` directory (ADR-010). Every read and write takes the Web Lock
+`relate-web:catalog` (shared to read, exclusive to write), so several tabs lose no update. A browser with the file storage
+but no Web Locks counts as having no storage. An entry has a `kind` (`application` or `cache`), a `name`, a `state`
+(`ready`, or `seeding`, `migrating`, `importing`, `resetting`, `loading` or `removing` for an operation started and not yet
+confirmed), `updatedAt`, and, for an application, `version` and `seeded`, or, for a cache, `revision`. A cache restores only
+from a `ready` entry at the descriptor's revision over a store with all its nodes; anything else rebuilds, and a catalog that
+cannot be used never fails the page, it only means the cache rebuilds. The core removes only a stale cache's contents and a
+leftover `relate-web/<id>.json`; it never removes an application graph.
+
+Three calls are exported. None opens a store, and each needs the origin-private storage and Web Locks (`CatalogError` with
+reason `unavailable` otherwise).
+
+```ts
+import { listGraphs, removeGraph, resetCatalog } from "@relate/web";
+
+const { catalog, items } = await listGraphs({ sizes: true });
+// catalog: "ok" | "missing" | "unreadable" | "newer"
+// each item: { store, kind?, name?, state?, version? | revision?, registered, present, status, size?, modified? }
+// status: "ok" | "unregistered" (a directory with no entry) | "missing" (an entry with no directory)
+
+await removeGraph("app-notes", { kind: "application" });  // discards the visitor's data: say so
+await resetCatalog();                                       // deletes the file; no store is touched
+```
+
+`listGraphs` works while another tab holds a store; sizes and modification times cost a file read per slot file, so ask for
+them only when needed (about 6 ms per store in Chromium, 20 ms in Firefox and WebKit, in the spike's runs). `removeGraph`
+refuses a name that is not an `app-<name>` or `rel-<id>` store (`not-a-store`), a `kind` that disagrees with the entry or is
+missing (`kind-mismatch`), and a store another tab holds (`locked`, with its entry left as its holder wrote it). Removing a
+graph the catalog does not know (`unregistered`) needs only its name and kind. `resetCatalog()` is the way out of a catalog that
+does not parse; afterwards a store with data and no entry fails `store-unmarked` until you import an export or call
+`resetApplication()`.
+
+**What a clear looks like to a page.** Clearing a site's storage, or the browser evicting it, removes the stores and the
+catalog together, and the browser gives no signal. A page that starts cold then sees no entry and no data, the same as a first
+visit, and applies the seed. A client that already held a store sees a storage error instead. An application that cannot
+afford silent loss needs a copy outside the origin (an export, a server record).
 
 **Not measured:** power loss and system crashes, Firefox and WebKit beyond the sizes in `reports/`, a write that
 exceeds the browser's quota, the time to migrate a large store, and the cause of the occasional write stalls seen in

@@ -60,13 +60,13 @@ Use `/adr-review` before moving a draft to `accepted`.
 |---|---|---|---|
 | [ADR-001](ADR-001-worker-hosting-profiles.md) | Dedicated-Worker Hosting with Two Navigation Profiles | accepted (amended 2026-11-02) | RFC-001 |
 | [ADR-002](ADR-002-graph-data-format.md) | Node-Link JSON as the Graph Data Format | accepted (amended 2026-11-02) | RFC-001, RFC-002 |
-| [ADR-003](ADR-003-graph-descriptor.md) | Graph Descriptor Beside the Graph Data | accepted | RFC-001 |
+| [ADR-003](ADR-003-graph-descriptor.md) | Graph Descriptor Beside the Graph Data | accepted (amended 2026-11-10) | RFC-001 |
 | [ADR-004](ADR-004-astro-adapter.md) | The Astro Adapter as an Integration over the Core | accepted (amended 2026-11-05) | RFC-001, RFC-002 |
 | [ADR-005](ADR-005-next-adapter.md) | The Next.js Adapter as React Bindings over the Core | accepted (amended 2026-11-05) | RFC-001, RFC-002 |
 | [ADR-006](ADR-006-observable-adapter.md) | The Observable Framework Adapter as a Helper Package over the Core | accepted (amended 2026-11-08) | RFC-001, RFC-002 |
 | [ADR-007](ADR-007-sveltekit-adapter.md) | The SvelteKit Adapter as Svelte 5 Helpers over the Core | accepted (amended 2026-11-08) | RFC-001, RFC-002 |
 | [ADR-008](ADR-008-react-admin-provider.md) | A react-admin Data Provider over the Core, with a Local-First Starter | proposed | RFC-005, RFC-006 |
-| [ADR-009](ADR-009-application-graphs-in-the-core.md) | Application Graphs in the Core as a Named Durable Store with Schema Versions | accepted | RFC-006, RFC-001 |
+| [ADR-009](ADR-009-application-graphs-in-the-core.md) | Application Graphs in the Core as a Named Durable Store with Schema Versions | accepted (amended 2026-11-10) | RFC-006, RFC-001 |
 | [ADR-010](ADR-010-graph-catalog-file.md) | A Catalog File Beside the Stores, Ordered by a Web Lock | accepted | RFC-007 |
 
 Package names: on 2026-11-05 the core and the Astro adapter were renamed from `related-web-core` and `related-web-astro` to `@relate/web-core` and `@relate/web-astro`, joining `@relate/web-next`. The ADRs use the new names throughout; the decisions are unchanged. On 2026-11-08 the project became `relate-contrib` and the packages `@relate/web`, `@relate/astro` and `@relate/nextjs`; the same holds for the decisions and the text of the ADRs (see `design/notes/2026-11-08-relate-contrib-rename.md`).

@@ -108,3 +108,12 @@ The `shape` and `embeddings` sections, which the site-graph RFC defines. A catal
 - RFCs: RFC-001
 - ADRs: ADR-001 (worker hosting, the store and its retry rule), ADR-002 (the data document)
 - Evidence: `design/spikes/SPIKE-002-astro-build-time-graph/SPIKE.md` (document size), `design/spikes/SPIKE-004-worker-hosting-and-faults/SPIKE.md` (replay and restore times), `design/spikes/SPIKE-005-worker-survival-across-navigation/SPIKE.md` (a restored store keeps its index)
+
+## 6. Amendments
+
+- 2026-11-10: the stored copy is replaced by the cache's entry in the catalog (ADR-010, specs/007-graph-catalog), which changes 2.4, 2.5 and the matching consequences. The descriptor itself, its validation, the store name (2.6) and the retry rule are unchanged.
+  - **2.4 and 2.5.** The record of what a store holds is the entry for `rel-<id>` in `relate-web/catalog.json`: `kind: "cache"`, a `state` of `ready`, `loading` or `removing`, and the descriptor's `revision`. A store is restored when its entry is `ready` at the descriptor's revision and, after the sweep of leftover scoped data, its node count equals `data.nodes`. In every other case (no entry, `loading`, `removing`, a different revision, a count mismatch, an empty store) the worker writes `loading`, resets the store if it is not empty, fetches and validates the data, creates the indexes, loads, and writes `ready` with the revision last. This is the order the stored copy had (removed first, written last), as intent and outcome.
+  - **A cache never fails the page over its record.** A catalog that does not parse, was written by a newer format, or errors on a write only means the cache rebuilds and writes no entry; the file is left as it was.
+  - **The old file.** A leftover `relate-web/<id>.json` is removed when its cache is next opened. Nothing reads it.
+  - **Measured.** Restores of 5,000 pages stayed within the recorded baselines in Chromium, Firefox and WebKit, with no request for the data (single runs, `packages/web/tests/catalog/browser/cache.spec.ts`).
+
