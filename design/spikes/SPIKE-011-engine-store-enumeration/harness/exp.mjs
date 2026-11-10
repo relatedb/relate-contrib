@@ -1,11 +1,12 @@
 import { openPage, sleep } from "./lib.mjs";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const call = (page, key, cmd, args) => page.evaluate(([k, c, a]) => window.call(k, c, a), [key, cmd, args]).then((v) => ({ ok: true, v }), (e) => ({ ok: false, err: String(e.message).split("\n")[0].slice(0, 160) }));
 const spawn = (page, key) => page.evaluate((k) => window.spawn(k), key);
 const kill = (page, key) => page.evaluate((k) => window.kill(k), key);
 const clearRoot = (page) => page.evaluate(() => window.clearRoot());
-const PKG = "/Users/abk/Developer/akollegger/graph-web/vendor/relate-wasm/pkg";
+const PKG = fileURLToPath(new URL("../../../../vendor/relate-wasm/pkg", import.meta.url));
 
 export async function e1(ctx) {
   const page = await openPage(ctx);

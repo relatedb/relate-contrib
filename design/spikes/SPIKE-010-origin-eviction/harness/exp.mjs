@@ -48,9 +48,11 @@ async function readCatalog(page) {
 
 const clearOrigin = async (ctx, page, types = "file_systems") => {
   const cdp = await ctx.newCDPSession(page);
+  const t = Date.now();
   const r = await cdp.send("Storage.clearDataForOrigin", { origin: ORIGIN, storageTypes: types });
+  const ms = Date.now() - t;
   await cdp.detach();
-  return r;
+  return { ...r, ms };
 };
 
 export async function e0(ctx) {
@@ -106,13 +108,12 @@ export async function e3(ctx) {
   await seed(page);
   await page.evaluate(() => { window.events = []; });
   const before = await state(page);
-  const t = Date.now();
-  await clearOrigin(ctx, page);
+  const cleared = await clearOrigin(ctx, page);
   const after = await state(page, "st5");
   await sleep(1500);
   const later = await state(page, "st6");
   await page.close();
-  return { before, after, later, clearedMs: Date.now() - t };
+  return { before, after, later, clearedMs: cleared.ms };
 }
 
 // A storage bucket: does the engine's root and a bucket's directory share fate?

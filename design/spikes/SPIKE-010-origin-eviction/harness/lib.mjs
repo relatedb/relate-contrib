@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { serve } from "./serve.mjs";
 
-const require = createRequire("/Users/abk/Developer/akollegger/graph-web/packages/web/package.json");
+const require = createRequire(new URL("../../../../packages/web/package.json", import.meta.url));
 export const pw = require("@playwright/test");
 export const PORT = Number(process.env.SPIKE_PORT ?? 5590);
 export const BASE = `http://127.0.0.1:${PORT}/`;

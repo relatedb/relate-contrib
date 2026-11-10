@@ -49,7 +49,7 @@ A worker holding a store open when the origin was cleared saw its next write and
 
 ### 4.3 What a page can observe
 
-`estimate().usage` fell from 23,036 to 0 and stayed there; `persisted()` was false throughout. `navigator.storage` has no change event (`onquotachange` is absent in Chromium). The clear took 1.5 s to return. A page learns that storage was cleared only by finding its own data gone.
+`estimate().usage` fell from 23,036 to 0 and stayed there; `persisted()` was false throughout. `navigator.storage` has no change event (`onquotachange` is absent in Chromium). The clear call itself returned in 1 ms. A page learns that storage was cleared only by finding its own data gone.
 
 ### 4.4 Storage buckets
 
@@ -61,10 +61,10 @@ MDN's page on storage quotas and eviction criteria says browsers manage storage 
 
 ## 5. Conclusion
 
-Loss of the origin-private file storage is total: a catalog file goes with the stores it describes, so it cannot tell the page that stores were lost (RFC-007 7.5). Whether a catalog kept in another browser store (IndexedDB, for example) would survive was not measured, because the scripted clear covered file systems only; MDN documents eviction as whole-origin, which would take such a catalog along under storage pressure, but a user's selective clear could leave it. After a clear, a page sees no stores, no entry and an empty store opened on demand: the same as a first visit. The question "report, or seed again" for a vanished application graph therefore has no detectable trigger inside the origin; a page that needs to notice loss must keep something outside the origin (an exported copy, a server record) or accept that loss looks like first run.
+Loss of the origin-private file storage is total: a catalog file goes with the stores it describes, so it cannot tell the page that stores were lost (RFC-007 7.5). Whether a catalog kept in another browser store (IndexedDB, for example) would survive was not measured, because the scripted clear covered file systems only; MDN documents eviction as whole-origin, which would take such a catalog along under storage pressure, but a user's selective clear could leave it. After a clear, a page that starts cold sees no stores, no entry and an empty store opened on demand: the same as a first visit. A live client that already holds a store is in a different position: it knows the store existed and receives a storage error (4.2). For a cold start, "report, or seed again" has no detectable trigger inside the origin, so a page that needs to notice loss must keep something outside the origin (an exported copy, a server record) or accept that loss looks like a first run; a live client can report the loss it has just seen.
 
-What a catalog still has to guard against is partial loss from crashes and from clears that run while a store is held: the held store errors rather than silently continuing, and reopening yields an empty store with no marker, which the marker or catalog must classify as first run, not as damage.
+What a catalog still has to guard against is partial loss from crashes and from clears that run while a store is held: the held store errors rather than silently continuing, and reopening yields an empty store with no marker. A cold start classifies that as a first run; a client that saw the error should report the loss instead of treating the reopened store as new.
 
-Text for RFC-007 §2 and 7.5: "Measured in Chromium, clearing an origin's storage removed engine stores and a catalog file together and left nothing the page could use to tell loss from a first visit; a store held at the time failed its next write; browsers document eviction as per origin and whole."
+Text for RFC-007 §2 and 7.5: "Measured in Chromium, clearing an origin's storage removed engine stores and a catalog file together and left nothing a cold-starting page could use to tell loss from a first visit; a store held at the time failed its next write; browsers document eviction as per origin and whole."
 
 What is not covered: survival of IndexedDB or other stores after a file-systems-only or full clear; Firefox and WebKit clearing (not scriptable through Playwright); real eviction under pressure; whether a persistent-storage grant changes the outcome of a user's clear (it exempts pressure eviction only, per MDN).

@@ -27,7 +27,7 @@ Neither can be listed through the core. The browser can list the directories in 
 
 The scattered bookkeeping has costs that are already visible.
 
-- **The marker is data.** It is counted by `MATCH (n) RETURN count(n)`, drawn by a graph visualisation, and removed by a statement such as `MATCH (n) DETACH DELETE n`. A store with its marker removed fails to open as `store-unmarked`, because the core cannot tell it from a store it never created.
+- **The marker is data.** It is counted by `MATCH (n) RETURN count(n)`, drawn by a graph visualisation, and removed by a statement such as `MATCH (n) DETACH DELETE n`. A statement that removes only the marker leaves data without one, and the store then fails to open as `store-unmarked`, because the core cannot tell it from a store it never created. `MATCH (n) DETACH DELETE n` removes every node, marker included: if the application created indexes they remain and the store fails the same way, and otherwise the store opens as a first run and loads the seed again, with no failure to say the visitor's data is gone.
 - **The two records are not written with the data.** A cache's descriptor file and a store's contents are two writes; the file is ordered last so that a crash leaves a store that looks stale, not one that looks complete. An application import resets the store and then writes the new marker as separate steps; a crash between them leaves an empty store with no marker, which opens as a first run and seeds again.
 - **Nothing detects a name collision.** Two applications on one origin that pick the same name share one store, and nothing records that the name was taken.
 - **Nothing finds leftovers.** A site that renames a descriptor `id` or an application leaves the old store in the visitor's storage with no way for the page, the site or the visitor to find it.
@@ -128,7 +128,7 @@ Figures are single runs on one machine; power loss was not tested. The harnesses
 
 7.4. A store's approximate size and last-modified time can be read from its directory without an engine call, at a cost of a file read per slot file. Is that figure and cost acceptable for the listing, including for an origin with many stores?
 
-7.5. A full clear or eviction removes every store and the catalog together and cannot be told from a first visit. What does the core do with an application graph that has vanished this way (open it empty, as today), and does an application that cannot afford silent loss need a signal kept outside the origin, such as an exported copy or a server record? Partial loss, from a crash or a selective clear, is detectable by the reconciliation in 5.4.
+7.5. A full clear or eviction removes every store and the catalog together and cannot be told from a first visit. A cold start that finds nothing cannot know a graph existed: today it treats the store as a first run and applies the configured seed. A live client that already holds a store learns of the loss from a storage error and can report it. What should each do, and does an application that cannot afford silent loss need a signal kept outside the origin, such as an exported copy or a server record? Partial loss, from a crash or a selective clear, is detectable by the reconciliation in 5.4.
 
 7.6. Who may remove a graph and when: the site's code, the visitor through a page the site provides, or the core on its own for leftover content caches? Is there an automatic age or count limit for caches?
 
