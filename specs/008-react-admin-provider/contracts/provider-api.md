@@ -10,7 +10,7 @@ Names are those ADR-008 and the spec fix (`createDataProvider`, `ensureSchema`);
 export function createDataProvider(
   client: ProviderClient,
   schema: Schema,
-  options?: { onStatement?: (statement: string, params: object) => void },
+  options?: { onStatement?: (statement: string, params: object) => void; timeoutMs?: number },
 ): DataProvider;                         // react-admin's DataProvider type
 
 export function ensureSchema(client: ProviderClient, schema: Schema): Promise<void>;
@@ -37,7 +37,7 @@ Parameters and results are react-admin's own for each method; this table gives o
 | `getManyReference(resource, { target, id, pagination, sort, filter })` | as `getList`, `target` is a reference field | `{ data, total }` | 400: `target` is not a declared reference |
 | `create(resource, { data })` | `data` | `{ data }` (the created record) | 400: only undeclared fields, missing target, duplicate `id` (constraint violation) |
 | `update(resource, { id, data, previousData })` | `data` (`previousData` ignored) | `{ data }` (the updated record) | 404, 400 |
-| `updateMany(resource, { ids, data })` | | `{ data: ids }` (ids changed) | 400 |
+| `updateMany(resource, { ids, data })` | | `{ data: ids }` (ids changed; empty when no id matches) | 400 |
 | `delete(resource, { id })` | `id` | `{ data: { id } }` | 404 |
 | `deleteMany(resource, { ids })` | | `{ data: ids }` (ids removed) | |
 
@@ -53,6 +53,10 @@ Fixed by the package (ADR-008 2.3, FR-007 to FR-009). A filter object key is pro
 4. Anything else rejects with 400.
 
 Values are coerced to the field's declared type: a number field accepts a number or a numeric string, a boolean field accepts a boolean or `"true"` and `"false"`, a string field accepts a string. A filter that is not allowed on the field (not declared `filterable`) rejects with 400, as does a sort on a field not declared `sortable`.
+
+## Timeout
+
+`timeoutMs` (default 10,000) is passed as the `timeoutMs` option of every `client.query`. The core's `query()` applies no timeout of its own (only `run()` does), and a timeout there rejects with a `GraphError` of reason `timeout` and replaces the instance. The provider maps that, and the core's `lost` and `failed` rejections, to `status` 503 with the client's message.
 
 ## `onStatement`
 

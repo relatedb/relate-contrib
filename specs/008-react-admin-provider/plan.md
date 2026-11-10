@@ -38,8 +38,8 @@ The engine behaviours the ADR listed as "to confirm" were probed during planning
 |---|---|---|
 | I. Decisions Before Code | ADR-008 is accepted (parents RFC-005, RFC-006; builds on ADR-009, ADR-010). Where planning found the ADR incomplete (the constraint in place of `schemaIndexes`, the order of matching in writes, the fill form), the amendment is a task, written before the statements are built. | Pass |
 | II. Core First, Thin Adapters | No adapter is involved. The package uses the core's client through its exported types only; the starter is a consumer like any application. | Pass |
-| III. The Page Works Without the Graph | The starter's shell, navigation and the storage notice render before the client is ready; list regions show react-admin's loading state, and a failed client shows the failure message instead of a blank page. | Pass |
-| IV. Faults Are Contained | The provider throws 503 on a failed client and relies on the core's worker replacement; a visitor-typed filter cannot run a statement the schema did not allow; every statement goes through the client's timeout. | Pass |
+| III. The Page Works Without the Graph | The starter's shell, navigation and the storage notice render before the client is ready; list regions show react-admin's loading state, and a failed client shows the failure message instead of a blank page (FR-034). | Pass |
+| IV. Faults Are Contained | The provider throws 503 on a failed client and relies on the core's worker replacement; a visitor-typed filter cannot run a statement the schema did not allow; the provider passes a timeout to every statement, because `Client.query()` has none of its own (research R16, FR-033). | Pass |
 | V. Specified Behavior Is Tested and Measured | Every MUST has a `covers-ra:` test (FR-030). Figures (SC-004, SC-009) are single runs, labelled. The engine assumptions become tests (R2). | Pass |
 | VI. The Engine Stays Upstream | Only openCypher forms the engine already accepts; the constraints and statements are forms the engine already supports; nothing is worked around. | Pass |
 
@@ -100,7 +100,7 @@ starters/react-admin/            # new: unpublished starter (package react-admin
 │   ├── CompanyPage.tsx          #   a company with its people and projects (getManyReference)
 │   ├── StatementPanel.tsx       #   shows what onStatement reported
 │   ├── StorageNotice.tsx        #   client.storage, requestPersistence button
-│   ├── FailureScreen.tsx        #   the six failure reasons, export and reset choices
+│   ├── FailureScreen.tsx        #   the six failure reasons and the confirmed reset (no export: the core cannot export from a failed client)
 │   └── ResetControl.tsx         #   exportApplication then confirmed resetApplication
 ├── scripts/make-seed.ts         #   deterministic seed generator
 ├── tests/browser/               #   Playwright, three browsers (create, filter, sort, paging, reference, delete, reload, second tab, reset)

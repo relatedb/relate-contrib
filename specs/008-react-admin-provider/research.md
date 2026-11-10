@@ -98,6 +98,10 @@ The core documents that queries are pending while the client is `loading` and re
 
 **Decision**: a README for the package (API, schema, conventions, what is not supported) and one for the starter (run, copy, rename the store, what clearing site data loses), and a dated amendments section in ADR-008 recording R2 to R8 and the results of the Confirm items.
 
+## R16: Timeouts
+
+`Client.query()` sets no timeout; `Client.run()` applies the visitor timeout (10,000 ms) (`packages/web/src/client/client.ts`, `query` and `run`). A provider statement built from visitor-typed filter values is not a visitor-supplied statement, but a runaway one can only be ended by ending the worker, so constitution IV's intent applies. **Decision**: the provider passes `timeoutMs` (default 10,000, overridable) as the option of every `query`; on expiry the core rejects with `timeout` and replaces the instance, and the provider answers 503 (FR-033).
+
 ## Open items to confirm during implementation
 
 - R6: descending order with absent values (only completeness asserted).

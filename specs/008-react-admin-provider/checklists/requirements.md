@@ -24,7 +24,7 @@
 
 ## Feature Readiness
 
-- [x] All functional requirements have clear acceptance criteria (FR-001 to FR-032 map to User Stories 1 to 7)
+- [x] All functional requirements have clear acceptance criteria (FR-001 to FR-034 map to User Stories 1 to 7)
 - [x] User scenarios cover primary flows
 - [x] Feature meets measurable outcomes defined in Success Criteria
 - [x] No implementation details leak into the specification beyond ADR-008's decisions

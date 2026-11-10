@@ -55,6 +55,7 @@ A thrown `ProviderError` (an `Error` with `status` and `message`):
 | no node for `id` on `getOne`, `update`, `delete` | 404 |
 | the engine reports an error in the envelope | 400, with the engine's message |
 | client status `failed` | 503, with the client's failure message (`diagnostic.reason` and text) |
+| a statement exceeds `timeoutMs`, or the core rejects `lost` or `failed` | 503, saying the statement timed out or the client's message |
 
 ## Starter data
 

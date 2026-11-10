@@ -34,6 +34,7 @@ The specification implements ADR-008 and does not restate its decisions where an
 - Q: Does this feature change the core (`packages/web`)? → A: No, unless an early confirmation task (User Story 7) shows something missing; such a change is raised as an ADR amendment first (constitution I, VI). The package depends on the core through its public entry points only.
 - Q: Who creates the uniqueness constraint on `id`? → A: The package, idempotently and before its first statement (`CREATE CONSTRAINT … IF NOT EXISTS` per resource), exported as `ensureSchema(client, schema)` and called by the provider itself. The engine enforces per-label uniqueness and the constraint owns the lookup index, so no separate index is created; a separate index on the same property makes the constraint fail to create, so the starter passes no `id` index to the core. No core change; a `constraints` option in the core's application mode was considered and set aside (research R3). This supersedes ADR-008 2.2's `schemaIndexes`, which an ADR-008 amendment records.
 - Q: Which data types may a schema field have? → A: string, number and boolean, the types the core's export carries without loss. Any other type is added later together with its loss behaviour (ADR-008 2.6).
+- Q: Can the starter offer an export from a failure screen? → A: No. `exportApplication()` waits for a ready client and rejects with `failed` when the client has failed, which every failure reason produces, and ADR-009's "export attempt" for `store-unreadable` is not available through that call. The failure screens offer reset only, and the reset control (data open) keeps its export. Export from a failed client is a follow-up for the core, to be raised as an ADR-009 amendment if wanted; this specification does not change the core. ADR-008 2.6 is amended to match.
 - Q: Is the starter published? → A: No. It is the place later starters' shared needs get noticed; extraction into a shared library happens when a second starter needs the same code (RFC-005 5.3).
 - Q: What does the starter use for the visitor's records? → A: One application graph, store `react-admin-starter`, schema version 1, no migrations yet. A project that copies the starter renames the store (ADR-008 4).
 
@@ -96,6 +97,7 @@ When the engine reports an error, a record is missing, a field is undeclared, or
 2. **Given** a client whose status is `failed`, **When** any provider method is called, **Then** it throws with `status` 503 and the client's failure message, and sends no statement.
 3. **Given** a client still `loading`, **When** a method is called, **Then** it resolves after the client is ready.
 4. **Given** an `onStatement` callback, **When** methods run, **Then** it receives each statement text and its parameters in order; **given** none, **then** nothing is reported.
+5. **Given** a statement that does not answer within the timeout, **When** it is sent, **Then** the call rejects with `status` 503 saying the statement timed out; **given** the option `timeoutMs`, **then** that value is passed to the client's `query`.
 
 ---
 
@@ -114,13 +116,14 @@ A participant clones the repository, runs one command and sees a working adminis
 3. **Given** the people list, **When** a visitor sorts, filters, searches and pages, **Then** the list and total follow, and a panel shows the statements the provider ran.
 4. **Given** an edit form for a person, **When** the visitor picks another company in the relation picker and saves, **Then** the list and the company page show the person under the new company.
 5. **Given** a company page, **When** it opens, **Then** it lists that company's people and projects.
-6. **Given** a participant who copies the starter, **When** they follow its README, **Then** they can rename the store and change the schema without touching the package.
+6. **Given** a client that is still `loading`, **When** the starter opens, **Then** the shell and the storage notice are on screen and the list regions show a loading state, not a blank page.
+7. **Given** a participant who copies the starter, **When** they follow its README, **Then** they can rename the store and change the schema without touching the package.
 
 ---
 
 ### User Story 5 - The starter is honest about storage and failures (Priority: P2)
 
-A visitor can tell whether their records are stored durably, are held in memory only, or are waiting on another tab, and can ask the browser for persistent storage. When the stored data cannot be opened, the starter says which of the core's failure reasons occurred and offers the choices that are safe: export first where the store is readable, then reset; for lost data, reset only. Resetting demo data is an explicit, confirmed action.
+A visitor can tell whether their records are stored durably, are held in memory only, or are waiting on another tab, and can ask the browser for persistent storage. When the stored data cannot be opened, the starter says which of the core's failure reasons occurred and offers a reset, an explicit and confirmed action that discards the stored data. It cannot offer an export at that point: the core's `exportApplication()` rejects once a client has failed, so the export is offered by the reset control while the data is open (scenario 5).
 
 **Why this priority**: RFC-005 and RFC-006 ask that starters say what a visitor loses; a starter that empties silently is a demo, not an application.
 
@@ -131,7 +134,7 @@ A visitor can tell whether their records are stored durably, are held in memory 
 1. **Given** durable storage, **When** the starter is open, **Then** a notice says the data is stored durably; **given** memory storage, **then** it says the data is in memory only, with the reason.
 2. **Given** a second tab, **When** another tab holds the store, **Then** the second tab says it is waiting and continues when the first closes.
 3. **Given** the notice, **When** the visitor presses the persistence button, **Then** persistence is requested from that user action and the notice updates with the answer; the starter never requests it unprompted.
-4. **Given** each of `store-newer`, `store-lost`, `store-unmarked`, `store-unreadable`, `import-interrupted` and `migration-failed`, **When** the client fails with it, **Then** the starter shows that reason with a plain explanation and the choice to reset, plus an export first where the store is readable; `store-lost` offers reset only.
+4. **Given** each of `store-newer`, `store-lost`, `store-unmarked`, `store-unreadable`, `import-interrupted` and `migration-failed`, **When** the client fails with it, **Then** the starter shows that reason with a plain explanation and the choice to reset, requiring confirmation, and offers no export (the core cannot export from a failed client).
 5. **Given** the reset-demo-data control, **When** it is used, **Then** it offers an export (no `allowLoss` needed for the starter's data), requires confirmation, then resets and seeds again.
 6. **Given** the starter's README, **When** a participant reads it, **Then** it says what a visitor loses by clearing site data and that a copied project renames the store.
 
@@ -182,6 +185,7 @@ Before the provider's statements are fixed, early tasks confirm the engine behav
 - Two applications on one origin choosing the same store name share a store (RFC-007 7.3); the starter's fixed name is why a copy renames it.
 - A seed with duplicate `id` values is rejected by the core's validation before the starter shows anything.
 - The graph is empty because the visitor deleted every record: the application is `seeded: true`, so the next open fails `store-lost`; the starter explains it and offers reset (ADR-010).
+- `updateMany` with ids that match no node answers an empty list of ids; with a reference whose target does not exist it rejects 400, as `update` does.
 - A `create` with a supplied `id` that already exists: the provider rejects it with 400 rather than creating a second node with the same `id`.
 
 ## Requirements *(mandatory)*
@@ -197,19 +201,19 @@ Before the provider's statements are fixed, early tasks confirm the engine behav
 
 **Reading**
 
-- **FR-005**: `getList` MUST send one data statement and one count statement; `total` MUST be the count statement's value (ADR-008 2.3).
+- **FR-005**: `getList` MUST send one data statement and one count statement (the one-time constraint statements of FR-002 are not counted); `total` MUST be the count statement's value (ADR-008 2.3).
 - **FR-006**: A sort or filter field name MUST be accepted only if the schema declares it as sortable or filterable respectively, and only then interpolated, quoted; every value MUST be a bound parameter; an undeclared name MUST reject with `status` 400 before any statement is sent.
 - **FR-007**: A plain filter key MUST be equality and an array value membership; the suffixes `_gte`, `_lte`, `_neq`, `_lt` and `_gt` MUST be comparisons on a declared filterable field; a key that is itself a declared field MUST NOT be split; otherwise a suffix MUST be removed only if the rest is a declared filterable field.
 - **FR-008**: Filter values MUST be coerced to the declared field type; a value that does not convert MUST reject with 400.
 - **FR-009**: `q` MUST be a case-insensitive contains over the resource's searchable fields joined by OR; a reference field as a filter key MUST test the relationship's target `id`.
-- **FR-010**: The requested sort MUST be followed by `id` as a final key; paging MUST use `SKIP` and `LIMIT` from the request's page, as bound parameters or, if the engine does not accept them there (FR-032), validated non-negative integers interpolated.
+- **FR-010**: The requested sort MUST be followed by `id` as a final key; paging MUST use `SKIP` and `LIMIT` from the request's page as bound parameters (the engine accepts them there, research R2).
 - **FR-011**: `getOne` and `getMany` MUST match on `id` (one value or a list); `getManyReference` MUST be `getList` with the reference filter fixed to the given target `id`; a record MUST be the node's declared properties plus each declared reference field filled from the relationship's target `id`.
 
 **Writing**
 
 - **FR-012**: Each write MUST be a single statement, atomic without a transaction (ADR-008 2.4).
 - **FR-013**: `create` MUST create the node with its declared fields and the relationship to each supplied reference target found by `id`; a supplied `id` that already exists MUST reject with 400 (the constraint of FR-002 enforces it atomically). An `id` in `update` data MUST be ignored: a record's `id` does not change.
-- **FR-014**: `update` MUST set the supplied declared fields on the node found by `id`; for a supplied reference it MUST remove the existing relationship of that type and create the new one in the same statement; `null` or an empty value MUST remove it; `updateMany` MUST apply the same data to every id.
+- **FR-014**: `update` MUST set the supplied declared fields on the node found by `id`; for a supplied reference it MUST remove the existing relationship of that type and create the new one in the same statement; `null` or an empty value MUST remove it; `updateMany` MUST apply the same data to every id and answer the ids it changed, which is none when no id matches a node.
 - **FR-015**: `delete` and `deleteMany` MUST detach-delete the nodes, so records that referenced them show an empty reference afterwards.
 - **FR-016**: Fields not in the schema MUST be ignored on write, and MUST be named in the error text if they were the only data; a write matching no node MUST answer 404; a reference whose target does not exist MUST reject with 400 naming the field; relationship properties and many-to-many references MUST NOT be supported.
 
@@ -218,6 +222,7 @@ Before the provider's statements are fixed, early tasks confirm the engine behav
 - **FR-017**: An engine error in the result envelope, a missing record and an undeclared field MUST become a thrown error with a `status` (400 or 404) and the engine's message (ADR-008 2.5).
 - **FR-018**: When the core client's status is `failed`, the provider MUST throw with `status` 503 and the client's failure message and MUST NOT send a statement; it MUST NOT retry.
 - **FR-019**: An optional `onStatement` callback MUST receive each statement and its parameters, in the order sent.
+- **FR-033**: The provider MUST pass a timeout to every statement it sends, `timeoutMs` from its options with a default of 10,000 ms, and a statement that exceeds it MUST reject with `status` 503 and the message that the statement timed out; the core's `query()` applies no timeout of its own, so the provider supplies one (constitution IV).
 
 **The starter**
 
@@ -226,7 +231,8 @@ Before the provider's statements are fixed, early tasks confirm the engine behav
 - **FR-022**: The interface MUST offer sortable, filterable, paged lists, edit forms with relation pickers, a company page listing its people and projects through `getManyReference`, and a panel showing the statements the provider ran.
 - **FR-023**: The starter's data MUST use only string, number and boolean properties; it MUST offer a reset-demo-data control that offers `exportApplication` and, after confirmation, calls `resetApplication`.
 - **FR-024**: The starter MUST read `client.storage` and say whether data is stored durably, in memory only (with the reason), or waiting on another tab; it MUST offer `requestPersistence` only from a button, and MUST NOT request it on its own.
-- **FR-025**: The starter MUST show each failure reason the client reports (`store-newer`, `store-lost`, `store-unmarked`, `store-unreadable`, `import-interrupted`, `migration-failed`) with the choice to reset, and to export first where the store is readable; `store-lost` MUST offer reset only.
+- **FR-034**: The starter's shell (navigation, titles and the storage notice) MUST render before the client is ready, and while the client is `loading` the list regions MUST show react-admin's loading state, and when it has failed the failure screen, never a blank page (constitution III).
+- **FR-025**: The starter MUST show each failure reason the client reports (`store-newer`, `store-lost`, `store-unmarked`, `store-unreadable`, `import-interrupted`, `migration-failed`) with the choice to reset, and MUST NOT offer an export from a failure screen (the core's `exportApplication()` rejects while a client is `failed`).
 - **FR-026**: The starter MUST pin `react-admin` to an exact version and MUST NOT use react-admin's paid add-on modules; its README MUST say what a visitor loses by clearing site data and that a project copying the starter renames the store.
 
 **Checks**
@@ -257,7 +263,7 @@ Before the provider's statements are fixed, early tasks confirm the engine behav
 - **SC-006**: Each of the six failure reasons is shown by the starter with its own explanation and only the safe choices.
 - **SC-007**: The packed package installs in a clean project with its peer dependencies and answers a list call.
 - **SC-008**: Every requirement and success criterion of this specification has a passing, tagged test, and the repository's drift and full checks include them.
-- **SC-009**: A list costs at most two statements, and every resource's `id` carries a uniqueness constraint, which owns the lookup index (asserted from the engine's constraint and index lists); the statement counts are asserted and the timings recorded, labelled single-run.
+- **SC-009**: Once the constraints exist, a list costs at most two statements, and every resource's `id` carries a uniqueness constraint, which owns the lookup index (asserted from the engine's constraint and index lists); the statement counts are asserted and the timings recorded, labelled single-run.
 
 ## Assumptions
 
