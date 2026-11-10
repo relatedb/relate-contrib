@@ -1,0 +1,24 @@
+{
+ "generatedBy": "scripts/extract-assets.mjs",
+ "source": "Relate by ABK design system",
+ "sourceVersion": "1794331993-33c7",
+ "colours": {
+  "black": "#181414",
+  "darkest-baltic": "#002B43",
+  "dark-gray": "#4F4E4D",
+  "cream": "#F2EAD4",
+  "light-gray": "#FCF9F6",
+  "dark-baltic": "#014063",
+  "mid-baltic": "#0A6190",
+  "baltic": "#4C99A4",
+  "light-baltic": "#8FE3E8",
+  "periwinkle": "#6A82FF",
+  "yellow": "#FAFF00",
+  "forest": "#145439",
+  "mid-forest": "#6FA646",
+  "light-forest": "#90CB62",
+  "hibiscus": "#D43300",
+  "mid-hibiscus": "#F96746",
+  "light-hibiscus": "#FF8E6A"
+ }
+}

@@ -1,0 +1,75 @@
+{
+ "generatedBy": "scripts/extract-assets.mjs",
+ "source": "Relate by ABK design system",
+ "sourceVersion": "1794331993-33c7",
+ "tones": {
+  "baltic": {
+   "stroke": "dark-baltic",
+   "fill": "light-baltic"
+  },
+  "lagoon": {
+   "stroke": "mid-baltic",
+   "fill": "light-baltic"
+  },
+  "forest": {
+   "stroke": "forest",
+   "fill": "light-forest"
+  },
+  "meadow": {
+   "stroke": "forest",
+   "fill": "mid-forest"
+  },
+  "mint": {
+   "stroke": "forest",
+   "fill": "light-baltic"
+  },
+  "moss": {
+   "stroke": "forest",
+   "fill": "light-hibiscus"
+  },
+  "coral": {
+   "stroke": "black",
+   "fill": "mid-hibiscus"
+  },
+  "berry": {
+   "stroke": "hibiscus",
+   "fill": "light-baltic"
+  },
+  "sun": {
+   "stroke": "black",
+   "fill": "yellow"
+  },
+  "flare": {
+   "stroke": "mid-baltic",
+   "fill": "yellow"
+  },
+  "dusk": {
+   "stroke": "darkest-baltic",
+   "fill": "periwinkle"
+  },
+  "iris": {
+   "stroke": "dark-baltic",
+   "fill": "periwinkle"
+  },
+  "sand": {
+   "stroke": "dark-gray",
+   "fill": "cream"
+  },
+  "ink": {
+   "stroke": "black",
+   "fill": "light-baltic"
+  },
+  "night": {
+   "stroke": "light-baltic",
+   "fill": "dark-baltic"
+  },
+  "lamp": {
+   "stroke": "yellow",
+   "fill": "dark-baltic"
+  },
+  "leaf": {
+   "stroke": "light-forest",
+   "fill": "forest"
+  }
+ }
+}

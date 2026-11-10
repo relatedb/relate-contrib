@@ -21,6 +21,16 @@
         "dev"
       ],
       "port": 5190
+    },
+    {
+      "name": "phaser-path-explorer",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "phaser-path-explorer",
+        "dev"
+      ],
+      "port": 5174
     }
   ]
 }
