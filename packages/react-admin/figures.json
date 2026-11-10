@@ -1,0 +1,109 @@
+{
+  "SC-009": {
+    "claim": "once the constraints exist a list costs two statements and a lookup by id one; every resource's id carries a uniqueness constraint that owns the lookup index",
+    "label": "single run",
+    "method": "30 timed calls after 5 warm-up calls per figure, through the provider over an in-process client; median and 95th percentile per call; the data are 3 companies and the given number of people, each person at one company",
+    "environment": {
+      "node": "v24.14.1",
+      "os": "darwin 25.6.0 arm64",
+      "cpu": "Apple M5 Max",
+      "engine": "the vendored @relate/relate-wasm build, in this process (Node), not a browser worker"
+    },
+    "measuredAt": "2026-11-10",
+    "statementsNote": "firstCall = 3 constraints (one per resource) + the page + the count; later calls = the page + the count",
+    "results": [
+      {
+        "people": 50,
+        "statements": {
+          "firstCall": 5,
+          "perList": 2,
+          "perLookup": 1
+        },
+        "timings": [
+          {
+            "label": "getList, a page of 10 sorted by name",
+            "medianMs": 0.713,
+            "p95Ms": 1.132,
+            "runs": 30
+          },
+          {
+            "label": "getList, a page of 10 filtered by company and minimum age, sorted by name",
+            "medianMs": 1.021,
+            "p95Ms": 1.383,
+            "runs": 30
+          },
+          {
+            "label": "getOne by id, with the constraint and its index",
+            "medianMs": 0.093,
+            "p95Ms": 0.106,
+            "runs": 30
+          },
+          {
+            "label": "getOne by id, the same statement with no constraint and no index",
+            "medianMs": 0.103,
+            "p95Ms": 0.112,
+            "runs": 30
+          }
+        ]
+      },
+      {
+        "people": 5000,
+        "statements": {
+          "firstCall": 5,
+          "perList": 2,
+          "perLookup": 1
+        },
+        "timings": [
+          {
+            "label": "getList, a page of 10 sorted by name",
+            "medianMs": 12.466,
+            "p95Ms": 12.742,
+            "runs": 30
+          },
+          {
+            "label": "getList, a page of 10 filtered by company and minimum age, sorted by name",
+            "medianMs": 39.285,
+            "p95Ms": 40.204,
+            "runs": 30
+          },
+          {
+            "label": "getOne by id, with the constraint and its index",
+            "medianMs": 0.081,
+            "p95Ms": 0.102,
+            "runs": 30
+          },
+          {
+            "label": "getOne by id, the same statement with no constraint and no index",
+            "medianMs": 1.643,
+            "p95Ms": 2.212,
+            "runs": 30
+          }
+        ]
+      }
+    ]
+  },
+  "SC-004": {
+    "claim": "from a clean checkout to the demo's lists on screen with install and one run command, with no server",
+    "label": "single run",
+    "method": "a fresh local clone of the branch at a1465d0 in a temporary directory, with the engine's built WebAssembly package copied in (it is gitignored build output); timed: `pnpm install --frozen-lockfile --prefer-offline`, then `pnpm --filter \"react-admin-demo...\" run build` (the core, the provider and the demo), then `pnpm --filter react-admin-demo dev` until the people list had rows in Chromium (Playwright, headless)",
+    "environment": {
+      "node": "v24.14.1",
+      "pnpm": "11.7.0",
+      "os": "darwin 25.6.0 arm64",
+      "browser": "Chromium through Playwright, headless",
+      "packageStore": "warm (nothing was downloaded: 599 packages reused, 604 added)",
+      "engine": "built beforehand; building the engine from source (Rust) is not included"
+    },
+    "measuredAt": "2026-11-10",
+    "results": {
+      "installS": 9.6,
+      "buildS": 2.9,
+      "runCommandToRowsS": 1.12,
+      "serverUpS": 0.43,
+      "firstRowsAfterOpenS": 0.46,
+      "rowsShown": 10,
+      "totalS": 13.6
+    },
+    "notLimits": "a cold package store needs the network and takes longer; a machine without the engine build needs the Rust toolchain first (see the root CLAUDE.md)"
+  }
+}

@@ -13,6 +13,13 @@ const check = (env: Record<string, string> = {}) =>
   spawnSync(process.execPath, ["--import", "tsx", "tests/trace/check-trace.ts", "--static"], { cwd: pkg, encoding: "utf8", env: { ...process.env, ...env } });
 
 describe("every stated behavior has a tagged test (FR-030, SC-008)", () => {
+  it("finds a tag for every requirement and success criterion in the specification", () => {
+    const run = check();
+    expect(run.stderr).toBe("");
+    expect(run.status).toBe(0);
+    expect(run.stdout).toMatch(/trace: \d+ ids in the specification, \d+ tagged/);
+  });
+
   it("reports an id the specification has and no test tags, and exits non-zero", () => {
     const dir = mkdtempSync(join(tmpdir(), "rel-trace-"));
     try {

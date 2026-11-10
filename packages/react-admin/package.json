@@ -19,7 +19,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:react-admin": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json",
     "test:react-admin-package": "vitest run --config vitest.package.config.ts --reporter=default --reporter=json --outputFile.json=reports/package.json",
-    "test:react-admin-trace": "tsx tests/trace/check-trace.ts"
+    "test:react-admin-trace": "tsx tests/trace/check-trace.ts",
+    "measure": "tsx scripts/measure.ts"
   },
   "peerDependencies": {
     "@relate/web": "*",

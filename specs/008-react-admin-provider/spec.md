@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-10
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "React-admin data provider and local-first demo: implement accepted ADR-008 (parent RFC-005 and RFC-006; builds on ADR-001, ADR-002, ADR-003, ADR-009 and ADR-010) in two deliverables: a package `@relate/react-admin` exporting `createDataProvider(client, schema)` and `ensureSchema(client, schema)`, and an unpublished demo application `demos/react-admin` whose records persist in an application graph. Early tasks confirm the engine behaviours the ADR assumes and amend ADR-008 with the results."
 
