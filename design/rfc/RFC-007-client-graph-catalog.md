@@ -33,7 +33,7 @@ The scattered bookkeeping has costs that are already visible.
 - **Nothing finds leftovers.** A site that renames a descriptor `id` or an application leaves the old store in the visitor's storage with no way for the page, the site or the visitor to find it.
 - **The visitor cannot be told anything.** Whether a site's data is durable, how many graphs it holds, and what clearing one would cost are all unanswerable, so the application cannot give a visitor an honest account of what is stored (RFC-006's privacy question on shared devices has no home).
 
-Two further facts shape the problem. The browser can evict an origin's storage under pressure, so a catalog stored beside the graphs may lose entries and graphs together, or one without the other. And a store serves one holder at a time (a second tab's attempt to open it waits until the first releases it), so a catalog that is itself a store of the same kind is unreadable from every other tab while one tab holds it.
+Two further facts shape the problem. The browser evicts or clears an origin's storage as a whole; measured in Chromium, clearing the origin-private storage removed engine stores and a file beside them together, and a reopened store came back empty, indistinguishable from a first visit. And a store serves one holder at a time (a second tab's attempt to open it waits until the first releases it), so a catalog that is itself a store of the same kind is unreadable from every other tab while one tab holds it.
 
 ## 3. Goals
 
@@ -43,7 +43,7 @@ Two further facts shape the problem. The browser can evict an origin's storage u
 - **Readable from any tab.** Every tab of an origin can read the catalog while another tab holds a store. Writes from several tabs do not corrupt it.
 - **Orphans are visible.** A store with no entry, and an entry with no store, are both reported as such.
 - **Cleanup is possible and deliberate.** A site and a visitor can remove one graph or all of them, and the catalog says what each removal discards. Nothing is removed without an explicit call.
-- **Honest storage.** The catalog reports what the browser is willing to say about persistence and eviction, and notices when stored graphs have been lost.
+- **Honest storage.** The catalog reports what the browser is willing to say about persistence and eviction, and notices partial loss (a store without its entry, or an entry without its store). Loss of everything at once looks like a first visit, and the catalog says so rather than implying it can tell.
 - **One mechanism for both kinds.** Content caches and application graphs use the same catalog, with different rules per kind (a cache can be rebuilt; an application's data cannot).
 
 ## 4. Non-Goals
@@ -67,11 +67,11 @@ An entry names a graph and says what the core needs to decide what to do with it
 
 Candidates, each with a different consequence for access from several tabs and for eviction:
 
-- **In the engine.** A catalog, or a per-store metadata slot committed with the store's data, provided by the engine. This is the only candidate that can make an entry atomic with its data. It needs the engine to offer it, and a per-store slot does not by itself enumerate stores.
+- **In the engine.** A catalog, or a per-store metadata slot committed with the store's data, provided by the engine. This is the only candidate that can make an entry atomic with its data. It needs the engine to offer it: the engine's public interface has no call for listing stores or reading a store's size or metadata today, and a per-store slot would not by itself enumerate stores.
 - **A store of the engine's kind**, with a reserved name, holding the catalog as a small graph. It enumerates and is written transactionally, but it serves one holder at a time and so is not readable from other tabs while one tab holds it.
-- **One small file per graph** in the origin's private storage, replaced atomically, listed by directory. It enumerates cheaply, needs no store to be open, and works across tabs; it is a second write beside the store's data. The content cache already works this way: its stored-copy file is such a file, written last and removed before a reset, so its cost is known in outline (a crash between the two writes is survivable only because the order makes the store look stale).
+- **One small file per graph** in the origin's private storage, replaced atomically, listed by directory. It enumerates cheaply, needs no store to be open, and works across tabs; it is a second write beside the store's data. Measured in Chromium, Firefox and WebKit, such a file can be read and replaced from every tab while another tab holds a store, and writers from several tabs lose no update when each takes a Web Lock (without the lock, updates are lost, and WebKit's replace can expose an empty file). The content cache already works this way: its stored-copy file is such a file, written last and removed before a reset, so its cost is known in outline (a crash between the two writes is survivable only because the order makes the store look stale).
 - **State carried in the store's own name**, for example a directory name that encodes kind, revision and state. It enumerates for free and needs no second file, but changing state means renaming a directory, which the browser's storage interface does not do atomically.
-- **A browser database designed for several tabs** (IndexedDB, or a shared key-value store), which gives cross-tab transactions and a coordinated writer but is neither atomic with the engine's files nor guaranteed to be evicted together with them.
+- **A browser database designed for several tabs** (IndexedDB, or a shared key-value store), which gives cross-tab transactions and a coordinated writer but is not atomic with the engine's files. Browsers document eviction as whole-origin, which would take such a database along with the stores; a visitor's selective clear could leave it. That was not measured.
 
 A choice can combine them: an engine-provided slot for state that must be atomic with the data, and a cross-tab list for enumeration.
 
@@ -79,7 +79,7 @@ A choice can combine them: an engine-provided slot for state that must be atomic
 
 The entry and the store change at different moments, so a protocol is needed. Candidates:
 
-- **Intent first.** The entry records the intent (`seeding`, `importing`, `migrating to n`) before the data changes and the outcome (`ready`) after. A crash leaves an intent entry, which names the interrupted operation, as the marker does today.
+- **Intent first.** The entry records the intent (`seeding`, `importing`, `migrating to n`) before the data changes and the outcome (`ready`) after. A crash leaves an intent entry, which names the interrupted operation, as the marker does today. Where the entry is a file, writers from several tabs are ordered with a Web Lock, which a terminated or closed holder releases within a few milliseconds.
 - **Verify on open.** The entry holds a fingerprint the store can be checked against (a count, a generation number written into the store by the engine), so an entry that disagrees with its store is detected.
 - **Atomic with the data.** The engine commits the state with the data (the engine candidate in 5.2). No crash window remains.
 
@@ -87,11 +87,11 @@ The first two close the common crash windows but leave a window between the data
 
 ### 5.4 Enumeration, orphans and cleanup
 
-The catalog is the starting point for listing; a reconciliation step compares it with what the origin's storage actually contains and reports two kinds of mismatch: a store with no entry (created by an older version of the core, or lost its entry) and an entry with no store (cleared by the visitor, or evicted). Cleanup is explicit: remove one graph, remove all graphs of a kind, remove orphans. A content cache can be removed freely because the site can ship it again; removing an application graph discards the visitor's data and is reported as such.
+The catalog is the starting point for listing; a reconciliation step compares it with what the origin's storage actually contains and reports two kinds of mismatch: a store with no entry (created by an older version of the core, or lost its entry) and an entry with no store (a crash between the two writes, or a selective clear that left the catalog). A visitor's full clear or an eviction removes both, so it leaves no mismatch to report. Listing the stores from the origin's directory gives each store's name, approximate size and last-modified time without opening it, even while another tab holds one; it costs a file read per slot file, about 5 ms per store in Chromium and 20 to 25 ms in Firefox and WebKit. Cleanup is explicit: remove one graph, remove all graphs of a kind, remove orphans. A content cache can be removed freely because the site can ship it again; removing an application graph discards the visitor's data and is reported as such.
 
 ### 5.5 Several tabs
 
-Every tab needs to read the catalog, and every tab can change it (a tab opens a store, another finishes a migration). The catalog has to define who may write, how writers are ordered, and what a tab sees when a store it listed is held by another tab: a listed graph and an open graph are different facts.
+Every tab needs to read the catalog, and every tab can change it (a tab opens a store, another finishes a migration). The catalog has to define who may write, how writers are ordered, and what a tab sees when a store it listed is held by another tab: a listed graph and an open graph are different facts. A second tab that tries to open a held store is refused at once, while reading and replacing a file beside it succeeds.
 
 ### 5.6 What the page and the visitor see
 
@@ -101,13 +101,15 @@ The core reports the catalog to the page: a listing, a change notification, and 
 
 A descriptor still names a graph and its revision as the site ships it; the catalog records what the browser holds. An application's name and version stay the application's declaration. Stores created before a catalog exists carry a marker or a stored-copy file; they have to be recognised and either adopted into the catalog or rebuilt.
 
-### 5.8 What to measure
+### 5.8 What was measured
 
-Three short measurements, each in Chromium, Firefox and WebKit, would choose between the candidates:
+Three measurements, each in Chromium, Firefox and WebKit unless noted, were run against these candidates:
 
-- **A small file in the origin's private storage:** whether it can be replaced atomically, and whether every tab can read it while another tab holds a store. This answers the file candidate of 5.2 and the cross-tab question of 5.5.
-- **Eviction:** what remains, and what the page can observe, after the browser clears an origin's storage or part of it. This bears on the detection asked for in 7.5.
-- **Enumeration through the engine:** whether the engine can list its own stores or expose a per-store metadata slot, and at what cost. This bears on 7.1.
+- **A small file in the origin's private storage** (a 50 KB self-checking file, 300 replaces against a reader in another tab). The file is readable and replaceable from any tab while another holds a store. Without a lock, readers see torn or missing reads in some browser and method combinations (WebKit's atomic-swap replace gave an empty file in a third of reads), and three tabs writing at once lost most updates; with an exclusive Web Lock for writers and a shared one for readers, nothing tore, went missing or was lost in any browser. A writer terminated at a random point left a whole file in all but one of 180 runs (three browsers, three methods, twenty each; the exception was an in-place write in Firefox). A temporary-file-and-rename scheme leaves a temporary file behind. The lock was granted to a waiting tab within 8 ms of its holder being terminated or its tab closed.
+- **Eviction** (Chromium only for the clear, which Playwright can script there). Clearing the origin's file storage removed engine stores and the catalog file together; reopened stores were empty; a store held at the time failed its next write; `navigator.storage` has no change event, and only the usage figure and the missing data show that anything happened. The engine's stores cannot be placed in a storage bucket, which only Chromium offers. Browsers document eviction as per origin and whole.
+- **Enumeration through the engine.** The engine's public interface exposes no listing, size or metadata call. A page can list the stores from the origin-private directory instead: each store is a directory of 65 files whose sizes sum to the store's size (identical across browsers), with a modification time, readable while another tab holds the store. Kind, version and state are not in the directory.
+
+Figures are single runs on one machine; power loss was not tested. The harnesses and raw results are with the spikes.
 
 ## 6. Alternatives Considered
 
@@ -118,15 +120,15 @@ Three short measurements, each in Chromium, Firefox and WebKit, would choose bet
 
 ## 7. Open Questions
 
-7.1. Where does the catalog live (5.2)? If the engine can provide a per-store metadata slot committed with the store's data, or a catalog of its stores, the consistency problem is solved there and the RFC reduces to enumeration and cleanup. If not, which of the remaining candidates is acceptable, and what does each give up: cross-tab reads, atomicity with the data, or survival of eviction together with the stores?
+7.1. Where does the catalog live (5.2)? A file in the origin's private storage, ordered by a Web Lock, is measured to work across tabs in all three browsers; a per-store metadata slot committed with the data is the only candidate that closes the window between a data write and an entry write, and the engine offers none. Is the file candidate acceptable with a reported mismatch, or is the engine slot a prerequisite for the application kind?
 
 7.2. Which consistency protocol (5.3), and which failure is acceptable when no candidate closes every crash window: a detected and reported mismatch, or an automatic repair?
 
 7.3. What identifies a graph across kinds and sites on one origin? A content cache and an application can currently choose the same text for different stores; two applications can choose one name and share data. Does the catalog refuse a name that is taken, and by whom is it "taken"?
 
-7.4. What can be learned about size? The engine has no call for a store's size (RFC-006 7.5), and the browser reports usage and quota per origin, not per directory. Is an approximate or origin-level figure enough, or is the engine call a prerequisite?
+7.4. A store's approximate size and last-modified time can be read from its directory without an engine call, at a cost of a file read per slot file. Is that figure and cost acceptable for the listing, including for an origin with many stores?
 
-7.5. How are eviction and partial loss detected and reported (some stores gone, entries intact, or the reverse), and what does the core do with an application graph whose store has vanished: report, or seed again?
+7.5. A full clear or eviction removes every store and the catalog together and cannot be told from a first visit. What does the core do with an application graph that has vanished this way (open it empty, as today), and does an application that cannot afford silent loss need a signal kept outside the origin, such as an exported copy or a server record? Partial loss, from a crash or a selective clear, is detectable by the reconciliation in 5.4.
 
 7.6. Who may remove a graph and when: the site's code, the visitor through a page the site provides, or the core on its own for leftover content caches? Is there an automatic age or count limit for caches?
 
