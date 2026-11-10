@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 
 const repoRoot = fileURLToPath(new URL("../../", import.meta.url));
 
-// The core is imported from its build output, so the starter runs the artifact that ships, including the worker URL
+// The core is imported from its build output, so the demo runs the artifact that ships, including the worker URL
 // that bundlers resolve. The engine binary stays out of dependency pre-bundling so its URL is the package's own.
 export default defineConfig({
   plugins: [react()],

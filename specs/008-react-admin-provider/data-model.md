@@ -57,9 +57,9 @@ A thrown `ProviderError` (an `Error` with `status` and `message`):
 | client status `failed` | 503, with the client's failure message (`diagnostic.reason` and text) |
 | a statement exceeds `timeoutMs`, or the core rejects `lost` or `failed` | 503, saying the statement timed out or the client's message |
 
-## Starter data
+## Demo data
 
-The starter's graph (seed in `starters/react-admin/src/seed.json`):
+The demo's graph (seed in `demos/react-admin/src/seed.json`):
 
 | Resource | Label | Fields | References |
 |---|---|---|---|
@@ -67,4 +67,4 @@ The starter's graph (seed in `starters/react-admin/src/seed.json`):
 | people | `Person` | `name` (string; sortable, filterable, searchable), `title` (string; filterable, searchable), `age` (number; sortable, filterable), `active` (boolean; filterable) | `company` → companies, `WORKS_AT`, out |
 | projects | `Project` | `name` (string; sortable, filterable, searchable), `status` (string; sortable, filterable), `budget` (number; sortable, filterable) | `company` → companies, `OWNED_BY`, out; `lead` → people, `LED_BY`, out |
 
-Counts: 6 companies, 50 people, 10 projects. The application is `react-admin-starter`, version 1.
+Counts: 6 companies, 50 people, 10 projects. The application is `react-admin-demo`, version 1.

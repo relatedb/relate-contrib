@@ -1,5 +1,5 @@
 {
-  "name": "react-admin-starter",
+  "name": "react-admin-demo",
   "version": "0.0.0",
   "description": "A local-first administrative application over the embedded graph: react-admin, the @relate/react-admin data provider and an application graph that keeps what the visitor writes.",
   "private": true,

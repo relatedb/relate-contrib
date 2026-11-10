@@ -1,4 +1,4 @@
-# Feature Specification: A react-admin Data Provider and Local-First Starter
+# Feature Specification: A react-admin Data Provider and Local-First Demo
 
 **Feature Branch**: `spec/008-react-admin-provider` (spec directory `008-react-admin-provider`)
 
@@ -6,22 +6,22 @@
 
 **Status**: Draft
 
-**Input**: User description: "React-admin data provider and local-first starter: implement accepted ADR-008 (parent RFC-005 and RFC-006; builds on ADR-001, ADR-002, ADR-003, ADR-009 and ADR-010) in two deliverables: a package `@relate/react-admin` exporting `createDataProvider(client, schema)` and `ensureSchema(client, schema)`, and an unpublished starter application `starters/react-admin` whose records persist in an application graph. Early tasks confirm the engine behaviours the ADR assumes and amend ADR-008 with the results."
+**Input**: User description: "React-admin data provider and local-first demo: implement accepted ADR-008 (parent RFC-005 and RFC-006; builds on ADR-001, ADR-002, ADR-003, ADR-009 and ADR-010) in two deliverables: a package `@relate/react-admin` exporting `createDataProvider(client, schema)` and `ensureSchema(client, schema)`, and an unpublished demo application `demos/react-admin` whose records persist in an application graph. Early tasks confirm the engine behaviours the ADR assumes and amend ADR-008 with the results."
 
 ## Overview
 
-react-admin is a React framework for administrative applications: lists with sorting, filters and paging, edit forms, and pickers for related records. It reaches all of its data through one object, the *data provider*, whose methods take a resource name and parameters and return promises. A team that describes three or four entities to a provider over the embedded graph gets those screens with no server. That is the first starter proposed by RFC-005, a small runnable application a participant can run, change and show within hours, whose purpose is to inspire community projects and lower the cost of adopting the database.
+react-admin is a React framework for administrative applications: lists with sorting, filters and paging, edit forms, and pickers for related records. It reaches all of its data through one object, the *data provider*, whose methods take a resource name and parameters and return promises. A team that describes three or four entities to a provider over the embedded graph gets those screens with no server. That is the first demo proposed by RFC-005, a small runnable application a participant can run, change and show within hours, whose purpose is to inspire community projects and lower the cost of adopting the database.
 
 This feature builds two things from ADR-008:
 
 - **The package** `@relate/react-admin` (`packages/react-admin`): a data provider that works over any client of the core (`@relate/web`), and a helper that creates the uniqueness constraint on each resource's `id`. It holds no interface components and no hosting code.
-- **The starter** `starters/react-admin`: an unpublished Vite and React application with three linked resources (companies, people and projects) whose records persist in the visitor's browser, built on the application graphs of ADR-009 and the catalog of ADR-010.
+- **The demo** `demos/react-admin`: an unpublished Vite and React application with three linked resources (companies, people and projects) whose records persist in the visitor's browser, built on the application graphs of ADR-009 and the catalog of ADR-010.
 
 Three kinds of people depend on it:
 
-- **Hackathon participants and application authors** want to declare their entities and get working lists, filters, edit forms and relation pickers, and a starter they can copy and rename.
-- **Visitors of an application built from the starter** want their records to survive reloads and return visits, and to be told plainly when storage is in memory only, when another tab holds the data, or when stored data cannot be opened.
-- **Maintainers of this repository** want the provider's translation from interface state to queries to be safe by construction (declared names, bound values), tested against the real engine, and checked with every other package so the starter does not decay.
+- **Hackathon participants and application authors** want to declare their entities and get working lists, filters, edit forms and relation pickers, and a demo they can copy and rename.
+- **Visitors of an application built from the demo** want their records to survive reloads and return visits, and to be told plainly when storage is in memory only, when another tab holds the data, or when stored data cannot be opened.
+- **Maintainers of this repository** want the provider's translation from interface state to queries to be safe by construction (declared names, bound values), tested against the real engine, and checked with every other package so the demo does not decay.
 
 Terms: a *resource* is one kind of record the interface shows (a node label); a *schema* is the caller's declaration of its resources, fields and references; a *reference* is a field holding the `id` of one record of another resource, stored as a relationship. The record `id` is the node's `id` property (ADR-002), never the engine's internal element id.
 
@@ -31,12 +31,13 @@ The specification implements ADR-008 and does not restate its decisions where an
 
 ### Session 2026-11-10
 
+- Q: Why "demo" and not "starter"? → A: This feature calls the application a *demo* (`demos/react-admin`, package `react-admin-demo`, store `react-admin-demo`). RFC-005 and ADR-008 still say "starter"; the project-wide change of vocabulary is pending on another branch, and the ADR-008 amendment records the name used here. "Starter" in those documents and "demo" here mean the same application.
 - Q: Does this feature change the core (`packages/web`)? → A: No, unless an early confirmation task (User Story 7) shows something missing; such a change is raised as an ADR amendment first (constitution I, VI). The package depends on the core through its public entry points only.
-- Q: Who creates the uniqueness constraint on `id`? → A: The package, idempotently and before its first statement (`CREATE CONSTRAINT … IF NOT EXISTS` per resource), exported as `ensureSchema(client, schema)` and called by the provider itself. The engine enforces per-label uniqueness and the constraint owns the lookup index, so no separate index is created; a separate index on the same property makes the constraint fail to create, so the starter passes no `id` index to the core. No core change; a `constraints` option in the core's application mode was considered and set aside (research R3). This supersedes ADR-008 2.2's `schemaIndexes`, which an ADR-008 amendment records.
+- Q: Who creates the uniqueness constraint on `id`? → A: The package, idempotently and before its first statement (`CREATE CONSTRAINT … IF NOT EXISTS` per resource), exported as `ensureSchema(client, schema)` and called by the provider itself. The engine enforces per-label uniqueness and the constraint owns the lookup index, so no separate index is created; a separate index on the same property makes the constraint fail to create, so the demo passes no `id` index to the core. No core change; a `constraints` option in the core's application mode was considered and set aside (research R3). This supersedes ADR-008 2.2's `schemaIndexes`, which an ADR-008 amendment records.
 - Q: Which data types may a schema field have? → A: string, number and boolean, the types the core's export carries without loss. Any other type is added later together with its loss behaviour (ADR-008 2.6).
-- Q: Can the starter offer an export from a failure screen? → A: No. `exportApplication()` waits for a ready client and rejects with `failed` when the client has failed, which every failure reason produces, and ADR-009's "export attempt" for `store-unreadable` is not available through that call. The failure screens offer reset only, and the reset control (data open) keeps its export. Export from a failed client is a follow-up for the core, to be raised as an ADR-009 amendment if wanted; this specification does not change the core. ADR-008 2.6 is amended to match.
-- Q: Is the starter published? → A: No. It is the place later starters' shared needs get noticed; extraction into a shared library happens when a second starter needs the same code (RFC-005 5.3).
-- Q: What does the starter use for the visitor's records? → A: One application graph, store `react-admin-starter`, schema version 1, no migrations yet. A project that copies the starter renames the store (ADR-008 4).
+- Q: Can the demo offer an export from a failure screen? → A: No. `exportApplication()` waits for a ready client and rejects with `failed` when the client has failed, which every failure reason produces, and ADR-009's "export attempt" for `store-unreadable` is not available through that call. The failure screens offer reset only, and the reset control (data open) keeps its export. Export from a failed client is a follow-up for the core, to be raised as an ADR-009 amendment if wanted; this specification does not change the core. ADR-008 2.6 is amended to match.
+- Q: Is the demo published? → A: No. It is the place later demos' shared needs get noticed; extraction into a shared library happens when a second demo needs the same code (RFC-005 5.3).
+- Q: What does the demo use for the visitor's records? → A: One application graph, store `react-admin-demo`, schema version 1, no migrations yet. A project that copies the demo renames the store (ADR-008 4).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -46,7 +47,7 @@ A developer declares a schema (companies, people, projects, with fields and refe
 
 **Why this priority**: reading is what every screen needs first, and the safe translation of sort and filter state is the part of the provider with real design in it (RFC-005 2).
 
-**Independent Test**: build a provider over a client holding the starter's seed, call `getList` for each resource with sort, filter and page parameters, and compare the records and total with expected values.
+**Independent Test**: build a provider over a client holding the demo's seed, call `getList` for each resource with sort, filter and page parameters, and compare the records and total with expected values.
 
 **Acceptance Scenarios**:
 
@@ -101,57 +102,57 @@ When the engine reports an error, a record is missing, a field is undeclared, or
 
 ---
 
-### User Story 4 - The starter runs and keeps what the visitor writes (Priority: P1)
+### User Story 4 - The demo runs and keeps what the visitor writes (Priority: P1)
 
 A participant clones the repository, runs one command and sees a working administrative application: sortable, filterable, paged lists of companies, people and projects, edit forms with pickers for related records, and a company page listing that company's people and projects. About 50 people and a few companies and projects are there on first run. Edits survive a reload and a return visit.
 
-**Why this priority**: the starter is the deliverable people see; everything else supports it.
+**Why this priority**: the demo is the deliverable people see; everything else supports it.
 
-**Independent Test**: serve the starter in a browser, create, edit and delete records, reload, and see them.
+**Independent Test**: serve the demo in a browser, create, edit and delete records, reload, and see them.
 
 **Acceptance Scenarios**:
 
-1. **Given** an empty browser, **When** the starter opens, **Then** the lists show the seed records and no record is created twice by a reload.
+1. **Given** an empty browser, **When** the demo opens, **Then** the lists show the seed records and no record is created twice by a reload.
 2. **Given** a created person, **When** the page reloads, **Then** the person is in the list and the seed is not applied again.
 3. **Given** the people list, **When** a visitor sorts, filters, searches and pages, **Then** the list and total follow, and a panel shows the statements the provider ran.
 4. **Given** an edit form for a person, **When** the visitor picks another company in the relation picker and saves, **Then** the list and the company page show the person under the new company.
 5. **Given** a company page, **When** it opens, **Then** it lists that company's people and projects.
-6. **Given** a client that is still `loading`, **When** the starter opens, **Then** the shell and the storage notice are on screen and the list regions show a loading state, not a blank page.
-7. **Given** a participant who copies the starter, **When** they follow its README, **Then** they can rename the store and change the schema without touching the package.
+6. **Given** a client that is still `loading`, **When** the demo opens, **Then** the shell and the storage notice are on screen and the list regions show a loading state, not a blank page.
+7. **Given** a participant who copies the demo, **When** they follow its README, **Then** they can rename the store and change the schema without touching the package.
 
 ---
 
-### User Story 5 - The starter is honest about storage and failures (Priority: P2)
+### User Story 5 - The demo is honest about storage and failures (Priority: P2)
 
-A visitor can tell whether their records are stored durably, are held in memory only, or are waiting on another tab, and can ask the browser for persistent storage. When the stored data cannot be opened, the starter says which of the core's failure reasons occurred and offers a reset, an explicit and confirmed action that discards the stored data. It cannot offer an export at that point: the core's `exportApplication()` rejects once a client has failed, so the export is offered by the reset control while the data is open (scenario 5).
+A visitor can tell whether their records are stored durably, are held in memory only, or are waiting on another tab, and can ask the browser for persistent storage. When the stored data cannot be opened, the demo says which of the core's failure reasons occurred and offers a reset, an explicit and confirmed action that discards the stored data. It cannot offer an export at that point: the core's `exportApplication()` rejects once a client has failed, so the export is offered by the reset control while the data is open (scenario 5).
 
-**Why this priority**: RFC-005 and RFC-006 ask that starters say what a visitor loses; a starter that empties silently is a demo, not an application.
+**Why this priority**: RFC-005 and RFC-006 ask that demos say what a visitor loses; a demo that empties silently is a demo, not an application.
 
-**Independent Test**: open the starter in two tabs, open it with storage unavailable, and force each failure reason from the core's fixtures.
+**Independent Test**: open the demo in two tabs, open it with storage unavailable, and force each failure reason from the core's fixtures.
 
 **Acceptance Scenarios**:
 
-1. **Given** durable storage, **When** the starter is open, **Then** a notice says the data is stored durably; **given** memory storage, **then** it says the data is in memory only, with the reason.
+1. **Given** durable storage, **When** the demo is open, **Then** a notice says the data is stored durably; **given** memory storage, **then** it says the data is in memory only, with the reason.
 2. **Given** a second tab, **When** another tab holds the store, **Then** the second tab says it is waiting and continues when the first closes.
-3. **Given** the notice, **When** the visitor presses the persistence button, **Then** persistence is requested from that user action and the notice updates with the answer; the starter never requests it unprompted.
-4. **Given** each of `store-newer`, `store-lost`, `store-unmarked`, `store-unreadable`, `import-interrupted` and `migration-failed`, **When** the client fails with it, **Then** the starter shows that reason with a plain explanation and the choice to reset, requiring confirmation, and offers no export (the core cannot export from a failed client).
-5. **Given** the reset-demo-data control, **When** it is used, **Then** it offers an export (no `allowLoss` needed for the starter's data), requires confirmation, then resets and seeds again.
-6. **Given** the starter's README, **When** a participant reads it, **Then** it says what a visitor loses by clearing site data and that a copied project renames the store.
+3. **Given** the notice, **When** the visitor presses the persistence button, **Then** persistence is requested from that user action and the notice updates with the answer; the demo never requests it unprompted.
+4. **Given** each of `store-newer`, `store-lost`, `store-unmarked`, `store-unreadable`, `import-interrupted` and `migration-failed`, **When** the client fails with it, **Then** the demo shows that reason with a plain explanation and the choice to reset, requiring confirmation, and offers no export (the core cannot export from a failed client).
+5. **Given** the reset-demo-data control, **When** it is used, **Then** it offers an export (no `allowLoss` needed for the demo's data), requires confirmation, then resets and seeds again.
+6. **Given** the demo's README, **When** a participant reads it, **Then** it says what a visitor loses by clearing site data and that a copied project renames the store.
 
 ---
 
 ### User Story 6 - The package installs cleanly and is checked with the rest (Priority: P2)
 
-The package can be packed, installed in a clean project beside `react-admin` and `@relate/web`, and used. Its contract tests run against the real engine, the starter's browser tests run in Chromium, Firefox and WebKit, and both run in the repository's routine checks so they do not decay between launches.
+The package can be packed, installed in a clean project beside `react-admin` and `@relate/web`, and used. Its contract tests run against the real engine, the demo's browser tests run in Chromium, Firefox and WebKit, and both run in the repository's routine checks so they do not decay between launches.
 
-**Why this priority**: RFC-005 asks for an automated check that each starter builds and answers a query; constitution V requires tests for every MUST.
+**Why this priority**: RFC-005 asks for an automated check that each demo builds and answers a query; constitution V requires tests for every MUST.
 
 **Independent Test**: run the package's install check and the repository's drift check.
 
 **Acceptance Scenarios**:
 
 1. **Given** the packed package, **When** it is installed in an empty project with its peer dependencies, **Then** a script builds a provider, and a list call returns records.
-2. **Given** the repository's drift and full checks, **When** they run, **Then** they include the package's unit and contract tests, the starter's browser tests, the package test and the trace check.
+2. **Given** the repository's drift and full checks, **When** they run, **Then** they include the package's unit and contract tests, the demo's browser tests, the package test and the trace check.
 3. **Given** every requirement of this specification, **When** the trace check runs, **Then** each has a passing test carrying its tag.
 
 ---
@@ -182,9 +183,9 @@ Before the provider's statements are fixed, early tasks confirm the engine behav
 - An array filter value on a reference or plain field is membership; an empty array matches nothing.
 - `getMany` with ids that include missing records returns only the records found.
 - A page past the end returns no records and the unchanged total.
-- Two applications on one origin choosing the same store name share a store (RFC-007 7.3); the starter's fixed name is why a copy renames it.
-- A seed with duplicate `id` values is rejected by the core's validation before the starter shows anything.
-- The graph is empty because the visitor deleted every record: the application is `seeded: true`, so the next open fails `store-lost`; the starter explains it and offers reset (ADR-010).
+- Two applications on one origin choosing the same store name share a store (RFC-007 7.3); the demo's fixed name is why a copy renames it.
+- A seed with duplicate `id` values is rejected by the core's validation before the demo shows anything.
+- The graph is empty because the visitor deleted every record: the application is `seeded: true`, so the next open fails `store-lost`; the demo explains it and offers reset (ADR-010).
 - `updateMany` with ids that match no node answers an empty list of ids; with a reference whose target does not exist it rejects 400, as `update` does.
 - A `create` with a supplied `id` that already exists: the provider rejects it with 400 rather than creating a second node with the same `id`.
 
@@ -224,21 +225,21 @@ Before the provider's statements are fixed, early tasks confirm the engine behav
 - **FR-019**: An optional `onStatement` callback MUST receive each statement and its parameters, in the order sent.
 - **FR-033**: The provider MUST pass a timeout to every statement it sends, `timeoutMs` from its options with a default of 10,000 ms, and a statement that exceeds it MUST reject with `status` 503 and the message that the statement timed out; the core's `query()` applies no timeout of its own, so the provider supplies one (constitution IV).
 
-**The starter**
+**The demo**
 
-- **FR-020**: `starters/react-admin` MUST be an unpublished Vite and React application using the package, with three resources: companies, people (each works at one company) and projects (each owned by one company and led by one person) (ADR-008 2.6).
-- **FR-021**: The starter's graph MUST be an application graph in a store named `react-admin-starter` at schema version 1 with no migrations, seeded once from a graph data document of about 50 people and a few companies and projects, and MUST NOT pass an index on `id` (the constraint of FR-002 owns it).
+- **FR-020**: `demos/react-admin` MUST be an unpublished Vite and React application using the package, with three resources: companies, people (each works at one company) and projects (each owned by one company and led by one person) (ADR-008 2.6).
+- **FR-021**: The demo's graph MUST be an application graph in a store named `react-admin-demo` at schema version 1 with no migrations, seeded once from a graph data document of about 50 people and a few companies and projects, and MUST NOT pass an index on `id` (the constraint of FR-002 owns it).
 - **FR-022**: The interface MUST offer sortable, filterable, paged lists, edit forms with relation pickers, a company page listing its people and projects through `getManyReference`, and a panel showing the statements the provider ran.
-- **FR-023**: The starter's data MUST use only string, number and boolean properties; it MUST offer a reset-demo-data control that offers `exportApplication` and, after confirmation, calls `resetApplication`.
-- **FR-024**: The starter MUST read `client.storage` and say whether data is stored durably, in memory only (with the reason), or waiting on another tab; it MUST offer `requestPersistence` only from a button, and MUST NOT request it on its own.
-- **FR-034**: The starter's shell (navigation, titles and the storage notice) MUST render before the client is ready, and while the client is `loading` the list regions MUST show react-admin's loading state, and when it has failed the failure screen, never a blank page (constitution III).
-- **FR-025**: The starter MUST show each failure reason the client reports (`store-newer`, `store-lost`, `store-unmarked`, `store-unreadable`, `import-interrupted`, `migration-failed`) with the choice to reset, and MUST NOT offer an export from a failure screen (the core's `exportApplication()` rejects while a client is `failed`).
-- **FR-026**: The starter MUST pin `react-admin` to an exact version and MUST NOT use react-admin's paid add-on modules; its README MUST say what a visitor loses by clearing site data and that a project copying the starter renames the store.
+- **FR-023**: The demo's data MUST use only string, number and boolean properties; it MUST offer a reset-demo-data control that offers `exportApplication` and, after confirmation, calls `resetApplication`.
+- **FR-024**: The demo MUST read `client.storage` and say whether data is stored durably, in memory only (with the reason), or waiting on another tab; it MUST offer `requestPersistence` only from a button, and MUST NOT request it on its own.
+- **FR-034**: The demo's shell (navigation, titles and the storage notice) MUST render before the client is ready, and while the client is `loading` the list regions MUST show react-admin's loading state, and when it has failed the failure screen, never a blank page (constitution III).
+- **FR-025**: The demo MUST show each failure reason the client reports (`store-newer`, `store-lost`, `store-unmarked`, `store-unreadable`, `import-interrupted`, `migration-failed`) with the choice to reset, and MUST NOT offer an export from a failure screen (the core's `exportApplication()` rejects while a client is `failed`).
+- **FR-026**: The demo MUST pin `react-admin` to an exact version and MUST NOT use react-admin's paid add-on modules; its README MUST say what a visitor loses by clearing site data and that a project copying the demo renames the store.
 
 **Checks**
 
 - **FR-027**: A contract test MUST run every provider method against the real engine through the core and assert the shapes react-admin expects, including rejection of undeclared fields and injection attempts in sort and filter values (ADR-008 2.7).
-- **FR-028**: A browser test MUST run the starter in Chromium, Firefox and WebKit through create, filter, sort, paging, changing a reference, delete, reload (records remain), a second tab and reset.
+- **FR-028**: A browser test MUST run the demo in Chromium, Firefox and WebKit through create, filter, sort, paging, changing a reference, delete, reload (records remain), a second tab and reset.
 - **FR-029**: A package test MUST pack the package, install it with its peer dependencies in a clean project, build a provider and run a list call.
 - **FR-030**: Test names MUST carry the identifiers of the requirements they cover (`covers-ra:` tags) and a trace check MUST fail when a requirement or success criterion has no passing test; the unit, browser, package and trace checks MUST run in the repository's `test:drift` and full workflow.
 - **FR-031**: The package MUST depend on the core only through its exported entry points and MUST NOT reference the vendored engine path.
@@ -249,18 +250,18 @@ Before the provider's statements are fixed, early tasks confirm the engine behav
 - **Schema**: the caller's declaration of resources. A **resource** has a label, **fields** (name, type, sortable, filterable, searchable) and **references** (field name, target resource, relationship type, direction).
 - **Record**: what react-admin sees: the node's declared properties, its `id`, and each reference field holding a target `id`.
 - **Provider**: the object react-admin calls; built from a schema and a core client, with an optional statement observer.
-- **Starter graph**: the application graph holding companies, people and projects, one store per origin, seeded once.
+- **Demo graph**: the application graph holding companies, people and projects, one store per origin, seeded once.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: Every provider method returns the shape react-admin expects for each of the starter's three resources, shown by the contract test against the real engine.
+- **SC-001**: Every provider method returns the shape react-admin expects for each of the demo's three resources, shown by the contract test against the real engine.
 - **SC-002**: In sort and filter tests with hostile values (statement text, quotes, comment markers), no hostile value changes a statement's shape, and every undeclared name is rejected before a statement is sent.
 - **SC-003**: Paging through a sorted list with ties returns every record exactly once.
-- **SC-004**: A participant goes from a clean checkout to the starter's lists on screen with install and one run command, with no server; the time is measured once and recorded, labelled single-run.
-- **SC-005**: In Chromium, Firefox and WebKit, records created, edited and deleted in the starter are still as left after a reload, and a second tab waits instead of corrupting the data.
-- **SC-006**: Each of the six failure reasons is shown by the starter with its own explanation and only the safe choices.
+- **SC-004**: A participant goes from a clean checkout to the demo's lists on screen with install and one run command, with no server; the time is measured once and recorded, labelled single-run.
+- **SC-005**: In Chromium, Firefox and WebKit, records created, edited and deleted in the demo are still as left after a reload, and a second tab waits instead of corrupting the data.
+- **SC-006**: Each of the six failure reasons is shown by the demo with its own explanation and only the safe choices.
 - **SC-007**: The packed package installs in a clean project with its peer dependencies and answers a list call.
 - **SC-008**: Every requirement and success criterion of this specification has a passing, tagged test, and the repository's drift and full checks include them.
 - **SC-009**: Once the constraints exist, a list costs at most two statements, and every resource's `id` carries a uniqueness constraint, which owns the lookup index (asserted from the engine's constraint and index lists); the statement counts are asserted and the timings recorded, labelled single-run.
@@ -272,5 +273,5 @@ Before the provider's statements are fixed, early tasks confirm the engine behav
 - The engine accepts the openCypher forms the ADR names; User Story 7 confirms each before the statements are fixed.
 - Records are per browser: no sharing between visitors or devices, and clearing site data erases them (RFC-005, RFC-006).
 - One interpretation of react-admin's filter conventions is fixed by the package; other conventions need a schema or provider option, not a second package.
-- A Refine provider, many-to-many references, a schema-from-graph helper, a shared translation library, paid react-admin modules, server-backed data, other starters and engine changes are out of scope (ADR-008 3 and 4).
+- A Refine provider, many-to-many references, a schema-from-graph helper, a shared translation library, paid react-admin modules, server-backed data, other demos and engine changes are out of scope (ADR-008 3 and 4).
 - Timing figures are single runs on one machine and are labelled so (constitution V).

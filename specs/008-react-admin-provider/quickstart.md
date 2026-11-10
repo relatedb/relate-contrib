@@ -25,11 +25,11 @@ pnpm test:react-admin-package     # packs the package, installs it in a clean pr
 pnpm test:react-admin-trace       # every requirement and success criterion has a passing, tagged test
 ```
 
-## The starter
+## The demo
 
 ```sh
-pnpm --filter react-admin-starter dev          # the starter at a local address
-pnpm test:react-admin-browsers                 # the starter in Chromium, Firefox and WebKit
+pnpm --filter react-admin-demo dev          # the demo at a local address
+pnpm test:react-admin-browsers                 # the demo in Chromium, Firefox and WebKit
 ```
 
 Expected: the lists show 6 companies, 50 people and 10 projects on first run; a created person is still there after a reload; a second tab says it is waiting.

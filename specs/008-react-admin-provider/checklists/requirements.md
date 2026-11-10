@@ -1,4 +1,4 @@
-# Specification Quality Checklist: A react-admin Data Provider and Local-First Starter
+# Specification Quality Checklist: A react-admin Data Provider and Local-First Demo
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-11-10

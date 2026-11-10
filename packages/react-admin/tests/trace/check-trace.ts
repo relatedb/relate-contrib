@@ -1,8 +1,8 @@
 // Traceability check (SC-008): every requirement (FR-n) and success criterion (SC-n) in specs/008-react-admin-provider/spec.md
-// must be named in a `// covers-ra: FR-n, SC-n` tag in a test file of the package or of the starter, and those tests must pass.
+// must be named in a `// covers-ra: FR-n, SC-n` tag in a test file of the package or of the demo, and those tests must pass.
 //
 // usage: tsx tests/trace/check-trace.ts [--static]
-//   default   also read the reports of the package (reports/vitest.json, reports/package.json) and of the starter
+//   default   also read the reports of the package (reports/vitest.json, reports/package.json) and of the demo
 //             (reports/vitest.json, reports/playwright.json) and require the tagged files to pass
 //   --static  only check that every id is tagged
 //
@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 const here = fileURLToPath(new URL(".", import.meta.url));
 const pkg = resolve(here, "../..");
 const repo = resolve(pkg, "../..");
-const starter = join(repo, "starters/react-admin");
+const demo = join(repo, "demos/react-admin");
 const staticOnly = process.argv.includes("--static");
 
 const spec = readFileSync(process.env.TRACE_SPEC ?? join(repo, "specs/008-react-admin-provider/spec.md"), "utf8");
@@ -31,7 +31,7 @@ function walk(dir: string): string[] {
     });
 }
 
-const testFiles = [...walk(join(pkg, "tests")), ...walk(join(starter, "tests"))].filter((f) => /\.(test|spec)\.tsx?$/.test(f));
+const testFiles = [...walk(join(pkg, "tests")), ...walk(join(demo, "tests"))].filter((f) => /\.(test|spec)\.tsx?$/.test(f));
 const tagged = new Map<string, string[]>(); // id -> files, relative to the repository
 for (const file of testFiles) {
   const text = readFileSync(file, "utf8");
@@ -54,7 +54,7 @@ type VitestReport = { testResults?: Array<{ name: string; status: string }> };
 for (const report of [
   join(pkg, "reports/vitest.json"),
   join(pkg, "reports/package.json"),
-  join(starter, "reports/vitest.json"),
+  join(demo, "reports/vitest.json"),
 ]) {
   if (!existsSync(report)) continue;
   haveReports = true;
@@ -65,11 +65,11 @@ for (const report of [
 
 type Spec = { file: string; ok: boolean };
 type Suite = { specs?: Spec[]; suites?: Suite[] };
-const playwright = join(starter, "reports/playwright.json");
+const playwright = join(demo, "reports/playwright.json");
 if (existsSync(playwright)) {
   haveReports = true;
   const visit = (s: Suite): void => {
-    for (const sp of s.specs ?? []) note(join("starters/react-admin/tests/browser", sp.file), sp.ok);
+    for (const sp of s.specs ?? []) note(join("demos/react-admin/tests/browser", sp.file), sp.ok);
     for (const c of s.suites ?? []) visit(c);
   };
   visit(JSON.parse(readFileSync(playwright, "utf8")) as Suite);

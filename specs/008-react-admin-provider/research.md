@@ -1,4 +1,4 @@
-# Research: The react-admin Data Provider and Starter
+# Research: The react-admin Data Provider and Demo
 
 **Feature**: [spec.md](spec.md) | **Plan**: [plan.md](plan.md) | **Date**: 2026-11-10
 
@@ -8,7 +8,7 @@ Decisions the plan rests on. The engine behaviours ADR-008 listed "to confirm at
 
 **Decision**: `createDataProvider` takes `ProviderClient`, the subset `Pick<Client, "query" | "status" | "diagnostic">` of the core's client. Anything with those three members works: a client from `createClient`, `createSiteClient` or an adapter helper.
 
-**Rationale**: the provider issues statements and reads failure state, nothing else. A narrow type lets the contract test run the provider over a small in-process client (R11) without a worker, while the starter's browser test uses the real client.
+**Rationale**: the provider issues statements and reads failure state, nothing else. A narrow type lets the contract test run the provider over a small in-process client (R11) without a worker, while the demo's browser test uses the real client.
 
 **Alternatives**: depend on the whole `Client` (rejected: forces the contract test to host a worker in Node, which the core's own Node tests avoid).
 
@@ -34,13 +34,13 @@ The probes ran each form the ADR assumes. Results (engine envelope, node values 
 
 **Findings** (probes constraints, constraints-2, constraints-3): the engine enforces per-label uniqueness. After `CREATE CONSTRAINT c FOR (n:Label) REQUIRE n.id IS UNIQUE`, a duplicate `CREATE` and a `SET n.id` to a taken value both fail with `ConstraintValidationFailed`; the same `id` on another label is allowed; nodes with no `id` are not constrained. The constraint owns a range index on the property (`SHOW INDEXES` lists it with `owningConstraint` set), so lookups by `id` need nothing else. `CREATE CONSTRAINT … IF NOT EXISTS` is idempotent. Creating it over data that already holds duplicates fails, and creating it while a plain index exists on the same label and property fails too ("a constraint cannot be created until the index has been dropped", even with `IF NOT EXISTS`); creating a plain index after the constraint also fails (`EquivalentSchemaRuleAlreadyExists`). Without a constraint, nothing prevents two nodes with the same `id`.
 
-**Decision**: the package creates one constraint per resource label, named `rel_<Label>_id`, with `CREATE CONSTRAINT … IF NOT EXISTS`. `ensureSchema(client, schema)` runs them; `createDataProvider` runs it once, memoised, before its first data statement, so a caller does nothing. A duplicate `create` is then an engine error the provider maps to 400. The starter passes no `id` index to the core's application `indexes`.
+**Decision**: the package creates one constraint per resource label, named `rel_<Label>_id`, with `CREATE CONSTRAINT … IF NOT EXISTS`. `ensureSchema(client, schema)` runs them; `createDataProvider` runs it once, memoised, before its first data statement, so a caller does nothing. A duplicate `create` is then an engine error the provider maps to 400. The demo passes no `id` index to the core's application `indexes`.
 
 **Rationale**: the constraint makes uniqueness atomic with the write and also supplies the lookup index. Running it on every open is idempotent, so whether the durable store keeps a constraint across a reload does not matter, and a store whose constraint was never created (a crash between the first run and the first provider call) is repaired on the next open. It needs no core change and works for any client, not only application mode.
 
 **Alternatives**: a `constraints` option in the core's application mode, created at first run (rejected for now: it changes the core and needs an ADR-009 amendment, and it helps application graphs only); an in-statement guard (`OPTIONAL MATCH … WHERE e IS NULL`), which works without a constraint and was verified, but leaves a hand-written `CREATE` or a `SET` of `id` unchecked and still needs an index for speed.
 
-**Cost and limits**: one statement per provider per page load. If the store holds duplicate ids (a hand-edited or imported store), `ensureSchema` fails with 400 and no data statement runs until the duplicates are removed; the failure names the resource. **Confirm**: the first-run order in the starter (seed loaded by the core, then the constraint created over unique ids) succeeds.
+**Cost and limits**: one statement per provider per page load. If the store holds duplicate ids (a hand-edited or imported store), `ensureSchema` fails with 400 and no data statement runs until the duplicates are removed; the failure names the resource. **Confirm**: the first-run order in the demo (seed loaded by the core, then the constraint created over unique ids) succeeds.
 
 ## R4: A naive relationship replacement loses the old relationship when the target is missing
 
@@ -72,31 +72,31 @@ A record is the node's `properties` (which hold the application `id`), with decl
 
 ## R10: A statement issued while loading
 
-The core documents that queries are pending while the client is `loading` and resolve after it is ready (`packages/web/README.md`, "Storage"; ADR-009 whenLocked wait). **Confirm**: find the existing core test that covers it, or add a case to the starter's browser test (a statement sent immediately after `createClient`). No core change is expected.
+The core documents that queries are pending while the client is `loading` and resolve after it is ready (`packages/web/README.md`, "Storage"; ADR-009 whenLocked wait). **Confirm**: find the existing core test that covers it, or add a case to the demo's browser test (a statement sent immediately after `createClient`). No core change is expected.
 
 ## R11: Contract tests run the provider over an in-process client
 
-**Decision**: the package's unit tests build a `ProviderClient` over `RelateDb` from `@relate/relate-wasm` (initialised from the vendored binary in Node, as the core's own tests do), with `query(statement, params)` returning the parsed envelope, `status` `"ready"` and `diagnostic` null. A second small client with `status: "failed"` drives the 503 case. They exercise every method, the injection and undeclared-name rejections, and the shapes react-admin reads. The starter's browser test then runs the same provider through the real client, worker and application store.
+**Decision**: the package's unit tests build a `ProviderClient` over `RelateDb` from `@relate/relate-wasm` (initialised from the vendored binary in Node, as the core's own tests do), with `query(statement, params)` returning the parsed envelope, `status` `"ready"` and `diagnostic` null. A second small client with `status: "failed"` drives the 503 case. They exercise every method, the injection and undeclared-name rejections, and the shapes react-admin reads. The demo's browser test then runs the same provider through the real client, worker and application store.
 
 **Rationale**: the contract between the provider and the engine is the statements and the envelope; the worker is the core's concern and is already tested there.
 
-## R12: The starter's toolchain
+## R12: The demo's toolchain
 
-**Decision**: Vite and React, `react-admin` pinned to an exact 5.x release (5.15.6 at planning: MIT, published 2026-11-07, peers React 18 or 19, `react-router` 6.28+ or 7.1+, `react-hook-form` ^7.72, `@tanstack/react-query` ^5.83; npm registry, checked 2026-11-10). The engine binary is passed to `createClient` by URL through the bundler's asset import, as the core's README shows. The starter lives in `starters/react-admin` and the workspace gains `starters/*`; `pnpm -r build` then builds it, which is the build check for RFC-005's "does not decay".
+**Decision**: Vite and React, `react-admin` pinned to an exact 5.x release (5.15.6 at planning: MIT, published 2026-11-07, peers React 18 or 19, `react-router` 6.28+ or 7.1+, `react-hook-form` ^7.72, `@tanstack/react-query` ^5.83; npm registry, checked 2026-11-10). The engine binary is passed to `createClient` by URL through the bundler's asset import, as the core's README shows. The demo lives in `demos/react-admin` and the workspace gains `demos/*`; `pnpm -r build` then builds it, which is the build check for RFC-005's "does not decay".
 
-**Alternatives**: a Next or Astro host (rejected: the starter exists to need no framework adapter; ADR-008 2.1 fixes Vite and React).
+**Alternatives**: a Next or Astro host (rejected: the demo exists to need no framework adapter; ADR-008 2.1 fixes Vite and React).
 
 ## R13: Repository wiring and trace
 
-**Decision**: scripts follow the existing pattern: `test:react-admin` (Vitest, Node, contract tests), `test:react-admin-browsers` (Playwright, three browsers, over the starter's built preview), `test:react-admin-package` (pack and install in a clean project), `test:react-admin-trace` (`covers-ra:` tags). They join `test:units`, `test:browsers-all`, `test:packages-all` and `test:traces-all`, and so `test:drift` and `test:all`. The trace check is `tests/trace/check-trace.ts` in the package, modelled on `packages/sveltekit/tests/trace/check-trace.ts`.
+**Decision**: scripts follow the existing pattern: `test:react-admin` (Vitest, Node, contract tests), `test:react-admin-browsers` (Playwright, three browsers, over the demo's built preview), `test:react-admin-package` (pack and install in a clean project), `test:react-admin-trace` (`covers-ra:` tags). They join `test:units`, `test:browsers-all`, `test:packages-all` and `test:traces-all`, and so `test:drift` and `test:all`. The trace check is `tests/trace/check-trace.ts` in the package, modelled on `packages/sveltekit/tests/trace/check-trace.ts`.
 
 ## R14: The seed is generated once and committed
 
-**Decision**: a deterministic script (`starters/react-admin/scripts/make-seed.ts`) writes `src/seed.json`, a graph data document (ADR-002) of 50 people, 6 companies and 10 projects, with names combined from fixed lists and no real persons. The output is committed; the script is the record of how it was made. Every node has a string `id`; relationships are `WORKS_AT`, `OWNED_BY` and `LED_BY`, one per person or project each.
+**Decision**: a deterministic script (`demos/react-admin/scripts/make-seed.ts`) writes `src/seed.json`, a graph data document (ADR-002) of 50 people, 6 companies and 10 projects, with names combined from fixed lists and no real persons. The output is committed; the script is the record of how it was made. Every node has a string `id`; relationships are `WORKS_AT`, `OWNED_BY` and `LED_BY`, one per person or project each.
 
 ## R15: Documents
 
-**Decision**: a README for the package (API, schema, conventions, what is not supported) and one for the starter (run, copy, rename the store, what clearing site data loses), and a dated amendments section in ADR-008 recording R2 to R8 and the results of the Confirm items.
+**Decision**: a README for the package (API, schema, conventions, what is not supported) and one for the demo (run, copy, rename the store, what clearing site data loses), and a dated amendments section in ADR-008 recording R2 to R8 and the results of the Confirm items.
 
 ## R16: Timeouts
 
@@ -106,6 +106,6 @@ The core documents that queries are pending while the client is `loading` and re
 
 - R6: descending order with absent values (only completeness asserted).
 - R7: `ORDER BY n.<field>` after the aggregating `WITH`.
-- R3: the first-run order in the starter (seed, then constraint).
+- R3: the first-run order in the demo (seed, then constraint).
 - R10: the existing or added test for a statement issued while loading.
 - Reference filter with several target ids: `EXISTS { (n)-[:T]->(t:Target) WHERE t.id IN $v }`. Fallback: an OR of single-target forms.
