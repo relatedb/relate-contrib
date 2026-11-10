@@ -9,9 +9,10 @@ export interface DiagnosticLike {
 const UNCHANGED = "The stored data was not changed.";
 const RESET = "Calling resetApplication() discards it and starts again from the seed.";
 
-/** What each application failure means for the visitor's data (ADR-009 2.2, 2.4). */
+/** What each application failure means for the visitor's data (ADR-010 2.3, ADR-009 2.4). */
 const LIFECYCLE: Record<string, string> = {
-  "store-unmarked": `The browser holds data for this application that the page cannot identify (its marker is missing). ${UNCHANGED} ${RESET}`,
+  "store-unmarked": `The browser holds data for this application that the page cannot identify (the catalog has no entry for it). ${UNCHANGED} ${RESET}`,
+  "store-lost": `The browser's record says this application's stored data was filled, and it is now empty: the data is gone. ${UNCHANGED} ${RESET}`,
   "store-newer": `The browser holds data written by a newer version of this application than this page. ${UNCHANGED} ${RESET}`,
   "import-interrupted": `An import into this application did not finish. ${UNCHANGED} ${RESET}`,
   "store-unreadable": `The browser's stored data for this application could not be opened. ${UNCHANGED} ${RESET}`,

@@ -171,7 +171,7 @@ export const scenarios: Scenario[] = [
     id: "C-07",
     title: "a changed revision replaces the stored graph and shows none of the old data",
     spec: ["US5", "FR-022", "FR-038", "SC-013"],
-    behavior: "staleness must be decided by the descriptor's revision against the stored copy, and a matching revision must not fetch the data",
+    behavior: "staleness must be decided by the descriptor's revision against the revision in the cache's catalog entry, and a matching revision must not fetch the data",
     profiles: ["multi-page"],
     async run(ctx) {
       const a = await ctx.open("/page-1.html");
@@ -248,7 +248,7 @@ export const scenarios: Scenario[] = [
   },
   {
     id: "C-11",
-    title: "a store emptied while its stored copy remains is treated as stale",
+    title: "a store emptied while its catalog entry remains is treated as stale",
     spec: ["US5", "FR-038"],
     behavior: "the node count of a restored store must be checked against the descriptor's, and a difference treated as stale",
     profiles: ["multi-page"],

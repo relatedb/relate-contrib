@@ -18,7 +18,7 @@ Planned integration order (subject to change as ADRs land): ObservableHQ, Astro,
 
 The first package, `packages/web` (`@relate/web`), is implemented from `specs/001-core-package/`
 (see its `tasks.md`). The Astro adapter, `packages/astro` (`@relate/astro`), is implemented from `specs/002-astro-adapter/`
-(ADR-004). The Next adapter, `packages/nextjs` (`@relate/nextjs`), is implemented from `specs/003-next-adapter/` (ADR-005) under the `@relate` namespace, like the core and the Astro adapter (all three renamed on 2026-11-08, see `design/notes/2026-11-08-relate-contrib-rename.md`). The Observable Framework adapter, `packages/observable` (`@relate/observable`), is implemented from `specs/004-observable-adapter/` (ADR-006). The SvelteKit adapter, `packages/sveltekit` (`@relate/sveltekit`), is implemented from `specs/005-sveltekit-adapter/` (ADR-007). Application mode of the core, an application graph in `createClient` (`application` option: named durable store `app-<name>`, schema version, migrations, storage status, export and import), is implemented from `specs/006-application-graphs/` (ADR-009). Design documents are in `design/`. Further adapters come next.
+(ADR-004). The Next adapter, `packages/nextjs` (`@relate/nextjs`), is implemented from `specs/003-next-adapter/` (ADR-005) under the `@relate` namespace, like the core and the Astro adapter (all three renamed on 2026-11-08, see `design/notes/2026-11-08-relate-contrib-rename.md`). The Observable Framework adapter, `packages/observable` (`@relate/observable`), is implemented from `specs/004-observable-adapter/` (ADR-006). The SvelteKit adapter, `packages/sveltekit` (`@relate/sveltekit`), is implemented from `specs/005-sveltekit-adapter/` (ADR-007). Application mode of the core, an application graph in `createClient` (`application` option: named durable store `app-<name>`, schema version, migrations, storage status, export and import), is implemented from `specs/006-application-graphs/` (ADR-009). The graph catalog, one file (`relate-web/catalog.json`, under the Web Lock `relate-web:catalog`) that records every persisted graph and replaced the marker node of application graphs and the stored-copy file of content caches, with `listGraphs`, `removeGraph` and `resetCatalog`, is implemented from `specs/007-graph-catalog/` (ADR-010, RFC-007). Design documents are in `design/`. Further adapters come next.
 
 ## Commands
 
@@ -38,6 +38,9 @@ pnpm test:trace                # every requirement and success criterion has a p
 pnpm test:application          # application graphs in the core: unit tests against the real engine in Node
 pnpm test:application-browsers # application graphs in Chromium, Firefox, WebKit (durability, second tab, recovery, restore)
 pnpm test:application-trace    # every requirement of specs/006 has a passing, tagged test (tags are `covers-app:`)
+pnpm test:catalog              # the graph catalog (ADR-010): classification, intent-first lifecycle, caches, listing, removal; unit tests against the real engine in Node
+pnpm test:catalog-browsers     # the catalog in Chromium, Firefox, WebKit (several tabs, the Web Lock, interrupted operations, caches, listing, removal)
+pnpm test:catalog-trace        # every requirement of specs/007 has a passing, tagged test (tags are `covers-cat:`)
 pnpm test:astro                # the Astro adapter: unit and build tests
 pnpm test:astro-browsers       # the adapter in Chromium, Firefox, WebKit (lifecycle, store, inline graphs, profile check)
 pnpm test:astro-conformance    # the core's conformance runner over packages/astro/conformance-site, both profiles

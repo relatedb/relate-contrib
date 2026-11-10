@@ -1,5 +1,6 @@
 // Opening an application's store (ADR-009 2.4): the bounded retry of ADR-001, then waiting (or memory) for a locked
 // store, memory or failure for a browser with no store, and failure by default for any other open error.
+import { catalogSupported } from "../../catalog/opfs-storage.js";
 import { APP_STORE_PREFIX, WAIT_RETRY_MS } from "../../config.js";
 import type { ApplicationInit } from "../protocol.js";
 import { Engine, StorageLockedError } from "../engine.js";
@@ -22,12 +23,11 @@ export interface OpenHooks {
 
 const defaultSleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** True when the browser gives this worker an origin-private file system. */
+/** True when the browser gives this worker an origin-private file system and Web Locks, which the catalog needs (ADR-010 2.2). */
 export async function storageAvailable(): Promise<boolean> {
   try {
-    const nav = (globalThis as { navigator?: { storage?: { getDirectory?: () => Promise<unknown> } } }).navigator;
-    if (!nav?.storage?.getDirectory) return false;
-    await nav.storage.getDirectory();
+    if (!catalogSupported()) return false;
+    await navigator.storage.getDirectory();
     return true;
   } catch {
     return false;

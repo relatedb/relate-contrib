@@ -1,16 +1,15 @@
 // covers-app: FR-021, SC-006
 import { describe, expect, it } from "vitest";
 import { exportApplication, readDocument } from "../../../src/worker/application/transfer.js";
-import { openApplication } from "../../../src/worker/application/lifecycle.js";
-import { input, query, realEngine } from "./helpers.js";
+import { query, world } from "./helpers.js";
 
 async function withNodes(...statements: string[]) {
-  const e = await realEngine();
-  openApplication(e, input({ seed: { version: 1, nodes: [], links: [] }, indexes: [] }));
-  for (const s of statements) query(e, s);
-  return e;
+  const w = await world();
+  await w.open({ seed: { version: 1, nodes: [], links: [] }, indexes: [] });
+  for (const s of statements) query(w.e, s);
+  return w.e;
 }
-const kinds = (e: Awaited<ReturnType<typeof realEngine>>) => Object.fromEntries(readDocument(e).losses.map((l) => [l.kind, l.count]));
+const kinds = (e: Awaited<ReturnType<typeof withNodes>>) => Object.fromEntries(readDocument(e).losses.map((l) => [l.kind, l.count]));
 
 describe("loss detection reads each value with its type", () => {
   it("integers beyond 2^53, in either direction, but not 2^53 - 1", async () => {
@@ -68,7 +67,7 @@ describe("loss detection reads each value with its type", () => {
     expect(() => query(e, "CREATE (:T {id: 'm', nl: [[1], [2]]})")).toThrow(/InvalidPropertyType/);
   });
 
-  it("counts relationship properties too, and skips the marker", async () => {
+  it("counts relationship properties too", async () => {
     const e = await withNodes("CREATE (:T {id: 'a'})-[:R {w: 2.0}]->(:T {id: 'b'})");
     expect(kinds(e)).toEqual({ "whole-number-float": 1 });
     expect(readDocument(e).document.nodes.map((n) => n.id).sort()).toEqual(["a", "b"]);

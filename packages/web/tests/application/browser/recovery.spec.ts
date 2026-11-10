@@ -1,5 +1,6 @@
 // covers-app: FR-007, FR-008, FR-009, FR-010, SC-003
 import { expect, test } from "./fixtures.js";
+import { entry, putEntry, writeCatalogText, catalogText } from "../../catalog/browser/catalog-file.js";
 import { RUNAWAY, count, diagnostic, makeBulk, makeClient, openHarness, openReady, rows, seed, status, waitStatus } from "./helpers.js";
 
 const app = (over: Record<string, unknown> = {}) => ({ name: "rec", version: 1, seed, ...over });
@@ -17,23 +18,35 @@ const people = (page: import("@playwright/test").Page) => count(page, "MATCH (p:
 test("an interrupted first run is reset and seeded again", async ({ page }) => {
   await openHarness(page);
   await makeClient(page, app({ seed: { version: 1, nodes: [{ id: "ok", labels: ["Half"] }, { labels: ["NoId"] }], links: [] } }));
-  await waitStatus(page, "failed"); // the marker stays "seeding"
+  await waitStatus(page, "failed"); // an invalid seed is refused before anything is written
+  expect(await entry(page, "app-rec")).toBeUndefined();
   expect(await reopen(page)).toBe("ready");
   expect(await people(page)).toBe(3);
-  expect(await rows(page, "MATCH (m:_RelateApplication) RETURN m.state AS s")).toEqual([{ s: "ready" }]);
+  expect(await entry(page, "app-rec")).toMatchObject({ state: "ready" });
 });
 
-for (const [name, change, reason] of [
-  ["an interrupted import", "SET m.state = 'importing'", "import-interrupted"],
-  ["a deleted marker", "DELETE m", "store-unmarked"],
-  ["a newer version", "SET m.version = 9", "store-newer"],
-  ["a newer format", "SET m.format = 2", "store-newer"],
-] as const) {
-  test(`${name} fails ${reason}, leaves the data alone and resetApplication recovers`, async ({ page }) => {
+type Change = { entry: Record<string, unknown> | null } | { catalogFormat: number };
+for (const [name, change, reason, recoverable] of [
+  ["an interrupted import", { entry: { state: "importing" } }, "import-interrupted", true],
+  ["a removed entry", { entry: null }, "store-unmarked", true],
+  ["a newer version", { entry: { version: 9 } }, "store-newer", true],
+  ["a newer catalog format", { catalogFormat: 2 }, "store-newer", false],
+  ["an emptied store", { entry: { state: "ready" } }, "store-lost", true],
+] as Array<[string, Change, string, boolean]>) {
+  test(`${name} fails ${reason}, leaves the data alone and ${recoverable ? "resetApplication recovers" : "resetApplication cannot write over it"}`, async ({ page }) => {
     await openReady(page, app());
     await rows(page, "CREATE (:Person {id: 'v', name: 'Visitor'})");
-    await rows(page, `MATCH (m:_RelateApplication) ${change}`);
-    const before = await count(page, "MATCH (n) RETURN count(n) AS c");
+    if ("catalogFormat" in change) {
+      const text = JSON.parse((await catalogText(page))!);
+      await writeCatalogText(page, JSON.stringify({ ...text, format: change.catalogFormat }));
+    } else if (reason === "store-lost") {
+      await rows(page, "MATCH (n) DETACH DELETE n");
+      await rows(page, "DROP INDEX Person_name IF EXISTS");
+    } else {
+      await putEntry(page, "app-rec", change.entry);
+    }
+    const before = await count(page, "MATCH (n) RETURN count(n) AS c").catch(() => 0);
+    const file = await catalogText(page);
 
     expect(await reopen(page)).toBe("failed");
     expect((await diagnostic(page))?.reason).toBe(reason);
@@ -44,30 +57,37 @@ for (const [name, change, reason] of [
     await page.evaluate(() => window.client!.retry());
     await page.waitForFunction(() => window.client!.status === "failed");
     expect((await diagnostic(page))?.reason).toBe(reason);
+    expect(await catalogText(page)).toBe(file);
 
-    // the data is as it was (open it by resetting nothing: read the node count through a raw second look)
-    await page.evaluate(() => window.client!.destroy());
-    await page.waitForTimeout(500);
-    await openHarness(page);
-    await makeClient(page, app({ version: change.includes("version") ? 9 : 1 }));
-    await page.waitForFunction(() => ["ready", "failed"].includes(window.client!.status), null, { timeout: 60_000 });
-    if (change.includes("version")) {
-      expect(await status(page)).toBe("ready"); // code at version 9 opens it: the data was there
+    if (!recoverable) {
+      // the catalog is never written over, so a reset cannot proceed either
+      await page.evaluate(() => window.client!.resetApplication().catch(() => undefined));
+      expect(await catalogText(page)).toBe(file);
+      return;
+    }
+    if (reason === "store-newer") {
+      // code at the stored version opens the data as it was
+      await page.evaluate(() => window.client!.destroy());
+      await page.waitForTimeout(500);
+      await openHarness(page);
+      await makeClient(page, app({ version: 9, migrations: Object.fromEntries(Array.from({ length: 8 }, (_, i) => [String(i + 2), ["RETURN 1"]])) }));
+      await page.waitForFunction(() => ["ready", "failed"].includes(window.client!.status), null, { timeout: 60_000 });
+      expect(await status(page)).toBe("ready");
       expect(await count(page, "MATCH (n) RETURN count(n) AS c")).toBe(before);
-    } else {
-      expect(await status(page)).toBe("failed");
     }
 
     // resetApplication is the way out
+    await page.evaluate(() => window.client?.destroy());
+    await page.waitForTimeout(500);
     await openHarness(page);
     await makeClient(page, app());
     await page.waitForFunction(() => ["ready", "failed"].includes(window.client!.status), null, { timeout: 60_000 });
     if ((await status(page)) === "failed") {
       await page.evaluate(() => window.client!.resetApplication());
       expect(await status(page)).toBe("ready");
-      expect(await people(page)).toBe(3);
-      expect(await count(page, "MATCH (v:Person {id: 'v'}) RETURN count(v) AS c")).toBe(0);
     }
+    expect(await people(page)).toBe(3);
+    expect(await count(page, "MATCH (v:Person {id: 'v'}) RETURN count(v) AS c")).toBe(0);
   });
 }
 

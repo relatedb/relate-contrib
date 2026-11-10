@@ -1,6 +1,6 @@
 // The browser tests' `test`: identical to Playwright's, except that WebKit runs in a persistent context. In
 // WebKit's default (ephemeral) context the origin-private file system is unavailable, and the engine's store and
-// the stored copy of a descriptor both need it. A persistent context is a normal browser profile on disk.
+// the catalog and the engine's store both need it. A persistent context is a normal browser profile on disk.
 //
 // Playwright's WebKit keeps origin-private data outside the profile directory it is given, so data would leak
 // from one test (and one run) to the next. The origin-private root is therefore emptied before and after each

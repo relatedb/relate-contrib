@@ -6,6 +6,8 @@
 
 **Status**: Implemented
 
+**Superseded in part (2026-11-10)**: [specs/007-graph-catalog](../007-graph-catalog/spec.md) (ADR-010) replaces the marker node with a catalog entry. FR-006 to FR-009 and FR-027 are superseded where they name the marker node or say the content-graph cache changes in no way; every other requirement stands. The tests of this specification now check the entry in place of the marker.
+
 **Input**: User description: "Application graphs in the core package (`@relate/web`, `packages/web`): implement accepted ADR-009 (and build on ADR-001 to ADR-003 and the SPIKE-008 findings; parent RFC-006) so a page can open one named, durable, versioned graph in the visitor's browser through `createClient`: seeded once, carried forward by migrations, honest about whether it is stored, and exportable. It is checked in Chromium, Firefox and WebKit, and the open items in ADR-009 §4 are tested and the ADR amended with what is found."
 
 ## Overview

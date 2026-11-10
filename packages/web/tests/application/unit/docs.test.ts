@@ -12,7 +12,7 @@ describe("the package documentation", () => {
 
   it("describes application mode, the failure names, the storage status, export and import, and the rule for migrations", () => {
     for (const word of [
-      "application:", "_RelateApplication", "store-unmarked", "store-newer", "import-interrupted", "store-unreadable", "migration-failed",
+      "application:", "store-unmarked", "store-newer", "import-interrupted", "store-unreadable", "migration-failed",
       "resetApplication", "client.storage", "requestPersistence", "storageEstimate", "exportApplication", "importApplication",
       "allowLoss", "inRanges", "bounded", "safe to run again", "two clients",
     ]) expect(section, word).toContain(word);

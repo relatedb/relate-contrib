@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://relate-contrib.invalid/schemas/relate-web-catalog-1.json",
+  "title": "relate-web catalog, format 1",
+  "description": "The file relate-web/catalog.json in the origin-private root: one entry per graph the core persists on the origin (ADR-010). Entries are validated when used; unknown extra fields are preserved on rewrite and ignored on read.",
+  "type": "object",
+  "required": ["format", "graphs"],
+  "properties": {
+    "format": { "type": "integer", "minimum": 1 },
+    "graphs": {
+      "type": "object",
+      "propertyNames": { "pattern": "^(app-[A-Za-z0-9_-]{1,60}|rel-[A-Za-z0-9_-]{1,48})$" },
+      "additionalProperties": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "oneOf": [{ "$ref": "#/$defs/application" }, { "$ref": "#/$defs/cache" }]
+    },
+    "application": {
+      "type": "object",
+      "required": ["kind", "name", "state", "version", "seeded", "updatedAt"],
+      "properties": {
+        "kind": { "const": "application" },
+        "name": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,60}$" },
+        "state": { "enum": ["ready", "seeding", "migrating", "importing", "resetting", "removing"] },
+        "version": { "type": "integer", "minimum": 1 },
+        "target": { "type": "integer", "minimum": 2 },
+        "seeded": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "if": { "properties": { "state": { "const": "migrating" } } },
+      "then": { "required": ["target"] },
+      "else": { "not": { "required": ["target"] } }
+    },
+    "cache": {
+      "type": "object",
+      "required": ["kind", "name", "state", "updatedAt"],
+      "properties": {
+        "kind": { "const": "cache" },
+        "name": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,48}$" },
+        "state": { "enum": ["ready", "loading", "removing"] },
+        "revision": { "type": "string", "minLength": 1 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "if": { "properties": { "state": { "const": "ready" } } },
+      "then": { "required": ["revision"] }
+    }
+  }
+}

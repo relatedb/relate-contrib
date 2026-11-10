@@ -22,7 +22,6 @@ test("export reports each loss kind with its count and rejects without allowLoss
   const allowed = await page.evaluate(() => window.client!.exportApplication({ allowLoss: true }));
   expect(allowed.losses.length).toBe(7);
   expect(allowed.envelope.document.nodes.map((n) => n.id)).toEqual(["a"]);
-  expect(JSON.stringify(allowed.envelope)).not.toContain("_RelateApplication");
 });
 
 test("a carriable graph survives export, import and export identically, and the page's own data is replaced", async ({ page }, info) => {

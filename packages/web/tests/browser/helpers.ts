@@ -96,19 +96,20 @@ export const query = async (page: Page, statement: string): Promise<any[]> =>
 export const restored = (page: Page): Promise<boolean | null> =>
   page.evaluate(() => (window as any).timings.find((t: { phase: string }) => t.phase === "total")?.restored ?? null);
 
-/** The stored copy of a descriptor, read from the origin-private file system on the page's main thread. */
-export const storedCopy = (page: Page, id: string): Promise<any | null> =>
+/** A graph's entry in the catalog (`relate-web/catalog.json`), read from the origin-private file system on the page's main thread; null when there is none. */
+export const catalogEntry = (page: Page, store: string): Promise<any | null> =>
   page.evaluate(async (name) => {
     try {
       const root = await navigator.storage.getDirectory();
       const dir = await root.getDirectoryHandle("relate-web");
-      return JSON.parse(await (await (await dir.getFileHandle(`${name}.json`)).getFile()).text());
+      const file = JSON.parse(await (await (await dir.getFileHandle("catalog.json")).getFile()).text());
+      return file.graphs[name] ?? null;
     } catch {
       return null;
     }
-  }, id);
+  }, store);
 
-/** Entries at the origin-private root (to see whether a store or a stored copy exists at all). */
+/** Entries at the origin-private root (to see whether a store or a catalog exists at all). */
 export const opfsRoot = (page: Page): Promise<string[]> =>
   page.evaluate(async () => {
     const root = await navigator.storage.getDirectory();

@@ -1,15 +1,20 @@
-// The lifecycle of an application store (ADR-009 2.2): classify what was opened, then seed, recover, migrate or stop.
-// Everything here runs against an `Engine`, so it is tested in Node with the real engine in memory.
+// The lifecycle of an application store (ADR-010 2.2, 2.3): classify what was opened from its catalog entry, then seed,
+// recover, migrate or stop. An operation writes its intent to the entry before it changes data and its outcome after.
+// Engine calls stay synchronous; the catalog calls between them are awaited. Everything takes an `Engine` and a
+// `Catalog`, so it is tested in Node with the real engine and the in-memory catalog storage.
+import { CatalogUnavailable, type Catalog } from "../../catalog/catalog.js";
 import type { MigrationStep } from "../../application/types.js";
-import { MARKER_LABEL, MARKER_FORMAT } from "../../config.js";
 import type { Descriptor, IndexSpec } from "../../data/types.js";
 import type { Engine } from "../engine.js";
 import { LoadError, loadGraph, prepare, run } from "../loader.js";
-import { classify, type Action, type FailureReason } from "./classify.js";
-import { createMarker, readMarkers, setState } from "./marker.js";
+import { classify, LEGACY_MARKER_LABEL, type Action, type FailureReason, type StoreFacts } from "./classify.js";
 import { migrate, MigrationError } from "./migrate.js";
 
 export interface LifecycleInput {
+  /** The catalog and the store's name in it (`app-<name>`), with the application's name. */
+  catalog: Catalog;
+  store: string;
+  name: string;
   version: number;
   intent: "open" | "reset";
   /** The seed's data document, already fetched. */
@@ -28,72 +33,71 @@ const count = (engine: Engine, statement: string): number => {
   return typeof v === "number" ? v : 0;
 };
 
-/** A seed may not contain the marker's label (ADR-009 2.2). Checked before any statement runs. */
-export function rejectMarkerLabel(seed: unknown): void {
-  const nodes = (seed as { nodes?: Array<{ labels?: unknown }> } | null)?.nodes;
-  if (!Array.isArray(nodes)) return;
-  for (const [i, node] of nodes.entries()) {
-    if (Array.isArray(node?.labels) && node.labels.includes(MARKER_LABEL)) {
-      throw new LoadError("invalid-document", `nodes[${i}].labels`, `the label ${MARKER_LABEL} is reserved for the application's marker`);
-    }
-  }
+/** The facts about the store the classifier asks for; none is read for a store whose entry decides on its own. */
+function readFacts(engine: Engine): StoreFacts {
+  const nodeCount = count(engine, "MATCH (n) RETURN count(n) AS c");
+  const indexCount = run(engine, "SHOW INDEXES").rows.length;
+  const legacyMarker = nodeCount > 0 && count(engine, `MATCH (n:${LEGACY_MARKER_LABEL}) RETURN count(n) AS c`) > 0;
+  return { nodeCount, indexCount, legacyMarker };
 }
 
-/** First run: marker `seeding`, the seed, the indexes, then `ready` as the last statement. */
-function firstRun(engine: Engine, input: LifecycleInput): void {
-  rejectMarkerLabel(input.seed);
-  createMarker(engine, input.version, "seeding");
+async function inspect(engine: Engine, input: Pick<LifecycleInput, "catalog" | "store" | "version">): Promise<Action> {
+  const lookup = await input.catalog.lookup(input.store);
+  return classify(lookup, () => readFacts(engine), { version: input.version });
+}
+
+/**
+ * Fill a store from the seed: validate, write the intent (`seeding` or `resetting`), reset when the store may hold
+ * other data, load the seed and its indexes, then write `ready`. An invalid seed fails before anything is written.
+ */
+async function seedStore(engine: Engine, input: LifecycleInput, intent: "seeding" | "resetting", reset: boolean): Promise<void> {
   const document = prepare(input.seed, { descriptor: input.descriptor });
+  const seeded = document.nodes.length > 0;
+  const base = { kind: "application", name: input.name, version: input.version, seeded } as const;
+  await input.catalog.set(input.store, { ...base, state: intent });
+  if (reset) engine.reset();
   loadGraph(engine, document, { descriptor: input.descriptor, indexes: input.indexes });
-  setState(engine, "ready");
-}
-
-/** Classify the opened store. The counts only matter without a marker, so a ready store is not scanned (SC-007). */
-function inspect(engine: Engine, version: number): Action {
-  const markers = readMarkers(engine);
-  const unmarked = markers.length === 0;
-  return classify(
-    {
-      markers,
-      nodeCount: unmarked ? count(engine, "MATCH (n) RETURN count(n) AS c") : 0,
-      indexCount: unmarked ? run(engine, "SHOW INDEXES").rows.length : 0,
-    },
-    { version, format: MARKER_FORMAT },
-  );
+  await input.catalog.set(input.store, { ...base, state: "ready" });
 }
 
 /** Whether opening this store will load the seed, so a ready store does not fetch it. */
-export function needsSeed(engine: Engine, version: number, intent: "open" | "reset"): boolean {
-  if (intent === "reset") return true;
-  const action = inspect(engine, version).action;
-  return action === "first-run" || action === "reset-and-seed";
+export async function needsSeed(engine: Engine, input: Pick<LifecycleInput, "catalog" | "store" | "version" | "intent">): Promise<boolean> {
+  if (input.intent === "reset") return true;
+  const action = (await inspect(engine, input)).action;
+  return action === "first-run" || action === "reset-and-seed" || action === "finish-removal";
 }
 
-export function openApplication(engine: Engine, input: LifecycleInput): LifecycleResult {
+export async function openApplication(engine: Engine, input: LifecycleInput): Promise<LifecycleResult> {
   try {
     if (input.intent === "reset") {
-      engine.reset();
-      firstRun(engine, input);
+      await seedStore(engine, input, "resetting", true);
       return { ok: true, restored: false };
     }
-    const action = inspect(engine, input.version);
+    const action = await inspect(engine, input);
     switch (action.action) {
       case "fail":
         return { ok: false, reason: action.reason, message: action.message };
       case "open":
         return { ok: true, restored: true };
       case "migrate":
-        migrate(engine, action.from, input.version, input.migrations);
+        await migrate(engine, { catalog: input.catalog, store: input.store, name: input.name }, action.from, input.version, input.migrations);
         return { ok: true, restored: true };
       case "reset-and-seed":
+        await seedStore(engine, input, action.intent, true);
+        return { ok: true, restored: false };
+      case "finish-removal":
+        // The directory cannot be removed while this worker holds it, so the removal is finished by a reset.
         engine.reset();
-        firstRun(engine, input);
+        await input.catalog.delete(input.store);
+        await seedStore(engine, input, "seeding", false);
         return { ok: true, restored: false };
       case "first-run":
-        firstRun(engine, input);
+        await seedStore(engine, input, "seeding", false);
         return { ok: true, restored: false };
     }
   } catch (e) {
+    // A catalog that does not parse, or was written by a newer format, is never written over (ADR-010 2.3).
+    if (e instanceof CatalogUnavailable) return { ok: false, reason: e.reason === "newer" ? "store-newer" : "store-unreadable", message: e.message };
     if (e instanceof MigrationError) return { ok: false, reason: "migration-failed", message: e.message };
     if (e instanceof LoadError) return { ok: false, reason: e.reason, message: e.message };
     throw e;

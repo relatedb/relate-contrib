@@ -1,15 +1,15 @@
 // The worker entry: owns one engine instance and answers the client's messages (contracts/worker-protocol.md).
 import { validateDescriptor } from "../data/descriptor.js";
-import type { Descriptor } from "../data/types.js";
 import { Engine, TrapError } from "./engine.js";
 import { dropScope, EngineError, LoadError, loadDocument, loadGraph, prepare } from "./loader.js";
 import { openStore } from "./store.js";
-import { readStoredCopy, removeStoredCopy, writeStoredCopy } from "./stored-copy.js";
-import { initApplication } from "./application/init.js";
+import { beginRebuild, canRestore, finishRebuild } from "./cache.js";
+import { removeLegacyCopy } from "./legacy-copy.js";
+import { openCatalog } from "../catalog/index.js";
+import { initApplication, type ApplicationSession } from "./application/init.js";
 import { MigrationError } from "./application/migrate.js";
 import { SeedError, seedDescriptor } from "./application/seed.js";
 import { ImportRejected, exportApplication, importApplication } from "./application/transfer.js";
-import { isEmpty, nodeCount, sweepScoped } from "./sweep.js";
 import type {
   ClientMessage,
   ExportApplicationMessage,
@@ -31,6 +31,7 @@ const scope = self as unknown as {
 let engine: Engine | null = null;
 /** The application this worker serves, when it was started in application mode. */
 let application: InitMessage["application"] = undefined;
+let session: ApplicationSession | null = null;
 
 const send = (message: WorkerMessage): void => scope.postMessage(message);
 const since = (t0: number): number => Math.round((performance.now() - t0) * 10) / 10;
@@ -44,12 +45,13 @@ function failure(e: unknown): InitFailedMessage {
   return { type: "init-failed", reason: "worker-error", message: messageOf(e) };
 }
 
-/** The start-up of contracts/worker-protocol.md: restore from a store when its stored copy matches, else load. */
+/** The start-up of contracts/worker-protocol.md: restore from a store when its catalog entry matches, else load. */
 async function init(msg: InitMessage): Promise<void> {
   if (msg.application) {
     application = msg.application;
     try {
-      engine = await initApplication(msg, send);
+      session = await initApplication(msg, send);
+      engine = session?.engine ?? null;
     } catch (e) {
       send(failure(e));
     }
@@ -70,24 +72,30 @@ async function init(msg: InitMessage): Promise<void> {
     await Engine.load(msg.engineUrl);
     timings.init = since(t);
 
-    // With a store: open it (retrying a locked one), and restore if its stored copy has this revision.
-    let storeId: string | null = null;
+    // With a store: open it (retrying a locked one), and restore if its catalog entry has this revision.
+    let rebuild: { catalog: ReturnType<typeof openCatalog> } | null = null;
     if (msg.useStore && descriptor) {
       t = performance.now();
       const opened = await openStore(descriptor.id, (attempt, waitMs) => send({ type: "store-retry", attempt, waitMs }));
       timings.open = since(t);
       if (opened) {
         engine = opened;
-        storeId = descriptor.id;
+        const catalog = openCatalog(true);
+        await removeLegacyCopy(descriptor.id);
         t = performance.now();
-        if (await canRestore(opened, descriptor)) {
+        if (await canRestore(opened, catalog, descriptor)) {
           timings.restore = since(t);
           timings.total = since(t0);
           send({ type: "ready", restored: true, timings });
           return;
         }
-        await removeStoredCopy(storeId);
-        if (!isEmpty(opened)) opened.reset();
+        if (await beginRebuild(opened, catalog, descriptor)) {
+          rebuild = { catalog };
+        } else {
+          // The catalog cannot record the rebuild, so the durable store is not touched: load in memory instead.
+          opened.release();
+          engine = null;
+        }
       }
     }
     engine ??= Engine.memory();
@@ -101,21 +109,13 @@ async function init(msg: InitMessage): Promise<void> {
       input = await response.json();
     }
     loadDocument(engine, input, { descriptor, indexes: msg.indexes });
-    if (storeId && descriptor) await writeStoredCopy(descriptor);
+    if (rebuild && descriptor) await finishRebuild(rebuild.catalog, descriptor);
     timings.load = since(t);
     timings.total = since(t0);
     send({ type: "ready", restored: false, timings });
   } catch (e) {
     send(failure(e));
   }
-}
-
-/** A store can be used as it is when its stored copy has the descriptor's revision and it holds all the nodes. */
-async function canRestore(opened: Engine, descriptor: Descriptor): Promise<boolean> {
-  const copy = await readStoredCopy(descriptor.id);
-  if (!copy || copy.revision !== descriptor.revision) return false;
-  sweepScoped(opened);
-  return nodeCount(opened) === descriptor.data.nodes;
 }
 
 function query(msg: QueryMessage): void {
@@ -169,19 +169,31 @@ async function importApp(msg: ImportApplicationMessage): Promise<void> {
     if (!engine || !application) throw new TrapError("no application instance");
     // the indexes of a seed given as a URL are in its descriptor, which a restored store never fetched
     const indexes = (await seedDescriptor(application.seed))?.indexes ?? application.indexes;
-    importApplication(engine, { name: application.name, version: application.version, indexes, migrations: application.migrations }, msg.envelope);
+    if (!session) throw new TrapError("no application session");
+    await importApplication(
+      engine,
+      { catalog: session.catalog, store: session.store, name: application.name, version: application.version, indexes, migrations: application.migrations },
+      msg.envelope,
+    );
     send({ type: "done", id: msg.id });
   } catch (e) {
     transferError(msg.id, e);
   }
 }
 
+// Messages that use the store run one at a time, in arrival order. An import awaits the catalog between engine steps, and
+// without this a query, an export or another import could run inside it and see (or change) a half-imported store.
+let chain: Promise<void> = Promise.resolve();
+const serially = (job: () => void | Promise<void>): void => {
+  chain = chain.then(job).catch(() => undefined);
+};
+
 scope.onmessage = (e) => {
   const msg = e.data;
   if (msg.type === "init") void init(msg);
-  else if (msg.type === "query") query(msg);
-  else if (msg.type === "scoped-add") scopedAdd(msg);
-  else if (msg.type === "scoped-drop") scopedDrop(msg);
-  else if (msg.type === "export-application") exportApp(msg);
-  else if (msg.type === "import-application") void importApp(msg);
+  else if (msg.type === "query") serially(() => query(msg));
+  else if (msg.type === "scoped-add") serially(() => scopedAdd(msg));
+  else if (msg.type === "scoped-drop") serially(() => scopedDrop(msg));
+  else if (msg.type === "export-application") serially(() => exportApp(msg));
+  else if (msg.type === "import-application") serially(() => importApp(msg));
 };

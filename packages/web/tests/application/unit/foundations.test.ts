@@ -2,9 +2,9 @@
 import { describe, expect, it } from "vitest";
 import { diagnosticMessage } from "../../../src/client/diagnostic.js";
 import { FailureCounter } from "../../../src/client/failure.js";
-import { APP_STORE_PREFIX, MARKER_LABEL, STORE_PREFIX } from "../../../src/config.js";
+import { APP_STORE_PREFIX, STORE_PREFIX } from "../../../src/config.js";
 
-const FINAL = ["store-unmarked", "store-newer", "import-interrupted", "store-unreadable", "unavailable", "migration-failed"];
+const FINAL = ["store-unmarked", "store-newer", "import-interrupted", "store-lost", "store-unreadable", "unavailable", "migration-failed"];
 
 describe("failures that a repeat cannot change", () => {
   it.each(FINAL)("%s gives up at once and counts no attempt", (reason) => {
@@ -22,7 +22,7 @@ describe("failures that a repeat cannot change", () => {
 });
 
 describe("the wording of an application failure", () => {
-  it.each(FINAL.slice(0, 4))("%s says the data is unchanged and names resetApplication", (reason) => {
+  it.each(["store-unmarked", "store-newer", "import-interrupted", "store-lost", "store-unreadable"])("%s says the data is unchanged and names resetApplication", (reason) => {
     const text = diagnosticMessage({ reason, failures: 0, engineError: "detail" });
     expect(text).toContain("not changed");
     expect(text).toContain("resetApplication()");
@@ -39,6 +39,5 @@ describe("constants", () => {
   it("keeps application stores apart from the content cache", () => {
     expect(APP_STORE_PREFIX).toBe("app-");
     expect(STORE_PREFIX).toBe("rel-");
-    expect(MARKER_LABEL).toBe("_RelateApplication");
   });
 });

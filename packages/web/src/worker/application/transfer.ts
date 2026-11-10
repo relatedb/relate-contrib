@@ -1,14 +1,13 @@
-// Export and import of an application graph (ADR-009 2.5). Export reads nodes and relationships in pages with typed
-// reads and reports what the data format cannot carry; import validates the whole document, then marks the store
-// `importing`, resets, loads, marks it `ready` and migrates.
+// Export and import of an application graph (ADR-009 2.5, ADR-010 2.2). Export reads nodes and relationships in pages
+// with typed reads and reports what the data format cannot carry; import validates the whole document, then writes the
+// entry `importing`, resets, loads, writes it `ready` and migrates.
 import type { ExportEnvelope, LossKind, LossReport, MigrationStep } from "../../application/types.js";
-import { BATCH_SIZE, MARKER_LABEL } from "../../config.js";
+import type { Catalog } from "../../catalog/catalog.js";
+import { BATCH_SIZE } from "../../config.js";
 import type { GraphDocument, GraphLink, GraphNode, IndexSpec, Properties } from "../../data/types.js";
 import { validate } from "../../data/validate.js";
 import type { Engine } from "../engine.js";
 import { loadGraph, prepare, run } from "../loader.js";
-import { rejectMarkerLabel } from "./lifecycle.js";
-import { createMarker, readMarkers, setState } from "./marker.js";
 import { migrate } from "./migrate.js";
 import { convert, type TypedValue } from "./losses.js";
 
@@ -21,10 +20,10 @@ export class ImportRejected extends Error {
 }
 
 const NODE_PAGE =
-  `MATCH (n) WHERE NOT n:${MARKER_LABEL} WITH n ORDER BY elementId(n) SKIP $skip LIMIT $limit ` +
+  "MATCH (n) WITH n ORDER BY elementId(n) SKIP $skip LIMIT $limit " +
   "RETURN elementId(n) AS e, labels(n) AS labels, properties(n) AS p, [k IN keys(n) | [k, valueType(n[k]), toString(n[k])]] AS t";
 const LINK_PAGE =
-  `MATCH (a)-[r]->(b) WHERE NOT a:${MARKER_LABEL} AND NOT b:${MARKER_LABEL} WITH a, r, b ORDER BY elementId(r) SKIP $skip LIMIT $limit ` +
+  "MATCH (a)-[r]->(b) WITH a, r, b ORDER BY elementId(r) SKIP $skip LIMIT $limit " +
   "RETURN elementId(a) AS s, elementId(b) AS t, type(r) AS type, properties(r) AS p, [k IN keys(r) | [k, valueType(r[k]), toString(r[k])]] AS tv";
 
 const ORDER: LossKind[] = ["integer-beyond-2^53", "whole-number-float", "date", "duration", "point", "empty-list", "node-without-string-id"];
@@ -55,7 +54,7 @@ function properties(json: Record<string, unknown>, typed: TypedValue[], skip: st
   return out as Properties;
 }
 
-/** Read every node and relationship (the marker excluded) into an ADR-002 document, counting what it cannot carry. */
+/** Read every node and relationship into an ADR-002 document, counting what it cannot carry. */
 export function readDocument(engine: Engine): { document: GraphDocument; losses: LossReport } {
   const losses = new Losses();
   const ids = new Map<string, string>(); // element id -> document id, for the nodes that have one
@@ -108,12 +107,12 @@ export function exportApplication(
   if (losses.length > 0 && !allowLoss) return { envelope: null, losses };
   const checked = validate(document, { scoped: false });
   if (!checked.ok) throw new ImportRejected(`the graph cannot be written in the data format: ${checked.path}: ${checked.message}`);
-  const stored = readMarkers(engine)[0];
+  // A client that is ready has been carried to the code's version, so that is the version the data is at.
   return {
     envelope: {
       format: "relate-application-export",
       version: 1,
-      application: { name: application.name, version: stored && typeof stored.version === "number" ? stored.version : application.version },
+      application: { name: application.name, version: application.version },
       document,
     },
     losses,
@@ -121,6 +120,8 @@ export function exportApplication(
 }
 
 export interface ImportContext {
+  catalog: Catalog;
+  store: string;
   name: string;
   version: number;
   indexes: IndexSpec[];
@@ -139,14 +140,13 @@ export function checkEnvelope(envelope: unknown, ctx: Pick<ImportContext, "name"
   return e as ExportEnvelope;
 }
 
-export function importApplication(engine: Engine, ctx: ImportContext, input: unknown): void {
+export async function importApplication(engine: Engine, ctx: ImportContext, input: unknown): Promise<void> {
   const envelope = checkEnvelope(input, ctx);
-  rejectMarkerLabel(envelope.document);
   const document = prepare(envelope.document); // validates the whole document before any write
-  setState(engine, "importing");
+  const base = { kind: "application", name: ctx.name, version: envelope.application.version, seeded: document.nodes.length > 0 } as const;
+  await ctx.catalog.set(ctx.store, { ...base, state: "importing" });
   engine.reset();
-  createMarker(engine, envelope.application.version, "importing");
   loadGraph(engine, document, { indexes: ctx.indexes });
-  setState(engine, "ready");
-  migrate(engine, envelope.application.version, ctx.version, ctx.migrations);
+  await ctx.catalog.set(ctx.store, { ...base, state: "ready" });
+  await migrate(engine, ctx, envelope.application.version, ctx.version, ctx.migrations);
 }

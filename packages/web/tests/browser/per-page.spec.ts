@@ -52,7 +52,7 @@ test("a store held by another page falls back to memory within five seconds plus
 
   const third = await context.newPage();
   await visitSite(third, { id: "locked", pages: 300, revision: "r1" });
-  expect(await restored(third)).toBe(true); // the store and its stored copy were left as they were
+  expect(await restored(third)).toBe(true); // the store and its catalog entry were left as they were
 });
 
 test("a worker ended in the middle of a query: the next page's retry covers the time the store stays locked", async ({ page, context }) => {

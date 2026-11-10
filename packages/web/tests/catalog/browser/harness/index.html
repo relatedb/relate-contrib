@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>catalog harness</title></head>
+  <body>
+    <h1>Catalog harness</h1>
+    <nav><a href="/other.html">other page</a></nav>
+    <p id="region">graph region</p>
+    <p id="status">status: none</p>
+    <p id="storage">storage: none</p>
+    <pre id="listing">listing: not requested</pre>
+    <button id="list" type="button">List graphs</button>
+    <p>
+      <input id="store" placeholder="store name, such as app-orders" />
+      <select id="kind"><option>application</option><option>cache</option></select>
+      <button id="remove" type="button">Remove graph</button>
+      <button id="reset" type="button">Reset catalog</button>
+    </p>
+    <pre id="result">result: none</pre>
+    <script type="module" src="./harness.ts"></script>
+  </body>
+</html>
