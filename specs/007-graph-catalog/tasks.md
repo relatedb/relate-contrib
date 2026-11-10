@@ -130,15 +130,15 @@ description: "Task list for the graph catalog in the core package"
 
 ### Tests for User Story 4 ⚠️ write first, they must fail
 
-- [ ] T035 [P] [US4] Write `packages/web/tests/catalog/unit/cache.test.ts` (`// covers-cat: FR-015, FR-016`): with the memory storage, restore only for `ready` with the same revision and a node count equal to `data.nodes`; every other case (no entry, `loading`, `removing`, a different revision, a count mismatch, an empty store, an unreadable catalog) writes `loading`, resets if not empty, loads, creates indexes and writes `ready` last, and an unreadable catalog does not fail the open and is not overwritten
-- [ ] T036 [P] [US4] Write `packages/web/tests/catalog/browser/cache.spec.ts` (`// covers-cat: FR-015, FR-016`, SC-008), all three browsers: restore with no request for the data; rebuild on a new revision; a leftover `relate-web/<id>.json` is removed on the next open; a restore of 5,000 pages within the recorded baseline (`checkBaseline`)
+- [X] T035 [P] [US4] Write `packages/web/tests/catalog/unit/cache.test.ts` (`// covers-cat: FR-015, FR-016`): with the memory storage, restore only for `ready` with the same revision and a node count equal to `data.nodes`; every other case (no entry, `loading`, `removing`, a different revision, a count mismatch, an empty store, an unreadable catalog) writes `loading`, resets if not empty, loads, creates indexes and writes `ready` last, and an unreadable catalog does not fail the open and is not overwritten
+- [X] T036 [P] [US4] Write `packages/web/tests/catalog/browser/cache.spec.ts` (`// covers-cat: FR-015, FR-016`, SC-008), all three browsers: restore with no request for the data; rebuild on a new revision; a leftover `relate-web/<id>.json` is removed on the next open; a restore of 5,000 pages within the recorded baseline (`checkBaseline`)
 
 ### Implementation for User Story 4
 
-- [ ] T037 [US4] Create `packages/web/src/worker/cache.ts` with `openCache(engine, catalog, descriptor, load)`: the restore-or-rebuild decision of FR-015 over the `Catalog`; `canRestore` and `sweepScoped` keep their order (sweep before the node-count check)
-- [ ] T038 [US4] Edit `packages/web/src/worker/worker.ts`: replace `canRestore`, `readStoredCopy`, `removeStoredCopy` and `writeStoredCopy` with `openCache`; call `removeLegacyCopy(id)` on every cache open
-- [ ] T039 [US4] Reduce `packages/web/src/worker/stored-copy.ts` to `removeLegacyCopy(id)` (delete `relate-web/<id>.json` if present; ignore absence) and rename the file `legacy-copy.ts`; update imports
-- [ ] T040 [US4] Rewrite the browser tests that asserted the stored copy: `tests/browser/stored-copy.spec.ts` becomes `tests/browser/catalog-entry.spec.ts` (reads the entry instead of the file), and update `tests/browser/per-page.spec.ts`, `fixtures.ts` and `helpers.ts` where they read or write `relate-web/<id>.json`; keep every test's behaviour and its `// covers:` tags; inspect `conformance/scenarios.ts` and change only a stored-copy assertion if one exists
+- [X] T037 [US4] Create `packages/web/src/worker/cache.ts` with `canRestore`, `beginRebuild` and `finishRebuild`: the restore-or-rebuild decision of FR-015 over the `Catalog` (the worker keeps the fetch and load between them); `sweepScoped` still runs before the node-count check; a catalog that cannot be used, or a write that fails, only means no entry is written
+- [X] T038 [US4] Edit `packages/web/src/worker/worker.ts`: replace `canRestore`, `readStoredCopy`, `removeStoredCopy` and `writeStoredCopy` with `openCache`; call `removeLegacyCopy(id)` on every cache open
+- [X] T039 [US4] Reduce `packages/web/src/worker/stored-copy.ts` to `removeLegacyCopy(id)` (delete `relate-web/<id>.json` if present; ignore absence) and rename the file `legacy-copy.ts`; update imports
+- [X] T040 [US4] Rewrite the browser tests that asserted the stored copy: `tests/browser/stored-copy.spec.ts` becomes `tests/browser/catalog-entry.spec.ts` (reads the entry instead of the file), and update `tests/browser/per-page.spec.ts`, `fixtures.ts` and `helpers.ts` where they read or write `relate-web/<id>.json`; keep every test's behaviour and its `// covers:` tags; inspect `conformance/scenarios.ts` and change only a stored-copy assertion if one exists
 
 **Checkpoint**: US1 to US4 (the MVP) pass; `pnpm test:unit`, `test:application` and `test:catalog` are green.
 

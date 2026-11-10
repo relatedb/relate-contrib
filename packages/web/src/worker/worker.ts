@@ -1,15 +1,15 @@
 // The worker entry: owns one engine instance and answers the client's messages (contracts/worker-protocol.md).
 import { validateDescriptor } from "../data/descriptor.js";
-import type { Descriptor } from "../data/types.js";
 import { Engine, TrapError } from "./engine.js";
 import { dropScope, EngineError, LoadError, loadDocument, loadGraph, prepare } from "./loader.js";
 import { openStore } from "./store.js";
-import { readStoredCopy, removeStoredCopy, writeStoredCopy } from "./stored-copy.js";
+import { beginRebuild, canRestore, finishRebuild } from "./cache.js";
+import { removeLegacyCopy } from "./legacy-copy.js";
+import { openCatalog } from "../catalog/index.js";
 import { initApplication, type ApplicationSession } from "./application/init.js";
 import { MigrationError } from "./application/migrate.js";
 import { SeedError, seedDescriptor } from "./application/seed.js";
 import { ImportRejected, exportApplication, importApplication } from "./application/transfer.js";
-import { isEmpty, nodeCount, sweepScoped } from "./sweep.js";
 import type {
   ClientMessage,
   ExportApplicationMessage,
@@ -45,7 +45,7 @@ function failure(e: unknown): InitFailedMessage {
   return { type: "init-failed", reason: "worker-error", message: messageOf(e) };
 }
 
-/** The start-up of contracts/worker-protocol.md: restore from a store when its stored copy matches, else load. */
+/** The start-up of contracts/worker-protocol.md: restore from a store when its catalog entry matches, else load. */
 async function init(msg: InitMessage): Promise<void> {
   if (msg.application) {
     application = msg.application;
@@ -72,24 +72,24 @@ async function init(msg: InitMessage): Promise<void> {
     await Engine.load(msg.engineUrl);
     timings.init = since(t);
 
-    // With a store: open it (retrying a locked one), and restore if its stored copy has this revision.
-    let storeId: string | null = null;
+    // With a store: open it (retrying a locked one), and restore if its catalog entry has this revision.
+    let rebuild: { catalog: ReturnType<typeof openCatalog>; writable: boolean } | null = null;
     if (msg.useStore && descriptor) {
       t = performance.now();
       const opened = await openStore(descriptor.id, (attempt, waitMs) => send({ type: "store-retry", attempt, waitMs }));
       timings.open = since(t);
       if (opened) {
         engine = opened;
-        storeId = descriptor.id;
+        const catalog = openCatalog(true);
+        await removeLegacyCopy(descriptor.id);
         t = performance.now();
-        if (await canRestore(opened, descriptor)) {
+        if (await canRestore(opened, catalog, descriptor)) {
           timings.restore = since(t);
           timings.total = since(t0);
           send({ type: "ready", restored: true, timings });
           return;
         }
-        await removeStoredCopy(storeId);
-        if (!isEmpty(opened)) opened.reset();
+        rebuild = { catalog, writable: await beginRebuild(opened, catalog, descriptor) };
       }
     }
     engine ??= Engine.memory();
@@ -103,21 +103,13 @@ async function init(msg: InitMessage): Promise<void> {
       input = await response.json();
     }
     loadDocument(engine, input, { descriptor, indexes: msg.indexes });
-    if (storeId && descriptor) await writeStoredCopy(descriptor);
+    if (rebuild?.writable && descriptor) await finishRebuild(rebuild.catalog, descriptor);
     timings.load = since(t);
     timings.total = since(t0);
     send({ type: "ready", restored: false, timings });
   } catch (e) {
     send(failure(e));
   }
-}
-
-/** A store can be used as it is when its stored copy has the descriptor's revision and it holds all the nodes. */
-async function canRestore(opened: Engine, descriptor: Descriptor): Promise<boolean> {
-  const copy = await readStoredCopy(descriptor.id);
-  if (!copy || copy.revision !== descriptor.revision) return false;
-  sweepScoped(opened);
-  return nodeCount(opened) === descriptor.data.nodes;
 }
 
 function query(msg: QueryMessage): void {
