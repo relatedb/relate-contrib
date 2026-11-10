@@ -3,7 +3,7 @@ id: RFC-007
 title: The Client-Side Graph Catalog
 status: draft
 created: 2026-11-09
-adrs: []
+adrs: [ADR-010]
 ---
 
 # RFC-007: The Client-Side Graph Catalog
@@ -138,6 +138,4 @@ Figures are single runs on one machine; power loss was not tested. The harnesses
 
 ## 8. ADRs
 
-_(none yet)_
-
-The first ADR also settles how the existing decisions change: whether the descriptor decision's stored-copy rule is superseded for content caches, and whether the application-graph decision's marker node is replaced, amended or kept for stores without a catalog.
+- ADR-010: a catalog file beside the stores, ordered by a Web Lock. It replaces the application-graph decision's marker node and the descriptor decision's stored copy.
