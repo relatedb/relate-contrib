@@ -21,12 +21,6 @@ export const APP_STORE_PREFIX = "app-";
 /** An application's name: 1 to 60 characters, so that `app-<name>` stays within the engine's 64 (ADR-009). */
 export const APP_NAME_PATTERN = /^[A-Za-z0-9_-]{1,60}$/;
 
-/** The label of the one node that records an application store's format, version and state (ADR-009 2.2). */
-export const MARKER_LABEL = "_RelateApplication";
-
-/** The marker format this code writes and understands. */
-export const MARKER_FORMAT = 1;
-
 /** Wait between attempts at a store another holder has locked, after the bounded retry (ADR-009 2.4). */
 export const WAIT_RETRY_MS = 1000;
 

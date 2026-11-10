@@ -5,7 +5,7 @@ import { Engine, TrapError } from "./engine.js";
 import { dropScope, EngineError, LoadError, loadDocument, loadGraph, prepare } from "./loader.js";
 import { openStore } from "./store.js";
 import { readStoredCopy, removeStoredCopy, writeStoredCopy } from "./stored-copy.js";
-import { initApplication } from "./application/init.js";
+import { initApplication, type ApplicationSession } from "./application/init.js";
 import { MigrationError } from "./application/migrate.js";
 import { SeedError, seedDescriptor } from "./application/seed.js";
 import { ImportRejected, exportApplication, importApplication } from "./application/transfer.js";
@@ -31,6 +31,7 @@ const scope = self as unknown as {
 let engine: Engine | null = null;
 /** The application this worker serves, when it was started in application mode. */
 let application: InitMessage["application"] = undefined;
+let session: ApplicationSession | null = null;
 
 const send = (message: WorkerMessage): void => scope.postMessage(message);
 const since = (t0: number): number => Math.round((performance.now() - t0) * 10) / 10;
@@ -49,7 +50,8 @@ async function init(msg: InitMessage): Promise<void> {
   if (msg.application) {
     application = msg.application;
     try {
-      engine = await initApplication(msg, send);
+      session = await initApplication(msg, send);
+      engine = session?.engine ?? null;
     } catch (e) {
       send(failure(e));
     }
@@ -169,7 +171,12 @@ async function importApp(msg: ImportApplicationMessage): Promise<void> {
     if (!engine || !application) throw new TrapError("no application instance");
     // the indexes of a seed given as a URL are in its descriptor, which a restored store never fetched
     const indexes = (await seedDescriptor(application.seed))?.indexes ?? application.indexes;
-    importApplication(engine, { name: application.name, version: application.version, indexes, migrations: application.migrations }, msg.envelope);
+    if (!session) throw new TrapError("no application session");
+    await importApplication(
+      engine,
+      { catalog: session.catalog, store: session.store, name: application.name, version: application.version, indexes, migrations: application.migrations },
+      msg.envelope,
+    );
     send({ type: "done", id: msg.id });
   } catch (e) {
     transferError(msg.id, e);

@@ -1,5 +1,6 @@
 // covers-app: FR-001, FR-003, FR-004, FR-005, FR-006, SC-001
 import { expect, test } from "./fixtures.js";
+import { entry } from "../../catalog/browser/catalog-file.js";
 import { count, makeClient, openHarness, openReady, rows, seed, status, waitStatus } from "./helpers.js";
 
 const app = (over: Record<string, unknown> = {}) => ({ name: "notes", version: 1, seed, indexes: [{ label: "Person", property: "name" }], ...over });
@@ -19,8 +20,8 @@ for (const navigation of ["client-routing", "multi-page"]) {
     expect(await count(page, "MATCH (p:Person) RETURN count(p) AS c")).toBe(4);
     expect(await count(page, "MATCH (z:Zed) RETURN count(z) AS c")).toBe(0);
     expect(await rows(page, "MATCH (p:Person {id: 'v'}) RETURN p.name AS n")).toEqual([{ n: "Visitor" }]);
-    const marker = await rows(page, "MATCH (m:_RelateApplication) RETURN m.state AS s, m.version AS v");
-    expect(marker).toEqual([{ s: "ready", v: 1 }]);
+    expect(await entry(page, "app-notes")).toMatchObject({ state: "ready", version: 1, seeded: true });
+    expect(await count(page, "MATCH (n) RETURN count(n) AS c")).toBe(4); // no bookkeeping node
   });
 }
 
@@ -42,12 +43,9 @@ test("two names on one origin do not see each other's data", async ({ page }) =>
   expect(await count(page, "MATCH (o:Only) RETURN count(o) AS c")).toBe(0);
 });
 
-test("a seed with the marker's label fails the client and names the label", async ({ page }) => {
-  await openHarness(page);
-  await makeClient(page, app({ seed: { version: 1, nodes: [{ id: "m", labels: ["_RelateApplication"] }], links: [] } }));
-  await waitStatus(page, "failed");
-  const d = await page.evaluate(() => window.client!.diagnostic);
-  expect(d?.engineError).toContain("_RelateApplication");
+test("a seed that uses the old record's label loads it as any label", async ({ page }) => {
+  await openReady(page, app({ name: "oldlabel", seed: { version: 1, nodes: [{ id: "m", labels: ["_RelateApplication"], properties: { x: 1 } }], links: [] } }));
+  expect(await rows(page, "MATCH (n:_RelateApplication) RETURN n.x AS x")).toEqual([{ x: 1 }]);
 });
 
 test("creation throws for an invalid name and starts nothing", async ({ page }) => {

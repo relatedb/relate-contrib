@@ -149,7 +149,7 @@ test("the core never asks for persistent storage; requestPersistence asks once a
 
 test("a failed client keeps the page's text and links and shows a message in the graph region", async ({ page }) => {
   await openHarness(page);
-  await makeClient(page, app({ seed: { version: 1, nodes: [{ id: "m", labels: ["_RelateApplication"] }], links: [] } }));
+  await makeClient(page, app({ seed: { version: 1, nodes: [{ labels: ["NoId"] }], links: [] } }));
   await waitStatus(page, "failed");
   await expect(page.locator("#region")).toContainText("failed");
   await expect(page.locator("h1")).toHaveText("Application harness");

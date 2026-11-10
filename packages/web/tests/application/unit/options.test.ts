@@ -37,10 +37,9 @@ describe("the migrations", () => {
     expect(() => validateApplication({ ...ok, version: 2, migrations: { 1: ["RETURN 1"] } })).toThrow(/version 1/);
     expect(() => validateApplication({ ...ok, version: 3, migrations: { 3: ["RETURN 1"] } })).toThrow(/version 2 is missing/);
   });
-  it("rejects a range step without $from or $to, a bad step, or the marker's label", () => {
+  it("rejects a range step without $from or $to, or a bad step", () => {
     expect(() => inRanges({ label: "N", property: "n", step: 10, statement: "MATCH (n) SET n.x = 1" })).toThrow(/\$from/);
     expect(() => inRanges({ label: "N", property: "n", step: 0, statement: "$from $to" })).toThrow(/positive integer/);
-    expect(() => inRanges({ label: "_RelateApplication", property: "n", step: 1, statement: "$from $to" })).toThrow(/reserved/);
     expect(() => validateApplication({ ...ok, version: 2, migrations: { 2: [{ kind: "ranges", label: "N", property: "n", step: 1, statement: "x" }] } })).toThrow(/\$from/);
   });
 });

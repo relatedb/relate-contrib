@@ -1,5 +1,6 @@
 // covers-app: FR-007, FR-009, FR-011, FR-013, FR-019
 import { expect, test } from "./fixtures.js";
+import { entry } from "../../catalog/browser/catalog-file.js";
 import { count, diagnostic, makeClient, openHarness, rows, seed, status, waitStatus } from "./helpers.js";
 
 const app = (over: Record<string, unknown> = {}) => ({ name: "rfx", version: 1, seed, ...over });
@@ -75,16 +76,13 @@ test("a store at an older version fails migration-failed, not ready, when the ap
   expect((await diagnostic(page))?.engineError).toContain("version 3");
 });
 
-test("a migration step that touches the marker fails and the marker is put back", async ({ page }) => {
+test("a migration step that touches every node succeeds: the core keeps nothing in the graph", async ({ page }) => {
   await openHarness(page);
   await makeClient(page, app({ name: "mk" }));
   await waitStatus(page, "ready");
   await openHarness(page);
   await makeClient(page, app({ name: "mk", version: 2, migrations: { 2: ["MATCH (n) SET n.touched = 1"] } }));
-  await waitStatus(page, "failed");
-  expect((await diagnostic(page))?.reason).toBe("migration-failed");
-  await openHarness(page);
-  await makeClient(page, app({ name: "mk" }));
   await waitStatus(page, "ready");
-  expect(await rows(page, "MATCH (m:_RelateApplication) RETURN properties(m) AS p")).toEqual([{ p: { format: 1, version: 1, state: "ready" } }]);
+  expect(await rows(page, "MATCH (n) WHERE n.touched = 1 RETURN count(n) AS c")).toEqual([{ c: 3 }]);
+  expect(await entry(page, "app-mk")).toMatchObject({ state: "ready", version: 2 });
 });

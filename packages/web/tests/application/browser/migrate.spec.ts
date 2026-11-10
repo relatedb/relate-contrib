@@ -1,5 +1,6 @@
 // covers-app: FR-011, FR-012, FR-013, SC-004
 import { expect, test } from "./fixtures.js";
+import { entry } from "../../catalog/browser/catalog-file.js";
 import { count, diagnostic, itemSeed, makeClient, openHarness, rows, waitStatus } from "./helpers.js";
 
 const NODES = 20_000;
@@ -31,7 +32,7 @@ test("a store at version 1 is migrated to 3 in order, keeping the visitor's data
   await openHarness(page);
   await openAt(page, "mig", 3, 2000);
   await waitStatus(page, "ready");
-  expect(await rows(page, "MATCH (m:_RelateApplication) RETURN m.version AS v")).toEqual([{ v: 3 }]);
+  expect(await entry(page, "app-mig")).toMatchObject({ state: "ready", version: 3 });
   expect(await count(page, "MATCH (i:Item) WHERE i.v2 = i.n * 2 AND i.v3 = i.n * 2 RETURN count(i) AS c")).toBe(2001);
 });
 
@@ -64,7 +65,7 @@ test("an interrupted migration resumes and ends identical to an uninterrupted on
   await openAt(page, "cut", 3);
   await waitStatus(page, "ready", 120_000);
   expect(await snapshot(page)).toBe(expected);
-  expect(await rows(page, "MATCH (m:_RelateApplication) RETURN m.version AS v")).toEqual([{ v: 3 }]);
+  expect(await entry(page, "app-cut")).toMatchObject({ state: "ready", version: 3 });
   test.info().annotations.push({ type: "uninterrupted-ms", description: String(uninterruptedMs) });
 });
 

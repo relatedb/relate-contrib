@@ -8,6 +8,7 @@ export const FINAL: ReadonlySet<string> = new Set([
   "store-unmarked",
   "store-newer",
   "import-interrupted",
+  "store-lost",
   "store-unreadable",
   "unavailable",
   "migration-failed",

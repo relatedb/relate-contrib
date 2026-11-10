@@ -101,6 +101,7 @@ export type InitFailReason =
   | "store-unmarked"
   | "store-newer"
   | "import-interrupted"
+  | "store-lost"
   | "store-unreadable"
   | "unavailable"
   | "migration-failed";
