@@ -1,0 +1,25 @@
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+const req = createRequire(new URL("../../../packages/web/package.json", import.meta.url));
+const dir = dirname(req.resolve("@relate/relate-wasm"));
+const mod = await import(join(dir, "relate.js"));
+await mod.default({ module_or_path: readFileSync(join(dir, "relate_bg.wasm")) });
+const db = new mod.RelateDb();
+const run = (label, q, p) => {
+  const env = JSON.parse(db.execute(q, p ? JSON.stringify(p) : null));
+  console.log(`\n## ${label}\n${q}\n->`, env.error ? "ERROR: " + env.error : JSON.stringify(env.rows).slice(0, 250));
+};
+run("index first", `CREATE INDEX FOR (p:Person) ON (p.id)`);
+run("constraint over an existing index on the same property", `CREATE CONSTRAINT person_id FOR (p:Person) REQUIRE p.id IS UNIQUE`);
+run("show indexes", `SHOW INDEXES`);
+run("show constraints", `SHOW CONSTRAINTS`);
+run("constraint IF NOT EXISTS (again)", `CREATE CONSTRAINT person_id IF NOT EXISTS FOR (p:Person) REQUIRE p.id IS UNIQUE`);
+run("constraint IF NOT EXISTS, other name", `CREATE CONSTRAINT other_name IF NOT EXISTS FOR (p:Person) REQUIRE p.id IS UNIQUE`);
+run("constraint again, no IF NOT EXISTS", `CREATE CONSTRAINT person_id FOR (p:Person) REQUIRE p.id IS UNIQUE`);
+run("index after constraint", `CREATE INDEX FOR (p:Company) ON (p.id)`);
+run("index on the constrained property after constraint", `CREATE INDEX person_id_idx FOR (p:Person) ON (p.id)`);
+run("IF NOT EXISTS for index", `CREATE INDEX person_id_idx IF NOT EXISTS FOR (p:Person) ON (p.id)`);
+run("count of nodes / index list as the catalog classifier reads them", `MATCH (n) RETURN count(n) AS c`);
+run("readCount after lookup", `MATCH (p:Person {id:'zz'}) RETURN p`);
+run("readCount", `SHOW INDEXES`);

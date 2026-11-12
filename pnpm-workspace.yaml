@@ -1,5 +1,6 @@
 packages:
   - "packages/*"
+  - "demos/*"
   - "packages/nextjs/conformance-site"
   - "packages/observable/conformance-site"
   - "packages/sveltekit/conformance-site"

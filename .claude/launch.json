@@ -11,6 +11,16 @@
         "dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "react-admin-demo",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "react-admin-demo",
+        "dev"
+      ],
+      "port": 5190
     }
   ]
 }

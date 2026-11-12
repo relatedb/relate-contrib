@@ -1,0 +1,1133 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "c01",
+      "labels": [
+        "Company"
+      ],
+      "properties": {
+        "name": "Northwind Labs",
+        "industry": "software",
+        "founded": 2008
+      }
+    },
+    {
+      "id": "c02",
+      "labels": [
+        "Company"
+      ],
+      "properties": {
+        "name": "Harbor & Finch",
+        "industry": "logistics",
+        "founded": 1994
+      }
+    },
+    {
+      "id": "c03",
+      "labels": [
+        "Company"
+      ],
+      "properties": {
+        "name": "Lumen Works",
+        "industry": "energy",
+        "founded": 2012
+      }
+    },
+    {
+      "id": "c04",
+      "labels": [
+        "Company"
+      ],
+      "properties": {
+        "name": "Pine Street Press",
+        "industry": "media",
+        "founded": 1987
+      }
+    },
+    {
+      "id": "c05",
+      "labels": [
+        "Company"
+      ],
+      "properties": {
+        "name": "Quill Analytics",
+        "industry": "software",
+        "founded": 2016
+      }
+    },
+    {
+      "id": "c06",
+      "labels": [
+        "Company"
+      ],
+      "properties": {
+        "name": "Tidewater Foods",
+        "industry": "food",
+        "founded": 2001
+      }
+    },
+    {
+      "id": "p01",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Avery Ashford",
+        "title": "engineer",
+        "age": 22,
+        "active": false
+      }
+    },
+    {
+      "id": "p02",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Blake Ashford",
+        "title": "manager",
+        "age": 29,
+        "active": true
+      }
+    },
+    {
+      "id": "p03",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Casey Ashford",
+        "title": "editor",
+        "age": 36,
+        "active": true
+      }
+    },
+    {
+      "id": "p04",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Devon Ashford",
+        "title": "designer",
+        "age": 43,
+        "active": true
+      }
+    },
+    {
+      "id": "p05",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Emery Ashford",
+        "title": "researcher",
+        "age": 50,
+        "active": true
+      }
+    },
+    {
+      "id": "p06",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Finley Ashford",
+        "title": "technician",
+        "age": 57,
+        "active": false
+      }
+    },
+    {
+      "id": "p07",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Harper Ashford",
+        "title": "analyst",
+        "age": 25,
+        "active": true
+      }
+    },
+    {
+      "id": "p08",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Jordan Ashford",
+        "title": "coordinator",
+        "age": 32,
+        "active": true
+      }
+    },
+    {
+      "id": "p09",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Kai Ashford",
+        "title": "engineer",
+        "age": 39,
+        "active": true
+      }
+    },
+    {
+      "id": "p10",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Logan Ashford",
+        "title": "manager",
+        "age": 46,
+        "active": true
+      }
+    },
+    {
+      "id": "p11",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Avery Brooks",
+        "title": "editor",
+        "age": 53,
+        "active": false
+      }
+    },
+    {
+      "id": "p12",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Blake Brooks",
+        "title": "designer",
+        "age": 60,
+        "active": true
+      }
+    },
+    {
+      "id": "p13",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Casey Brooks",
+        "title": "researcher",
+        "age": 28,
+        "active": true
+      }
+    },
+    {
+      "id": "p14",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Devon Brooks",
+        "title": "technician",
+        "age": 35,
+        "active": true
+      }
+    },
+    {
+      "id": "p15",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Emery Brooks",
+        "title": "analyst",
+        "age": 42,
+        "active": true
+      }
+    },
+    {
+      "id": "p16",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Finley Brooks",
+        "title": "coordinator",
+        "age": 49,
+        "active": false
+      }
+    },
+    {
+      "id": "p17",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Harper Brooks",
+        "title": "engineer",
+        "age": 56,
+        "active": true
+      }
+    },
+    {
+      "id": "p18",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Jordan Brooks",
+        "title": "manager",
+        "age": 24,
+        "active": true
+      }
+    },
+    {
+      "id": "p19",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Kai Brooks",
+        "title": "editor",
+        "age": 31,
+        "active": true
+      }
+    },
+    {
+      "id": "p20",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Logan Brooks",
+        "title": "designer",
+        "age": 38,
+        "active": true
+      }
+    },
+    {
+      "id": "p21",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Avery Calder",
+        "title": "researcher",
+        "age": 45,
+        "active": false
+      }
+    },
+    {
+      "id": "p22",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Blake Calder",
+        "title": "technician",
+        "age": 52,
+        "active": true
+      }
+    },
+    {
+      "id": "p23",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Casey Calder",
+        "title": "analyst",
+        "age": 59,
+        "active": true
+      }
+    },
+    {
+      "id": "p24",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Devon Calder",
+        "title": "coordinator",
+        "age": 27,
+        "active": true
+      }
+    },
+    {
+      "id": "p25",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Emery Calder",
+        "title": "engineer",
+        "age": 34,
+        "active": true
+      }
+    },
+    {
+      "id": "p26",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Finley Calder",
+        "title": "manager",
+        "age": 41,
+        "active": false
+      }
+    },
+    {
+      "id": "p27",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Harper Calder",
+        "title": "editor",
+        "age": 48,
+        "active": true
+      }
+    },
+    {
+      "id": "p28",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Jordan Calder",
+        "title": "designer",
+        "age": 55,
+        "active": true
+      }
+    },
+    {
+      "id": "p29",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Kai Calder",
+        "title": "researcher",
+        "age": 23,
+        "active": true
+      }
+    },
+    {
+      "id": "p30",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Logan Calder",
+        "title": "technician",
+        "age": 30,
+        "active": true
+      }
+    },
+    {
+      "id": "p31",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Avery Dunmore",
+        "title": "analyst",
+        "age": 37,
+        "active": false
+      }
+    },
+    {
+      "id": "p32",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Blake Dunmore",
+        "title": "coordinator",
+        "age": 44,
+        "active": true
+      }
+    },
+    {
+      "id": "p33",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Casey Dunmore",
+        "title": "engineer",
+        "age": 51,
+        "active": true
+      }
+    },
+    {
+      "id": "p34",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Devon Dunmore",
+        "title": "manager",
+        "age": 58,
+        "active": true
+      }
+    },
+    {
+      "id": "p35",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Emery Dunmore",
+        "title": "editor",
+        "age": 26,
+        "active": true
+      }
+    },
+    {
+      "id": "p36",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Finley Dunmore",
+        "title": "designer",
+        "age": 33,
+        "active": false
+      }
+    },
+    {
+      "id": "p37",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Harper Dunmore",
+        "title": "researcher",
+        "age": 40,
+        "active": true
+      }
+    },
+    {
+      "id": "p38",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Jordan Dunmore",
+        "title": "technician",
+        "age": 47,
+        "active": true
+      }
+    },
+    {
+      "id": "p39",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Kai Dunmore",
+        "title": "analyst",
+        "age": 54,
+        "active": true
+      }
+    },
+    {
+      "id": "p40",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Logan Dunmore",
+        "title": "coordinator",
+        "age": 22,
+        "active": true
+      }
+    },
+    {
+      "id": "p41",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Avery Ellery",
+        "title": "engineer",
+        "age": 29,
+        "active": false
+      }
+    },
+    {
+      "id": "p42",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Blake Ellery",
+        "title": "manager",
+        "age": 36,
+        "active": true
+      }
+    },
+    {
+      "id": "p43",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Casey Ellery",
+        "title": "editor",
+        "age": 43,
+        "active": true
+      }
+    },
+    {
+      "id": "p44",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Devon Ellery",
+        "title": "designer",
+        "age": 50,
+        "active": true
+      }
+    },
+    {
+      "id": "p45",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Emery Ellery",
+        "title": "researcher",
+        "age": 57,
+        "active": true
+      }
+    },
+    {
+      "id": "p46",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Finley Ellery",
+        "title": "technician",
+        "age": 25,
+        "active": false
+      }
+    },
+    {
+      "id": "p47",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Harper Ellery",
+        "title": "analyst",
+        "age": 32,
+        "active": true
+      }
+    },
+    {
+      "id": "p48",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Jordan Ellery",
+        "title": "coordinator",
+        "age": 39,
+        "active": true
+      }
+    },
+    {
+      "id": "p49",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Kai Ellery",
+        "title": "engineer",
+        "age": 46,
+        "active": true
+      }
+    },
+    {
+      "id": "p50",
+      "labels": [
+        "Person"
+      ],
+      "properties": {
+        "name": "Logan Ellery",
+        "title": "manager",
+        "age": 53,
+        "active": true
+      }
+    },
+    {
+      "id": "j01",
+      "labels": [
+        "Project"
+      ],
+      "properties": {
+        "name": "Atlas",
+        "status": "planned",
+        "budget": 25000
+      }
+    },
+    {
+      "id": "j02",
+      "labels": [
+        "Project"
+      ],
+      "properties": {
+        "name": "Borealis",
+        "status": "active",
+        "budget": 50000
+      }
+    },
+    {
+      "id": "j03",
+      "labels": [
+        "Project"
+      ],
+      "properties": {
+        "name": "Cascade",
+        "status": "active",
+        "budget": 75000
+      }
+    },
+    {
+      "id": "j04",
+      "labels": [
+        "Project"
+      ],
+      "properties": {
+        "name": "Delta",
+        "status": "done",
+        "budget": 100000
+      }
+    },
+    {
+      "id": "j05",
+      "labels": [
+        "Project"
+      ],
+      "properties": {
+        "name": "Ember",
+        "status": "planned",
+        "budget": 125000
+      }
+    },
+    {
+      "id": "j06",
+      "labels": [
+        "Project"
+      ],
+      "properties": {
+        "name": "Fjord",
+        "status": "active",
+        "budget": 150000
+      }
+    },
+    {
+      "id": "j07",
+      "labels": [
+        "Project"
+      ],
+      "properties": {
+        "name": "Garnet",
+        "status": "active",
+        "budget": 175000
+      }
+    },
+    {
+      "id": "j08",
+      "labels": [
+        "Project"
+      ],
+      "properties": {
+        "name": "Helix",
+        "status": "done",
+        "budget": 200000
+      }
+    },
+    {
+      "id": "j09",
+      "labels": [
+        "Project"
+      ],
+      "properties": {
+        "name": "Isthmus",
+        "status": "planned",
+        "budget": 225000
+      }
+    },
+    {
+      "id": "j10",
+      "labels": [
+        "Project"
+      ],
+      "properties": {
+        "name": "Juniper",
+        "status": "active",
+        "budget": 250000
+      }
+    }
+  ],
+  "links": [
+    {
+      "source": "p01",
+      "target": "c01",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p02",
+      "target": "c02",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p03",
+      "target": "c03",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p04",
+      "target": "c04",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p05",
+      "target": "c05",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p06",
+      "target": "c06",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p07",
+      "target": "c01",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p08",
+      "target": "c02",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p09",
+      "target": "c03",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p10",
+      "target": "c04",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p11",
+      "target": "c05",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p12",
+      "target": "c06",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p13",
+      "target": "c01",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p14",
+      "target": "c02",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p15",
+      "target": "c03",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p16",
+      "target": "c04",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p17",
+      "target": "c05",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p18",
+      "target": "c06",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p19",
+      "target": "c01",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p20",
+      "target": "c02",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p21",
+      "target": "c03",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p22",
+      "target": "c04",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p23",
+      "target": "c05",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p24",
+      "target": "c06",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p25",
+      "target": "c01",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p26",
+      "target": "c02",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p27",
+      "target": "c03",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p28",
+      "target": "c04",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p29",
+      "target": "c05",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p30",
+      "target": "c06",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p31",
+      "target": "c01",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p32",
+      "target": "c02",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p33",
+      "target": "c03",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p34",
+      "target": "c04",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p35",
+      "target": "c05",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p36",
+      "target": "c06",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p37",
+      "target": "c01",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p38",
+      "target": "c02",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p39",
+      "target": "c03",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p40",
+      "target": "c04",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p41",
+      "target": "c05",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p42",
+      "target": "c06",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p43",
+      "target": "c01",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p44",
+      "target": "c02",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p45",
+      "target": "c03",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p46",
+      "target": "c04",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p47",
+      "target": "c05",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p48",
+      "target": "c06",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p49",
+      "target": "c01",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "p50",
+      "target": "c02",
+      "type": "WORKS_AT"
+    },
+    {
+      "source": "j01",
+      "target": "c01",
+      "type": "OWNED_BY"
+    },
+    {
+      "source": "j01",
+      "target": "p01",
+      "type": "LED_BY"
+    },
+    {
+      "source": "j02",
+      "target": "c02",
+      "type": "OWNED_BY"
+    },
+    {
+      "source": "j02",
+      "target": "p02",
+      "type": "LED_BY"
+    },
+    {
+      "source": "j03",
+      "target": "c03",
+      "type": "OWNED_BY"
+    },
+    {
+      "source": "j03",
+      "target": "p03",
+      "type": "LED_BY"
+    },
+    {
+      "source": "j04",
+      "target": "c04",
+      "type": "OWNED_BY"
+    },
+    {
+      "source": "j04",
+      "target": "p04",
+      "type": "LED_BY"
+    },
+    {
+      "source": "j05",
+      "target": "c05",
+      "type": "OWNED_BY"
+    },
+    {
+      "source": "j05",
+      "target": "p05",
+      "type": "LED_BY"
+    },
+    {
+      "source": "j06",
+      "target": "c06",
+      "type": "OWNED_BY"
+    },
+    {
+      "source": "j06",
+      "target": "p06",
+      "type": "LED_BY"
+    },
+    {
+      "source": "j07",
+      "target": "c01",
+      "type": "OWNED_BY"
+    },
+    {
+      "source": "j07",
+      "target": "p07",
+      "type": "LED_BY"
+    },
+    {
+      "source": "j08",
+      "target": "c02",
+      "type": "OWNED_BY"
+    },
+    {
+      "source": "j08",
+      "target": "p08",
+      "type": "LED_BY"
+    },
+    {
+      "source": "j09",
+      "target": "c03",
+      "type": "OWNED_BY"
+    },
+    {
+      "source": "j09",
+      "target": "p09",
+      "type": "LED_BY"
+    },
+    {
+      "source": "j10",
+      "target": "c04",
+      "type": "OWNED_BY"
+    },
+    {
+      "source": "j10",
+      "target": "p10",
+      "type": "LED_BY"
+    }
+  ]
+}
