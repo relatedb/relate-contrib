@@ -19,7 +19,7 @@ import {
 } from "../hex/core/index.js";
 import { addSceneTexture, colourNumber, drawGraph, drawRing, drawVectorTile, fillHex, mixColour, strokeHex } from "../hex/phaser/index.js";
 import { routeToGraph, routes, withCrossings } from "./routes.js";
-import type { GameState, HexState } from "./state.js";
+import type { DuskHex, GameState, HexState } from "./state.js";
 import { COLS, ROWS, START_STEPS } from "./world.js";
 
 /** Screen pixels per lattice cell; a whole number keeps pixel edges crisp. */
@@ -52,6 +52,8 @@ export class MapScene extends Phaser.Scene {
   private reliefFaces!: Phaser.GameObjects.Graphics;
   /** True after a key press until the pointer moves: only then is the preview of the faced hex shown. */
   private keyboard = false;
+  /** Extra dusk while the day's fog settles, on top of the sun's own light. */
+  private dusk = 0;
 
   /** Canvas pixels per lattice cell: the chosen pixel size times the display's pixel density. */
   private readonly k: number;
@@ -162,7 +164,81 @@ export class MapScene extends Phaser.Scene {
     }
     this.drawThread();
     this.drawOverlay();
+    this.startDusk();
     this.drawSky();
+  }
+
+  /**
+   * Settle the day's fog: each forgotten hex keeps its remembered look while the dusk deepens, then fades away in
+   * rings from the abandoned thread outward. Secured ground and its disclosed edges were never in the answer.
+   */
+  private startDusk(): void {
+    const ghosts: DuskHex[] = this.state.lastFogged;
+    this.state.lastFogged = []; // consumed once; a later redraw shows only the settled board
+    if (!ghosts.length) {
+      this.dusk = 0;
+      return;
+    }
+    const version = this.state.version;
+    let lastRing = 0;
+    for (const ghost of ghosts) {
+      if (!ghost.terrain) continue;
+      const key = `dusk-${version}-${ghost.id}`;
+      if (this.textures.exists(key)) this.textures.remove(key);
+      if (ghost.state === "sensed") {
+        // A silhouette only: sensed ground never carried the pixel look.
+        const texture = this.textures.createCanvas(key, 16, 17);
+        if (!texture) throw new Error(`could not create texture "${key}"`);
+        const ctx = texture.getContext();
+        const base = ghost.terrain === "mountain" ? "mid-forest" : ghost.terrain === "deep" ? "dark-baltic" : "mid-baltic";
+        ctx.fillStyle = `#${mixColour(base, "darkest-baltic", 0.2).toString(16).padStart(6, "0")}`;
+        for (let y = 0; y < 17; y++) {
+          const w = hexSpan(y);
+          ctx.fillRect((16 - w) / 2, y, w, 1);
+        }
+        texture.refresh();
+        texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      } else {
+        addSceneTexture(this, key, paintScene([{ col: 0, row: 0, terrain: ghost.terrain, feature: ghost.feature }]));
+      }
+      const tile = this.state.tiles.get(ghost.id);
+      if (!tile) continue;
+      const [ox, oy] = tileOrigin(tile.col, tile.row);
+      const image = this.add.image(ox * this.k, oy * this.k, key).setOrigin(0).setScale(this.k).setDepth(2.4);
+      this.tweens.add({
+        targets: image,
+        alpha: 0,
+        delay: ghost.ring * 90,
+        duration: 420,
+        ease: "Quad.easeOut",
+        onComplete: () => {
+          image.destroy();
+          if (this.textures.exists(key)) this.textures.remove(key);
+        },
+      });
+      lastRing = Math.max(lastRing, ghost.ring);
+    }
+    this.tweens.addCounter({
+      from: 0,
+      to: 1,
+      duration: 280 + lastRing * 90 + 460,
+      ease: "Sine.easeIn",
+      onUpdate: (_tween, _target, _key, current) => {
+        this.dusk = current;
+        this.drawSky();
+      },
+      onComplete: () =>
+        this.tweens.addCounter({
+          from: 1,
+          to: 0,
+          duration: 520,
+          ease: "Sine.easeOut",
+          onUpdate: (_tween, _target, _key, current) => {
+            this.dusk = current;
+            this.drawSky();
+          },
+        }),
+    });
   }
 
   /**
@@ -284,8 +360,9 @@ export class MapScene extends Phaser.Scene {
     const ray = mix(body, 0xffffee, 0.18 + 0.3 * noon);
     this.paintSun(body, ray, noon);
     this.sun?.setPosition(x * this.k, y * this.k);
-    // the light cools as the day drains: dusk settles over the ground
-    sky.fillStyle(0x0e1a3a, 0.3 * f * f);
+    // The light cools as the day drains, and deepens for a breath while the day's fog settles.
+    const dark = Math.max(f * f, this.dusk);
+    sky.fillStyle(0x0e1a3a, 0.55 * dark);
     sky.fillRect(x0 - 1, yTop - 6, x1 - x0 + 3, yBottom - yTop + 7.5);
   }
 

@@ -378,6 +378,11 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       expect(state.tiles.get(second.id)!.state).toBe("hidden"); // its ground is forgotten
       expect(state.tiles.get(second.id)!.terrain).toBeUndefined();
       expect(state.tiles.get(first.id)!.state).toBe("sensed"); // the camp discloses its neighbour again
+      // the scene gets the fog in rings from the abandoned thread outward, with the thread's old look
+      const secondGhost = state.lastFogged.find((g) => g.id === second.id)!;
+      expect(secondGhost.ring).toBe(0);
+      expect(secondGhost.terrain).toBeDefined();
+      expect(state.lastFogged.at(-1)!.ring).toBeGreaterThan(0);
     });
 
     it("reports the win only when both towers are joined", async () => {

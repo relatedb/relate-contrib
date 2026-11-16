@@ -27,6 +27,15 @@ export interface PlayerState {
   markers: number;
 }
 
+/** A hex the day forgot, kept only long enough for the scene to settle it into fog. */
+export interface DuskHex {
+  id: string;
+  ring: number;
+  state: Knowledge;
+  terrain?: Terrain;
+  feature?: Feature;
+}
+
 /** The thread (loose) or a path between anchors (secured), from one hex to the next. */
 export interface Edge {
   from: string;
@@ -58,6 +67,8 @@ export class GameState {
   pending: string | null = null;
   /** Bumped on every change, so the frame loop can redraw only when something changed. */
   version = 0;
+  /** The hexes the last day end fogged, ordered outward from the abandoned thread. The scene consumes this. */
+  lastFogged: DuskHex[] = [];
   private moves = 0;
 
   constructor(private readonly bridge: Bridge) {}
@@ -376,8 +387,36 @@ export class GameState {
         this.message = "The day will not end.";
         return;
       }
-      this.edges = this.edges.filter((e) => e.kind !== "LOOSE");
+      // What the day forgot, ordered outward from the abandoned thread, so the fog can close from the path out.
       const fogged = (r["fogged"] as string[]) ?? [];
+      const thread = new Set<string>();
+      for (const e of this.edges) if (e.kind === "LOOSE") { thread.add(e.from); thread.add(e.to); }
+      if (!thread.size) thread.add(r["at"] as string); // no path to measure from: the fog closes from home
+      const rings = new Map<string, number>([...thread].map((id) => [id, 0]));
+      const forgotten = new Set(fogged);
+      let frontier = [...thread];
+      while (frontier.length) {
+        const next: string[] = [];
+        for (const id of frontier) {
+          const t = this.tiles.get(id);
+          if (!t) continue;
+          for (const [c, r2] of neighbours(t.col, t.row)) {
+            const nid = this.tileAt(c, r2)?.id;
+            if (nid && forgotten.has(nid) && !rings.has(nid)) {
+              rings.set(nid, (rings.get(id) ?? 0) + 1);
+              next.push(nid);
+            }
+          }
+        }
+        frontier = next;
+      }
+      this.lastFogged = fogged
+        .map((id) => {
+          const t = this.tiles.get(id);
+          return { id, ring: rings.get(id) ?? 99, state: t?.state ?? "hidden", terrain: t?.terrain, feature: t?.feature };
+        })
+        .sort((a, b) => a.ring - b.ring || a.id.localeCompare(b.id));
+      this.edges = this.edges.filter((e) => e.kind !== "LOOSE");
       for (const id of fogged) {
         const t = this.tiles.get(id);
         if (!t) continue;
