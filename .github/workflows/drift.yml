@@ -1,24 +1,29 @@
 # The drift check: does everything still agree with the core? Builds every package, type-checks adapters against the
 # core's published types, runs every package's unit tests, and runs the core's conformance check over every adapter's
 # conformance site. The same command runs locally: `pnpm test:drift`.
+#
+# Runs nightly on main (the check takes ~45 minutes, too slow to gate pull requests). A failure opens a GitHub
+# issue, or comments on the one already open; a green run does nothing. `workflow_dispatch` allows a manual run,
+# which reports failures in the same way.
 name: drift
 
 on:
-  # Changes that cannot affect a package (design documents, specifications, prose) skip the check; a change that
-  # also touches code still runs it. Nothing requires this check to merge, so a skipped run blocks nothing.
-  pull_request:
-    paths-ignore: ["design/**", "specs/**", "**/*.md"]
-  push:
-    branches: [main]
-    paths-ignore: ["design/**", "specs/**", "**/*.md"]
+  schedule:
+    - cron: "17 3 * * *" # nightly at 03:17 UTC
   workflow_dispatch:
 
 concurrency:
-  group: drift-${{ github.ref }}
-  cancel-in-progress: true
+  group: drift-nightly
+  cancel-in-progress: false # let a running check finish; it may be filing the issue
 
 permissions:
   contents: read
+  issues: write # to file and comment on drift-failure issues
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ISSUE_TITLE: "Drift check failed on main"
+  ISSUE_LABEL: drift
 
 jobs:
   drift:
@@ -41,3 +46,28 @@ jobs:
             packages/*/reports
             packages/*/test-results
           if-no-files-found: ignore
+
+      - name: Report the failure as a GitHub issue
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          body="The nightly drift check failed.
+
+          Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          Commit: $GITHUB_SHA
+
+          See the run's logs and the drift-reports artifact for what broke. This issue is updated by later
+          failing runs; close it once main is green again."
+
+          gh label create "$ISSUE_LABEL" --description "Nightly drift check failures" --color d93f0b --force
+
+          # One open issue at a time: a repeat failure comments on it instead of opening another.
+          issue=$(gh issue list --label "$ISSUE_LABEL" --state open --json number,title \
+            --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" | head -1)
+          if [ -n "$issue" ]; then
+            echo "$body" | gh issue comment "$issue" --body-file -
+            echo "Commented on existing issue #$issue"
+          else
+            echo "$body" | gh issue create --title "$ISSUE_TITLE" --label "$ISSUE_LABEL" --body-file -
+          fi
