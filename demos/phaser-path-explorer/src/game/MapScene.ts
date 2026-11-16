@@ -21,6 +21,17 @@ import { COLS, ROWS, START_STEPS } from "./world.js";
 /** Screen pixels per lattice cell; a whole number keeps pixel edges crisp. */
 export const DEFAULT_PIXEL = 3;
 
+/** Interpolate two RGB integers without relying on Phaser's colour objects having a lerp method. */
+function mix(a: number, b: number, t: number): number {
+  const ca = Phaser.Display.Color.IntegerToColor(a);
+  const cb = Phaser.Display.Color.IntegerToColor(b);
+  return Phaser.Display.Color.GetColor(
+    Math.round(ca.red + (cb.red - ca.red) * t),
+    Math.round(ca.green + (cb.green - ca.green) * t),
+    Math.round(ca.blue + (cb.blue - ca.blue) * t),
+  );
+}
+
 export class MapScene extends Phaser.Scene {
   private vector!: Phaser.GameObjects.Graphics;
   private thread!: Phaser.GameObjects.Graphics;
@@ -54,12 +65,12 @@ export class MapScene extends Phaser.Scene {
     this.thread = this.add.graphics().setScale(this.k).setDepth(2);
     this.overlay = this.add.graphics().setScale(this.k).setDepth(3);
     this.sky = this.add.graphics().setScale(this.k).setDepth(4);
-    // Four texture pixels per board cell give the large sun smooth gradients and rays without changing the map's scale.
-    const sunTexture = this.textures.createCanvas("sun", 64, 68);
+    // One texture pixel per board cell, like the terrain: the large sun is pixel art, not a smooth vector disc.
+    const sunTexture = this.textures.createCanvas("sun", 16, 17);
     if (!sunTexture) throw new Error('could not create texture "sun"');
     this.sunTexture = sunTexture;
-    this.sunTexture.setFilter(Phaser.Textures.FilterMode.LINEAR);
-    this.sun = this.add.image(0, 0, "sun").setScale(this.k / 4).setDepth(5);
+    this.sunTexture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    this.sun = this.add.image(0, 0, "sun").setScale(this.k).setDepth(5);
 
     // keys, as in a space shooter: left and right turn (a sixth of a turn each), up acts on the hex ahead and down
     // on the hex behind; shift steps instead of extending; backspace reels in
@@ -144,7 +155,7 @@ export class MapScene extends Phaser.Scene {
   }
 
   /**
-   * The sun is the day's clock, not a meter: a hex-sized sprite crosses the sky as the steps drain, warm at dawn,
+   * The sun is the day's clock, not a meter: a hex-sized sprite crosses the top row as the steps drain, warm at dawn,
    * pale at noon and an ember towards dusk, while the whole world's light cools underneath it. At dusk the day is over.
    */
   private drawSky(): void {
@@ -154,17 +165,8 @@ export class MapScene extends Phaser.Scene {
     const f = Math.max(0, Math.min(1, 1 - this.state.player.steps / START_STEPS)); // 0 dawn, 1 dusk
     const [x0, yTop] = tileCentre(0, 0);
     const [x1, yBottom] = tileCentre(COLS - 1, ROWS - 1);
-    const x = x0 + 1 + (x1 - 2 - x0) * f;
-    const y = yTop + 5.5 - 5.5 * 4 * f * (1 - f); // low at the horizons, high at noon, always in frame
-    const mix = (a: number, b: number, t: number) => {
-      const ca = Phaser.Display.Color.IntegerToColor(a);
-      const cb = Phaser.Display.Color.IntegerToColor(b);
-      return Phaser.Display.Color.GetColor(
-        Math.round(ca.red + (cb.red - ca.red) * t),
-        Math.round(ca.green + (cb.green - ca.green) * t),
-        Math.round(ca.blue + (cb.blue - ca.blue) * t),
-      );
-    };
+    // A straight, grid-aligned crossing: dawn at the leftmost centre, noon at the middle, dusk at the right.
+    const [x, y] = tileCentre(Math.round(f * (COLS - 1)), 0);
     const body = f < 0.5 ? mix(0xffb45f, 0xfff4c8, 2 * f) : mix(0xfff4c8, 0xff6b3d, 2 * (f - 0.5));
     const noon = Math.sin(Math.PI * f); // the rays strengthen to noon, then recede
     const ray = mix(body, 0xffffee, 0.18 + 0.3 * noon);
@@ -175,52 +177,55 @@ export class MapScene extends Phaser.Scene {
     sky.fillRect(x0 - 1, yTop - 6, x1 - x0 + 3, yBottom - yTop + 7.5);
   }
 
-  /** Paint one day's sun into its persistent texture: a full hex, with the rays at their strongest at noon. */
+  /** Paint whole texture pixels, exactly like a terrain sprite; the disc and its rays have no antialiased edges. */
   private paintSun(body: number, ray: number, noon: number): void {
     const texture = this.sunTexture;
     if (!texture) return;
-    const ctx = texture.getContext();
-    const rgba = (colour: number, alpha: number) => {
-      const c = Phaser.Display.Color.IntegerToColor(colour);
-      return `rgba(${c.red}, ${c.green}, ${c.blue}, ${alpha})`;
+    const image = texture.getContext().createImageData(16, 17);
+    const pixel = (x: number, y: number, colour: number, alpha = 255) => {
+      if (x < 0 || x >= 16 || y < 0 || y >= 17) return;
+      const i = (y * 16 + x) * 4;
+      image.data[i] = (colour >> 16) & 255;
+      image.data[i + 1] = (colour >> 8) & 255;
+      image.data[i + 2] = colour & 255;
+      image.data[i + 3] = alpha;
     };
-    ctx.clearRect(0, 0, texture.width, texture.height);
-    ctx.save();
-    ctx.scale(4, 4); // texture pixels -> the 16 by 17 board-cell hex
-    const x = 8;
-    const y = 8.5;
-    const radius = 5.9 + 0.35 * noon;
-
-    const halo = ctx.createRadialGradient(x, y, radius * 0.65, x, y, 8.3);
-    halo.addColorStop(0, rgba(ray, 0.14 + 0.2 * noon));
-    halo.addColorStop(0.65, rgba(ray, 0.06 + 0.1 * noon));
-    halo.addColorStop(1, rgba(ray, 0));
-    ctx.fillStyle = halo;
-    ctx.fillRect(0, 0, 16, 17);
-
-    // Alternating ray lengths keep the disc legible as a sun even at the board's small pixel scale.
-    ctx.strokeStyle = rgba(ray, 0.3 + 0.7 * noon);
-    ctx.lineWidth = 0.35 + 0.4 * noon;
-    ctx.lineCap = "round";
+    const line = (x0: number, y0: number, x1: number, y1: number, alpha: number) => {
+      const steps = Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)));
+      for (let i = 0; i <= steps; i++) {
+        const t = steps === 0 ? 0 : i / steps;
+        pixel(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), ray, alpha);
+      }
+    };
+    const x = 7.5;
+    const y = 8;
+    const radius = 5.65;
+    // Rasterized one-pixel rays: longer and more opaque at noon, short and subdued at the horizons.
     for (let i = 0; i < 12; i++) {
       const angle = (i * Math.PI) / 6;
-      const inner = radius + 0.35;
-      const outer = radius + 0.65 + 0.95 * noon + (i % 2 === 0 ? 0.2 : 0);
-      ctx.beginPath();
-      ctx.moveTo(x + Math.cos(angle) * inner, y + Math.sin(angle) * inner);
-      ctx.lineTo(x + Math.cos(angle) * outer, y + Math.sin(angle) * outer);
-      ctx.stroke();
+      const inner = radius + 0.3;
+      const outer = radius + 0.55 + 1.5 * noon + (i % 2 === 0 ? 0.25 : 0);
+      line(
+        x + Math.cos(angle) * inner,
+        y + Math.sin(angle) * inner,
+        x + Math.cos(angle) * outer,
+        y + Math.sin(angle) * outer,
+        Math.round(255 * (0.4 + 0.6 * noon)),
+      );
     }
-
-    const disc = ctx.createRadialGradient(x - 1.5, y - 1.8, 0.4, x, y, radius);
-    disc.addColorStop(0, rgba(ray, 1));
-    disc.addColorStop(0.7, rgba(body, 1));
-    disc.addColorStop(1, rgba(body, 0.94));
-    ctx.fillStyle = disc;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    // Three flat tones give the disc a lit edge and a shaded edge, without gradients or smooth drawing primitives.
+    const highlight = mix(body, 0xffffee, 0.55);
+    const shade = mix(body, 0x783b36, 0.22);
+    for (let py = 0; py < 17; py++) {
+      for (let px = 0; px < 16; px++) {
+        const dx = px - x;
+        const dy = py - y;
+        if (dx * dx + dy * dy > radius * radius) continue;
+        const colour = dx + dy < -2 ? highlight : dx + dy > 4 ? shade : body;
+        pixel(px, py, colour);
+      }
+    }
+    texture.getContext().putImageData(image, 0, 0);
     texture.refresh();
   }
 
