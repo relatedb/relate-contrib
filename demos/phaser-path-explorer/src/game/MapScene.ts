@@ -3,17 +3,21 @@
 // only the cache in GameState and never awaits; it redraws when the cache's version changes.
 import Phaser from "phaser";
 import {
+  HEX_OUTLINE,
+  hexSpan,
   layoutGraph,
+  neighbours,
   paintScene,
   placeWave,
   tileCentre,
+  tileOrigin,
   type GraphEdge,
   type GraphNode,
   type GraphPiece,
   type Point,
   type Tile,
 } from "../hex/core/index.js";
-import { addSceneTexture, drawGraph, drawRing, drawVectorTile, fillHex, strokeHex } from "../hex/phaser/index.js";
+import { addSceneTexture, colourNumber, drawGraph, drawRing, drawVectorTile, fillHex, mixColour, strokeHex } from "../hex/phaser/index.js";
 import { routeToGraph, routes, withCrossings } from "./routes.js";
 import type { GameState, HexState } from "./state.js";
 import { COLS, ROWS, START_STEPS } from "./world.js";
@@ -43,6 +47,9 @@ export class MapScene extends Phaser.Scene {
   private sun: Phaser.GameObjects.Image | undefined;
   private sunTexture: Phaser.Textures.CanvasTexture | undefined;
   private hover: HexState | undefined;
+  /** The terrain next to the explorer with relief: mountains lifted, water dropped. */
+  private relief = new Map<string, { image: Phaser.GameObjects.Image; offset: number; flat: boolean }>();
+  private reliefFaces!: Phaser.GameObjects.Graphics;
   /** True after a key press until the pointer moves: only then is the preview of the faced hex shown. */
   private keyboard = false;
 
@@ -62,6 +69,7 @@ export class MapScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor("#002b43");
     this.vector = this.add.graphics().setScale(this.k).setDepth(0);
+    this.reliefFaces = this.add.graphics().setScale(this.k).setDepth(1);
     this.thread = this.add.graphics().setScale(this.k).setDepth(2);
     this.overlay = this.add.graphics().setScale(this.k).setDepth(3);
     this.sky = this.add.graphics().setScale(this.k).setDepth(4);
@@ -131,8 +139,10 @@ export class MapScene extends Phaser.Scene {
   private redraw(): void {
     const g = this.vector;
     g.clear();
+    const raised = this.syncRelief();
     const discovered: Tile[] = [];
     for (const t of this.state.tiles.values()) {
+      if (raised.has(t.id)) continue; // its relief sprite takes this tile's place
       if (t.state === "hidden") {
         fillHex(g, t.col, t.row, "dark-baltic"); // fog: one flat colour, no outline
       } else if (t.state === "sensed" && t.terrain) {
@@ -153,6 +163,105 @@ export class MapScene extends Phaser.Scene {
     this.drawOverlay();
     this.drawSky();
   }
+
+  /**
+   * The relief is the cost's language: a neighbouring mountain lifts (a step up), neighbouring water drops away (the
+   * edge of the world), and both settle back as the explorer moves on. Tiles keep their sprite once raised, so a
+   * returning tile eases home instead of popping back into the ground texture. Sensed ground stays a dim silhouette.
+   */
+  private syncRelief(): Set<string> {
+    const here = this.state.here();
+    const near = new Set(
+      here ? neighbours(here.col, here.row).map(([c, r]) => this.state.tileAt(c, r)?.id) : [],
+    );
+    const active = new Set<string>();
+    for (const t of this.state.tiles.values()) {
+      if (!t.terrain || t.state === "hidden") continue;
+      const relief = t.terrain === "mountain" ? -2.4 : t.terrain === "water" || t.terrain === "deep" ? 2 : 0;
+      const flat = t.state === "sensed";
+      const known = relief !== 0;
+      let entry = this.relief.get(t.id);
+      if (entry && (entry.flat !== flat || !known)) {
+        this.tweens.killTweensOf(entry);
+        entry.image.destroy();
+        this.relief.delete(t.id);
+        entry = undefined;
+      }
+      if (!known) continue;
+      if (!entry) {
+        const key = `relief-${t.id}-${flat ? "sensed" : "seen"}`;
+        if (this.textures.exists(key)) this.textures.remove(key);
+        if (flat) {
+          const texture = this.textures.createCanvas(key, 16, 17);
+          if (!texture) throw new Error(`could not create texture "${key}"`);
+          const ctx = texture.getContext();
+          const base = t.terrain === "mountain" ? "mid-forest" : t.terrain === "deep" ? "dark-baltic" : "mid-baltic";
+          const dim = mixColour(base, "darkest-baltic", 0.2);
+          ctx.fillStyle = `#${dim.toString(16).padStart(6, "0")}`;
+          for (let y = 0; y < 17; y++) {
+            const w = hexSpan(y);
+            ctx.fillRect((16 - w) / 2, y, w, 1);
+          }
+          texture.refresh();
+          texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+        } else {
+          addSceneTexture(this, key, paintScene([{ col: 0, row: 0, terrain: t.terrain, feature: t.feature }]));
+        }
+        const [ox, oy] = tileOrigin(t.col, t.row);
+        const image = this.add.image(ox * this.k, oy * this.k, key).setOrigin(0).setScale(this.k).setDepth(1.5);
+        entry = { image, offset: 0, flat };
+        this.relief.set(t.id, entry);
+      }
+      active.add(t.id);
+      const target = near.has(t.id) ? relief : 0;
+      if (entry.offset !== target) {
+        this.tweens.killTweensOf(entry);
+        this.tweens.add({
+          targets: entry,
+          offset: target,
+          duration: 180,
+          ease: "Sine.easeOut",
+          onUpdate: () => {
+            entry!.image.y = (tileOrigin(t.col, t.row)[1] + entry!.offset) * this.k;
+            this.drawReliefFaces();
+          },
+        });
+      }
+      entry.image.y = (tileOrigin(t.col, t.row)[1] + entry.offset) * this.k;
+    }
+    for (const [id, entry] of this.relief) {
+      const t = this.state.tiles.get(id);
+      if (!t?.terrain || t.state === "hidden" || (t.terrain !== "mountain" && t.terrain !== "water" && t.terrain !== "deep")) {
+        this.tweens.killTweensOf(entry);
+        entry.image.destroy();
+        this.relief.delete(id);
+        if (this.textures.exists(`relief-${id}-sensed`)) this.textures.remove(`relief-${id}-sensed`);
+        if (this.textures.exists(`relief-${id}-seen`)) this.textures.remove(`relief-${id}-seen`);
+      }
+    }
+    this.drawReliefFaces();
+    return active;
+  }
+
+  /** The dark faces beneath raised mountains and at the rims of sunk water, in board cells like the other vectors. */
+  private drawReliefFaces(): void {
+    const g = this.reliefFaces;
+    if (!g) return;
+    g.clear();
+    for (const [id, entry] of this.relief) {
+      const t = this.state.tiles.get(id);
+      if (!t?.terrain) continue;
+      const [ox, oy] = tileOrigin(t.col, t.row);
+      const colour = t.terrain === "mountain" ? "forest" : t.terrain === "deep" ? "darkest-baltic" : "dark-baltic";
+      g.fillStyle(colourNumber(colour), 1);
+      const pts: Phaser.Math.Vector2[] = [];
+      for (let i = 0; i < HEX_OUTLINE.length; i += 2) {
+        pts.push(new Phaser.Math.Vector2(ox + HEX_OUTLINE[i]!, oy + HEX_OUTLINE[i + 1]! + entry.offset));
+      }
+      g.fillPoints(pts, true);
+    }
+  }
+
 
   /**
    * The sun is the day's clock, not a meter: a hex-sized sprite crosses the top row as the steps drain, warm at dawn,
