@@ -36,6 +36,16 @@ export interface DuskHex {
   feature?: Feature;
 }
 
+/** The loose path a waymarker banked, kept only long enough for the scene to pull it taut. */
+export interface BankedPath {
+  /** The new anchor. */
+  waymark: string;
+  /** The anchor the banked path started from. */
+  from: string;
+  /** The edges as they were loose, before the statement secured them. */
+  edges: Edge[];
+}
+
 /** The thread (loose) or a path between anchors (secured), from one hex to the next. */
 export interface Edge {
   from: string;
@@ -69,6 +79,8 @@ export class GameState {
   version = 0;
   /** The hexes the last day end fogged, ordered outward from the abandoned thread. The scene consumes this. */
   lastFogged: DuskHex[] = [];
+  /** The path the last waymarker banked. The scene consumes this to pull the loose wave taut. */
+  lastBanked: BankedPath | null = null;
   private moves = 0;
 
   constructor(private readonly bridge: Bridge) {}
@@ -361,6 +373,7 @@ export class GameState {
     if (here.anchor) return this.say("You stand on an anchor already.");
     if (this.loose().length === 0) return this.say("There is no path to bank: extend the path first.");
     return this.act(here.id, async () => {
+      const path = this.loose().map((e) => ({ ...e }));
       const rows = await this.bridge.enqueue(PLACE_WAYMARKER);
       const r = rows[0];
       if (!r) {
@@ -368,6 +381,7 @@ export class GameState {
         return;
       }
       here.anchor = true;
+      this.lastBanked = { waymark: here.id, from: path[0]?.from ?? here.id, edges: path };
       this.edges = this.edges.map((e) => ({ ...e, kind: "SECURED" as const }));
       this.player = { at: r["at"] as string, steps: r["steps"] as number, markers: r["markers"] as number };
       const secured = r["secured"] as number;

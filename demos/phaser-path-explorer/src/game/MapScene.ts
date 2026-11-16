@@ -14,6 +14,8 @@ import {
   type GraphEdge,
   type GraphNode,
   type GraphPiece,
+  type PlacedLink,
+  type PlacedPiece,
   type Point,
   type Tile,
 } from "../hex/core/index.js";
@@ -39,6 +41,19 @@ function mix(a: number, b: number, t: number): number {
 export class MapScene extends Phaser.Scene {
   private vector!: Phaser.GameObjects.Graphics;
   private thread!: Phaser.GameObjects.Graphics;
+  /** The short pull from loose wave to secured line, over the redrawn thread. */
+  private bankThread!: Phaser.GameObjects.Graphics;
+  private bank:
+    | {
+        key: string;
+        waymark: string;
+        oldLinks: PlacedLink[];
+        oldBodies: Point[][];
+        newPieces: PlacedPiece[];
+        newLinks: PlacedLink[];
+        turn: { t: number };
+      }
+    | undefined;
   private overlay!: Phaser.GameObjects.Graphics;
   private ground?: Phaser.GameObjects.Image;
   private drawn = -1;
@@ -74,6 +89,7 @@ export class MapScene extends Phaser.Scene {
     // Beneath every terrain: a sinking shore must pass under pixel-art and vector neighbours alike.
     this.reliefFaces = this.add.graphics().setScale(this.k).setDepth(-0.2);
     this.thread = this.add.graphics().setScale(this.k).setDepth(2);
+    this.bankThread = this.add.graphics().setScale(this.k).setDepth(2.3);
     this.overlay = this.add.graphics().setScale(this.k).setDepth(3);
     this.sky = this.add.graphics().setScale(this.k).setDepth(4);
     // One texture pixel per board cell, like the terrain: the large sun is pixel art, not a smooth vector disc.
@@ -142,6 +158,7 @@ export class MapScene extends Phaser.Scene {
   private redraw(): void {
     const g = this.vector;
     g.clear();
+    this.startBank();
     const raised = this.syncRelief();
     const discovered: Tile[] = [];
     for (const t of this.state.tiles.values()) {
@@ -421,6 +438,88 @@ export class MapScene extends Phaser.Scene {
     texture.refresh();
   }
 
+  /**
+   * Bank a path: keep its loose wave on screen for a moment, pull it taut, then crossfade into the secured double
+   * line. A small pulse on the new anchor confirms that these steps are safe. The day does not turn; that belongs to
+   * the end-of-day fog alone.
+   */
+  private startBank(): void {
+    const banked = this.state.lastBanked;
+    if (!banked) return;
+    this.state.lastBanked = null;
+    if (this.bank) {
+      this.tweens.killTweensOf(this.bank.turn);
+      this.bankThread.clear();
+      this.bank = undefined;
+    }
+    const tiles = this.state.tiles;
+    const marked = new Set<string>();
+    for (const t of tiles.values()) if (t.anchor && t.state !== "hidden") marked.add(t.id);
+    if (this.state.here()) marked.add(this.state.player.at);
+    const oldRoute = routes(banked.edges, marked, tiles).routes.find(
+      (r) => r.kind === "LOOSE" && r.from === banked.from && r.to === banked.waymark,
+    );
+    const securedRoute = routes(this.state.edges, marked, tiles).routes.find(
+      (r) => r.kind === "SECURED" && r.from === banked.from && r.to === banked.waymark,
+    );
+    if (!oldRoute || !securedRoute) return;
+    const nodes: GraphNode[] = [];
+    for (const id of marked) {
+      const t = tiles.get(id);
+      if (t) nodes.push({ id, col: t.col, row: t.row, size: MapScene.RING });
+    }
+    const oldParts = routeToGraph(oldRoute, tiles, MapScene.RING);
+    const securedParts = routeToGraph(securedRoute, tiles, MapScene.RING);
+    const secured = layoutGraph(nodes, securedParts.edges, {}, withCrossings(securedParts.pieces));
+    const turn = { t: 0 };
+    this.bank = {
+      key: `${banked.from}>${banked.waymark}`,
+      waymark: banked.waymark,
+      oldLinks: layoutGraph(nodes, oldParts.edges, {}).links,
+      oldBodies: oldParts.waves,
+      newPieces: secured.pieces,
+      newLinks: secured.links,
+      turn,
+    };
+    this.tweens.add({
+      targets: turn,
+      t: 1,
+      duration: 520,
+      ease: "Sine.easeInOut",
+      onUpdate: () => this.drawBank(),
+      onComplete: () => {
+        this.bankThread.clear();
+        this.bank = undefined;
+        this.drawThread(); // the secured route is no longer omitted
+      },
+    });
+    this.drawBank();
+  }
+
+  private drawBank(): void {
+    const bank = this.bank;
+    if (!bank) return;
+    const g = this.bankThread;
+    const clamp = (x: number) => Math.max(0, Math.min(1, x));
+    const smooth = (x: number) => x * x * (3 - 2 * x);
+    const t = clamp(bank.turn.t);
+    const pull = smooth(clamp(t / 0.58));
+    const waveAlpha = 1 - smooth(clamp((t - 0.52) / 0.2));
+    const securedAlpha = smooth(clamp((t - 0.52) / 0.42));
+    g.clear();
+    drawGraph(
+      g,
+      { pieces: bank.oldBodies.map((body) => placeWave(body, { amplitude: 1.2 * (1 - pull) })), links: bank.oldLinks, nodes: [] },
+      waveAlpha,
+    );
+    drawGraph(g, { pieces: bank.newPieces, links: bank.newLinks, nodes: [] }, securedAlpha);
+    const pulse = smooth(clamp((t - 0.58) / 0.42));
+    if (pulse > 0) {
+      const tile = this.state.tiles.get(bank.waymark);
+      if (tile) drawRing(g, tile.col, tile.row, 9.5 + 6.5 * pulse, "light-baltic", 1, 0.5, 0.8 * (1 - pulse));
+    }
+  }
+
   /** The size of the rings that mark the camp, the towers and the explorer: all the same. */
   private static readonly RING = 8;
 
@@ -450,6 +549,7 @@ export class MapScene extends Phaser.Scene {
     const edges: GraphEdge[] = [];
     const waves: Point[][] = [];
     for (const r of found) {
+      if (this.bank && r.kind === "SECURED" && `${r.from}>${r.to}` === this.bank.key) continue; // the transition draws this one
       const route = routeToGraph(r, tiles, MapScene.RING);
       pieces.push(...route.pieces);
       edges.push(...route.edges);

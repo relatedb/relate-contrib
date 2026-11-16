@@ -363,6 +363,11 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       expect(state.tiles.get(a.id)!.anchor).toBe(true);
       expect(state.tiles.get(a.id)!.state).toBe("path"); // banked: the ground stays known
       expect(state.lastFogged).toEqual([]); // no fog or overnight transition
+      expect(state.lastBanked).toEqual({
+        waymark: a.id,
+        from: camp,
+        edges: [{ from: camp, to: a.id, kind: "LOOSE" }],
+      });
       expect(state.message).toMatch(/banked/i);
 
       const b = [...state.tiles.values()].find((t) => t.state === "sensed" && state.canExtend(t.id))!;
