@@ -19,7 +19,7 @@ const dpr = Math.max(1, Math.min(3, Number(params.get("dpr")) || Math.round(wind
 const status = document.getElementById("status")!;
 const say = (text: string) => (status.textContent = text);
 
-// The world is an application graph (ADR-009, ADR-010 2.4): seeded once on first run and kept in the browser.
+// The world is an application graph (ADR-009, ADR-011 2.4): seeded once on first run and kept in the browser.
 // A new seed only takes effect on a first run, or with ?reset=1, which discards the stored world.
 const client = createClient({
   engineUrl,

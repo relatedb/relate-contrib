@@ -1,4 +1,4 @@
-// ADR-010, 2.1: the hex library's layers import only downward, and only the adapter imports Phaser.
+// ADR-011, 2.1: the hex library's layers import only downward, and only the adapter imports Phaser.
 import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";

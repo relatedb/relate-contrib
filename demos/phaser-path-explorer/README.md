@@ -2,7 +2,7 @@
 
 A Phaser demo where exploring is querying. An explorer extends a thread across a hidden hex map, and the world lives in an
 embedded Relate graph in the browser. The design is `design/notes/2026-11-10-phaser-path-explorer.md`; the decisions are
-`design/adr/ADR-010-phaser-path-explorer.md`. Rules are expected to change in play testing.
+`design/adr/ADR-011-phaser-path-explorer.md`. Rules are expected to change in play testing.
 
 ## Status: slice 2 (the thread)
 
@@ -49,10 +49,10 @@ browser console for driving the game by hand.
 
 ## Layout
 
-- `src/hex/` is the hex library, written to be lifted out (ADR-010, 2.1): `assets/` (data only), `core/` (pure code, no DOM
+- `src/hex/` is the hex library, written to be lifted out (ADR-011, 2.1): `assets/` (data only), `core/` (pure code, no DOM
   and no Phaser), `phaser/` (the only code that imports Phaser). Nothing in it imports the game; `tests/boundary.test.ts`
   enforces that.
-- `src/game/` is the game: the world generator, the graph model, the statements (`statements.ts`, ADR-010 2.5), the
+- `src/game/` is the game: the world generator, the graph model, the statements (`statements.ts`, ADR-011 2.5), the
   bridge (`bridge.ts`: outbox, pump), the cache and actions (`state.ts`) and the scene (`MapScene.ts`). The scene reads the
   cache and never awaits.
 - `scripts/extract-assets.mjs` regenerates `src/hex/assets/*.json` and `tests/fixtures/hexmap-golden.json` from the
@@ -69,7 +69,7 @@ browser console for driving the game by hand.
 
 ## Notes
 
-- Terrain and cues carry information in this game, which the design system does not allow elsewhere (ADR-010, 2.7).
+- Terrain and cues carry information in this game, which the design system does not allow elsewhere (ADR-011, 2.7).
 - The ground truth of the world sits in the visitor's browser store and can be read with developer tools.
 - Phaser 4.2.1 is MIT-licensed. The production bundle is about 1.4 MB (360 KB gzipped), mostly Phaser.
 - The sprites, terrain and mascot of the design system need the Neo4j brand team's review before a public release.

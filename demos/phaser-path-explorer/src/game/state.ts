@@ -1,4 +1,4 @@
-// The cache (ADR-010, 2.6): a plain object of the board as the player may know it, patched by replies. Rendering
+// The cache (ADR-011, 2.6): a plain object of the board as the player may know it, patched by replies. Rendering
 // reads this and never awaits. Actions go through the bridge; an extension needs its reply to know what the new hexes
 // contain, so it shows as pending until the reply arrives, and a further action waits for it.
 import { neighbourAt, neighbours, oppositeSide, sideTo, turnSide, type Feature, type Side, type Terrain } from "../hex/core/index.js";
@@ -101,7 +101,7 @@ export class GameState {
 
   // --- the thread ---
 
-  /** The loose thread, if one is in play: at most one at a time (ADR-010, 2.4). */
+  /** The loose thread, if one is in play: at most one at a time (ADR-011, 2.4). */
   loose(): Edge[] {
     return this.edges.filter((e) => e.kind === "LOOSE");
   }

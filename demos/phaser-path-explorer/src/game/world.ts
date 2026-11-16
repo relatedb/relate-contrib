@@ -113,7 +113,7 @@ export function generateRows(seed: string, cols = COLS, rowsCount = ROWS): strin
         grid[row]![col] = R() < 0.2 ? "f" : "g";
   grid[campRow]![campCol] = "t";
   // towers on grass or hills, away from the camp and each other. The first two are within reach of the starting
-  // waymarks (ADR-010, 2.4), so every seed has somewhere to go; the rest are anywhere on land.
+  // waymarks (ADR-011, 2.4), so every seed has somewhere to go; the rest are anywhere on land.
   const towers: [number, number][] = [];
   const wanted = Math.max(3, Math.round((cols * rowsCount) / 75));
   const reach = landDistances(grid.map((l) => l.join("")), [campCol, campRow]);

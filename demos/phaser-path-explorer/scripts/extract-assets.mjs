@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Extracts the hex library's assets and its golden fixtures from the "Relate by ABK" design system (ADR-010, 2.2).
+// Extracts the hex library's assets and its golden fixtures from the "Relate by ABK" design system (ADR-011, 2.2).
 //
 //   node scripts/extract-assets.mjs --bundle <bundle.js> --tokens <tokens.json> --version <artifact version>
 //

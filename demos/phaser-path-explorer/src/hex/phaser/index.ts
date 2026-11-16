@@ -1,4 +1,4 @@
-// The only layer that imports Phaser (ADR-010, 2.1): it turns the core's buffers and draw lists into Phaser
+// The only layer that imports Phaser (ADR-011, 2.1): it turns the core's buffers and draw lists into Phaser
 // textures and graphics. Everything is in lattice cells; scale the game object by a whole number of pixels.
 import Phaser from "phaser";
 import { paletteAsset } from "../assets/index.js";

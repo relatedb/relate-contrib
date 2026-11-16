@@ -1,4 +1,4 @@
-// The database bridge (ADR-010, 2.6). The frame loop never awaits: actions push statements onto an outbox, a single
+// The database bridge (ADR-011, 2.6). The frame loop never awaits: actions push statements onto an outbox, a single
 // pump outside the frame loop drains it in order, one statement at a time, and replies resolve the promises that
 // callers hold. Rendering reads only the cache that replies patch (state.ts).
 

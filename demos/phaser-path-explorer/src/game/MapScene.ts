@@ -1,4 +1,4 @@
-// Draws the board by what the player knows (ADR-010, 2.3): hidden hexes are fog, sensed hexes are drawn in the
+// Draws the board by what the player knows (ADR-011, 2.3): hidden hexes are fog, sensed hexes are drawn in the
 // flat look (just the ground's colour), and discovered hexes (seen or on a path) in the pixel look. The scene reads
 // only the cache in GameState and never awaits; it redraws when the cache's version changes.
 import Phaser from "phaser";

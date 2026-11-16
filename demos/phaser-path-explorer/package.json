@@ -1,7 +1,7 @@
 {
   "name": "phaser-path-explorer",
   "version": "0.0.0",
-  "description": "A Phaser demo where exploring is querying: a thread extended across a hidden hex map, backed by an embedded Relate graph (ADR-010).",
+  "description": "A Phaser demo where exploring is querying: a thread extended across a hidden hex map, backed by an embedded Relate graph (ADR-011).",
   "private": true,
   "type": "module",
   "scripts": {

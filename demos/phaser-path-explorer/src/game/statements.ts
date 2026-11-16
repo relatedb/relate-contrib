@@ -1,4 +1,4 @@
-// The game's verbs as statements (ADR-010, 2.5). Each verb is one statement, so each is atomic; values are bound
+// The game's verbs as statements (ADR-011, 2.5). Each verb is one statement, so each is atomic; values are bound
 // parameters. tests/statements.test.ts runs every one against the real engine in WebAssembly.
 //
 // Reachability uses `shortestPath`, which has no hop cap. It needs two distinct nodes, so the hex being tested is
@@ -92,7 +92,7 @@ SET pl.waymarks = pl.waymarks + size(orphans),
     pl.at = CASE WHEN pl.at IN ids THEN home.id ELSE pl.at END
 RETURN ids, pl.waymarks AS waymarks, pl.at AS at`;
 
-// --- reads. A hidden hex gives away nothing but its place: terrain, feature and anchor come back null (ADR-010, 2.3). ---
+// --- reads. A hidden hex gives away nothing but its place: terrain, feature and anchor come back null (ADR-011, 2.3). ---
 
 const HEX_FIELDS = `
   h.id AS id, h.col AS col, h.row AS row, h.state AS state,

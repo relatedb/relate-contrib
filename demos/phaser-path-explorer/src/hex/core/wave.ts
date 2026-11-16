@@ -1,7 +1,7 @@
 // A wavy line along a route that bends. The design system's wavy shaft (`~`) belongs to its arrow glyph, which runs
 // straight between two nodes; it has no wavy elbow. For a route that turns through several hexes this draws one
 // continuous wave along the route's centreline, with the corners softened, tapering to the straight line at both ends
-// so it meets the rest of the drawing exactly. This is a departure from the design system, recorded in ADR-010 2.7.
+// so it meets the rest of the drawing exactly. This is a departure from the design system, recorded in ADR-011 2.7.
 
 export type Point = [number, number];
 
