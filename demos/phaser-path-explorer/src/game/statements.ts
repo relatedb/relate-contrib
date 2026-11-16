@@ -2,12 +2,12 @@
 // statement, so each is atomic; values are bound parameters. tests/statements.test.ts runs every one against the
 // real engine in WebAssembly.
 //
-// The economy: a day is a budget of steps ($budget refills it). Moving costs one step — extending, stepping,
-// reeling in, travelling between anchors. A waymarker is placed on the hex the explorer stands on: the path from
-// the previous anchor is secured, the day ends and the explorer returns to the camp. When the steps run out the
-// day ends the same way, but the loose path is abandoned and everything the secured network does not disclose
-// fogs over. The camp and the towers are fixed anchors (the towers carry a `tower` flag); arriving on a tower
-// secures the path but does not end the day.
+// The economy: a day is a budget of steps ($budget refills it when the day ends). Moving costs one step — extending,
+// stepping, reeling in, travelling between anchors. A waymarker is placed on the hex the explorer stands on: the path
+// from the previous anchor is secured, and a new path can grow from that waymarker with the steps still remaining.
+// When the steps run out, or the player ends the day, the explorer returns to the camp, the loose path is abandoned
+// and everything the secured network does not disclose fogs over. The camp and the towers are fixed anchors (the
+// towers carry a `tower` flag); arriving on a tower secures the path but does not end the day.
 //
 // Reachability uses `shortestPath`, which has no hop cap. It needs two distinct nodes, so the hex being tested is
 // compared with the target first. A flag that is absent is null, so statements use IS NULL or coalesce.
@@ -46,21 +46,20 @@ CREATE (a)-[:SECURED {since: r.since}]->(b) DELETE r
 RETURN count(r) AS secured`;
 
 /**
- * Place a waymarker on the hex the explorer stands on, and end the day. Requires a waymarker to spend, the hex not
- * to be an anchor already, and the explorer to be at the head of the day's path. $budget: the day's step budget.
- * The loose path becomes secured (so the day's ground is banked), the explorer returns to the camp, the steps refill.
+ * Place a waymarker on the hex the explorer stands on, without ending the day. Requires a waymarker to spend, the
+ * hex not to be an anchor already, and the explorer to be at the head of the day's path. The loose path becomes
+ * secured; the explorer and the remaining steps stay where they are, ready for a new path from this anchor.
  */
 export const PLACE_WAYMARKER = `
-MATCH (pl:Player {id: 'player'}), (h:Hex {id: pl.at}), (home:Hex {origin: true})
+MATCH (pl:Player {id: 'player'}), (h:Hex {id: pl.at})
 WHERE pl.markers > 0 AND h.anchor IS NULL
   AND NOT EXISTS { (h)-[:LOOSE]->(:Hex) }
 MATCH (prev:Hex)-[:LOOSE]->(h)
 SET h.anchor = true, pl.markers = pl.markers - 1
-WITH pl, h, home
+WITH pl, h
 MATCH (a:Hex)-[r:LOOSE]->(b:Hex)
 CREATE (a)-[:SECURED {since: r.since}]->(b) DELETE r
-WITH pl, h, home, count(r) AS secured
-SET pl.at = home.id, pl.steps = $budget
+WITH pl, h, count(r) AS secured
 RETURN h.id AS waymark, secured AS secured, pl.at AS at, pl.steps AS steps, pl.markers AS markers`;
 
 /**

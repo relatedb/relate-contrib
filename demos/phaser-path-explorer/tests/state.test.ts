@@ -349,20 +349,34 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
   });
 
   describe("the day", () => {
-    it("banks the path with a waymarker: secured ground, home, the steps refilled", async () => {
+    it("banks the path with a waymarker and starts another without ending the day", async () => {
       const camp = state.player.at;
       const a = [...state.tiles.values()].find((t) => t.state === "sensed" && state.canExtend(t.id))!;
       await state.click(a.id);
       expect(state.player.steps).toBe(START_STEPS - 1);
+      const remaining = state.player.steps;
       await state.placeWaymarker();
-      expect(state.player.at).toBe(camp);
-      expect(state.player.steps).toBe(START_STEPS);
+      expect(state.player.at).toBe(a.id); // banking is not a return to camp
+      expect(state.player.steps).toBe(remaining);
       expect(state.player.markers).toBe(START_MARKERS - 1);
-      expect(state.edges.length).toBeGreaterThan(0);
-      expect(state.edges.every((e) => e.kind === "SECURED")).toBe(true);
+      expect(state.edges).toEqual([{ from: camp, to: a.id, kind: "SECURED" }]);
       expect(state.tiles.get(a.id)!.anchor).toBe(true);
       expect(state.tiles.get(a.id)!.state).toBe("path"); // banked: the ground stays known
+      expect(state.lastFogged).toEqual([]); // no fog or overnight transition
       expect(state.message).toMatch(/banked/i);
+
+      const b = [...state.tiles.values()].find((t) => t.state === "sensed" && state.canExtend(t.id))!;
+      await state.click(b.id); // the next wavy path grows from the new anchor
+      expect(state.player.at).toBe(b.id);
+      expect(state.player.steps).toBe(remaining - (b.cost ?? 1));
+      expect(state.loose()).toEqual([{ from: a.id, to: b.id, kind: "LOOSE" }]);
+
+      await state.endDay();
+      expect(state.player.at).toBe(camp);
+      expect(state.player.steps).toBe(START_STEPS);
+      expect(state.loose()).toEqual([]);
+      expect(state.tiles.get(a.id)!.state).toBe("path"); // the banked segment survives the night
+      expect(state.tiles.get(a.id)!.anchor).toBe(true);
     });
 
     it("ends the day on exhaustion: home, refilled, and the unsecured ground forgotten", async () => {

@@ -20,10 +20,11 @@ Mouse:
 - another anchor, from an anchor: **travel** for one step along secured paths
 - reaching a tower secures the path but does not end the day
 
-The day ends when the steps run out, or when you **place a waymarker** (**p**): the day's path is banked as secured
-ground, you return to the camp and the steps refill. A day that runs out of steps loses its loose path and everything the
-secured network does not disclose fogs over; only what waymarkers banked survives, neighbours of secured ground coming
-back as sensed. A found cache adds one waymarker.
+Placing a waymarker (**p**) banks the path followed so far as secured ground and turns your current hex into an anchor.
+It does **not** end the day: you stay on the waymark with your remaining steps, and a new loose path can grow from it.
+The day ends only when the steps run out or you press **e**; then you return to the camp and the steps refill. Any path
+still loose is abandoned, and everything the secured network does not disclose fogs over. Banked ground survives, with
+its neighbours coming back as sensed. A found cache adds one waymarker.
 
 Keyboard, as in a space shooter: **left and right turn** a sixth of a turn, **up** acts on the hex ahead (the same as a
 click on it), **down** acts on the hex behind, **shift** steps instead of extending, **backspace** reels in, **p** places

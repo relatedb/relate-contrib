@@ -243,15 +243,16 @@ between anchors. The path traces from the last anchor (the camp or a placed waym
 hexes it crosses no longer cost anything in themselves.
 
 - **Place a waymarker** on the hex the explorer stands on: the hex becomes an anchor, one waymarker is spent, and the
-  path from the previous anchor becomes secured. This **ends the day**: the explorer returns to the camp and the step
-  budget refills.
-- **A day also ends when the steps run out**: the explorer returns to the camp, the step budget refills, and the loose
-  path of that day is abandoned. Everything the day revealed that is not covered by the secured network fogs over: a
-  hex stays known only if it lies on a secured path, is the camp, or neighbours such a hex (and then only as sensed);
-  every other hex, including the whole of the abandoned day's path, is hidden again. What the player durably knows is
-  exactly what the secured network discloses — knowledge is banked by placing waymarkers, so sweeping ground without
-  spending one gains nothing that survives the day. (A day ended by placing a waymarker keeps its ground, because its
-  path was secured.)
+  path from the previous anchor becomes secured. This does **not** end the day: the explorer stays on the new waymark
+  with the remaining steps, and a new loose path can grow from it. Banking is therefore a mid-day choice between
+  preserving the path followed so far and continuing to explore.
+- **A day ends when the steps run out, or when the player explicitly ends it**: the explorer returns to the camp, the
+  step budget refills, and the remaining loose path is abandoned. Everything the day revealed that is not covered by
+  the secured network fogs over: a hex stays known only if it lies on a secured path, is the camp, or neighbours such
+  a hex (and then only as sensed); every other hex, including the whole of the abandoned loose path, is hidden again.
+  What the player durably knows is exactly what the secured network discloses — knowledge is banked by placing
+  waymarkers, so sweeping ground without spending one gains nothing that survives the day. Ground secured before a
+  waymarker was placed survives even when the next loose path is abandoned at night.
 - **Travel** from an anchor to another anchor joined by secured paths costs one step, not one per hex. This applies
   from the camp to a waymarker and between waymarkers, and is the payoff of placing markers.
 - **A tower** is a fixed anchor. Arriving on one secures the path as before but does not end the day.
@@ -276,13 +277,14 @@ mechanics return.
 *thread* is called the **path** in the interface and the remaining prose.
 
 **Statements.** The extend statement of 2.5 loses its waymark cost and its snag branch and pays one step instead. The
-secure statement is unchanged. Two statements are added: place a waymarker and end the day (spend one, set `anchor`,
-secure the path, return the player to the camp, refill steps), and end the day when the steps run out (return, refill,
+secure statement is unchanged. Two statements are added: place a waymarker (spend one, set `anchor`, and secure the
+path without moving the player or changing steps), and end the day on exhaustion or command (return to camp, refill,
 delete the loose path, and re-fog every hex the secured network does not disclose: path hexes keep their state, their
 neighbours become sensed, everything else is hidden, and the statement answers with the ids that were fogged so the
 client's cache can drop them). The skip statement charges one step. The win is read with one statement over `SECURED`
 edges from the camp to both towers. These are specified and tested against the engine before the interface uses them.
 
-**Checks.** Node tests against the engine's WebAssembly build cover every new statement, including a day ended by
-placing a waymarker, a day ended by exhaustion, travel between anchors costing one step, and the win test. Browser
-checks are by hand in one browser for v1; the Playwright setup for the demo and the cross-browser run are deferred.
+**Checks.** Node tests against the engine's WebAssembly build cover every new statement, including banking a path and
+extending from its new waymarker without ending the day, a day ended by exhaustion, travel between anchors costing one
+step, and the win test. Browser checks are by hand in one browser for v1; the Playwright setup for the demo and the
+cross-browser run are deferred.

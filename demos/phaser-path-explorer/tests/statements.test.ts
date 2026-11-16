@@ -68,23 +68,24 @@ describe.skipIf(!existsSync(wasm))("statements, in the engine's WebAssembly buil
     expect(run("MATCH (pl:Player) SET pl.at = 'c'"));
   });
 
-  it("places a waymarker: the path is secured, the explorer goes home and the day refills", () => {
-    expect(run(S.PLACE_WAYMARKER, { budget: 12 })[0]).toMatchObject({ waymark: "c", secured: 3, at: "H", steps: 12, markers: 1 });
+  it("places a waymarker: the path is secured, and the explorer stays with the steps remaining", () => {
+    expect(run(S.PLACE_WAYMARKER)[0]).toMatchObject({ waymark: "c", secured: 3, at: "c", steps: 8, markers: 1 });
     expect(edges().map((e) => e["t"])).toEqual(["SECURED", "SECURED", "SECURED"]);
     expect(hex("a")).toBe("path"); // banked: the day's ground stays
   });
 
   it("refuses a waymarker without a path to bank, and on an anchor", () => {
-    expect(run(S.PLACE_WAYMARKER, { budget: 12 })).toHaveLength(0); // at the camp: no loose path
+    expect(run(S.PLACE_WAYMARKER)).toHaveLength(0); // at the new anchor: no loose path
     // Standing on an anchor is no good either way, even with a path to bank.
+    run("MATCH (pl:Player) SET pl.at = 'H'");
     run("MATCH (h:Hex {id:'H'}), (d:Hex {id:'d'}) CREATE (h)-[:LOOSE {since: 4}]->(d)");
-    expect(run(S.PLACE_WAYMARKER, { budget: 12 })).toHaveLength(0); // the camp is an anchor already
+    expect(run(S.PLACE_WAYMARKER)).toHaveLength(0); // the camp is an anchor already
     run("MATCH ()-[r:LOOSE]->() DELETE r");
   });
 
-  it("travels to the waymarker for one step, and extends on to the tower, which secures", () => {
-    expect(run(S.TRAVEL, { to: "c" })[0]).toMatchObject({ at: "c", steps: 11 });
-    expect(extend("T1", 5)[0]).toMatchObject({ id: "T1", anchor: true, steps: 10 });
+  it("travels back to the waymarker for one step, and extends on to the tower, which secures", () => {
+    expect(run(S.TRAVEL, { to: "c" })[0]).toMatchObject({ at: "c", steps: 7 });
+    expect(extend("T1", 5)[0]).toMatchObject({ id: "T1", anchor: true, steps: 6 });
     expect(run(S.SECURE)[0]).toMatchObject({ secured: 1 });
   });
 
@@ -98,16 +99,16 @@ describe.skipIf(!existsSync(wasm))("statements, in the engine's WebAssembly buil
   it("refuses travel while a path is in play, and reels it back in for a step", () => {
     expect(extend("c", 6)[0]).toMatchObject({ id: "c" }); // cross onto the secured path
     expect(run(S.TRAVEL, { to: "H" })).toHaveLength(0);
-    expect(run(S.REEL_IN)[0]).toMatchObject({ at: "T1", steps: 8 });
+    expect(run(S.REEL_IN)[0]).toMatchObject({ at: "T1", steps: 4 });
     expect(hex("c")).toBe("path"); // a hex of the secured path stays on it
-    expect(run(S.TRAVEL, { to: "H" })[0]).toMatchObject({ at: "H", steps: 7 });
+    expect(run(S.TRAVEL, { to: "H" })[0]).toMatchObject({ at: "H", steps: 3 });
   });
 
   it("finds a cache on entering: one waymarker gained, found only once", () => {
-    expect(extend("d", 7)[0]).toMatchObject({ id: "d", steps: 6, sensed: ["e"] });
+    expect(extend("d", 7)[0]).toMatchObject({ id: "d", steps: 2, sensed: ["e"] });
     expect(run(S.TETHERED)[0]).toMatchObject({ tethered: true });
     expect(run(S.CUE_SOURCE, { ids: ["e"] })).toEqual([{ id: "e", own: true, kind: "cache" }]);
-    expect(extend("e", 8)[0]).toMatchObject({ id: "e", caches: 1, markers: 2, steps: 5, sensed: ["f", "x"].sort() });
+    expect(extend("e", 8)[0]).toMatchObject({ id: "e", caches: 1, markers: 2, steps: 1, sensed: ["f", "x"].sort() });
     expect(run("MATCH (t:Thing {id:'cache1'})-[o:ON]->() RETURN count(o) AS c")[0]).toMatchObject({ c: 0 }); // spent
   });
 

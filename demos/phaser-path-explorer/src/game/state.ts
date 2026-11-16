@@ -351,8 +351,8 @@ export class GameState {
   }
 
   /**
-   * Place a waymarker: the day's path is banked as secured ground, the explorer returns to the camp and the steps
-   * refill. Requires a waymarker to spend, a path to bank, and a hex that is not an anchor already.
+   * Place a waymarker: the path is banked as secured ground and a new path can grow from here with the steps still
+   * remaining. Requires a waymarker to spend, a path to bank, and a hex that is not an anchor already.
    */
   async placeWaymarker(): Promise<void> {
     const here = this.here();
@@ -361,7 +361,7 @@ export class GameState {
     if (here.anchor) return this.say("You stand on an anchor already.");
     if (this.loose().length === 0) return this.say("There is no path to bank: extend the path first.");
     return this.act(here.id, async () => {
-      const rows = await this.bridge.enqueue(PLACE_WAYMARKER, { budget: START_STEPS });
+      const rows = await this.bridge.enqueue(PLACE_WAYMARKER);
       const r = rows[0];
       if (!r) {
         this.message = "The waymarker will not take here.";
@@ -370,7 +370,8 @@ export class GameState {
       here.anchor = true;
       this.edges = this.edges.map((e) => ({ ...e, kind: "SECURED" as const }));
       this.player = { at: r["at"] as string, steps: r["steps"] as number, markers: r["markers"] as number };
-      this.message = `Waymarker placed: ${r["secured"]} of path banked. Back at camp.`;
+      const secured = r["secured"] as number;
+      this.message = `Waymarker placed: ${secured} step${secured === 1 ? "" : "s"} of path banked. Keep exploring.`;
       this.touch();
     });
   }
