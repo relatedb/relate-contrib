@@ -69,8 +69,8 @@ export class MapScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor("#002b43");
     this.vector = this.add.graphics().setScale(this.k).setDepth(0);
-    // Beneath the ground texture: a sinking shore must pass under its neighbours, not cover them.
-    this.reliefFaces = this.add.graphics().setScale(this.k).setDepth(0.5);
+    // Beneath every terrain: a sinking shore must pass under pixel-art and vector neighbours alike.
+    this.reliefFaces = this.add.graphics().setScale(this.k).setDepth(-0.2);
     this.thread = this.add.graphics().setScale(this.k).setDepth(2);
     this.overlay = this.add.graphics().setScale(this.k).setDepth(3);
     this.sky = this.add.graphics().setScale(this.k).setDepth(4);
@@ -209,8 +209,8 @@ export class MapScene extends Phaser.Scene {
           addSceneTexture(this, key, paintScene([{ col: 0, row: 0, terrain: t.terrain, feature: t.feature }]));
         }
         const [ox, oy] = tileOrigin(t.col, t.row);
-        // Raised land stands over the board; sunk water slides underneath the neighbouring ground.
-        const depth = t.terrain === "mountain" ? 1.5 : 0.6;
+        // Raised land stands over the board; sunk water slides underneath every kind of neighbouring terrain.
+        const depth = t.terrain === "mountain" ? 1.5 : -0.1;
         const image = this.add.image(ox * this.k, oy * this.k, key).setOrigin(0).setScale(this.k).setDepth(depth);
         entry = { image, offset: 0, flat };
         this.relief.set(t.id, entry);
