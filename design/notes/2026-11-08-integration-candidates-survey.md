@@ -1,6 +1,6 @@
 # Integration candidates beyond the web frameworks: survey for the hackathon
 
-This note records a survey, run on 2026-11-08, of third-party libraries that RelateDB (relate, the embedded openCypher property-graph engine this repository integrates with web frameworks) could ship starters or helpers for, ahead of a launch hackathon. Next, SvelteKit and Observable Framework are done (`packages/`); the relate core team is covering common UI components and agent integration. This survey covers what they are not: games, third-party graph visualization, geospatial visualization, and the building blocks of do-it-yourself SaaS apps (datagrids, admin frameworks, editors). Headless CMS integrations were dropped at the outset. The note binds no decision; a choice among these would go through an RFC or, for small helpers, straight to a spec.
+This note records a survey, run on 2026-11-08, of third-party libraries that RelateDB (relate, the embedded openCypher property-graph engine this repository integrates with web frameworks) could ship demos or helpers for, ahead of a launch hackathon. Next, SvelteKit and Observable Framework are done (`packages/`); the relate core team is covering common UI components and agent integration. This survey covers what they are not: games, third-party graph visualization, geospatial visualization, and the building blocks of do-it-yourself SaaS apps (datagrids, admin frameworks, editors). Headless CMS integrations were dropped at the outset. The note binds no decision; a choice among these would go through an RFC or, for small helpers, straight to a spec.
 
 ## 1. How reliable this is
 
@@ -10,7 +10,7 @@ Six research agents surveyed one area each. Three kinds of claim appear below an
 - **Unverified**: release dates, rendering-scale limits, licence details read from third-party summaries, exact library interface shapes recalled from memory, and everything about runtimes the engine docs do not mention. Prices and licence terms move; check them before shipping.
 - Two spot checks were made by hand: the engine really has points only (§3.4), and the engine's own WASM playground depends on NVL (§3.1).
 
-## 2. What a "starter" is here
+## 2. What a "demo" is here
 
 The surveys separated three kinds of work, which differ a great deal in cost:
 
@@ -18,7 +18,7 @@ The surveys separated three kinds of work, which differ a great deal in cost:
 |---|---|---|
 | Result transform | A function from query results to a library's data model | graph viz, datagrids, map layers |
 | Provider/contract | An implementation of a small, stable interface a framework already defines | an admin data provider |
-| Pattern kit | A runnable app and a recipe for one awkward problem | games, the editor starter |
+| Pattern kit | A runnable app and a recipe for one awkward problem | games, the editor demo |
 
 Only a few of these are packages in the sense `@relate/sveltekit` is. Most are small helpers plus a template app.
 
@@ -40,7 +40,7 @@ Only a few of these are packages in the sense `@relate/sveltekit` is. Most are s
 
 - Nothing here blocks on an asynchronous, worker-hosted data source; data is pushed in after an `await`. The friction is coordinates (Sigma and xyflow need a layout step) and mutation (force-graph).
 - Expanding a node's neighbours is incremental in Cytoscape, Sigma/graphology, vis-network and NVL, and re-render-from-state in force-graph and xyflow.
-- **NVL.** The engine's own WASM playground depends on it (`examples/wasm-playground/package.json`, `@neo4j-nvl/*` ^1.2.0). The agent could not read NVL's licence terms; one third-party registry says LPL-1.02 and an unofficial guide says Neo4j-products-only (both unverified). If the terms restrict use to Neo4j, that matters for the playground and for any starter. This needs a direct answer from Neo4j's side, not a guess.
+- **NVL.** The engine's own WASM playground depends on it (`examples/wasm-playground/package.json`, `@neo4j-nvl/*` ^1.2.0). The agent could not read NVL's licence terms; one third-party registry says LPL-1.02 and an unofficial guide says Neo4j-products-only (both unverified). If the terms restrict use to Neo4j, that matters for the playground and for any demo. This needs a direct answer from Neo4j's side, not a guess.
 - Practical scale limits (a few thousand nodes for canvas, tens of thousands for WebGL) are estimates; measure before promising numbers.
 - Commercial options (Ogma, KeyLines/ReGraph) and Cosmograph (GPU, very large graphs) were noted, not studied.
 
@@ -58,17 +58,17 @@ Only a few of these are packages in the sense `@relate/sveltekit` is. Most are s
 | melonJS | 1.9k | niche |
 | rot.js (`rot-js`) | 6.4k | roguelike toolkit; BSD-3-Clause; ~2.7k stars; latest 2.2.1 (2024-11-13), the release before it 2021-07-21; repo not archived (added later, §3.2.1) |
 
-Phaser is the main starter by audience; Kaplay is the low-friction second for short jams. No per-engine jam statistics were found (js13k mostly uses raw canvas or tiny libraries; Phaser sponsors js13k). Godot and Bevy web exports can reach a worker-hosted database only through fiddly interop and long builds; they were set aside (Bevy has its own note, `2026-11-08-bevy-integration.md`).
+Phaser is the main demo by audience; Kaplay is the low-friction second for short jams. No per-engine jam statistics were found (js13k mostly uses raw canvas or tiny libraries; Phaser sponsors js13k). Godot and Bevy web exports can reach a worker-hosted database only through fiddly interop and long builds; they were set aside (Bevy has its own note, `2026-11-08-bevy-integration.md`).
 
 **The pattern** is the real deliverable, and it is a recommendation, not a finding from sources: never await inside the frame loop; push `{id, cypher, params}` onto an outbox flushed once per frame or tick; resolve replies into typed events through the engine's emitter; let the frame loop read only a plain-JS cache that results patch; separate authoritative writes (applied to the cache optimistically), reads prefetched on scene entry, and slow analytics shown as "thinking"; batch statements per round trip and never block input on a reply.
 
-**Starter ideas that use Cypher, not just storage**: a quest and dialogue graph RPG (next-available choices, unfinished prerequisite chains); a social-sim village (gossip as a two-hop traversal); a crafting and tech tree (recipes whose inputs are all held; transitive unlocks); a roguelike map graph (shortest key-to-door path, unreachable rooms, loops); a detective mystery (the suspect with no alibi edge); a procedural world and faction war (influence spread by traversal). Prior art found: a dialogue-as-graph paper on Outer Worlds, a Godot quest-graph editor with optional Neo4j storage, a thesis on graph data for NPC acting.
+**Demo ideas that use Cypher, not just storage**: a quest and dialogue graph RPG (next-available choices, unfinished prerequisite chains); a social-sim village (gossip as a two-hop traversal); a crafting and tech tree (recipes whose inputs are all held; transitive unlocks); a roguelike map graph (shortest key-to-door path, unreachable rooms, loops); a detective mystery (the suspect with no alibi edge); a procedural world and faction war (influence spread by traversal). Prior art found: a dialogue-as-graph paper on Outer Worlds, a Godot quest-graph editor with optional Neo4j storage, a thesis on graph data for NPC acting.
 
-#### 3.2.1 rot.js: a turn-based starter (added after the survey)
+#### 3.2.1 rot.js: a turn-based demo (added after the survey)
 
 A side conversation proposed rot.js, which the games survey had not covered. Checked on 2026-11-08 against the npm registry, the GitHub API and the published 2.2.1 package's type declarations:
 
-- **Maintenance.** Stable and quiet, not abandoned: 6,369 downloads last week, 2.7k stars, BSD-3-Clause, not archived. The last release was 2.2.1 on 2024-11-13, two years ago, and the one before it was 2.2.0 in July 2021. A small ASCII toolkit that changes rarely suits a pinned hackathon starter, but there should be no expectation of fixes; it is far smaller than Phaser.
+- **Maintenance.** Stable and quiet, not abandoned: 6,369 downloads last week, 2.7k stars, BSD-3-Clause, not archived. The last release was 2.2.1 on 2024-11-13, two years ago, and the one before it was 2.2.0 in July 2021. A small ASCII toolkit that changes rarely suits a pinned hackathon demo, but there should be no expectation of fixes; it is far smaller than Phaser.
 - **Turn loop.** `Engine` has `lock()` and `unlock()` ("when this call returns, the loop is locked"), and the scheduler hands out actors with `next()`. An actor's turn can therefore wait on a worker query and call `unlock()` when the reply arrives. This replaces the outbox-and-cache workaround that a frame-based engine needs. The type declarations confirm the methods exist; the behaviour with a promise pending was not run.
 - **Graph shape.** `Digger` and `Uniform` extend `Dungeon`, which has `getRooms()` and `getCorridors()`; a `Room` has `getDoors()` and `getCenter()`. Rooms, corridors and doors map to nodes and edges, so Cypher can answer shortest key-to-door paths, unreachable rooms and loops (the roguelike-map idea in the list above). rot.js also ships A* and Dijkstra with unit edge costs, FOV, a display with ASCII and tile backends, and a seedable RNG, which makes demo worlds reproducible.
 - **Fit.** A good "turn-based" companion to Phaser and Kaplay: no art needed, small games with graph-driven mechanics (relationships, factions, dialogue, crafting). Graph-backed rooms and doors should live in the database, with rot.js doing display and field of view over a local array rebuilt from it.
@@ -105,7 +105,7 @@ A react-admin data provider over a graph is the best return of anything surveyed
 | Milkdown | MIT (unverified) | Markdown as native format, Yjs plugin |
 | Lexical, Plate, Novel, Yoopta, Editor.js | various | Plate and Novel are React-only; Editor.js is weak on inline nodes and collaboration |
 
-Recommended starter: BlockNote core only (never import an `xl-*` package, which would make the starter GPL-3.0; a CI check on imports would hold that line), Tiptap as the fallback and the choice for Vue or Svelte, CodeMirror 6 for a Markdown-source variant. No Obsidian-like app built on BlockNote or Tiptap was found; a GitHub search for `blocknote wikilink` and `tiptap backlinks` is the next step.
+Recommended demo: BlockNote core only (never import an `xl-*` package, which would make the demo GPL-3.0; a CI check on imports would hold that line), Tiptap as the fallback and the choice for Vue or Svelte, CodeMirror 6 for a Markdown-source variant. No Obsidian-like app built on BlockNote or Tiptap was found; a GitHub search for `blocknote wikilink` and `tiptap backlinks` is the next step.
 
 **Document-to-graph mapping (a sketch from the survey, not tested).** One `Doc` node per document (id, title, updated time, embedding, and the editor's JSON as the source of truth). The graph is a rebuildable projection: on a debounced save, delete the document's derived edges and recreate them. `[[wikilink]]` becomes `LINKS_TO` (an unresolved target creates a stub `Doc`, giving backlinks and unlinked mentions); `@mention` becomes `MENTIONS`; `#tag` becomes `TAGGED`; transclusion becomes `EMBEDS`. Only blocks that are link targets, transcluded or database rows need to be nodes. A live-query block stores its Cypher in block properties and re-runs in the worker. Database-view rows are `Doc` nodes with typed properties and relations as edges; rollups are Cypher aggregates. Blocks are ordered with fractional-index ranks. Hardest problems named: moves that keep block ids and transclusion edges, one writer per fact (editor versus database), undo (deriving the graph from the document makes it free for editor edits), rename propagation (link by id, not title), and collaboration with a derived index (each client re-derives, or one authority writes).
 
@@ -113,7 +113,7 @@ Recommended starter: BlockNote core only (never import an `xl-*` package, which 
 
 Spot-checked: the engine supports **points only**. `docs/guides/geospatial-queries.md` states "The Cypher dialect has points only", with `point()` in WGS-84 and cartesian forms, `point.distance()`, `point.withinBBox()`, and a `POINT INDEX` (an R-tree used only for those two predicate shapes). A tested recipe exists at `docs/cookbook/nearby-places.md`. There are no geometry types, no line or polygon values, no GeoJSON functions and no GeoArrow output; the guide says to keep GeoJSON as a string and do geometry in the host language (an earlier design note records that geometry types were dropped, ADR-0497). Whether points and the point index work in the WASM build is unverified: the WASM spec does not mention spatial support. This corrects an earlier assumption in this project that Arrow and WKB handling implied richer spatial support.
 
-A deck.gl or MapLibre demo is cheap for point layers (return longitude and latitude, filter by the viewport's bounding box so the index helps) and edges can be drawn as lines in the client. Polygons would be parsed in the browser. The agent's judgment, which this note adopts: a thin piece of glue, about a day, and a weaker showcase of the engine than the other areas. Build it as an example page inside another starter, not as an integration of its own.
+A deck.gl or MapLibre demo is cheap for point layers (return longitude and latitude, filter by the viewport's bounding box so the index helps) and edges can be drawn as lines in the client. Polygons would be parsed in the browser. The agent's judgment, which this note adopts: a thin piece of glue, about a day, and a weaker showcase of the engine than the other areas. Build it as an example page inside another demo, not as an integration of its own.
 
 ### 3.6 Server-side routes (the choice that shapes the SaaS kits)
 
@@ -129,7 +129,7 @@ Documented in the engine's docs: connections in one process share a database, re
 | Cloudflare Workers or Durable Objects, WASM | In-memory plausible; the engine's browser file store is dedicated-worker only, so persistence would be hand-rolled snapshots | Inference; needs an experiment |
 | Deno or Bun, WASM | Likely in-memory | Inference |
 
-Consequences for the kits: a shared-data SaaS app needs one long-lived process per store, and the application server must hold the credential and do tenant checks itself. A browser-only (local-first) kit avoids all of this and fits personal tools, the editor starter and the admin demo. Open experiments: whether the point functions run in the WASM build and what a point looks like in WASM output; whether the native package loads on Vercel or Lambda; whether the WASM module imports on Workers; the cost of saving and restoring a snapshot per tenant; whether Bun and Deno run koffi and the WASM build unchanged.
+Consequences for the kits: a shared-data SaaS app needs one long-lived process per store, and the application server must hold the credential and do tenant checks itself. A browser-only (local-first) kit avoids all of this and fits personal tools, the editor demo and the admin demo. Open experiments: whether the point functions run in the WASM build and what a point looks like in WASM output; whether the native package loads on Vercel or Lambda; whether the WASM module imports on Workers; the cost of saving and restoring a snapshot per tenant; whether Bun and Deno run koffi and the WASM build unchanged.
 
 ## 4. A first-batch proposal (not decided)
 
@@ -137,9 +137,9 @@ Ranked by time to an impressive demo, reach and how little it depends on unresol
 
 1. **react-admin data provider** (provider/contract): a small package plus a three-entity demo with a live Cypher panel. Local-first first.
 2. **Graph visualization helpers** (result transform): Cytoscape.js, Sigma.js with graphology, force-graph, plus a d3-force layout helper; xyflow for schema and node-editor apps. NVL only after its licence is answered.
-3. **Notion-style editor starter** (pattern kit): BlockNote core, with the document-to-graph mapping above, backlinks and a live-query block; the grid below for database views.
+3. **Notion-style editor demo** (pattern kit): BlockNote core, with the document-to-graph mapping above, backlinks and a live-query block; the grid below for database views.
 4. **TanStack Table with the grid-to-Cypher translator** (result transform), written so AG Grid can adopt the same translator later.
-5. **Phaser starter** (pattern kit) with the query-between-frames pattern, and one or two of the Cypher-heavy game ideas; Kaplay as a short-jam variant, and rot.js as the turn-based variant (§3.2.1) where the async query needs no frame-loop workaround.
+5. **Phaser demo** (pattern kit) with the query-between-frames pattern, and one or two of the Cypher-heavy game ideas; Kaplay as a short-jam variant, and rot.js as the turn-based variant (§3.2.1) where the async query needs no frame-loop workaround.
 6. **Geo**: one example page with points on MapLibre, after the WASM check.
 
 Nuxt stays deferred; the framework-agnostic helpers above reach Vue users without it.
@@ -148,6 +148,6 @@ Nuxt stays deferred; the framework-agnostic helpers above reach Vue users withou
 
 - Whether NVL's licence permits non-Neo4j use, and what that means for the playground.
 - Whether the first batch is local-first only, or includes a server-backed kit (a container running `relate serve` behind the application server).
-- Where the starters live: here, or in the website repository.
+- Where the demos live: here, or in the website repository.
 - Which items get an RFC and ADR, and which are lighter recipes; the translator and the data provider are the two with real interface design.
 - Whether Refine is worth supporting at all, given its unverified maintenance status.

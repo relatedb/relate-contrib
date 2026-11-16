@@ -3,7 +3,7 @@ id: RFC-006
 title: Application Graphs
 status: draft
 created: 2026-11-08
-adrs: [ADR-008, ADR-009]
+adrs: [ADR-008, ADR-009, ADR-011]
 ---
 
 # RFC-006: Application Graphs
@@ -129,5 +129,6 @@ A site may need both: a read-only content graph that is replaced at each release
 
 ## 8. ADRs
 
-- [ADR-008](../adr/ADR-008-react-admin-provider.md): A react-admin data provider over the core, with a local-first starter (proposed)
+- [ADR-008](../adr/ADR-008-react-admin-provider.md): A react-admin data provider over the core, with a local-first demo (proposed)
 - [ADR-009](../adr/ADR-009-application-graphs-in-the-core.md): Application graphs in the core as a named durable store with schema versions (accepted)
+- [ADR-011](../adr/ADR-011-phaser-path-explorer.md): The phaser-path-explorer, a Phaser demo with a separable hex library and a disclosure graph (accepted)
