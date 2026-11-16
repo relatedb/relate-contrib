@@ -29,6 +29,8 @@ export class MapScene extends Phaser.Scene {
   private drawn = -1;
   /** The sun and the day's light: the clock that is not a meter. */
   private sky: Phaser.GameObjects.Graphics | undefined;
+  private sun: Phaser.GameObjects.Image | undefined;
+  private sunTexture: Phaser.Textures.CanvasTexture | undefined;
   private hover: HexState | undefined;
   /** True after a key press until the pointer moves: only then is the preview of the faced hex shown. */
   private keyboard = false;
@@ -52,6 +54,12 @@ export class MapScene extends Phaser.Scene {
     this.thread = this.add.graphics().setScale(this.k).setDepth(2);
     this.overlay = this.add.graphics().setScale(this.k).setDepth(3);
     this.sky = this.add.graphics().setScale(this.k).setDepth(4);
+    // Four texture pixels per board cell give the large sun smooth gradients and rays without changing the map's scale.
+    const sunTexture = this.textures.createCanvas("sun", 64, 68);
+    if (!sunTexture) throw new Error('could not create texture "sun"');
+    this.sunTexture = sunTexture;
+    this.sunTexture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+    this.sun = this.add.image(0, 0, "sun").setScale(this.k / 4).setDepth(5);
 
     // keys, as in a space shooter: left and right turn (a sixth of a turn each), up acts on the hex ahead and down
     // on the hex behind; shift steps instead of extending; backspace reels in
@@ -136,8 +144,8 @@ export class MapScene extends Phaser.Scene {
   }
 
   /**
-   * The sun is the day's clock, not a meter: it crosses the sky as the steps drain, warm at dawn, pale at noon and an
-   * ember towards dusk, while the whole world's light cools underneath it. At dusk the day is over.
+   * The sun is the day's clock, not a meter: a hex-sized sprite crosses the sky as the steps drain, warm at dawn,
+   * pale at noon and an ember towards dusk, while the whole world's light cools underneath it. At dusk the day is over.
    */
   private drawSky(): void {
     const sky = this.sky;
@@ -147,7 +155,7 @@ export class MapScene extends Phaser.Scene {
     const [x0, yTop] = tileCentre(0, 0);
     const [x1, yBottom] = tileCentre(COLS - 1, ROWS - 1);
     const x = x0 + 1 + (x1 - 2 - x0) * f;
-    const y = yTop + 2.6 - 7.4 * 4 * f * (1 - f); // low at the horizons, high at noon
+    const y = yTop + 5.5 - 5.5 * 4 * f * (1 - f); // low at the horizons, high at noon, always in frame
     const mix = (a: number, b: number, t: number) => {
       const ca = Phaser.Display.Color.IntegerToColor(a);
       const cb = Phaser.Display.Color.IntegerToColor(b);
@@ -157,14 +165,63 @@ export class MapScene extends Phaser.Scene {
         Math.round(ca.blue + (cb.blue - ca.blue) * t),
       );
     };
-    const body = f < 0.5 ? mix(0xffd27f, 0xfff4c8, 2 * f) : mix(0xfff4c8, 0xff7a3f, 2 * (f - 0.5));
-    sky.fillStyle(body, 0.14);
-    sky.fillCircle(x, y, 2.2); // the halo
-    sky.fillStyle(body, 1);
-    sky.fillCircle(x, y, 0.95);
+    const body = f < 0.5 ? mix(0xffb45f, 0xfff4c8, 2 * f) : mix(0xfff4c8, 0xff6b3d, 2 * (f - 0.5));
+    const noon = Math.sin(Math.PI * f); // the rays strengthen to noon, then recede
+    const ray = mix(body, 0xffffee, 0.18 + 0.3 * noon);
+    this.paintSun(body, ray, noon);
+    this.sun?.setPosition(x * this.k, y * this.k);
     // the light cools as the day drains: dusk settles over the ground
     sky.fillStyle(0x0e1a3a, 0.3 * f * f);
     sky.fillRect(x0 - 1, yTop - 6, x1 - x0 + 3, yBottom - yTop + 7.5);
+  }
+
+  /** Paint one day's sun into its persistent texture: a full hex, with the rays at their strongest at noon. */
+  private paintSun(body: number, ray: number, noon: number): void {
+    const texture = this.sunTexture;
+    if (!texture) return;
+    const ctx = texture.getContext();
+    const rgba = (colour: number, alpha: number) => {
+      const c = Phaser.Display.Color.IntegerToColor(colour);
+      return `rgba(${c.red}, ${c.green}, ${c.blue}, ${alpha})`;
+    };
+    ctx.clearRect(0, 0, texture.width, texture.height);
+    ctx.save();
+    ctx.scale(4, 4); // texture pixels -> the 16 by 17 board-cell hex
+    const x = 8;
+    const y = 8.5;
+    const radius = 5.9 + 0.35 * noon;
+
+    const halo = ctx.createRadialGradient(x, y, radius * 0.65, x, y, 8.3);
+    halo.addColorStop(0, rgba(ray, 0.14 + 0.2 * noon));
+    halo.addColorStop(0.65, rgba(ray, 0.06 + 0.1 * noon));
+    halo.addColorStop(1, rgba(ray, 0));
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, 16, 17);
+
+    // Alternating ray lengths keep the disc legible as a sun even at the board's small pixel scale.
+    ctx.strokeStyle = rgba(ray, 0.3 + 0.7 * noon);
+    ctx.lineWidth = 0.35 + 0.4 * noon;
+    ctx.lineCap = "round";
+    for (let i = 0; i < 12; i++) {
+      const angle = (i * Math.PI) / 6;
+      const inner = radius + 0.35;
+      const outer = radius + 0.65 + 0.95 * noon + (i % 2 === 0 ? 0.2 : 0);
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(angle) * inner, y + Math.sin(angle) * inner);
+      ctx.lineTo(x + Math.cos(angle) * outer, y + Math.sin(angle) * outer);
+      ctx.stroke();
+    }
+
+    const disc = ctx.createRadialGradient(x - 1.5, y - 1.8, 0.4, x, y, radius);
+    disc.addColorStop(0, rgba(ray, 1));
+    disc.addColorStop(0.7, rgba(body, 1));
+    disc.addColorStop(1, rgba(body, 0.94));
+    ctx.fillStyle = disc;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    texture.refresh();
   }
 
   /** The size of the rings that mark the camp, the towers and the explorer: all the same. */
