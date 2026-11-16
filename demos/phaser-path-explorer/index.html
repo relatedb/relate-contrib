@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Path explorer</title>
+    <style>
+      :root { --surface-0: #002b43; --ink: #f2ead4; --ink-muted: #8fe3e8; }
+      html, body { margin: 0; height: 100%; background: var(--surface-0); color: var(--ink); }
+      body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+             font-family: "Public Sans", system-ui, sans-serif; }
+      #game { line-height: 0; }
+      #game canvas { image-rendering: pixelated; }
+      #status { font-size: 13px; color: var(--ink-muted); }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="status">Loading…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

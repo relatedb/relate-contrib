@@ -128,6 +128,6 @@ For RFC-006 (the RFC is not edited by this spike; the points below are text to c
 - **§7.7 and §7.10.** `persist()` cannot be assumed to be granted, and in Firefox it can wait on a prompt, so the core must not block on it. Quota in these profiles is in gigabytes.
 - **§7.9, naming.** A store name is one segment of at most 64 characters from `[A-Za-z0-9_-]`, so a name derived from an application id needs a mapping rule (and a collision rule); two names on one origin are independent.
 
-For ADR-008: a single provider statement is atomic only below the engine's batching threshold (about 10,000 entities for a bare `MATCH`); the provider's statements carry `WHERE` clauses on `id`, so this does not affect them, but the starter's reset and any migration must be written with the rule above.
+For ADR-008: a single provider statement is atomic only below the engine's batching threshold (about 10,000 entities for a bare `MATCH`); the provider's statements carry `WHERE` clauses on `id`, so this does not affect them, but the demo's reset and any migration must be written with the rule above.
 
 Not answered: RFC-006 §7.3 (one instance for both graphs, namespaces) and §7.4 and §7.8; behaviour under power loss; the cause of the long-run stalls; whether Firefox and WebKit behave like Chromium at one million nodes and beyond.

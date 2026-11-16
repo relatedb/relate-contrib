@@ -1,0 +1,685 @@
+{
+ "generatedBy": "scripts/extract-assets.mjs",
+ "source": "Relate by ABK design system",
+ "sourceVersion": "1794331993-33c7",
+ "cases": [
+  {
+   "axes": [
+    "ew",
+    "nesw"
+   ],
+   "style": "plain",
+   "over": "ew",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 15.5L12 1.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nesw"
+   ],
+   "style": "plain",
+   "over": "nesw",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 15.5L12 1.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nesw"
+   ],
+   "style": "junction",
+   "over": "ew",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 15.5L12 1.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nesw"
+   ],
+   "style": "junction",
+   "over": "nesw",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 15.5L12 1.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nesw"
+   ],
+   "style": "bridge",
+   "over": "ew",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 15.5L7.453 9.457M8.547 7.543L12 1.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nesw"
+   ],
+   "style": "bridge",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 15.5L12 1.5M0 8.5L6.898 8.5M9.102 8.5L16 8.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nesw"
+   ],
+   "style": "hop",
+   "over": "ew",
+   "expected": {
+    "d": "M0 8.5L6.08 8.5A1.92 1.92 0 0 1 9.92 8.5L16 8.5M4 15.5L8.516 7.597M9.389 6.069L12 1.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nesw"
+   ],
+   "style": "hop",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 15.5L7.047 10.167A1.92 1.92 0 0 1 8.953 6.833L12 1.5M0 8.5L5.2 8.5M6.96 8.5L16 8.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nwse"
+   ],
+   "style": "plain",
+   "over": "ew",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 1.5L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nwse"
+   ],
+   "style": "plain",
+   "over": "nwse",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 1.5L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nwse"
+   ],
+   "style": "junction",
+   "over": "ew",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 1.5L12 15.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nwse"
+   ],
+   "style": "junction",
+   "over": "nwse",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 1.5L12 15.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nwse"
+   ],
+   "style": "bridge",
+   "over": "ew",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 1.5L7.453 7.543M8.547 9.457L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nwse"
+   ],
+   "style": "bridge",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 1.5L12 15.5M0 8.5L6.898 8.5M9.102 8.5L16 8.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nwse"
+   ],
+   "style": "hop",
+   "over": "ew",
+   "expected": {
+    "d": "M0 8.5L6.08 8.5A1.92 1.92 0 0 1 9.92 8.5L16 8.5M4 1.5L6.611 6.069M7.484 7.597L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nwse"
+   ],
+   "style": "hop",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 1.5L7.047 6.833A1.92 1.92 0 0 1 8.953 10.167L12 15.5M0 8.5L9.04 8.5M10.8 8.5L16 8.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "ew"
+   ],
+   "style": "plain",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 15.5L12 1.5M0 8.5L16 8.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "ew"
+   ],
+   "style": "plain",
+   "over": "ew",
+   "expected": {
+    "d": "M4 15.5L12 1.5M0 8.5L16 8.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "ew"
+   ],
+   "style": "junction",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 15.5L12 1.5M0 8.5L16 8.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "ew"
+   ],
+   "style": "junction",
+   "over": "ew",
+   "expected": {
+    "d": "M4 15.5L12 1.5M0 8.5L16 8.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "ew"
+   ],
+   "style": "bridge",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 15.5L12 1.5M0 8.5L6.898 8.5M9.102 8.5L16 8.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "ew"
+   ],
+   "style": "bridge",
+   "over": "ew",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 15.5L7.453 9.457M8.547 7.543L12 1.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "ew"
+   ],
+   "style": "hop",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 15.5L7.047 10.167A1.92 1.92 0 0 1 8.953 6.833L12 1.5M0 8.5L5.2 8.5M6.96 8.5L16 8.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "ew"
+   ],
+   "style": "hop",
+   "over": "ew",
+   "expected": {
+    "d": "M0 8.5L6.08 8.5A1.92 1.92 0 0 1 9.92 8.5L16 8.5M4 15.5L8.516 7.597M9.389 6.069L12 1.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "nwse"
+   ],
+   "style": "plain",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 15.5L12 1.5M4 1.5L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "nwse"
+   ],
+   "style": "plain",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 15.5L12 1.5M4 1.5L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "nwse"
+   ],
+   "style": "junction",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 15.5L12 1.5M4 1.5L12 15.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "nwse"
+   ],
+   "style": "junction",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 15.5L12 1.5M4 1.5L12 15.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "nwse"
+   ],
+   "style": "bridge",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 15.5L12 1.5M4 1.5L7.453 7.543M8.547 9.457L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "nwse"
+   ],
+   "style": "bridge",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 1.5L12 15.5M4 15.5L7.453 9.457M8.547 7.543L12 1.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "nwse"
+   ],
+   "style": "hop",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 15.5L7.047 10.167A1.92 1.92 0 0 1 8.953 6.833L12 1.5M4 1.5L6.611 6.069M7.484 7.597L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nesw",
+    "nwse"
+   ],
+   "style": "hop",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 1.5L7.047 6.833A1.92 1.92 0 0 1 8.953 10.167L12 15.5M4 15.5L8.516 7.597M9.389 6.069L12 1.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "ew"
+   ],
+   "style": "plain",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 1.5L12 15.5M0 8.5L16 8.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "ew"
+   ],
+   "style": "plain",
+   "over": "ew",
+   "expected": {
+    "d": "M4 1.5L12 15.5M0 8.5L16 8.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "ew"
+   ],
+   "style": "junction",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 1.5L12 15.5M0 8.5L16 8.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "ew"
+   ],
+   "style": "junction",
+   "over": "ew",
+   "expected": {
+    "d": "M4 1.5L12 15.5M0 8.5L16 8.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "ew"
+   ],
+   "style": "bridge",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 1.5L12 15.5M0 8.5L6.898 8.5M9.102 8.5L16 8.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "ew"
+   ],
+   "style": "bridge",
+   "over": "ew",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 1.5L7.453 7.543M8.547 9.457L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "ew"
+   ],
+   "style": "hop",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 1.5L7.047 6.833A1.92 1.92 0 0 1 8.953 10.167L12 15.5M0 8.5L9.04 8.5M10.8 8.5L16 8.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "ew"
+   ],
+   "style": "hop",
+   "over": "ew",
+   "expected": {
+    "d": "M0 8.5L6.08 8.5A1.92 1.92 0 0 1 9.92 8.5L16 8.5M4 1.5L6.611 6.069M7.484 7.597L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "nesw"
+   ],
+   "style": "plain",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 1.5L12 15.5M4 15.5L12 1.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "nesw"
+   ],
+   "style": "plain",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 1.5L12 15.5M4 15.5L12 1.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "nesw"
+   ],
+   "style": "junction",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 1.5L12 15.5M4 15.5L12 1.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "nesw"
+   ],
+   "style": "junction",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 1.5L12 15.5M4 15.5L12 1.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "nesw"
+   ],
+   "style": "bridge",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 1.5L12 15.5M4 15.5L7.453 9.457M8.547 7.543L12 1.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "nesw"
+   ],
+   "style": "bridge",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 15.5L12 1.5M4 1.5L7.453 7.543M8.547 9.457L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "nesw"
+   ],
+   "style": "hop",
+   "over": "nwse",
+   "expected": {
+    "d": "M4 1.5L7.047 6.833A1.92 1.92 0 0 1 8.953 10.167L12 15.5M4 15.5L8.516 7.597M9.389 6.069L12 1.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "nwse",
+    "nesw"
+   ],
+   "style": "hop",
+   "over": "nesw",
+   "expected": {
+    "d": "M4 15.5L7.047 10.167A1.92 1.92 0 0 1 8.953 6.833L12 1.5M4 1.5L6.611 6.069M7.484 7.597L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nesw",
+    "nwse"
+   ],
+   "style": "plain",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 15.5L12 1.5M4 1.5L12 15.5",
+    "dots": []
+   }
+  },
+  {
+   "axes": [
+    "ew",
+    "nesw",
+    "nwse"
+   ],
+   "style": "junction",
+   "expected": {
+    "d": "M0 8.5L16 8.5M4 15.5L12 1.5M4 1.5L12 15.5",
+    "dots": [
+     [
+      8,
+      8.5,
+      1.2000000000000002
+     ]
+    ]
+   }
+  }
+ ]
+}

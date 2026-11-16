@@ -22,7 +22,7 @@ An application graph, the database behind an application whose data the visitor 
 - `persist()` was refused in Chromium and WebKit and waited on a prompt in Firefox.
 - The engine's JavaScript surface has no call to trigger a checkpoint, report size or export a snapshot. The graph data format (ADR-002) cannot carry integers beyond 2^53, whole-number floats, dates, durations, points or empty lists, and requires a string `id` on every node.
 
-What is missing is a contract in the core: a store that is not a cache, a version, a policy for each way a store can be unavailable, and a safe path out. RFC-006 describes the need. This ADR settles its open questions on the tab policy (7.1), the migration mechanism (7.2), one instance or two (7.3), unavailable storage (7.4), the export format (7.6), requesting persistence (7.7) and store names (7.9). It leaves open the engine requests (7.5, 7.12), reporting a damaged store (7.8), quota (7.10) and privacy on shared devices (7.11). The first consumer is the react-admin starter (ADR-008).
+What is missing is a contract in the core: a store that is not a cache, a version, a policy for each way a store can be unavailable, and a safe path out. RFC-006 describes the need. This ADR settles its open questions on the tab policy (7.1), the migration mechanism (7.2), one instance or two (7.3), unavailable storage (7.4), the export format (7.6), requesting persistence (7.7) and store names (7.9). It leaves open the engine requests (7.5, 7.12), reporting a damaged store (7.8), quota (7.10) and privacy on shared devices (7.11). The first consumer is the react-admin demo (ADR-008).
 
 ## 2. Decision
 
@@ -106,7 +106,7 @@ The package's tests, in all three browsers, cover: a worker terminated and a tab
 - Export refuses by default when the format would lose data, and an application with such values has no complete backup until a richer format or an engine snapshot export exists. This is a request to raise with the engine's maintainers, along with a call that triggers a checkpoint and reports store size; neither exists in the browser build, and the long-run stalls in SPIKE-008 (up to 421 ms) are unexplained.
 - Not measured: durability across power loss or an operating-system crash; Firefox and WebKit beyond 100,000 nodes; what a write does when the quota is exceeded; the time to migrate a large store.
 - To confirm at implementation and amend this ADR with the results: that typed reads detect each kind of loss in 2.5 (the engine documents `columnTypes` per column; its behaviour for a property that holds mixed types across nodes, and large integers, is not yet checked); the reopen sequence after a replaced worker in Chromium, where a busy terminated worker holds the store for about 3 s; and what the 5 s retry should be in application mode.
-- Follow-up work: adapters' helpers for application graphs; ADR-008's starter (which waits on this decision); a decision on one instance with namespaces; a decision on several tabs.
+- Follow-up work: adapters' helpers for application graphs; ADR-008's demo (which waits on this decision); a decision on one instance with namespaces; a decision on several tabs.
 
 ## 5. Related
 

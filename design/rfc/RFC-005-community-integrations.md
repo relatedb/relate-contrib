@@ -3,7 +3,7 @@ id: RFC-005
 title: Integrations for Community Projects and Hackathons
 status: draft
 created: 2026-11-08
-adrs: [ADR-008]
+adrs: [ADR-008, ADR-011]
 ---
 
 # RFC-005: Integrations for Community Projects and Hackathons
@@ -12,7 +12,7 @@ adrs: [ADR-008]
 
 RelateDB (relate) is an embedded property-graph database that speaks openCypher. In the browser it runs inside a Web Worker, behind a core package that gives a page asynchronous queries; results come back as columns and rows. A launch with a hackathon brings people who arrive with ideas: a game, a notes app, an admin tool, a map, a graph explorer. Their first hours go to wiring a database into whatever library they already use, and the wiring is the same few problems each time: shaping rows into a library's data model, bridging an asynchronous database to code that expects an answer now, turning a user interface's sort and filter state into safe queries, and giving records stable identities.
 
-The organizing claim is that the integrations worth building at this stage are starters, not a catalogue of adapters. A starter is a small, runnable application for one kind of project, with the helper it needs, chosen so that most ideas have a near neighbour to copy. Its purpose is to inspire community projects and lower the friction of adopting the database. Starters are built in one repository; needs that recur across them are extracted into shared libraries afterwards, once the repetition is visible.
+The organizing claim is that the integrations worth building at this stage are demos, not a catalogue of adapters. A demo is a small, runnable application for one kind of project, with the helper it needs, chosen so that most ideas have a near neighbour to copy. (Earlier drafts and the survey note called these starters; a demo is a working reference implementation and more than a template.) Its purpose is to inspire community projects and lower the friction of adopting the database. Demos are built in one repository; needs that recur across them are extracted into shared libraries afterwards, once the repetition is visible.
 
 This RFC settles what the integrations are for, how candidates are chosen, what kinds of work they involve, and how much design process each one gets. It does not choose the full list.
 
@@ -25,29 +25,29 @@ Integration with web frameworks is covered: adapters exist for four frameworks a
 - **Frame loops cannot wait.** A game's update runs many times a second and cannot await a database in a worker. Turn-based games can pause for an answer; frame-based ones need a cache and a queue. The right pattern is easy to describe and easy to get wrong.
 - **Frameworks define small data contracts.** An admin framework's data provider is a short list of methods (list, get, create, update, delete, references). One implementation gives a working multi-screen application over a graph. Relationships map onto its reference fields, but the mapping has to be designed: foreign key versus edge, direction, stable ids.
 - **Editors need a derived graph.** A block or Markdown editor keeps its document in its own format; links, backlinks, tags and embedded queries have to be projected into the graph on save, in a way that survives moves, renames and undo.
-- **Some dependencies bind their users.** Several candidate libraries hold their useful features behind a paywall or a copyleft licence for add-on packages. A starter that depends on one hands those terms to every project that copies it.
-- **The engine has limits a starter must respect.** Spatial support is points only, with no lines or polygons. A browser instance is private to a visitor. A shared, durable store needs one long-lived writer process, and the server's single shared credential does no per-user authentication.
+- **Some dependencies bind their users.** Several candidate libraries hold their useful features behind a paywall or a copyleft licence for add-on packages. A demo that depends on one hands those terms to every project that copies it.
+- **The engine has limits a demo must respect.** Spatial support is points only, with no lines or polygons. A browser instance is private to a visitor. A shared, durable store needs one long-lived writer process, and the server's single shared credential does no per-user authentication.
 
-The relate core team is building the common interface components and the agent integration. Games, third-party graph visualization, map visualization and the building blocks of do-it-yourself SaaS applications are outside that work. Without starters for them, every hackathon project begins with the same integration task, and the variety of what the database can do goes unseen.
+The relate core team is building the common interface components and the agent integration. Games, third-party graph visualization, map visualization and the building blocks of do-it-yourself SaaS applications are outside that work. Without demos for them, every hackathon project begins with the same integration task, and the variety of what the database can do goes unseen.
 
 ## 3. Goals
 
-- **Inspire.** Each starter is a working application a participant can run, change and show within hours, not a fragment. Together the starters span application types (administrative tools, document editors, graph and data visualization, games, maps) so that most project ideas have a close example.
+- **Inspire.** Each demo is a working application a participant can run, change and show within hours, not a fragment. Together the demos span application types (administrative tools, document editors, graph and data visualization, games, maps) so that most project ideas have a close example.
 - **Lower adoption friction.** The path from a clean checkout to a first query on screen takes minutes. The integration problem is already solved when a participant starts.
-- **Run locally first, and keep the data.** The first batch runs entirely in the browser with no server, so participants install nothing but the starter's own dependencies and share no data between visitors. A visitor's data persists across reloads and return visits: the starters are applications, and the persistence they rely on is the subject of RFC-006.
-- **Find the common needs.** Starters live in this repository so that repetition across them is visible. Result shaping, safe construction of queries from interface state, the asynchronous-to-synchronous bridge, stable record identity and data seeding are the expected candidates. A need is extracted into a shared library when starters demonstrate it, not before.
-- **Grow the ecosystem.** Starters depend on libraries from the wider open ecosystem. They do not depend on products owned by the engine's vendor, and they favour permissive licences that leave a participant's project free of obligations.
-- **Spend process in proportion.** This RFC covers the program. Each starter records its own decisions in a short ADR; a target that turns out to need real design gets a fuller treatment.
+- **Run locally first, and keep the data.** The first batch runs entirely in the browser with no server, so participants install nothing but the demo's own dependencies and share no data between visitors. A visitor's data persists across reloads and return visits: the demos are applications, and the persistence they rely on is the subject of RFC-006.
+- **Find the common needs.** Demos live in this repository so that repetition across them is visible. Result shaping, safe construction of queries from interface state, the asynchronous-to-synchronous bridge, stable record identity and data seeding are the expected candidates. A need is extracted into a shared library when demos demonstrate it, not before.
+- **Grow the ecosystem.** Demos depend on libraries from the wider open ecosystem. They do not depend on products owned by the engine's vendor, and they favour permissive licences that leave a participant's project free of obligations.
+- **Spend process in proportion.** This RFC covers the program. Each demo records its own decisions in a short ADR; a target that turns out to need real design gets a fuller treatment.
 
 ## 4. Non-Goals
 
-- Covering every library in a category, or every framework. Each category gets a few representative starters.
+- Covering every library in a category, or every framework. Each category gets a few representative demos.
 - Replacing the core team's interface components or agent integration.
 - Server-backed, multi-user kits in the first batch. Shared durable data is a separate shape of application (one writer per store, a proxy, application-side tenant checks) and is taken up later.
 - Headless content-management systems.
-- New engine capabilities. Gaps found while building starters (richer spatial types, for instance) are raised with the engine's maintainers, not worked around inside a starter.
-- A promise of long-term compatibility with every release of a third-party library. Starters pin versions.
-- Choosing the complete list of starters or their order beyond the first one.
+- New engine capabilities. Gaps found while building demos (richer spatial types, for instance) are raised with the engine's maintainers, not worked around inside a demo.
+- A promise of long-term compatibility with every release of a third-party library. Demos pin versions.
+- Choosing the complete list of demos or their order beyond the first one.
 
 ## 5. Proposed Approach (high-level)
 
@@ -61,7 +61,7 @@ The candidates differ in cost, and the differences set how much process each nee
 | Contract implementation | An implementation of an interface a framework already defines | small to medium |
 | Pattern kit | A runnable application plus a recipe for one awkward problem | medium |
 
-None of them needs a hosting adapter's lifecycle machinery. The framework adapters stay as they are; starters build on the core package.
+None of them needs a hosting adapter's lifecycle machinery. The framework adapters stay as they are; demos build on the core package.
 
 ### 5.2 Choosing candidates
 
@@ -71,50 +71,51 @@ A candidate is judged on:
 - how well it fits an asynchronous, worker-hosted data source;
 - licence terms, and whether any needed feature sits behind a paywall or copyleft;
 - signs of continued maintenance;
-- whether the starter exercises the graph (paths, neighbourhoods, aggregates) and not only storage.
+- whether the demo exercises the graph (paths, neighbourhoods, aggregates) and not only storage.
 
-The survey note holds the candidate libraries with their figures. A first ordering favours a data provider for an admin framework, because its contract is small and its demo is broad: several linked entities with list, filter, edit and relation pickers, all in the browser. Graph-visualization helpers, a document-editor starter, a datagrid-to-query translator, a frame-based and a turn-based game starter, and a map example follow, in an order the ADRs settle.
+The survey note holds the candidate libraries with their figures. A first ordering favours a data provider for an admin framework, because its contract is small and its demo is broad: several linked entities with list, filter, edit and relation pickers, all in the browser. Graph-visualization helpers, a document-editor demo, a datagrid-to-query translator, a frame-based and a turn-based game demo, and a map example follow, in an order the ADRs settle.
 
-### 5.3 Starters first, shared libraries by extraction
+### 5.3 Demos first, shared libraries by extraction
 
-Starters are built in this repository, each on the core package. When two starters need the same thing, the second one's work includes extracting it into a shared library that both use. The shared libraries then become what later integrations, and community projects, build on. Extraction driven by evidence keeps the libraries small and fitted to real use.
+Demos are built in this repository, each on the core package. When two demos need the same thing, the second one's work includes extracting it into a shared library that both use. The shared libraries then become what later integrations, and community projects, build on. Extraction driven by evidence keeps the libraries small and fitted to real use.
 
 ### 5.4 Process
 
-This RFC states the goals and the approach. Each starter, or family of starters with the same shape, records one short ADR: which library, what the helper does, how it is checked. A target with real design in it (a second runtime, a document model, a server) gets its own RFC or a fuller ADR. Each starter has an automated check that it builds and answers a query, so it does not decay between launches.
+This RFC states the goals and the approach. Each demo, or family of demos with the same shape, records one short ADR: which library, what the helper does, how it is checked. A target with real design in it (a second runtime, a document model, a server) gets its own RFC or a fuller ADR. Each demo has an automated check that it builds and answers a query, so it does not decay between launches.
 
 ### 5.5 Cross-cutting concerns
 
 - **Licences** are checked before a library is adopted, including the terms of add-on packages.
 - **Safe queries.** Anything that builds a query from user interface state takes identifiers from a declared list and binds values as parameters.
-- **Identity.** The engine's internal ids can be reused, so starters give records an application-assigned stable id.
-- **Local data.** Starters seed their data once, keep what the visitor writes, and say what a visitor clearing browser storage or opening a second tab loses or sees.
+- **Identity.** The engine's internal ids can be reused, so demos give records an application-assigned stable id.
+- **Local data.** Demos seed their data once, keep what the visitor writes, and say what a visitor clearing browser storage or opening a second tab loses or sees.
 
 ## 6. Alternatives Considered
 
 - **An adapter package for every library.** Rejected: most libraries need a function or a small provider, not a lifecycle, and a package per library multiplies maintenance for little gain at launch.
 - **Written recipes without runnable code.** Rejected: a recipe cannot be run or checked, drifts from the libraries it describes, and leaves the participant doing the setup.
-- **Shared libraries designed first, starters afterwards.** Rejected: which needs recur is unknown until starters exist, and libraries designed in advance are shaped by guesses.
+- **Shared libraries designed first, demos afterwards.** Rejected: which needs recur is unknown until demos exist, and libraries designed in advance are shaped by guesses.
 - **Leaving integrations to the community.** Rejected: the first participants would have nothing to copy, and the same integration problems would be solved separately each time.
 
 ## 7. Open Questions
 
-7.1. Which starters make up the first batch, and in what order? A data provider for an admin framework leads; the rest of the survey's candidates are open, and each ADR settles one.
+7.1. Which demos make up the first batch, and in what order? A data provider for an admin framework leads; the rest of the survey's candidates are open, and each ADR settles one.
 
-7.2. Where does a slim ADR end and a full RFC begin? Candidate triggers: a starter that adds a second runtime, introduces a document or data model other starters would share, or needs a server.
+7.2. Where does a slim ADR end and a full RFC begin? Candidate triggers: a demo that adds a second runtime, introduces a document or data model other demos would share, or needs a server.
 
-7.3. Which shared libraries are likely, and what triggers an extraction: the second starter that needs it, or the third?
+7.3. Which shared libraries are likely, and what triggers an extraction: the second demo that needs it, or the third?
 
-7.4. Beyond what the core provides for application graphs (RFC-006), what do starters promise their visitors: a reset-demo-data control, an export, a notice when storage is unavailable?
+7.4. Beyond what the core provides for application graphs (RFC-006), what do demos promise their visitors: a reset-demo-data control, an export, a notice when storage is unavailable?
 
-7.5. How are starters maintained after the hackathon, and how are updates and breakages in third-party libraries noticed?
+7.5. How are demos maintained after the hackathon, and how are updates and breakages in third-party libraries noticed?
 
-7.6. Should a shared library prescribe stable application ids for nodes and relationships, or leave identity to each starter?
+7.6. Should a shared library prescribe stable application ids for nodes and relationships, or leave identity to each demo?
 
 7.7. When does a server-backed kit come, and for whom, given one writer process per store and a single shared credential?
 
-7.8. How is success measured: time from a clean checkout to a first query, the number of participant projects that began from a starter, or something else?
+7.8. How is success measured: time from a clean checkout to a first query, the number of participant projects that began from a demo, or something else?
 
 ## 8. ADRs
 
-- ADR-008: a react-admin data provider over the core, with a local-first starter
+- ADR-008: a react-admin data provider over the core, with a local-first demo
+- ADR-011: the phaser-path-explorer, a Phaser demo with a separable hex library and a disclosure graph

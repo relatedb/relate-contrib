@@ -16,7 +16,7 @@ The shared core package (`@relate/web`, specification `specs/001-core-package/sp
 
 Three kinds of people depend on it:
 
-- **Application authors** (and the starters that follow, such as the react-admin provider of ADR-008) want a graph that is there when the visitor returns, with a seed, a schema version and a way to change the schema.
+- **Application authors** (and the demos that follow, such as the react-admin provider of ADR-008) want a graph that is there when the visitor returns, with a seed, a schema version and a way to change the schema.
 - **Adapter authors** later wrap this in framework helpers and need one dependable contract.
 - **Visitors** type records into an application and never see the package, but they feel a reload that empties the application, a second tab that overwrites their work, or a release that loses their data.
 
@@ -268,5 +268,5 @@ The items ADR-009 left for implementation are tested, and the ADR is amended wit
 - **Timeouts**: seed loading and migration statements are the application author's, not the visitor's, and are not subject to the visitor-statement timeout (constitution principle IV); they are written to survive interruption.
 - **Export fidelity**: whether typed reads detect each loss kind is unverified at specification time; User Story 7 settles it.
 - **Not measured**: durability across power loss; Firefox and WebKit beyond 100,000 nodes; behaviour when the quota is exceeded; the time to migrate a large store; the cause of the occasional write stalls seen in SPIKE-008.
-- **Out of scope**: adapter helpers for application mode, one instance holding a content and an application graph in namespaces, several tabs sharing the store, engine changes, synchronization between devices or visitors, encryption, the react-admin package and starter (ADR-008), and changes to the content-graph cache.
+- **Out of scope**: adapter helpers for application mode, one instance holding a content and an application graph in namespaces, several tabs sharing the store, engine changes, synchronization between devices or visitors, encryption, the react-admin package and demo (ADR-008), and changes to the content-graph cache.
 - **Names**: the package is `@relate/web`; the store prefix is `app-`; the internal prefix `rel-` is unchanged for the content cache; the engine package is `@relate/relate-wasm`.
