@@ -44,7 +44,7 @@ async function start(): Promise<void> {
   const hud = (s: GameState) => {
     const storage = client.storage;
     say(
-      `waymarks ${s.player.waymarks} · health ${s.player.health}${s.message ? ` · ${s.message}` : ""} · ←/→ turn · ↑ forward · ↓ back · shift step · backspace reel in · storage: ${storage.kind}${storage.reason ? ` (${storage.reason})` : ""} · seed: ${seed}`,
+      `steps ${s.player.steps} · waymarkers ${s.player.markers}${s.message ? ` · ${s.message}` : ""} · ←/→ turn · ↑ forward · ↓ back · shift step · backspace reel in · p place waymarker · e end the day · storage: ${storage.kind}${storage.reason ? ` (${storage.reason})` : ""} · seed: ${seed}`,
     );
   };
   const game = new Phaser.Game({

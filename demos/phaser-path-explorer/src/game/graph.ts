@@ -3,7 +3,7 @@
 import type { Client, GraphDocument, Properties } from "@relate/web";
 import { neighbours, toAxial, type Tile, type Terrain, type Feature } from "../hex/core/index.js";
 import { latticeAsset } from "../hex/assets/index.js";
-import { START_WAYMARKS } from "./world.js";
+import { START_MARKERS, START_STEPS } from "./world.js";
 
 export const APPLICATION = { name: "phaser-path-explorer", version: 1 } as const;
 
@@ -50,7 +50,7 @@ export function worldDocument(rows: string[]): GraphDocument {
       }
     }
   });
-  nodes.push({ id: "player", labels: ["Player"], properties: { at: hexId(...(camp.split(",").map(Number) as [number, number])), health: 3, waymarks: START_WAYMARKS } });
+  nodes.push({ id: "player", labels: ["Player"], properties: { at: hexId(...(camp.split(",").map(Number) as [number, number])), steps: START_STEPS, markers: START_MARKERS } });
   return { version: 1, nodes, links };
 }
 

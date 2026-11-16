@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { Bridge } from "../src/game/bridge.js";
 import { GameState } from "../src/game/state.js";
-import { COLS, ROWS, START_WAYMARKS, generateRows } from "../src/game/world.js";
+import { COLS, ROWS, START_MARKERS, START_STEPS, generateRows } from "../src/game/world.js";
 import { neighbours } from "../src/hex/core/index.js";
 import { engineBuilt, openEngine, seedWorld } from "./helpers/engine.js";
 
@@ -13,6 +13,12 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
   let state: GameState;
   let bridge: Bridge;
   const rows = generateRows("first-light");
+
+  /** Refill the day in the cache and the graph: long walks in these tests are not about the step budget. */
+  async function freshDay(): Promise<void> {
+    await bridge.enqueue("MATCH (pl:Player) SET pl.steps = $n", { n: START_STEPS });
+    state.player = { ...state.player, steps: START_STEPS };
+  }
 
   beforeEach(async () => {
     const engine = await openEngine();
@@ -31,7 +37,8 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       else expect(t.terrain, t.id).toBeDefined();
     }
     expect(byState).toEqual({ hidden: COLS * ROWS - 7, sensed: 6, seen: 0, path: 1 });
-    expect(state.player.waymarks).toBe(START_WAYMARKS);
+    expect(state.player.markers).toBe(START_MARKERS);
+    expect(state.player.steps).toBe(START_STEPS);
     expect(state.here()?.feature).toBe("tent");
   });
 
@@ -42,7 +49,8 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
     await state.extend(hidden.id);
     expect(bridge.pending).toBe(before);
     expect(state.message).not.toBe("");
-    expect(state.player.waymarks).toBe(START_WAYMARKS);
+    expect(state.player.markers).toBe(START_MARKERS);
+    expect(state.player.steps).toBe(START_STEPS);
   });
 
   it("extends onto a sensed neighbour: the hex joins the path, the explorer moves, new hexes are sensed", async () => {
@@ -56,7 +64,8 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
     expect(state.version).toBeGreaterThan(version);
     expect(state.tiles.get(target.id)!.state).toBe("path");
     expect(state.player.at).toBe(target.id);
-    expect(state.player.waymarks).toBe(START_WAYMARKS - 1);
+    expect(state.player.steps).toBe(START_STEPS - 1);
+    expect(state.player.markers).toBe(START_MARKERS);
     const sensed = [...state.tiles.values()].filter((t) => t.state === "sensed");
     expect(sensed.length).toBeGreaterThan(4); // the camp's other neighbours and the new ones
     for (const t of sensed) expect(t.terrain, t.id).toBeDefined(); // the new ones arrive with their terrain
@@ -87,6 +96,7 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
         .map(([c, r]) => state.tileAt(c, r))
         .filter((t): t is NonNullable<typeof t> => !!t && state.canExtend(t.id) && dist.has(`${t.col},${t.row}`))
         .sort((a, b) => Math.hypot(a.col - tower.col, a.row - tower.row) - Math.hypot(b.col - tower.col, b.row - tower.row))[0]!;
+      if (state.player.steps <= 1) await freshDay();
       await state.extend(next.id);
     }
     expect(state.player.at).toBe(tower.id);
@@ -113,6 +123,7 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
         .map(([c, r]) => state.tileAt(c, r))
         .filter((t): t is NonNullable<typeof t> => !!t && state.canExtend(t.id) && dist.has(`${t.col},${t.row}`))
         .sort((a, b) => Math.hypot(a.col - tower.col, a.row - tower.row) - Math.hypot(b.col - tower.col, b.row - tower.row))[0]!;
+      if (state.player.steps <= 1) await freshDay();
       await state.click(next.id);
     }
     return tower.id;
@@ -147,7 +158,8 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       await state.go();
       expect(state.player.at).toBe(target.id);
       expect(state.edges).toHaveLength(1);
-      expect(state.player.waymarks).toBe(START_WAYMARKS - 1);
+      expect(state.player.steps).toBe(START_STEPS - 1);
+    expect(state.player.markers).toBe(START_MARKERS);
       expect(state.facing).toBe("se");
       await state.go(); // straight on, the same direction
       expect(state.edges).toHaveLength(2);
@@ -157,12 +169,13 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
     it("moving behind reels the thread in when that hex is where it came from, and leaves the facing alone", async () => {
       await state.go(); // east
       await state.go(); // east again
-      expect(state.player.waymarks).toBe(START_WAYMARKS - 2);
+      expect(state.player.steps).toBe(START_STEPS - 2);
       await state.go(true); // behind: the hex the thread came from
-      expect(state.player.waymarks).toBe(START_WAYMARKS - 1);
+      expect(state.player.steps).toBe(START_STEPS - 3); // reeling in costs a step like any move
+      expect(state.player.markers).toBe(START_MARKERS);
       expect(state.facing).toBe("e"); // still facing the way the thread ran, so the next press extends again
       await state.go();
-      expect(state.player.waymarks).toBe(START_WAYMARKS - 2);
+      expect(state.player.steps).toBe(START_STEPS - 4);
     });
 
     it("turns to face a neighbour that is clicked, even when the click can do nothing", async () => {
@@ -187,7 +200,8 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
 
     it("previews what the next press would do without doing it", () => {
       expect(state.intent(state.faced()!.id)).toEqual({ kind: "extend" });
-      expect(state.player.waymarks).toBe(START_WAYMARKS);
+      expect(state.player.markers).toBe(START_MARKERS);
+    expect(state.player.steps).toBe(START_STEPS);
       expect(state.intent(state.faced()!.id, true).kind).toBe("none");
       expect(state.edges).toEqual([]);
     });
@@ -213,14 +227,15 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       expect(state.predecessor()).toBe(camp);
     });
 
-    it("reels in when the hex behind the thread is clicked, and gives the waymark back", async () => {
+    it("reels the path in when the hex behind is clicked: costs a step, and the ground is remembered", async () => {
       const camp = state.player.at;
       const a = [...state.tiles.values()].find((t) => t.state === "sensed")!;
       await state.click(a.id);
-      expect(state.player.waymarks).toBe(START_WAYMARKS - 1);
-      await state.click(camp);
+      expect(state.player.steps).toBe(START_STEPS - 1);
+      await state.click(camp); // reel in: one step, like any move
       expect(state.player.at).toBe(camp);
-      expect(state.player.waymarks).toBe(START_WAYMARKS);
+      expect(state.player.steps).toBe(START_STEPS - 2);
+      expect(state.player.markers).toBe(START_MARKERS);
       expect(state.edges).toEqual([]);
       expect(state.tiles.get(a.id)!.state).toBe("seen"); // remembered, no longer on a path
     });
@@ -233,10 +248,10 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       await state.click(a.id, { step: true }); // a seen hex next to the camp: a step
       expect(state.player.at).toBe(a.id);
       expect(state.edges).toEqual([]);
-      expect(state.player.waymarks).toBe(START_WAYMARKS);
+      expect(state.player.steps).toBe(START_STEPS - 3); // extend, reel in, step
     });
 
-    it("extends over remembered ground, not just unexplored ground: a click lays thread and costs a waymark", async () => {
+    it("extends over remembered ground, not just unexplored ground: a click lays path and costs a step", async () => {
       const camp = state.player.at;
       const a = [...state.tiles.values()].find((t) => t.state === "sensed")!;
       await state.click(a.id);
@@ -244,14 +259,16 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       expect(state.tiles.get(a.id)!.state).toBe("seen");
       await state.click(a.id);
       expect(state.edges).toEqual([{ from: camp, to: a.id, kind: "LOOSE" }]);
-      expect(state.player.waymarks).toBe(START_WAYMARKS - 1);
+      expect(state.player.steps).toBe(START_STEPS - 3); // extend, reel in, extend again
+      expect(state.player.markers).toBe(START_MARKERS);
       expect(state.player.at).toBe(a.id);
     });
 
     it("crosses a secured path with a new thread, and the crossed hex stays on its path", async () => {
       await walkToTower();
+      await freshDay();
       const camp = [...state.tiles.values()].find((t) => t.feature === "tent")!;
-      await state.click(camp.id); // skip home
+      await state.click(camp.id); // travel home, for one step
       // the first hex of the secured route, next to the camp, and a sensed hex that is next to both it and the camp
       const first = state.edges.find((e) => e.from === camp.id)!.to;
       const p1 = state.tiles.get(first)!;
@@ -289,19 +306,22 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       expect(graph[0]!["n"]).toBe(0);
     });
 
-    it("skips from one anchor to another along secured paths, in one turn", async () => {
+    it("travels from one anchor to another along secured paths, for one step", async () => {
       const tower = await walkToTower();
+      await freshDay();
       const camp = [...state.tiles.values()].find((t) => t.anchor && t.feature === "tent")!;
       await state.click(camp.id);
+      expect(state.player.steps).toBe(START_STEPS - 1); // one step, not one per hex
       expect(state.player.at).toBe(camp.id);
       await state.click(tower);
       expect(state.player.at).toBe(tower);
     });
 
-    it("will not skip while a thread is in play", async () => {
+    it("will not travel while a path is in play", async () => {
       const tower = await walkToTower();
+      await freshDay();
       const camp = [...state.tiles.values()].find((t) => t.feature === "tent")!;
-      await state.click(camp.id); // skip home
+      await state.click(camp.id); // travel home
       const next = [...state.tiles.values()].find((t) => t.state === "sensed" && state.canExtend(t.id))!;
       await state.click(next.id); // a new loose thread from the camp
       expect(state.loose()).toHaveLength(1);
@@ -309,7 +329,7 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       expect(state.player.at).toBe(camp.id);
       await state.click(tower);
       expect(state.player.at).toBe(camp.id);
-      expect(state.message).toMatch(/reel in or secure/i);
+      expect(state.message).toMatch(/bank or abandon/i);
     });
 
     it("will not start a second thread from the middle of a path", async () => {
@@ -325,6 +345,45 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       await state.click(sensed.id);
       expect(state.message).toMatch(/from an anchor/i);
       expect(state.tiles.get(sensed.id)!.state).toBe("sensed");
+    });
+  });
+
+  describe("the day", () => {
+    it("banks the path with a waymarker: secured ground, home, the steps refilled", async () => {
+      const camp = state.player.at;
+      const a = [...state.tiles.values()].find((t) => t.state === "sensed" && state.canExtend(t.id))!;
+      await state.click(a.id);
+      expect(state.player.steps).toBe(START_STEPS - 1);
+      await state.placeWaymarker();
+      expect(state.player.at).toBe(camp);
+      expect(state.player.steps).toBe(START_STEPS);
+      expect(state.player.markers).toBe(START_MARKERS - 1);
+      expect(state.edges.length).toBeGreaterThan(0);
+      expect(state.edges.every((e) => e.kind === "SECURED")).toBe(true);
+      expect(state.tiles.get(a.id)!.anchor).toBe(true);
+      expect(state.tiles.get(a.id)!.state).toBe("path"); // banked: the ground stays known
+      expect(state.message).toMatch(/banked/i);
+    });
+
+    it("ends the day on exhaustion: home, refilled, and the unsecured ground forgotten", async () => {
+      const camp = state.player.at;
+      const first = [...state.tiles.values()].find((t) => t.state === "sensed" && state.canExtend(t.id))!;
+      await state.click(first.id);
+      const second = [...state.tiles.values()].find((t) => t.state === "sensed" && state.canExtend(t.id))!;
+      await state.click(second.id);
+      await state.endDay();
+      expect(state.player.at).toBe(camp);
+      expect(state.player.steps).toBe(START_STEPS);
+      expect(state.edges).toEqual([]);
+      expect(state.tiles.get(second.id)!.state).toBe("hidden"); // its ground is forgotten
+      expect(state.tiles.get(second.id)!.terrain).toBeUndefined();
+      expect(state.tiles.get(first.id)!.state).toBe("sensed"); // the camp discloses its neighbour again
+    });
+
+    it("reports the win only when both towers are joined", async () => {
+      expect(await state.won()).toBe(false);
+      await walkToTower();
+      expect(await state.won()).toBe(false); // one tower of two
     });
   });
 });

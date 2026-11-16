@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateRows, landDistances, COLS, ROWS, START_WAYMARKS } from "../src/game/world.js";
+import { generateRows, landDistances, COLS, ROWS, START_STEPS } from "../src/game/world.js";
 import { worldDocument } from "../src/game/graph.js";
 import { neighbours } from "../src/hex/core/index.js";
 
@@ -64,7 +64,7 @@ describe("terrain variety", () => {
 });
 
 describe("reach", () => {
-  it("puts at least two towers within the starting waymarks of the camp, by land, for any seed", () => {
+  it("puts at least two towers within a day's steps of the camp, by land, for any seed", () => {
     for (const seed of ["first-light", "another", "tide", "ember", "moss", "x9", "a", "b", "c", "d", "e", "f", "g", "h"]) {
       const rows = generateRows(seed);
       const dist = landDistances(rows, [Math.floor(COLS / 2), Math.floor(ROWS / 2)]);
@@ -72,7 +72,7 @@ describe("reach", () => {
       rows.forEach((r, row) =>
         [...r].forEach((ch, col) => {
           const d = dist.get(`${col},${row}`);
-          if ((ch === "R" || ch === "U") && d !== undefined && d <= START_WAYMARKS) near++;
+          if ((ch === "R" || ch === "U") && d !== undefined && d <= START_STEPS) near++;
         }),
       );
       expect(near, seed).toBeGreaterThanOrEqual(2);

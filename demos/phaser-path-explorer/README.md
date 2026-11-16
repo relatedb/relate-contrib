@@ -4,29 +4,37 @@ A Phaser demo where exploring is querying. An explorer extends a thread across a
 embedded Relate graph in the browser. The design is `design/notes/2026-11-10-phaser-path-explorer.md`; the decisions are
 `design/adr/ADR-011-phaser-path-explorer.md`. Rules are expected to change in play testing.
 
-## Status: slice 2 (the thread)
+## Status: slice 3 (the waymarker expedition)
 
 A seeded 22 by 20 world is stored as an application graph (a durable graph in the browser, ADR-009). The board starts as
-fog; the camp and its six neighbours are known. You play by clicking:
+fog; the camp and its six neighbours are known. You play in **days**: each day is **12 steps** (extending, stepping,
+reeling in and travelling all cost one) and you carry **5 waymarkers**. Join both towers to the camp with secured paths to
+win.
 
 Mouse:
 
-- a hex next to you: **extend** the thread onto it (one waymark), over unexplored or remembered ground, or across a path
-  while a thread is in play; from an anchor, or from the end of your thread
-- the hex behind your thread: **reel in** (the waymark comes back)
-- shift-click a known hex next to you: **step** (no thread); with no thread in play, a plain click on a path also steps
-- another anchor, from an anchor: **skip** along secured paths
+- a hex next to you: **extend** the path onto it (one step), over unexplored or remembered ground, or across a path
+  while a path is in play; from an anchor, or from the end of your path
+- the hex behind your path: **reel in** (one step)
+- shift-click a known hex next to you: **step** (no path); with no path in play, a plain click on a path also steps
+- another anchor, from an anchor: **travel** for one step along secured paths
+- reaching a tower secures the path but does not end the day
+
+The day ends when the steps run out, or when you **place a waymarker** (**p**): the day's path is banked as secured
+ground, you return to the camp and the steps refill. A day that runs out of steps loses its loose path and everything the
+secured network does not disclose fogs over; only what waymarkers banked survives, neighbours of secured ground coming
+back as sensed. A found cache adds one waymarker.
 
 Keyboard, as in a space shooter: **left and right turn** a sixth of a turn, **up** acts on the hex ahead (the same as a
-click on it), **down** acts on the hex behind, **shift** steps instead of extending, **backspace** reels in. A translucent
-preview shows what the next press would do. The explorer faces the way it last moved; clicking a neighbour turns it to
-face that hex.
+click on it), **down** acts on the hex behind, **shift** steps instead of extending, **backspace** reels in, **p** places
+a waymarker, **e** ends the day. A translucent preview shows what the next press would do. The explorer faces the way it
+last moved; clicking a neighbour turns it to face that hex.
 
-A thread is wavy while it is being extended and straightens when it reaches a second anchor and becomes a secured path:
+A path is wavy while it is loose and straightens when it is banked as secured ground (a waymarker, or a tower):
 then it is drawn with the design system's hex elbows and straight connectors, with an arrow into the target. The camp
 (red), towers (light blue) and the explorer (yellow) are hollow rings of one size.
-Progress survives a reload. Snags, hazards, cues, hasty retreat and prune
-are the next slices.
+Progress survives a reload. Snags, cues, hazards, a clock and the
+cross-browser run are deferred (ADR-011, amended 2026-11-16).
 
 - `?dpr=2` renders at 2x pixel density (the default is the display's, rounded); `?seed=<text>` picks the world, but only on a first run: the stored graph is the truth afterwards.
 - `?reset=1` discards the stored world and seeds it again with the seed given, then drops itself from the address.

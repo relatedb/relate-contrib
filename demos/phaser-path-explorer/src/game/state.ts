@@ -3,7 +3,8 @@
 // contain, so it shows as pending until the reply arrives, and a further action waits for it.
 import { neighbourAt, neighbours, oppositeSide, sideTo, turnSide, type Feature, type Side, type Terrain } from "../hex/core/index.js";
 import type { Bridge, Row } from "./bridge.js";
-import { EXTEND, READ_BOARD, READ_EDGES, READ_HEXES, READ_PLAYER, REEL_IN, SECURE, SKIP, STEP } from "./statements.js";
+import { END_DAY, EXTEND, PLACE_WAYMARKER, READ_BOARD, READ_EDGES, READ_HEXES, READ_PLAYER, REEL_IN, SECURE, STEP, TRAVEL, TOWERS } from "./statements.js";
+import { START_STEPS } from "./world.js";
 
 export type Knowledge = "hidden" | "sensed" | "seen" | "path";
 
@@ -20,8 +21,8 @@ export interface HexState {
 
 export interface PlayerState {
   at: string;
-  health: number;
-  waymarks: number;
+  steps: number;
+  markers: number;
 }
 
 /** The thread (loose) or a path between anchors (secured), from one hex to the next. */
@@ -40,7 +41,7 @@ function toHex(r: Row): HexState {
 }
 
 /** What acting on a hex would do (see `GameState.intent`). */
-export type Intent = { kind: "reel" | "extend" | "step" | "skip" } | { kind: "none"; reason: string };
+export type Intent = { kind: "reel" | "extend" | "step" | "travel" } | { kind: "none"; reason: string };
 
 export class GameState {
   readonly tiles = new Map<string, HexState>();
@@ -48,7 +49,7 @@ export class GameState {
   edges: Edge[] = [];
   /** Which of the six directions the explorer faces: what the arrow keys act on. Not stored in the graph. */
   facing: Side = "e";
-  player: PlayerState = { at: "", health: 0, waymarks: 0 };
+  player: PlayerState = { at: "", steps: 0, markers: 0 };
   message = "";
   /** The hex an action is waiting on, while its reply is awaited. */
   pending: string | null = null;
@@ -80,7 +81,7 @@ export class GameState {
     this.byPos.clear();
     this.merge(board);
     const p = player[0];
-    if (p) this.player = { at: p["at"] as string, health: p["health"] as number, waymarks: p["waymarks"] as number };
+    if (p) this.player = { at: p["at"] as string, steps: p["steps"] as number, markers: p["markers"] as number };
     this.edges = edges.map((e) => ({ from: e["from"] as string, to: e["to"] as string, kind: e["kind"] as Edge["kind"] }));
     this.touch();
   }
@@ -133,7 +134,7 @@ export class GameState {
     const here = this.here();
     if (!target || !here || this.pending) return false;
     if (target.state === "hidden") return false;
-    if (this.player.waymarks <= 0 || !this.canGrowHere()) return false;
+    if (this.player.steps <= 0 || !this.canGrowHere()) return false;
     if (this.onThread(id)) return false;
     return this.adjacent(here, target);
   }
@@ -163,7 +164,7 @@ export class GameState {
   /**
    * What acting on a hex would do, without doing it: the explorer reels the thread in when the hex is the one behind
    * it; otherwise extends the thread there when it can (over unexplored or remembered ground, or across a path while
-   * a thread is in play); otherwise steps onto known ground; and from an anchor skips to another. `step` asks for a
+   * a thread is in play); otherwise steps onto known ground; and from an anchor travels to another. `step` asks for a
    * step in place of an extension. When nothing can be done, `reason` says why.
    */
   intent(id: string, step = false): Intent {
@@ -182,11 +183,11 @@ export class GameState {
       if (target.state === "sensed")
         return {
           kind: "none",
-          reason: this.player.waymarks <= 0 ? "No waymarks left." : "Extend from an anchor, or from the end of your thread.",
+          reason: this.player.steps <= 0 ? "No steps left in the day." : "Extend from an anchor, or from the end of your thread.",
         };
       return { kind: "none", reason: "You cannot see that far yet." };
     }
-    if (here.anchor && target.anchor && (target.state === "path" || target.state === "seen")) return { kind: "skip" };
+    if (here.anchor && target.anchor && (target.state === "path" || target.state === "seen")) return { kind: "travel" };
     return { kind: "none", reason: "Click a hex next to you, or another anchor." };
   }
 
@@ -203,8 +204,8 @@ export class GameState {
         return this.extend(id);
       case "step":
         return this.step(id);
-      case "skip":
-        return this.skip(id);
+      case "travel":
+        return this.travel(id);
       case "none":
         return i.reason ? this.say(i.reason) : undefined;
     }
@@ -251,10 +252,9 @@ export class GameState {
       }
       const hex = this.tiles.get(id)!;
       this.facing = sideTo(this.tiles.get(from)!, hex);
-      const snag = Boolean(r["snag"]);
-      hex.state = snag ? "seen" : "path";
-      if (!snag) this.edges.push({ from, to: id, kind: "LOOSE" });
-      this.player = { ...this.player, at: id, waymarks: this.player.waymarks - 1 };
+      hex.state = "path";
+      this.edges.push({ from, to: id, kind: "LOOSE" });
+      this.player = { ...this.player, at: id, steps: r["steps"] as number, markers: r["markers"] as number };
       const sensed = (r["sensed"] as string[]) ?? [];
       for (const sid of sensed) {
         const t = this.tiles.get(sid);
@@ -264,14 +264,13 @@ export class GameState {
       if (r["anchor"]) {
         await this.bridge.enqueue(SECURE);
         this.edges = this.edges.map((e) => ({ ...e, kind: "SECURED" as const }));
-        this.message = "Anchor reached: the thread is secured.";
-      } else if (snag) {
-        this.message = "The thread snags. You are cut off.";
+        this.message = "Anchor reached: the path is secured.";
       }
     });
+    if (this.player.steps <= 0) await this.endDay(); // the day ends when the steps run out
   }
 
-  /** Reel in: step back along the thread, taking its last edge in and its waymark back. */
+  /** Reel in: step back along the thread and take its last edge in. Costs a step. */
   async reelIn(): Promise<void> {
     const back = this.predecessor();
     if (!back) return this.say("There is no thread to reel in.");
@@ -286,11 +285,12 @@ export class GameState {
       this.edges = this.edges.filter((e) => !(e.kind === "LOOSE" && e.to === from));
       const left = this.tiles.get(from);
       if (left) left.state = this.edges.some((e) => e.kind === "SECURED" && (e.from === from || e.to === from)) ? "path" : "seen";
-      this.player = { ...this.player, at: r["at"] as string, waymarks: this.player.waymarks + 1 };
+      this.player = { ...this.player, at: r["at"] as string, steps: r["steps"] as number };
       // face the hex just left, so the next extension runs the way the thread did
       const now = this.here();
       if (now && left) this.facing = sideTo(now, left);
     });
+    if (this.player.steps <= 0) await this.endDay();
   }
 
   /** Step one hex over known ground; lays no thread. */
@@ -306,22 +306,86 @@ export class GameState {
         return;
       }
       this.facing = sideTo(here, target);
-      this.player = { ...this.player, at: rows[0]["at"] as string };
+      this.player = { ...this.player, at: rows[0]["at"] as string, steps: rows[0]["steps"] as number };
     });
+    if (this.player.steps <= 0) await this.endDay();
   }
 
-  /** Skip to another anchor along secured paths, in one turn. */
-  async skip(id: string): Promise<void> {
+  /** Travel between anchors joined by secured paths for one step. Refused while a path is in play. */
+  async travel(id: string): Promise<void> {
     const target = this.tiles.get(id);
-    if (!target?.anchor || !this.here()?.anchor) return this.say("You can only skip between anchors.");
-    if (this.loose().length > 0) return this.say("Reel in or secure your thread before skipping.");
+    if (!target?.anchor || !this.here()?.anchor) return this.say("You can only travel between anchors.");
+    if (this.loose().length > 0) return this.say("Bank or abandon your path before travelling.");
     return this.act(id, async () => {
-      const rows = await this.bridge.enqueue(SKIP, { to: id });
-      if (!rows[0]) {
+      const rows = await this.bridge.enqueue(TRAVEL, { to: id });
+      const r = rows[0];
+      if (!r) {
         this.message = "No secured path leads there.";
         return;
       }
-      this.player = { ...this.player, at: rows[0]["at"] as string };
+      this.player = { ...this.player, at: r["at"] as string, steps: r["steps"] as number };
     });
+    if (this.player.steps <= 0) await this.endDay();
+  }
+
+  /**
+   * Place a waymarker: the day's path is banked as secured ground, the explorer returns to the camp and the steps
+   * refill. Requires a waymarker to spend, a path to bank, and a hex that is not an anchor already.
+   */
+  async placeWaymarker(): Promise<void> {
+    const here = this.here();
+    if (!here) return;
+    if (this.player.markers <= 0) return this.say("No waymarkers left in the bag.");
+    if (here.anchor) return this.say("You stand on an anchor already.");
+    if (this.loose().length === 0) return this.say("There is no path to bank: extend the path first.");
+    return this.act(here.id, async () => {
+      const rows = await this.bridge.enqueue(PLACE_WAYMARKER, { budget: START_STEPS });
+      const r = rows[0];
+      if (!r) {
+        this.message = "The waymarker will not take here.";
+        return;
+      }
+      here.anchor = true;
+      this.edges = this.edges.map((e) => ({ ...e, kind: "SECURED" as const }));
+      this.player = { at: r["at"] as string, steps: r["steps"] as number, markers: r["markers"] as number };
+      this.message = `Waymarker placed: ${r["secured"]} of path banked. Back at camp.`;
+      this.touch();
+    });
+  }
+
+  /**
+   * End the day: the loose path is abandoned, the explorer returns to the camp, the steps refill, and everything the
+   * secured network does not disclose fogs over. Fogged hexes are forgotten here, not patched.
+   */
+  async endDay(): Promise<void> {
+    return this.act("day", async () => {
+      const rows = await this.bridge.enqueue(END_DAY, { budget: START_STEPS });
+      const r = rows[0];
+      if (!r) {
+        this.message = "The day will not end.";
+        return;
+      }
+      this.edges = this.edges.filter((e) => e.kind !== "LOOSE");
+      const fogged = (r["fogged"] as string[]) ?? [];
+      for (const id of fogged) {
+        const t = this.tiles.get(id);
+        if (!t) continue;
+        t.state = "hidden";
+        delete t.terrain; // forgotten: the client no longer holds the ground truth
+        delete t.feature;
+        delete t.anchor;
+      }
+      if (fogged.length) this.merge(await this.bridge.enqueue(READ_HEXES, { ids: fogged })); // some come back disclosed
+      this.player = { ...this.player, at: r["at"] as string, steps: r["steps"] as number };
+      const lost = r["lost"] as number;
+      this.message = lost ? `Day over: ${lost} step${lost === 1 ? "" : "s"} of path lost to the fog.` : "Day over. Back at camp.";
+      this.touch();
+    });
+  }
+
+  /** Has the expedition won: both towers joined to the camp by secured paths? */
+  async won(): Promise<boolean> {
+    const rows = await this.bridge.enqueue(TOWERS);
+    return rows.length > 0 && rows.every((r) => r["joined"] === true);
   }
 }

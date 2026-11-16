@@ -6,8 +6,9 @@ import { neighbours, rng } from "../hex/core/index.js";
 export const COLS = 22;
 export const ROWS = 20;
 
-/** Waymarks the explorer starts with: how many hexes of thread can be extended before reaching an anchor. */
-export const START_WAYMARKS = 8;
+/** Steps in a day, and waymarkers in the bag (ADR-011, amended 2026-11-16). Towers are reachable within a day. */
+export const START_STEPS = 12;
+export const START_MARKERS = 5;
 
 function hashSeed(seed: string): number {
   let h = 2166136261;
@@ -134,7 +135,7 @@ export function generateRows(seed: string, cols = COLS, rowsCount = ROWS): strin
     const col = Math.floor(R() * cols);
     const row = Math.floor(R() * rowsCount);
     const d = reach.get(`${col},${row}`);
-    if (d !== undefined && d >= 4 && d <= START_WAYMARKS && ok(col, row)) place(col, row);
+    if (d !== undefined && d >= 4 && d <= START_STEPS && ok(col, row)) place(col, row);
   }
   for (let tries = 0; tries < 800 && towers.length < wanted; tries++) {
     const col = Math.floor(R() * cols);

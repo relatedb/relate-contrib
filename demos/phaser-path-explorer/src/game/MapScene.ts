@@ -65,6 +65,8 @@ export class MapScene extends Phaser.Scene {
     key("UP", (e) => void this.state.go(false, { step: e.shiftKey }));
     key("DOWN", (e) => void this.state.go(true, { step: e.shiftKey }));
     key("BACKSPACE", () => void this.state.reelIn());
+    key("P", () => void this.state.placeWaymarker());
+    key("E", () => void this.state.endDay());
     this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
       const t = this.tileUnder(p);
       if (this.keyboard || t?.id !== this.hover?.id) {
@@ -186,7 +188,7 @@ export class MapScene extends Phaser.Scene {
     const ahead = this.state.faced();
     if (!here || !ahead) return;
     const i = this.state.intent(ahead.id);
-    if (i.kind === "none" || i.kind === "skip") return;
+    if (i.kind === "none" || i.kind === "travel") return;
     const alpha = 0.55;
     drawRing(o, ahead.col, ahead.row, MapScene.RING, "yellow", 1, 0.5, alpha);
     if (i.kind === "step") return;
