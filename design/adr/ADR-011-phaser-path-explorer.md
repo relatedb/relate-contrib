@@ -263,8 +263,10 @@ changes: the same `ADJ`, `LOOSE` and `SECURED` edges, the same `anchor` and `ori
 
 **Deferred, not decided against.** Snags, the taut elastic line and its SPIKE-012, cut-off, hasty retreat, prune,
 hazards and health, cues and decoys, predators, a clock, scoring beyond the win, and the facet or zoomed-out look are
-out of v1. The prune, hasty-retreat, cue and health statements of 2.5 stay in `src/game/statements.ts` and its engine
-tests, marked unused; they are the starting point when those mechanics return.
+out of v1. The prune and hasty-retreat statements of 2.5 are dropped rather than kept as dead code: the end of the day
+replaces the hasty retreat, and pruning a secured path has no refund now that hexes cost no waymarks. The cue statement
+stays, ready for when cues return. The statements of 2.5 remain in the text above as the starting point when those
+mechanics return.
 
 **Naming.** *Waymark* now means a placed anchor (previously the per-hex currency); *steps* is the movement currency;
 *thread* is called the **path** in the interface and the remaining prose.
