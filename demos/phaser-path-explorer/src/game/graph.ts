@@ -3,7 +3,7 @@
 import type { Client, GraphDocument, Properties } from "@relate/web";
 import { neighbours, toAxial, type Tile, type Terrain, type Feature } from "../hex/core/index.js";
 import { latticeAsset } from "../hex/assets/index.js";
-import { START_MARKERS, START_STEPS } from "./world.js";
+import { START_MARKERS, START_STEPS, terrainCost } from "./world.js";
 
 export const APPLICATION = { name: "phaser-path-explorer", version: 1 } as const;
 
@@ -37,6 +37,7 @@ export function worldDocument(rows: string[]): GraphDocument {
       const isCamp = key === camp;
       const props: Properties = {
         col, row, ...toAxial(col, row), terrain,
+        cost: terrainCost(ch), // steps to enter this hex; water costs more than any day
         state: isCamp ? "path" : campNeighbours.has(key) ? "sensed" : "hidden",
       };
       if (feature) props["feature"] = feature;

@@ -10,6 +10,13 @@ export const ROWS = 20;
 export const START_STEPS = 12;
 export const START_MARKERS = 5;
 
+/**
+ * Steps to enter a hex of each terrain (ADR-011, amended 2026-11-16): no binary walls, every hex has a price. Water
+ * and deep water cost more than any day, so they are never affordable — a drop off the edge of the world.
+ */
+export const TERRAIN_COST: Record<string, number> = { D: 13, w: 13, m: 4, b: 2, g: 1, f: 1, h: 1, s: 1, t: 1, R: 1, U: 1 };
+export const terrainCost = (ch: string | undefined): number => (ch === undefined ? 1 : (TERRAIN_COST[ch] ?? 1));
+
 function hashSeed(seed: string): number {
   let h = 2166136261;
   for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
@@ -53,17 +60,25 @@ function fbm(x: number, y: number, seed: number): number {
 }
 
 /** Steps from a hex to every land hex it can reach on foot (not through deep or shallow water), by breadth first. */
+/** Cost-weighted distances by land: the cheapest total steps from `from` to every hex that is not water. */
 export function landDistances(rows: string[], from: [number, number]): Map<string, number> {
   const dist = new Map<string, number>([[`${from[0]},${from[1]}`, 0]]);
   const queue: [number, number][] = [from];
   for (let i = 0; i < queue.length; i++) {
+    // a small array as a priority queue: the graph is tiny and the costs are whole numbers
+    let best = i;
+    for (let j = i + 1; j < queue.length; j++) if (dist.get(`${queue[j]![0]},${queue[j]![1]}`)! < dist.get(`${queue[best]![0]},${queue[best]![1]}`)!) best = j;
+    [queue[i], queue[best]] = [queue[best]!, queue[i]!];
     const [col, row] = queue[i]!;
     const d = dist.get(`${col},${row}`)!;
     for (const [c, r] of neighbours(col, row)) {
       const ch = rows[r]?.[c];
-      if (ch === undefined || ch === "D" || ch === "w" || dist.has(`${c},${r}`)) continue;
-      dist.set(`${c},${r}`, d + 1);
-      queue.push([c, r]);
+      if (ch === undefined || ch === "D" || ch === "w") continue; // no ground: never a route
+      const via = d + terrainCost(ch);
+      if (via < (dist.get(`${c},${r}`) ?? Infinity)) {
+        dist.set(`${c},${r}`, via);
+        queue.push([c, r]);
+      }
     }
   }
   return dist;

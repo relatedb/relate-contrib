@@ -13,6 +13,8 @@ export interface HexState {
   col: number;
   row: number;
   state: Knowledge;
+  /** Steps to enter this hex. Absent means 1 (older stores); hidden hexes give nothing away. */
+  cost?: number;
   /** Absent while hidden: the client never holds the ground truth of a hex it has not discovered. */
   terrain?: Terrain;
   feature?: Feature;
@@ -37,6 +39,7 @@ function toHex(r: Row): HexState {
   if (r["terrain"]) hex.terrain = r["terrain"] as Terrain;
   if (r["feature"]) hex.feature = r["feature"] as Feature;
   if (r["anchor"]) hex.anchor = true;
+  if (typeof r["cost"] === "number") hex.cost = r["cost"] as number;
   return hex;
 }
 
@@ -134,7 +137,7 @@ export class GameState {
     const here = this.here();
     if (!target || !here || this.pending) return false;
     if (target.state === "hidden") return false;
-    if (this.player.steps <= 0 || !this.canGrowHere()) return false;
+    if (this.player.steps < (target.cost ?? 1) || !this.canGrowHere()) return false;
     if (this.onThread(id)) return false;
     return this.adjacent(here, target);
   }
@@ -180,11 +183,18 @@ export class GameState {
       const crossing = target.state === "path" && this.loose().length === 0;
       if (!crossing && this.canExtend(id)) return { kind: "extend" };
       if (known) return { kind: "step" };
-      if (target.state === "sensed")
+      if (target.state === "sensed") {
+        const cost = target.cost ?? 1;
         return {
           kind: "none",
-          reason: this.player.steps <= 0 ? "No steps left in the day." : "Extend from an anchor, or from the end of your thread.",
+          reason:
+            this.player.steps <= 0
+              ? "The day is spent."
+              : this.player.steps < cost
+                ? "Too steep: you cannot afford that climb."
+                : "Extend from an anchor, or from the end of your path.",
         };
+      }
       return { kind: "none", reason: "You cannot see that far yet." };
     }
     if (here.anchor && target.anchor && (target.state === "path" || target.state === "seen")) return { kind: "travel" };
@@ -299,6 +309,7 @@ export class GameState {
     const here = this.here();
     if (!target || !here || !this.adjacent(here, target) || (target.state !== "seen" && target.state !== "path"))
       return this.say("You can only step onto ground you know, next to you.");
+    if (this.player.steps < (target.cost ?? 1)) return this.say("Too steep: you cannot afford that step.");
     return this.act(id, async () => {
       const rows = await this.bridge.enqueue(STEP, { to: id });
       if (!rows[0]) {

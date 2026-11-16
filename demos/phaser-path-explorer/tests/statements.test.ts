@@ -41,11 +41,11 @@ describe.skipIf(!existsSync(wasm))("statements, in the engine's WebAssembly buil
     // H (camp, anchor) - a - b - c - T1 (tower, anchor); H - d - e - f - T2 (tower, anchor); a - g (a side branch,
     // sensed); e - x (hidden); a cache Thing on e.
     run(`CREATE (:Hex {id:'H', origin:true, anchor:true, state:'path'}),
-              (:Hex {id:'a', state:'sensed'}), (:Hex {id:'b', state:'hidden'}), (:Hex {id:'c', state:'hidden'}),
+              (:Hex {id:'a', state:'sensed'}), (:Hex {id:'b', state:'hidden', terrain:'badlands', cost:2}), (:Hex {id:'c', state:'hidden'}),
               (:Hex {id:'T1', anchor:true, tower:true, state:'hidden'}),
               (:Hex {id:'d', state:'sensed'}), (:Hex {id:'e', state:'hidden'}), (:Hex {id:'f', state:'hidden'}),
               (:Hex {id:'T2', anchor:true, tower:true, state:'hidden'}),
-              (:Hex {id:'g', state:'hidden', terrain:'grass'}), (:Hex {id:'x', state:'hidden', terrain:'sand'}),
+              (:Hex {id:'g', state:'hidden', terrain:'grass'}), (:Hex {id:'x', state:'hidden', terrain:'water', cost:13}),
               (:Player {id:'player', at:'H', steps:12, markers:2})`);
     run(`MATCH (h:Hex {id:'H'}),(a:Hex {id:'a'}),(b:Hex {id:'b'}),(c:Hex {id:'c'}),(t1:Hex {id:'T1'}),
               (d:Hex {id:'d'}),(e:Hex {id:'e'}),(f:Hex {id:'f'}),(t2:Hex {id:'T2'}),(g:Hex {id:'g'}),(x:Hex {id:'x'})
@@ -56,8 +56,8 @@ describe.skipIf(!existsSync(wasm))("statements, in the engine's WebAssembly buil
 
   it("extends the path from the camp, one step a hex, sensing the neighbours", () => {
     expect(extend("a", 1)[0]).toMatchObject({ id: "a", anchor: false, caches: 0, steps: 11, markers: 2, sensed: ["b", "g"].sort() });
-    expect(extend("b", 2)[0]).toMatchObject({ id: "b", steps: 10, sensed: ["c"] });
-    expect(extend("c", 3)[0]).toMatchObject({ id: "c", steps: 9, sensed: ["T1"] });
+    expect(extend("b", 2)[0]).toMatchObject({ id: "b", steps: 9, sensed: ["c"] }); // badlands: two steps
+    expect(extend("c", 3)[0]).toMatchObject({ id: "c", steps: 8, sensed: ["T1"] });
     expect(at()).toBe("c");
   });
 
@@ -139,6 +139,21 @@ describe.skipIf(!existsSync(wasm))("statements, in the engine's WebAssembly buil
     expect(run(S.END_DAY, { budget: 12 })[0]).toMatchObject({ at: "H", steps: 12, lost: 0, fogged: ["g", "x"] });
     expect(hex("g")).toBe("sensed"); // re-sensed from the secured network at once
     expect(hex("x")).toBe("sensed"); // x neighbours e, which is now secured
+  });
+
+  it("charges the terrain's cost and refuses what the day cannot afford", () => {
+    run("MATCH (pl:Player) SET pl.at = 'H', pl.steps = 2");
+    expect(extend("d", 13)[0]).toMatchObject({ id: "d", steps: 1 }); // grass: one step
+    run("MATCH (pl:Player) SET pl.steps = 12"); // a full day
+    expect(extend("e", 14)[0]).toMatchObject({ id: "e", steps: 11 });
+    expect(extend("x", 15)).toHaveLength(0); // water: 13 is more than any day's 12
+    run("MATCH (pl:Player) SET pl.steps = 13");
+    expect(extend("x", 16)[0]).toMatchObject({ id: "x", steps: 0 }); // affordable only by impossible means
+    // leave the board as the later tests expect it
+    run("MATCH ()-[r:LOOSE]->() DELETE r");
+    run("MATCH (pl:Player) SET pl.at = 'H', pl.steps = 12");
+    run("MATCH (h:Hex) WHERE h.id IN ['e'] SET h.state = 'sensed'");
+    run("MATCH (h:Hex) WHERE h.id IN ['x'] SET h.state = 'hidden'");
   });
 
   it("steps over known ground for one step, and reads the player and the edges", () => {

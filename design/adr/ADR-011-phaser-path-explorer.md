@@ -257,6 +257,10 @@ hexes it crosses no longer cost anything in themselves.
 - **A tower** is a fixed anchor. Arriving on one secures the path as before but does not end the day.
 - **Winning**: both towers are joined to the camp by secured paths. The interface says so and offers a new day.
 - **Rewards**: a cache found on a hex adds one waymarker (the only `Thing` kind in v1).
+- **Terrain has a price, not a wall**: every hex carries a `cost` in steps (grass, sand, forest and hills 1;
+  badlands 2; mountain 4; water and deep water 13 — more than any day, so never affordable). Extend and step pay the
+  hex's cost; there is no passable/impassable flag. The relief itself is the interface: rises hint at the climb, the
+  coast sinks away at the drop.
 
 `Player` becomes `{id, steps, markers, at}` (no health, no waymarks); `Hex` loses the `snag` flag. Nothing else in 2.4
 changes: the same `ADJ`, `LOOSE` and `SECURED` edges, the same `anchor` and `origin` flags, and the same seed.

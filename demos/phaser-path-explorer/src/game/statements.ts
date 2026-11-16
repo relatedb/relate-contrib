@@ -20,12 +20,12 @@
  */
 export const EXTEND = `
 MATCH (pl:Player {id: 'player'}), (p:Hex {id: pl.at})-[:ADJ]-(h:Hex {id: $to})
-WHERE h.state IN ['sensed', 'seen', 'path'] AND pl.steps > 0
+WHERE h.state IN ['sensed', 'seen', 'path'] AND pl.steps >= coalesce(h.cost, 1)
   AND NOT EXISTS { (h)-[:LOOSE]-(:Hex) }
   AND ( (p.anchor AND NOT EXISTS { (:Hex)-[:LOOSE]->(:Hex) })
         OR (EXISTS { (:Hex)-[:LOOSE]->(p) } AND NOT EXISTS { (p)-[:LOOSE]->(:Hex) }) )
 CREATE (p)-[:LOOSE {since: $now}]->(h)
-SET h.state = 'path', pl.steps = pl.steps - 1, pl.at = h.id
+SET h.state = 'path', pl.steps = pl.steps - coalesce(h.cost, 1), pl.at = h.id
 WITH h, pl
 OPTIONAL MATCH (t:Thing {kind: 'cache'})-[o:ON]->(h)
 DELETE o
@@ -90,8 +90,8 @@ RETURN pl.at AS at, pl.steps AS steps, lost AS lost, fogged AS fogged`;
 /** Step one hex over known ground (on a path, or remembered); lays no path of its own. Costs one step. */
 export const STEP = `
 MATCH (pl:Player {id: 'player'}), (p:Hex {id: pl.at})-[:ADJ]-(h:Hex {id: $to})
-WHERE h.state IN ['seen', 'path'] AND pl.steps > 0
-SET pl.at = h.id, pl.steps = pl.steps - 1
+WHERE h.state IN ['seen', 'path'] AND pl.steps >= coalesce(h.cost, 1)
+SET pl.at = h.id, pl.steps = pl.steps - coalesce(h.cost, 1)
 RETURN pl.at AS at, pl.steps AS steps`;
 
 /** Reel in: the explorer at the head of the path steps back and takes the last loose edge in. Costs one step; a hex on a secured path stays on it. */
@@ -140,7 +140,8 @@ const HEX_FIELDS = `
   h.id AS id, h.col AS col, h.row AS row, h.state AS state,
   CASE WHEN h.state = 'hidden' THEN null ELSE h.terrain END AS terrain,
   CASE WHEN h.state = 'hidden' THEN null ELSE h.feature END AS feature,
-  CASE WHEN h.state = 'hidden' THEN false ELSE coalesce(h.anchor, false) END AS anchor`;
+  CASE WHEN h.state = 'hidden' THEN false ELSE coalesce(h.anchor, false) END AS anchor,
+  CASE WHEN h.state = 'hidden' THEN null ELSE coalesce(h.cost, 1) END AS cost`;
 
 /** The whole board as the player may know it. */
 export const READ_BOARD = `MATCH (h:Hex) RETURN ${HEX_FIELDS}`;
