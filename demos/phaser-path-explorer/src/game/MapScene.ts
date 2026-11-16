@@ -16,7 +16,7 @@ import {
 import { addSceneTexture, drawGraph, drawRing, drawVectorTile, fillHex, strokeHex } from "../hex/phaser/index.js";
 import { routeToGraph, routes, withCrossings } from "./routes.js";
 import type { GameState, HexState } from "./state.js";
-import { COLS, ROWS } from "./world.js";
+import { COLS, ROWS, START_STEPS } from "./world.js";
 
 /** Screen pixels per lattice cell; a whole number keeps pixel edges crisp. */
 export const DEFAULT_PIXEL = 3;
@@ -27,6 +27,8 @@ export class MapScene extends Phaser.Scene {
   private overlay!: Phaser.GameObjects.Graphics;
   private ground?: Phaser.GameObjects.Image;
   private drawn = -1;
+  /** The sun and the day's light: the clock that is not a meter. */
+  private sky: Phaser.GameObjects.Graphics | undefined;
   private hover: HexState | undefined;
   /** True after a key press until the pointer moves: only then is the preview of the faced hex shown. */
   private keyboard = false;
@@ -49,6 +51,7 @@ export class MapScene extends Phaser.Scene {
     this.vector = this.add.graphics().setScale(this.k).setDepth(0);
     this.thread = this.add.graphics().setScale(this.k).setDepth(2);
     this.overlay = this.add.graphics().setScale(this.k).setDepth(3);
+    this.sky = this.add.graphics().setScale(this.k).setDepth(4);
 
     // keys, as in a space shooter: left and right turn (a sixth of a turn each), up acts on the hex ahead and down
     // on the hex behind; shift steps instead of extending; backspace reels in
@@ -129,6 +132,39 @@ export class MapScene extends Phaser.Scene {
     }
     this.drawThread();
     this.drawOverlay();
+    this.drawSky();
+  }
+
+  /**
+   * The sun is the day's clock, not a meter: it crosses the sky as the steps drain, warm at dawn, pale at noon and an
+   * ember towards dusk, while the whole world's light cools underneath it. At dusk the day is over.
+   */
+  private drawSky(): void {
+    const sky = this.sky;
+    if (!sky) return;
+    sky.clear();
+    const f = Math.max(0, Math.min(1, 1 - this.state.player.steps / START_STEPS)); // 0 dawn, 1 dusk
+    const [x0, yTop] = tileCentre(0, 0);
+    const [x1, yBottom] = tileCentre(COLS - 1, ROWS - 1);
+    const x = x0 + 1 + (x1 - 2 - x0) * f;
+    const y = yTop + 2.6 - 7.4 * 4 * f * (1 - f); // low at the horizons, high at noon
+    const mix = (a: number, b: number, t: number) => {
+      const ca = Phaser.Display.Color.IntegerToColor(a);
+      const cb = Phaser.Display.Color.IntegerToColor(b);
+      return Phaser.Display.Color.GetColor(
+        Math.round(ca.red + (cb.red - ca.red) * t),
+        Math.round(ca.green + (cb.green - ca.green) * t),
+        Math.round(ca.blue + (cb.blue - ca.blue) * t),
+      );
+    };
+    const body = f < 0.5 ? mix(0xffd27f, 0xfff4c8, 2 * f) : mix(0xfff4c8, 0xff7a3f, 2 * (f - 0.5));
+    sky.fillStyle(body, 0.14);
+    sky.fillCircle(x, y, 2.2); // the halo
+    sky.fillStyle(body, 1);
+    sky.fillCircle(x, y, 0.95);
+    // the light cools as the day drains: dusk settles over the ground
+    sky.fillStyle(0x0e1a3a, 0.3 * f * f);
+    sky.fillRect(x0 - 1, yTop - 6, x1 - x0 + 3, yBottom - yTop + 7.5);
   }
 
   /** The size of the rings that mark the camp, the towers and the explorer: all the same. */
