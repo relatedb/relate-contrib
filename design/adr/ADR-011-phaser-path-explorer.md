@@ -227,3 +227,56 @@ Flat hexes have no outline, as in the design system.
 - ADR-009 (application graphs in the core), ADR-008 (the local-first conventions this one follows, for its react-admin demo)
 - ADR-002 (the graph data format and the `id` property), ADR-001 (worker hosting)
 - `design/notes/2026-11-10-phaser-path-explorer.md` (the design, the cue vocabulary, and the checks of the statements)
+
+## 6. Amendments
+
+### 2026-11-16: a one-week scope, and the waymarker expedition
+
+The demo is cut down to something playable within a week, while still exercising the integration the ADR exists to
+show: disclosure as a query result, paths and reachability as graph structure, and a durable application graph. The
+following supersedes 2.3's waymark economy, 2.4's `Player` and `Hex` fields, the verbs and economy of 2.5, and the
+checks of 2.8. Sections 2.1 (layout), 2.2 (assets) and 2.6 (the bridge) stand.
+
+**The expedition.** A day is a budget of steps. The player starts at the camp with **5 waymarkers** and **12 steps**.
+Every move costs one step: extending the path one hex, stepping over known ground, reeling back in, and travelling
+between anchors. The path traces from the last anchor (the camp or a placed waymarker) to the explorer's position; the
+hexes it crosses no longer cost anything in themselves.
+
+- **Place a waymarker** on the hex the explorer stands on: the hex becomes an anchor, one waymarker is spent, and the
+  path from the previous anchor becomes secured. This **ends the day**: the explorer returns to the camp and the step
+  budget refills.
+- **A day also ends when the steps run out**: the explorer returns to the camp, the step budget refills, and the loose
+  path of that day is abandoned. Everything the day revealed that is not covered by the secured network fogs over: a
+  hex stays known only if it lies on a secured path, is the camp, or neighbours such a hex (and then only as sensed);
+  every other hex, including the whole of the abandoned day's path, is hidden again. What the player durably knows is
+  exactly what the secured network discloses — knowledge is banked by placing waymarkers, so sweeping ground without
+  spending one gains nothing that survives the day. (A day ended by placing a waymarker keeps its ground, because its
+  path was secured.)
+- **Travel** from an anchor to another anchor joined by secured paths costs one step, not one per hex. This applies
+  from the camp to a waymarker and between waymarkers, and is the payoff of placing markers.
+- **A tower** is a fixed anchor. Arriving on one secures the path as before but does not end the day.
+- **Winning**: both towers are joined to the camp by secured paths. The interface says so and offers a new day.
+- **Rewards**: a cache found on a hex adds one waymarker (the only `Thing` kind in v1).
+
+`Player` becomes `{id, steps, markers, at}` (no health, no waymarks); `Hex` loses the `snag` flag. Nothing else in 2.4
+changes: the same `ADJ`, `LOOSE` and `SECURED` edges, the same `anchor` and `origin` flags, and the same seed.
+
+**Deferred, not decided against.** Snags, the taut elastic line and its SPIKE-012, cut-off, hasty retreat, prune,
+hazards and health, cues and decoys, predators, a clock, scoring beyond the win, and the facet or zoomed-out look are
+out of v1. The prune, hasty-retreat, cue and health statements of 2.5 stay in `src/game/statements.ts` and its engine
+tests, marked unused; they are the starting point when those mechanics return.
+
+**Naming.** *Waymark* now means a placed anchor (previously the per-hex currency); *steps* is the movement currency;
+*thread* is called the **path** in the interface and the remaining prose.
+
+**Statements.** The extend statement of 2.5 loses its waymark cost and its snag branch and pays one step instead. The
+secure statement is unchanged. Two statements are added: place a waymarker and end the day (spend one, set `anchor`,
+secure the path, return the player to the camp, refill steps), and end the day when the steps run out (return, refill,
+delete the loose path, and re-fog every hex the secured network does not disclose: path hexes keep their state, their
+neighbours become sensed, everything else is hidden, and the statement answers with the ids that were fogged so the
+client's cache can drop them). The skip statement charges one step. The win is read with one statement over `SECURED`
+edges from the camp to both towers. These are specified and tested against the engine before the interface uses them.
+
+**Checks.** Node tests against the engine's WebAssembly build cover every new statement, including a day ended by
+placing a waymarker, a day ended by exhaustion, travel between anchors costing one step, and the win test. Browser
+checks are by hand in one browser for v1; the Playwright setup for the demo and the cross-browser run are deferred.
