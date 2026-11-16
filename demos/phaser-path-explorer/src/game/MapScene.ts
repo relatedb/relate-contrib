@@ -356,13 +356,13 @@ export class MapScene extends Phaser.Scene {
     // A straight, grid-aligned crossing: dawn at the leftmost centre, noon at the middle, dusk at the right.
     const [x, y] = tileCentre(Math.round(f * (COLS - 1)), 0);
     const body = f < 0.5 ? mix(0xffb45f, 0xfff4c8, 2 * f) : mix(0xfff4c8, 0xff6b3d, 2 * (f - 0.5));
-    const noon = Math.sin(Math.PI * f); // the rays strengthen to noon, then recede
-    const ray = mix(body, 0xffffee, 0.18 + 0.3 * noon);
-    this.paintSun(body, ray, noon);
+    const noon = Math.sin(Math.PI * f) * (1 - this.dusk); // the sun's rays fall away overnight
+    const nightBody = mix(body, 0xc7dcf0, this.dusk);
+    const ray = mix(nightBody, 0xffffee, (0.18 + 0.3 * noon) * (1 - this.dusk));
+    this.paintSun(nightBody, ray, noon);
     this.sun?.setPosition(x * this.k, y * this.k);
     // The light cools as the day drains, and deepens for a breath while the day's fog settles.
-    const dark = Math.max(f * f, this.dusk);
-    sky.fillStyle(0x0e1a3a, 0.55 * dark);
+    sky.fillStyle(0x07152b, Math.min(0.82, 0.3 * f * f + 0.52 * this.dusk));
     sky.fillRect(x0 - 1, yTop - 6, x1 - x0 + 3, yBottom - yTop + 7.5);
   }
 
@@ -410,7 +410,10 @@ export class MapScene extends Phaser.Scene {
         const dx = px - x;
         const dy = py - y;
         if (dx * dx + dy * dy > radius * radius) continue;
-        const colour = dx + dy < -2 ? highlight : dx + dy > 4 ? shade : body;
+        const moon = this.dusk > 0 && dx > x + radius * (1 - 2 * this.dusk);
+        const colour = moon
+          ? mix(0xc7dcf0, 0x07152b, 0.78)
+          : dx + dy < -2 ? highlight : dx + dy > 4 ? shade : body;
         pixel(px, py, colour);
       }
     }
