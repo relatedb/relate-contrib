@@ -443,3 +443,11 @@ nothing of it is kept. Any key on the splash stops the demo, destroys its game a
 cannot start, the saved game shows behind the bubbles as before. The walk is `wanderStep` in `src/demo.ts`: it favours the
 way it was going and avoids water. It uses three small statements (`DEMO_AT`, `DEMO_DARKEN`, `DEMO_LIGHT`) that exist only
 for the demo. Robots, and the explorer fleeing them, are slice 3.
+
+**Robots in the demo (2026-11-17, slice 3).** Three robots roam the demo island at random, slowly, starting at least six hexes
+from the explorer. They are drawn only when the explorer can see them (within two hexes, inside the lantern); in the fog they
+are not there at all. A robot in sight is run from: the explorer takes the neighbouring hex that ends furthest from it,
+a little quicker than it wanders, and for a few steps after it shies from the places it saw one. The demo robots only
+roam: they do not chase, and they burn nothing, which the real game's finale does. `?robots=12` fills the island, to see
+them often. The logic is `fleeStep`, `placeRobots` and `wanderStep` (with its `shy` places) in `src/demo.ts`; the scene
+draws them through `setActors`.

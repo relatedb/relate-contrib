@@ -131,6 +131,9 @@ export class MapScene extends Phaser.Scene {
   private portalHex: HexState | undefined;
   private portal: Phaser.GameObjects.Graphics | undefined;
   private readonly overAtStart: boolean;
+  private actors: [number, number][] = [];
+  private actorsDirty = false;
+  private actorImages: Phaser.GameObjects.Image[] = [];
   /** The day's clock as drawn: it runs after the steps, so the sun crosses the sky instead of jumping. */
   private clock = -1;
   private clockTarget = -1;
@@ -262,6 +265,7 @@ export class MapScene extends Phaser.Scene {
       this.dayEndsSeen = this.state.dayEnds;
       this.startNight();
     }
+    if (this.actorsDirty) this.syncActors();
     if (this.state.over && !this.finaleStarted && this.nightT < 0) this.startFinale();
     if (this.drawn !== this.state.version) {
       this.drawn = this.state.version;
@@ -589,6 +593,23 @@ export class MapScene extends Phaser.Scene {
           arrived();
         },
       });
+    });
+  }
+
+  /** The demo's roaming robots the explorer can see now, as hex positions; drawn on the next frame. */
+  setActors(robots: [number, number][]): void {
+    this.actors = robots;
+    this.actorsDirty = true;
+  }
+
+  private syncActors(): void {
+    this.actorsDirty = false;
+    while (this.actorImages.length < this.actors.length)
+      this.actorImages.push(this.add.image(0, 0, "robot-7").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites + 0.35));
+    this.actorImages.forEach((img, i) => {
+      const at = this.actors[i];
+      img.setVisible(at !== undefined);
+      if (at) img.setPosition(tileOrigin(at[0], at[1])[0] * this.k, (tileOrigin(at[0], at[1])[1] + 1) * this.k);
     });
   }
 

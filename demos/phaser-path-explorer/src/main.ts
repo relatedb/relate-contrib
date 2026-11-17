@@ -115,8 +115,17 @@ async function start(): Promise<void> {
       const demoState = new GameState(demoBridge);
       await demoState.load();
       if (demoState.tiles.size === 0) return false;
-      demoGame = makeGame(() => new MapScene(demoState, pixel, dpr, () => {}, () => true));
-      stopDemo = runDemo({ rows, state: demoState, bridge: demoBridge, start: [Math.floor(cols / 2), Math.floor(rowsCount / 2)] });
+      let demoScene: MapScene | undefined;
+      demoGame = makeGame(() => (demoScene = new MapScene(demoState, pixel, dpr, () => {}, () => true)));
+      if (import.meta.env.DEV) Object.assign(window, { __demoScene: () => demoScene });
+      stopDemo = runDemo({
+        rows,
+        state: demoState,
+        bridge: demoBridge,
+        start: [Math.floor(cols / 2), Math.floor(rowsCount / 2)],
+        robots: Number(params.get("robots") ?? 3), // ?robots=12 fills the demo island, to see them often
+        onRobots: (seen) => demoScene?.setActors(seen),
+      });
       return true;
     } catch (err) {
       console.warn("the demo could not start", err);
