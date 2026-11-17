@@ -428,3 +428,9 @@ before the game sees it, so it is not also a move. A game that has just ended ig
 does not skip the result, which parks in the upper middle of the board until a key is pressed. A screen reader gets all the
 words as one block of text, and `prefers-reduced-motion` shows one still bubble a row at a time. This is slice 1 of a demo
 mode: a later slice puts a wandering explorer and hidden robots behind the bubbles, on a throwaway world, never the saved one.
+
+**The bubbles on the hexes (2026-11-17).** A bubble is a run of whole hexes in one row, its top and bottom edges following
+the hex points, and it moves a tile at a time, so it always lies on the board's hexes (odd rows half a tile in). Each band
+has several rows, top 2 to 4, middle 8 to 11, bottom 14 to 17, and a bubble takes a different one each time. The font is
+Share Tech Mono (SIL Open Font License, the `@fontsource/share-tech-mono` package, bundled, no request to a font service),
+a recorded deviation from the design system's type for the game's own words, for brand review.

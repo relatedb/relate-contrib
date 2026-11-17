@@ -99,6 +99,9 @@ async function start(): Promise<void> {
   splash = createSplash({
     canContinue: () => !state.over || (scene?.finaleActive ?? false), // the finale can be watched again, not played on
     scores: () => loadScores(store),
+    pixel,
+    cols,
+    rows: rowsCount,
     // a new game is a new random island: a reload with a fresh seed and a reset, straight past the splash
     onNew: () => location.assign(`${location.pathname}?seed=${Math.random().toString(36).slice(2, 8)}&reset=1&play=1`),
   });
