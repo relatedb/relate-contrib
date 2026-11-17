@@ -183,3 +183,9 @@ export const UNDO_PLAYER = `MATCH (pl:Player {id: 'player'}) SET pl.at = $at, pl
 /** Take the robot's parts back out, and put them back as they were. $parts: [{kind, n}]. */
 export const UNDO_CLEAR_PARTS = `MATCH (:Robot)-[:HAS]->(p:Part) DETACH DELETE p RETURN count(p) AS n`;
 export const UNDO_PARTS = `UNWIND $parts AS x MATCH (rb:Robot) CREATE (rb)-[:HAS]->(:Part {kind: x.kind, n: x.n}) RETURN count(*) AS n`;
+
+/** The whole board as it is, hidden or not: for the reveal when the game ends. */
+export const READ_TRUTH = `
+MATCH (h:Hex)
+RETURN h.id AS id, h.col AS col, h.row AS row, h.state AS state, h.terrain AS terrain, h.feature AS feature,
+       coalesce(h.anchor, false) AS anchor, coalesce(h.cost, 1) AS cost`;

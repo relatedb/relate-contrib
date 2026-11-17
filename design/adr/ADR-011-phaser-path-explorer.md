@@ -376,3 +376,11 @@ the graph, and an even hop of four tiles to the right each day (on a 25 wide boa
 faint outline of the whole robot marks where it is going. Until midnight of a night the row still shows the day that ended;
 at midnight the robot steps to its new place and the new part switches on. The seventh part, power, lights the eyes and
 the antenna.
+
+**The finale (2026-11-17).** When the game is over (the seventh night has played, or every settlement is routed) the
+clouds fade and the whole board is revealed: the cache reads the board as it is (`READ_TRUTH`), cache only, the graph is
+untouched. A robot, the finished prototype, walks in from beyond the board's edge on each settlement's side of the camp
+to that settlement, so its nearest settlement is its own. Where the settlement is joined to the camp by secured paths a
+heart rises from the robot; where it is not, the robot turns red, the screen shakes, the settlement is swept away (bare
+ground) and a fire burns. Then the splash tells the score. A game already over at load shows the same end state without
+the walk. The hearts and fires are the design system's `heart` and `fire` sprites.

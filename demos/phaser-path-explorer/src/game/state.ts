@@ -6,7 +6,7 @@ import type { Bridge, Row } from "./bridge.js";
 import {
   END_DAY, EXTEND, PLACE_WAYMARKER, READ_BOARD, READ_EDGES, READ_HEXES, READ_PLAYER, REEL_IN, SECURE, STEP, TRAVEL, TOWERS,
   UNDO_CLEAR_EDGES, UNDO_CLEAR_PARTS, UNDO_HEXES, UNDO_LOOSE, UNDO_PARTS, UNDO_PLAYER, UNDO_SECURED,
-  GAME_OVER, MARKERS_USED, READ_PARTS,
+  GAME_OVER, MARKERS_USED, READ_PARTS, READ_TRUTH,
 } from "./statements.js";
 import { PARTS, computeScore, type Outcome } from "./score.js";
 import { DAYS, START_STEPS } from "./world.js";
@@ -148,6 +148,33 @@ export class GameState {
   /** The hex the explorer stands on. */
   here(): HexState | undefined {
     return this.tiles.get(this.player.at);
+  }
+
+  /**
+   * The end of the game shows the whole board: every hex comes into the cache with its ground, as seen (a path stays a
+   * path). Cache only: the graph is not touched, and the game is over.
+   */
+  async revealAll(): Promise<void> {
+    const rows = await this.bridge.enqueue(READ_TRUTH);
+    for (const r of rows) {
+      const hex = toHex(r);
+      if (this.tiles.get(hex.id)?.state === "path") hex.state = "path";
+      else hex.state = "seen";
+      this.tiles.set(hex.id, hex);
+      this.byPos.set(`${hex.col},${hex.row}`, hex.id);
+    }
+    this.touch();
+  }
+
+  /** Settlements swept away: they stand no more (cache only, at the end of the game). */
+  sweepAway(ids: string[]): void {
+    for (const id of ids) {
+      const t = this.tiles.get(id);
+      if (!t) continue;
+      delete t.feature;
+      delete t.anchor;
+    }
+    this.touch();
   }
 
   /** The day, from 1 to seven: the robot's parts so far, plus one. */

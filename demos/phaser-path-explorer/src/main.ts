@@ -59,12 +59,20 @@ async function start(): Promise<void> {
     }
   })();
   let ended = state.over; // a game already over when the page loaded was scored in its own time
+  // the splash tells the result once the finale has played out, whichever of the score and the finale is ready last
+  let result: number | undefined;
+  let finaleDone = false;
+  const tellResult = () => {
+    if (result !== undefined && finaleDone) splash?.show({ result });
+  };
+  let scene: MapScene | undefined;
   const hud = (s: GameState) => {
     if (s.over && !ended) {
       ended = true;
       void s.score().then((score) => {
         recordScore(store, score);
-        splash?.show({ result: score });
+        result = score;
+        tellResult();
       });
     }
     const storage = client.storage;
@@ -81,7 +89,7 @@ async function start(): Promise<void> {
     antialias: true,
     roundPixels: false,
     backgroundColor: "#002b43",
-    scene: [new MapScene(state, pixel, dpr, hud, () => splash?.open ?? true)],
+    scene: [(scene = new MapScene(state, pixel, dpr, hud, () => splash?.open ?? true, () => { finaleDone = true; tellResult(); }))],
   });
   // the canvas holds dpr times the pixels, shown at the chosen size
   game.events.once(Phaser.Core.Events.READY, () => {
@@ -89,7 +97,7 @@ async function start(): Promise<void> {
     game.canvas.style.height = `${height}px`;
   });
   splash = createSplash({
-    canContinue: () => !state.over,
+    canContinue: () => !state.over || (scene?.finaleActive ?? false), // the finale can be watched again, not played on
     scores: () => loadScores(store),
     // a new game is a new random island: a reload with a fresh seed and a reset, straight past the splash
     onNew: () => location.assign(`${location.pathname}?seed=${Math.random().toString(36).slice(2, 8)}&reset=1&play=1`),

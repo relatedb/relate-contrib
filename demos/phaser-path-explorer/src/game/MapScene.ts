@@ -19,7 +19,7 @@ import {
   type Point,
   type Tile,
 } from "../hex/core/index.js";
-import { addSceneTexture, colourNumber, drawGraph, drawVectorTile, mixColour, strokeHex } from "../hex/phaser/index.js";
+import { addSceneTexture, addSpriteTexture, colourNumber, drawGraph, drawVectorTile, mixColour, strokeHex } from "../hex/phaser/index.js";
 import { addGameSprite } from "./sprites.js";
 import { cloudCell, cloudDensity } from "./clouds.js";
 import { robotCells, robotSlot } from "./robot.js";
@@ -115,6 +115,11 @@ export class MapScene extends Phaser.Scene {
   private robotGhost: Phaser.GameObjects.Image | undefined;
   private robotParts = -1;
   private robotSlotNow = -1;
+  /** The end of the game: the board revealed, the robots arriving. Started once, when the game is over. */
+  private finaleStarted = false;
+  private finaleActive_ = false;
+  private fadeGround = false;
+  private readonly overAtStart: boolean;
   /** The day's clock as drawn: it runs after the steps, so the sun crosses the sky instead of jumping. */
   private clock = -1;
   private clockTarget = -1;
@@ -142,9 +147,17 @@ export class MapScene extends Phaser.Scene {
     private readonly onChange: (state: GameState) => void = () => {},
     /** True while something (the splash) has the keyboard and the pointer. */
     private readonly blocked: () => boolean = () => false,
+    /** Called when the finale has played out, so the splash can say how it went. */
+    private readonly onFinaleEnd: () => void = () => {},
   ) {
     super("map");
     this.k = pixel * dpr;
+    this.overAtStart = state.over;
+  }
+
+  /** Is the finale playing? */
+  get finaleActive(): boolean {
+    return this.finaleActive_;
   }
 
   create(): void {
@@ -227,6 +240,7 @@ export class MapScene extends Phaser.Scene {
       this.dayEndsSeen = this.state.dayEnds;
       this.startNight();
     }
+    if (this.state.over && !this.finaleStarted && this.nightT < 0) this.startFinale();
     if (this.drawn !== this.state.version) {
       this.drawn = this.state.version;
       this.redraw();
@@ -273,6 +287,11 @@ export class MapScene extends Phaser.Scene {
       const blank = Array.from({ length: ROWS }, () => " ".repeat(COLS));
       addSceneTexture(this, "ground", paintScene(discovered, blank));
       this.ground = this.add.image(0, 0, "ground").setOrigin(0, 0).setScale(this.k).setDepth(LAYER.terrain);
+      if (this.fadeGround) {
+        this.fadeGround = false; // the revealed land comes up out of the fog
+        this.ground.setAlpha(0);
+        this.tweens.add({ targets: this.ground, alpha: 1, duration: 700 });
+      }
     }
     this.drawThread();
     this.syncSprites();
@@ -352,6 +371,113 @@ export class MapScene extends Phaser.Scene {
     texture.refresh();
     texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.add.image(0, 0, "board").setOrigin(0).setScale(this.k).setDepth(LAYER.board);
+  }
+
+  /**
+   * The end of the game. The clouds clear and the whole board is revealed; a rogue robot walks in from beyond the edge
+   * of the board to each settlement; where the settlement is joined to the camp the robot is made happy, and where it
+   * is not the settlement is swept away. A game already over when the page loaded just shows the outcome.
+   */
+  private startFinale(): void {
+    this.finaleStarted = true;
+    if (this.overAtStart) {
+      void this.settleOutcome(false);
+      return;
+    }
+    this.finaleActive_ = true;
+    const clouds = this.clouds;
+    const reveal = () => void this.settleOutcome(true);
+    if (clouds) this.tweens.add({ targets: clouds, alpha: 0, duration: 800, onComplete: reveal });
+    else reveal();
+  }
+
+  private async settleOutcome(animate: boolean): Promise<void> {
+    this.fadeGround = animate;
+    await this.state.revealAll();
+    const settlements = await this.state.settlements();
+    if (!animate) {
+      this.sweepAndBurn(settlements.filter((x) => !x.joined).map((x) => x.id));
+      return;
+    }
+    this.time.delayedCall(1000, () => this.sendRobots(settlements));
+  }
+
+  /** The settlements that were not saved stand no more: bare ground, and a fire. */
+  private sweepAndBurn(ids: string[]): void {
+    this.state.sweepAway(ids);
+    addSpriteTexture(this, "fire", "fire");
+    this.textures.get("fire").setFilter(Phaser.Textures.FilterMode.NEAREST);
+    for (const id of ids) {
+      const t = this.state.tiles.get(id);
+      if (!t) continue;
+      const [x, y] = this.spotOf(t.col, t.row);
+      const fire = this.add.image(x, y, "fire").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites + 0.2);
+      this.tweens.add({ targets: fire, scaleY: this.k * 0.88, y: y + 1.5 * this.k, duration: 260, yoyo: true, repeat: -1 });
+    }
+  }
+
+  private sendRobots(settlements: { id: string; joined: boolean }[]): void {
+    const tiles = this.state.tiles;
+    const camp = [...tiles.values()].find((t) => t.feature === "tent");
+    const [cx, cy] = camp ? tileCentre(camp.col, camp.row) : [0, 0];
+    const board = boardSizePx(1);
+    addSpriteTexture(this, "heart", "heart");
+    this.textures.get("heart").setFilter(Phaser.Textures.FilterMode.NEAREST);
+    let done = 0;
+    const arrived = () => {
+      if (++done < settlements.length) return;
+      this.time.delayedCall(1800, () => {
+        this.finaleActive_ = false;
+        this.onFinaleEnd();
+      });
+    };
+    if (!settlements.length) return arrived();
+    settlements.forEach((s, i) => {
+      const t = tiles.get(s.id);
+      if (!t) return arrived();
+      const [tx, ty] = tileCentre(t.col, t.row);
+      let dx = tx - cx;
+      let dy = ty - cy;
+      const len = Math.hypot(dx, dy) || 1;
+      dx /= len;
+      dy /= len;
+      // in from beyond the settlement's side of the board: so each robot's nearest settlement is its own
+      let sx = tx;
+      let sy = ty;
+      while (sx > 0 && sx < board.width && sy > 0 && sy < board.height) {
+        sx += dx * 4;
+        sy += dy * 4;
+      }
+      sx = Math.max(8, Math.min(board.width - 8, sx));
+      sy = Math.max(8, Math.min(board.height - 8, sy));
+      const away = Math.hypot(sx - tx, sy - ty) || 1;
+      const stopX = tx + ((sx - tx) / away) * 11;
+      const stopY = ty + ((sy - ty) / away) * 11;
+      const robot = this.add.image(sx * this.k, sy * this.k, "robot-7").setScale(this.k).setDepth(LAYER.sprites + 0.4).setAlpha(0);
+      const delay = i * 280;
+      this.tweens.add({ targets: robot, alpha: 1, duration: 300, delay });
+      this.tweens.add({
+        targets: robot,
+        x: stopX * this.k,
+        y: stopY * this.k,
+        duration: 2200,
+        delay,
+        ease: "Sine.easeInOut",
+        onComplete: () => {
+          if (s.joined) {
+            // the settlement is joined to the camp: the robot is made happy
+            const heart = this.add.image(robot.x, robot.y - 10 * this.k, "heart").setScale(this.k).setDepth(LAYER.sprites + 0.5);
+            this.tweens.add({ targets: heart, y: heart.y - 8 * this.k, alpha: 0, duration: 1400, ease: "Quad.easeOut", onComplete: () => heart.destroy() });
+          } else {
+            // isolated: it is swept away
+            robot.setTint(0xff6b3d);
+            this.cameras.main.shake(260, 0.004);
+            this.sweepAndBurn([s.id]);
+          }
+          arrived();
+        },
+      });
+    });
   }
 
   /** The robot as 8 textures (0 to 7 parts), and one of its whole outline for the faint plan of it. */
