@@ -73,8 +73,8 @@ const PILE: [number, number][] = [
   [12, 9],
   [6, 11],
 ];
-/** Where a waymarker stands on its tile: middle, top. */
-const STAND: [number, number] = [6, 0];
+/** Where a waymarker stands on its tile: the middle (it is only ever placed on open ground, never on a settlement). */
+const STAND: [number, number] = [6, 5];
 
 export class MapScene extends Phaser.Scene {
   private vector!: Phaser.GameObjects.Graphics;
@@ -1149,22 +1149,20 @@ export class MapScene extends Phaser.Scene {
       const [cx, cy] = tileCentre(t.col, t.row);
       for (const side of sides) {
         const a = (SIDE_ANGLE[side]! * Math.PI) / 180;
-        const ux = Math.cos(a);
-        const uy = Math.sin(a);
-        const px = -uy;
-        const py = ux;
-        // just outside the hex's edge, pointing away from it: clear of the camp's tent and the explorer
-        const tip = [cx + ux * 13.2, cy + uy * 13.2];
-        const b1 = [cx + ux * 9.2 + px * 2.6, cy + uy * 9.2 + py * 2.6];
-        const b2 = [cx + ux * 9.2 - px * 2.6, cy + uy * 9.2 - py * 2.6];
-        const tri = [new Phaser.Math.Vector2(tip[0], tip[1]), new Phaser.Math.Vector2(b1[0], b1[1]), new Phaser.Math.Vector2(b2[0], b2[1])];
-        g.lineStyle(1.5, colourNumber("cream"), 1);
-        g.strokePoints(tri, true);
-        g.fillStyle(colourNumber("black"), 1);
-        g.fillPoints(tri, true);
+        // a detached arrowhead, the design system's chevron, just outside the hex and pointing away from it
+        const tx = cx + Math.cos(a) * 12.4;
+        const ty = cy + Math.sin(a) * 12.4;
+        const arm = (turn: number) =>
+          new Phaser.Math.Vector2(tx - Math.cos(a + turn) * 3.4, ty - Math.sin(a + turn) * 3.4);
+        const chevron = [arm(0.62), new Phaser.Math.Vector2(tx, ty), arm(-0.62)];
+        for (const [width, colour] of [[2.1, "cream"], [1, "black"]] as const) {
+          g.lineStyle(width, colourNumber(colour), 1);
+          g.strokePoints(chevron, false);
+        }
       }
     }
   }
+
 
   /** Where a path's end-cap stands: against the edge of the tile (the apothem of the 16 wide hexagon). */
   private static readonly CAP_R = 7.5;
