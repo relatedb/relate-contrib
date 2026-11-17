@@ -161,6 +161,11 @@ export class MapScene extends Phaser.Scene {
     this.sunTexture = sunTexture;
     this.sunTexture.setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.sun = this.add.image(0, 0, "sun").setScale(this.k).setDepth(LAYER.sun);
+    // the crescent that previews a move ending the day, drawn once
+    const moonTexture = this.textures.createCanvas("moon", 16, 17);
+    if (!moonTexture) throw new Error('could not create texture "moon"');
+    moonTexture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    this.paintSun(0xc7dcf0, 0xc7dcf0, 0, 1, moonTexture);
     this.sunGhost = this.add.image(0, 0, "sun").setScale(this.k).setDepth(LAYER.sun - 0.1).setAlpha(0.4).setVisible(false);
 
     // keys, as in a space shooter: left and right turn (a sixth of a turn each), up acts on the hex ahead and down
@@ -666,8 +671,7 @@ export class MapScene extends Phaser.Scene {
    * Paint whole texture pixels, exactly like a terrain sprite; the disc and its rays have no antialiased edges. `moon`
    * (0 to 1) turns the sun into a crescent: the rays fade and a second disc bites into the first from the right.
    */
-  private paintSun(body: number, ray: number, noon: number, moon = 0): void {
-    const texture = this.sunTexture;
+  private paintSun(body: number, ray: number, noon: number, moon = 0, texture = this.sunTexture): void {
     if (!texture) return;
     const image = texture.getContext().createImageData(16, 17);
     const pixel = (x: number, y: number, colour: number, alpha = 255) => {
@@ -982,6 +986,8 @@ export class MapScene extends Phaser.Scene {
     const left = steps - cost;
     const f = Math.max(0, Math.min(1, 1 - left / START_STEPS));
     const [sx, sy] = tileCentre(Math.round(f * (COLS - 1)), 0);
+    // a move that spends the last step ends the day: the sun is shown as the moon it will become
+    sun.setTexture(left === 0 ? "moon" : "sun").setAlpha(left === 0 ? 0.6 : 0.4);
     sun.setPosition(sx * this.k, sy * this.k).setVisible(true);
     if (left < 0) sun.setTint(0x6b7fa0);
     else sun.clearTint();
