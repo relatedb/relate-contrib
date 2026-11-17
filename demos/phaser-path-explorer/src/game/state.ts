@@ -99,6 +99,8 @@ export class GameState {
   private applied = false;
   /** Bumped by every undo, so the scene can tell a step back from a step forward. */
   undone = 0;
+  /** Bumped when a day ends, so the scene can play the night. */
+  dayEnds = 0;
 
   constructor(private readonly bridge: Bridge) {}
 
@@ -475,6 +477,7 @@ export class GameState {
         return;
       }
       this.applied = true;
+      this.dayEnds++;
       // What the day forgot, ordered outward from the abandoned thread, so the fog can close from the path out.
       const fogged = (r["fogged"] as string[]) ?? [];
       const thread = new Set<string>();

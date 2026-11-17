@@ -328,3 +328,9 @@ whole hexes (one density per hex, so cloud edges follow hex borders) with the de
 the empty board's two-tone dither and lifts both tones slightly towards grey, so it reads as the same pattern, lighter.
 The board's dither is desaturated, and the night shade covers the whole board. The day's forgotten ground fades out
 above the clouds. Static for now; drift is open.
+
+**The night (2026-11-17).** Ending a day plays a 3.6 second scripted night, cosmetic only (the graph is already on the
+new day): the sun runs on to dusk if the day ended early, turns into a crescent moon on the right, the sky darkens and the
+forgotten ground fades as night falls, the moon crosses right to left, and at midnight (the moon on the left) the
+explorer returns to camp; the sky then lightens and the moon turns back into the sun. Input is locked until dawn except
+undo, which ends the night at once. The moon is a plain crescent with no phases.

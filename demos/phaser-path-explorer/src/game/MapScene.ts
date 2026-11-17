@@ -57,6 +57,11 @@ const LAYER = {
   sun: 5,
 } as const;
 
+/** How long the night takes, in milliseconds: dusk, nightfall, midnight, the small hours, dawn. */
+const NIGHT_MS = 3600;
+/** The moment of the night (0 to 1) at which the moon reaches the left: midnight, when the explorer is home. */
+const MIDNIGHT = 0.58;
+
 /** Where the waymarkers pile round the camp, as offsets of the 4 by 6 flag from the camp tile's corner: its rim. */
 const PILE: [number, number][] = [
   [2, 3],
@@ -112,8 +117,13 @@ export class MapScene extends Phaser.Scene {
   private reliefFaces!: Phaser.GameObjects.Graphics;
   /** True after a key press until the pointer moves: only then is the preview of the faced hex shown. */
   private keyboard = false;
-  /** Extra dusk while the day's fog settles, on top of the sun's own light. */
-  private dusk = 0;
+  /** The night between two days: progress 0 to 1 while it plays, -1 otherwise. Input waits for it, except undo. */
+  private nightT = -1;
+  private nightClock0 = 0;
+  private nightReturned = false;
+  private nightTween: Phaser.Tweens.Tween | undefined;
+  private dayEndsSeen = 0;
+  private undoneSeen = 0;
 
   /** Canvas pixels per lattice cell: the chosen pixel size times the display's pixel density. */
   private readonly k: number;
@@ -159,6 +169,7 @@ export class MapScene extends Phaser.Scene {
     kb?.addCapture("LEFT,RIGHT,UP,DOWN,BACKSPACE,SPACE"); // keep the page from scrolling
     const key = (name: string, run: (e: KeyboardEvent) => void) =>
       kb?.on(`keydown-${name}`, (e: KeyboardEvent) => {
+        if (this.nightT >= 0 && name !== "BACKSPACE" && name !== "Z") return; // the night is not interrupted
         this.keyboard = true;
         run(e);
         this.drawOverlay();
@@ -186,12 +197,20 @@ export class MapScene extends Phaser.Scene {
     });
     this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
       const t = this.tileUnder(p);
-      if (t) void this.state.click(t.id, { step: p.event.shiftKey });
+      if (t && this.nightT < 0) void this.state.click(t.id, { step: p.event.shiftKey });
     });
   }
 
   override update(): void {
     // the frame loop reads the cache only; it redraws when something changed
+    if (this.undoneSeen !== this.state.undone) {
+      this.undoneSeen = this.state.undone;
+      this.dayEndsSeen = this.state.dayEnds; // a day taken back has no night to play
+      this.finishNight();
+    } else if (this.dayEndsSeen !== this.state.dayEnds) {
+      this.dayEndsSeen = this.state.dayEnds;
+      this.startNight();
+    }
     if (this.drawn !== this.state.version) {
       this.drawn = this.state.version;
       this.redraw();
@@ -331,7 +350,8 @@ export class MapScene extends Phaser.Scene {
   private syncSprites(): void {
     const tiles = this.state.tiles;
     const here = this.state.here();
-    if (here && this.explorer) {
+    const home = this.nightT < 0 || this.nightReturned; // the explorer stays out until midnight
+    if (here && this.explorer && home) {
       const [x, y] = this.spotOf(here.col, here.row);
       if (!this.explorer.visible) this.explorer.setPosition(x, y).setVisible(true);
       else if (this.explorerAt !== here.id) {
@@ -396,12 +416,8 @@ export class MapScene extends Phaser.Scene {
   private startDusk(): void {
     const ghosts: DuskHex[] = this.state.lastFogged;
     this.state.lastFogged = []; // consumed once; a later redraw shows only the settled board
-    if (!ghosts.length) {
-      this.dusk = 0;
-      return;
-    }
+    if (!ghosts.length) return;
     const version = this.state.version;
-    let lastRing = 0;
     for (const ghost of ghosts) {
       if (!ghost.terrain) continue;
       const key = `dusk-${version}-${ghost.id}`;
@@ -429,7 +445,7 @@ export class MapScene extends Phaser.Scene {
       this.tweens.add({
         targets: image,
         alpha: 0,
-        delay: ghost.ring * 90,
+        delay: NIGHT_MS * 0.26 + ghost.ring * 90, // the ground is forgotten as night falls
         duration: 420,
         ease: "Quad.easeOut",
         onComplete: () => {
@@ -437,29 +453,7 @@ export class MapScene extends Phaser.Scene {
           if (this.textures.exists(key)) this.textures.remove(key);
         },
       });
-      lastRing = Math.max(lastRing, ghost.ring);
     }
-    this.tweens.addCounter({
-      from: 0,
-      to: 1,
-      duration: 280 + lastRing * 90 + 460,
-      ease: "Sine.easeIn",
-      onUpdate: (_tween, _target, _key, current) => {
-        this.dusk = current;
-        this.drawSky();
-      },
-      onComplete: () =>
-        this.tweens.addCounter({
-          from: 1,
-          to: 0,
-          duration: 520,
-          ease: "Sine.easeOut",
-          onUpdate: (_tween, _target, _key, current) => {
-            this.dusk = current;
-            this.drawSky();
-          },
-        }),
-    });
   }
 
   /**
@@ -565,43 +559,114 @@ export class MapScene extends Phaser.Scene {
 
   /**
    * The sun is the day's clock, not a meter: a hex-sized sprite crosses the top row as the steps drain, warm at dawn,
-   * pale at noon and an ember towards dusk, while the whole world's light cools underneath it. At dusk the day is over.
+   * pale at noon and an ember towards dusk, while the whole world's light cools underneath it. At dusk the day is over,
+   * and the night plays (see `startNight`).
    */
   private drawSky(): void {
     const sky = this.sky;
     if (!sky) return;
     sky.clear();
     const target = Math.max(0, Math.min(1, 1 - this.state.player.steps / START_STEPS)); // 0 dawn, 1 dusk
-    if (this.clock < 0) this.clock = this.clockTarget = target;
-    if (target !== this.clockTarget) {
-      // the sun runs after the steps: spent steps are time passing, so it crosses the sky rather than jumping
-      this.clockTarget = target;
-      this.tweens.killTweensOf(this);
-      this.tweens.add({
-        targets: this,
-        clock: target,
-        duration: Math.min(900, 220 + 700 * Math.abs(target - this.clock)),
-        ease: "Sine.easeInOut",
-        onUpdate: () => this.drawSky(),
-      });
+    let f: number;
+    let slot: number;
+    let moon = 0;
+    let darkness = 0;
+    if (this.nightT >= 0) {
+      ({ clock: f, slot, moon, darkness } = this.nightSky(this.nightT));
+    } else {
+      if (this.clock < 0) this.clock = this.clockTarget = target;
+      if (target !== this.clockTarget) {
+        // the sun runs after the steps: spent steps are time passing, so it crosses the sky rather than jumping
+        this.clockTarget = target;
+        this.tweens.killTweensOf(this);
+        this.tweens.add({
+          targets: this,
+          clock: target,
+          duration: Math.min(900, 220 + 700 * Math.abs(target - this.clock)),
+          ease: "Sine.easeInOut",
+          onUpdate: () => this.drawSky(),
+        });
+      }
+      f = this.clock;
+      // A straight, grid-aligned crossing: dawn at the leftmost centre, noon at the middle, dusk at the right.
+      slot = Math.round(f * (COLS - 1));
     }
-    const f = this.clock;
-    // A straight, grid-aligned crossing: dawn at the leftmost centre, noon at the middle, dusk at the right.
-    const [x, y] = tileCentre(Math.round(f * (COLS - 1)), 0);
+    const [x, y] = tileCentre(slot, 0);
     const body = f < 0.5 ? mix(0xffb45f, 0xfff4c8, 2 * f) : mix(0xfff4c8, 0xff6b3d, 2 * (f - 0.5));
-    const noon = Math.sin(Math.PI * f) * (1 - this.dusk); // the sun's rays fall away overnight
-    const nightBody = mix(body, 0xc7dcf0, this.dusk);
-    const ray = mix(nightBody, 0xffffee, (0.18 + 0.3 * noon) * (1 - this.dusk));
-    this.paintSun(nightBody, ray, noon);
+    const noon = Math.sin(Math.PI * f);
+    this.paintSun(mix(body, 0xc7dcf0, moon), mix(body, 0xffffee, 0.18 + 0.3 * noon), noon, moon);
     this.sun?.setPosition(x * this.k, y * this.k);
-    // The light cools as the day drains, and deepens for a breath while the day's fog settles.
-    sky.fillStyle(0x07152b, Math.min(0.82, 0.3 * f * f + 0.52 * this.dusk));
+    // The light cools as the day drains; at night it falls to its deepest and comes back by morning.
+    sky.fillStyle(0x07152b, Math.min(0.82, Math.max(0.3 * f * f, 0.82 * darkness)));
     const board = boardSizePx(1);
     sky.fillRect(0, 0, board.width, board.height); // the whole board, to its outermost hex edges
   }
 
-  /** Paint whole texture pixels, exactly like a terrain sprite; the disc and its rays have no antialiased edges. */
-  private paintSun(body: number, ray: number, noon: number): void {
+  /**
+   * The sky at a moment of the night (0 to 1): the sun runs on to the right (if the day was ended early), turns into
+   * a crescent moon, and the sky darkens as the moon crosses from right to left; at midnight (the moon on the left,
+   * the explorer home) the sky begins to lighten, and by morning the moon has turned back into the sun.
+   */
+  private nightSky(t: number): { clock: number; slot: number; moon: number; darkness: number } {
+    const clamp = (x: number) => Math.max(0, Math.min(1, x));
+    const ease = (x: number) => x * x * (3 - 2 * x);
+    const last = COLS - 1;
+    if (t < 0.14) {
+      const clock = this.nightClock0 + (1 - this.nightClock0) * ease(t / 0.14);
+      return { clock, slot: Math.round(clock * last), moon: 0, darkness: 0 };
+    }
+    if (t < MIDNIGHT) {
+      const crossing = ease(clamp((t - 0.26) / (MIDNIGHT - 0.26)));
+      return {
+        clock: 1,
+        slot: Math.round((1 - crossing) * last),
+        moon: ease(clamp((t - 0.14) / 0.12)),
+        darkness: ease(clamp((t - 0.26) / 0.22)),
+      };
+    }
+    return { clock: 0, slot: 0, moon: 1 - ease(clamp((t - 0.84) / 0.16)), darkness: 1 - ease(clamp((t - 0.6) / 0.28)) };
+  }
+
+  /** Play the night: the day just ended. The graph is already on the new day; this is the sky and the sun only. */
+  private startNight(): void {
+    this.nightTween?.stop();
+    this.tweens.killTweensOf(this);
+    this.nightClock0 = this.clock < 0 ? 0 : this.clock;
+    this.nightReturned = false;
+    this.nightT = 0;
+    this.nightTween = this.tweens.addCounter({
+      from: 0,
+      to: 1,
+      duration: NIGHT_MS,
+      onUpdate: (_tween, _target, _key, current) => {
+        this.nightT = current;
+        if (!this.nightReturned && current >= MIDNIGHT) {
+          this.nightReturned = true;
+          this.syncSprites(); // midnight: the explorer is home
+        }
+        this.drawSky();
+      },
+      onComplete: () => this.finishNight(),
+    });
+  }
+
+  /** End the night, now or by undo: the sky goes back to reading the steps. */
+  private finishNight(): void {
+    if (this.nightT < 0) return;
+    this.nightTween?.stop();
+    this.nightTween = undefined;
+    this.nightT = -1;
+    this.nightReturned = true;
+    this.clock = this.clockTarget = Math.max(0, Math.min(1, 1 - this.state.player.steps / START_STEPS));
+    this.syncSprites();
+    this.drawSky();
+  }
+
+  /**
+   * Paint whole texture pixels, exactly like a terrain sprite; the disc and its rays have no antialiased edges. `moon`
+   * (0 to 1) turns the sun into a crescent: the rays fade and a second disc bites into the first from the right.
+   */
+  private paintSun(body: number, ray: number, noon: number, moon = 0): void {
     const texture = this.sunTexture;
     if (!texture) return;
     const image = texture.getContext().createImageData(16, 17);
@@ -623,7 +688,7 @@ export class MapScene extends Phaser.Scene {
     const x = 7.5;
     const y = 8;
     const radius = 5.65;
-    // Rasterized one-pixel rays: longer and more opaque at noon, short and subdued at the horizons.
+    // Rasterized one-pixel rays: longer and more opaque at noon, short and subdued at the horizons; none on the moon.
     for (let i = 0; i < 12; i++) {
       const angle = (i * Math.PI) / 6;
       const inner = radius + 0.3;
@@ -633,22 +698,24 @@ export class MapScene extends Phaser.Scene {
         y + Math.sin(angle) * inner,
         x + Math.cos(angle) * outer,
         y + Math.sin(angle) * outer,
-        Math.round(255 * (0.4 + 0.6 * noon)),
+        Math.round(255 * (0.4 + 0.6 * noon) * (1 - moon)),
       );
     }
     // Three flat tones give the disc a lit edge and a shaded edge, without gradients or smooth drawing primitives.
     const highlight = mix(body, 0xffffee, 0.55);
     const shade = mix(body, 0x783b36, 0.22);
+    // the bite: a disc that starts far to the right (no bite) and comes in to leave a crescent lit on the left
+    const reach = 13 * (1 - moon) + 3.4 * moon;
+    const biteX = x + reach;
+    const biteY = y - reach * 0.35;
+    const biteR = 5.2;
     for (let py = 0; py < 17; py++) {
       for (let px = 0; px < 16; px++) {
         const dx = px - x;
         const dy = py - y;
         if (dx * dx + dy * dy > radius * radius) continue;
-        const moon = this.dusk > 0 && dx > x + radius * (1 - 2 * this.dusk);
-        const colour = moon
-          ? mix(0xc7dcf0, 0x07152b, 0.78)
-          : dx + dy < -2 ? highlight : dx + dy > 4 ? shade : body;
-        pixel(px, py, colour);
+        if (moon > 0 && (px - biteX) ** 2 + (py - biteY) ** 2 < biteR * biteR) continue;
+        pixel(px, py, dx + dy < -2 ? highlight : dx + dy > 4 && moon < 1 ? shade : body);
       }
     }
     texture.getContext().putImageData(image, 0, 0);
@@ -896,6 +963,7 @@ export class MapScene extends Phaser.Scene {
     if (!ghost || !sun) return;
     ghost.setVisible(false);
     sun.setVisible(false);
+    if (this.nightT >= 0) return; // the night plays undisturbed
     const here = this.state.here();
     const t = this.previewTarget();
     if (!here || !t || t.id === here.id || this.state.pending) return;
