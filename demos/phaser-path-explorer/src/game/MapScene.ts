@@ -21,6 +21,7 @@ import {
 } from "../hex/core/index.js";
 import { addSceneTexture, colourNumber, drawGraph, drawVectorTile, mixColour, strokeHex } from "../hex/phaser/index.js";
 import { addGameSprite } from "./sprites.js";
+import { cloudCell, cloudDensity } from "./clouds.js";
 import { routeToGraph, routes, withCrossings, type Route } from "./routes.js";
 import type { DuskHex, GameState, HexState } from "./state.js";
 import { COLS, ROWS, START_MARKERS, START_STEPS } from "./world.js";
@@ -51,6 +52,7 @@ const LAYER = {
   graph: 2,
   overlay: 3,
   sprites: 3.5,
+  clouds: 3.9,
   sky: 4,
   sun: 5,
 } as const;
@@ -98,6 +100,9 @@ export class MapScene extends Phaser.Scene {
   private pile: Phaser.GameObjects.Image[] = [];
   private flags = new Map<string, Phaser.GameObjects.Image>();
   private flying = new Set<string>();
+  /** The grey clouds over the unknown, and the hexes they were last painted for. */
+  private clouds: Phaser.GameObjects.Image | undefined;
+  private cloudKey = "";
   /** The day's clock as drawn: it runs after the steps, so the sun crosses the sky instead of jumping. */
   private clock = -1;
   private clockTarget = -1;
@@ -236,9 +241,54 @@ export class MapScene extends Phaser.Scene {
     }
     this.drawThread();
     this.syncSprites();
+    this.paintClouds();
     this.drawOverlay();
     this.startDusk();
     this.drawSky();
+  }
+
+  /**
+   * The fog, on the sky layer: grey clouds over every hex the explorer does not know, in flat greys with the design
+   * system's checker dither (see clouds.ts). Where the cloud thins, the dithered empty board shows through. The
+   * day's forgotten ground fades out above the clouds, so the weather seems to settle over it.
+   */
+  private paintClouds(): void {
+    const hidden = [...this.state.tiles.values()].filter((t) => t.state === "hidden");
+    const key = hidden.map((t) => t.id).join("|");
+    if (key === this.cloudKey) return;
+    this.cloudKey = key;
+    const { width, height } = boardSizePx(1);
+    this.clouds?.destroy();
+    if (this.textures.exists("clouds")) this.textures.remove("clouds");
+    const texture = this.textures.createCanvas("clouds", width, height);
+    if (!texture) throw new Error('could not create texture "clouds"');
+    const ctx = texture.getContext();
+    // The cloud keeps the board's own checker (same cells, same two tones) and lifts both a little towards grey, so
+    // it is the same dither, lighter: subtle weather, not a second pattern.
+    const grey = colourNumber("light-gray");
+    const lift: Record<string, number> = { wisp: 0.05, shade: 0.05, dither: 0.1, body: 0.1 };
+    const tone = (even: boolean, kind: string) =>
+      `#${mix(even ? MapScene.BOARD_LIGHT : MapScene.BOARD_DARK, grey, lift[kind]!).toString(16).padStart(6, "0")}`;
+    for (const t of hidden) {
+      const [ox, oy] = tileOrigin(t.col, t.row);
+      // one density per hex, so a cloud is a cluster of whole hexes and its edges follow the hex borders
+      const [cx, cy] = tileCentre(t.col, t.row);
+      const density = cloudDensity(cx, cy);
+      for (let y = 0; y < 17; y++) {
+        const w = hexSpan(y);
+        for (let x = (16 - w) / 2; x < (16 + w) / 2; x++) {
+          const px = ox + x;
+          const py = oy + y;
+          const kind = cloudCell(density, (px + py) % 2 === 0);
+          if (kind === "none") continue;
+          ctx.fillStyle = tone((px + py) % 2 === 0, kind);
+          ctx.fillRect(px, py, 1, 1);
+        }
+      }
+    }
+    texture.refresh();
+    texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    this.clouds = this.add.image(0, 0, "clouds").setOrigin(0).setScale(this.k).setDepth(LAYER.clouds).setAlpha(0.8);
   }
 
   /**
@@ -251,8 +301,8 @@ export class MapScene extends Phaser.Scene {
     const texture = this.textures.createCanvas("board", width, height);
     if (!texture) throw new Error('could not create texture "board"');
     const ctx = texture.getContext();
-    const light = `#${colourNumber("dark-baltic").toString(16).padStart(6, "0")}`;
-    const dark = `#${mixColour("dark-baltic", "darkest-baltic", 0.55).toString(16).padStart(6, "0")}`;
+    const light = `#${MapScene.BOARD_LIGHT.toString(16).padStart(6, "0")}`;
+    const dark = `#${MapScene.BOARD_DARK.toString(16).padStart(6, "0")}`;
     for (const [col, row] of Array.from({ length: ROWS }, (_, r) => Array.from({ length: COLS }, (_, c) => [c, r] as const)).flat()) {
       const [ox, oy] = tileOrigin(col, row);
       for (let y = 0; y < 17; y++) {
@@ -375,7 +425,7 @@ export class MapScene extends Phaser.Scene {
       const tile = this.state.tiles.get(ghost.id);
       if (!tile) continue;
       const [ox, oy] = tileOrigin(tile.col, tile.row);
-      const image = this.add.image(ox * this.k, oy * this.k, key).setOrigin(0).setScale(this.k).setDepth(LAYER.graph + 0.4);
+      const image = this.add.image(ox * this.k, oy * this.k, key).setOrigin(0).setScale(this.k).setDepth(LAYER.clouds + 0.05);
       this.tweens.add({
         targets: image,
         alpha: 0,
@@ -536,8 +586,6 @@ export class MapScene extends Phaser.Scene {
       });
     }
     const f = this.clock;
-    const [x0, yTop] = tileCentre(0, 0);
-    const [x1, yBottom] = tileCentre(COLS - 1, ROWS - 1);
     // A straight, grid-aligned crossing: dawn at the leftmost centre, noon at the middle, dusk at the right.
     const [x, y] = tileCentre(Math.round(f * (COLS - 1)), 0);
     const body = f < 0.5 ? mix(0xffb45f, 0xfff4c8, 2 * f) : mix(0xfff4c8, 0xff6b3d, 2 * (f - 0.5));
@@ -548,7 +596,8 @@ export class MapScene extends Phaser.Scene {
     this.sun?.setPosition(x * this.k, y * this.k);
     // The light cools as the day drains, and deepens for a breath while the day's fog settles.
     sky.fillStyle(0x07152b, Math.min(0.82, 0.3 * f * f + 0.52 * this.dusk));
-    sky.fillRect(x0 - 1, yTop - 6, x1 - x0 + 3, yBottom - yTop + 7.5);
+    const board = boardSizePx(1);
+    sky.fillRect(0, 0, board.width, board.height); // the whole board, to its outermost hex edges
   }
 
   /** Paint whole texture pixels, exactly like a terrain sprite; the disc and its rays have no antialiased edges. */
@@ -684,6 +733,10 @@ export class MapScene extends Phaser.Scene {
     );
     drawGraph(g, { pieces: bank.newPieces, links: bank.newLinks, nodes: [] }, securedAlpha);
   }
+
+  /** The empty board's two dither tones: the design system's dark blue drawn towards grey, close to each other. */
+  private static readonly BOARD_LIGHT = mixColour("dark-baltic", "dark-gray", 0.65);
+  private static readonly BOARD_DARK = mixColour("dark-baltic", "darkest-baltic", 0.25);
 
   /** Where a path's end-cap stands: against the edge of the tile (the apothem of the 16 wide hexagon). */
   private static readonly CAP_R = 7.5;

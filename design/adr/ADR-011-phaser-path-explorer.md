@@ -322,3 +322,9 @@ with a bar as long as a side of the hexagon inscribed one cell inside the tile's
 inner hex. These caps are drawn by hand, not from the design system's arrow glyphs, which have no `)`: a recorded
 deviation. Casings go under the graph and the black over it, so a cap and its line read as one stroke. Waymarker flags
 are 4 by 6 cells with no outline, standing top-centre on their hex.
+
+**Fog as weather (2026-11-17).** The fog is grey cloud on the sky layer over every hex the explorer does not know, in
+whole hexes (one density per hex, so cloud edges follow hex borders) with the design system's checker dither. It keeps
+the empty board's two-tone dither and lifts both tones slightly towards grey, so it reads as the same pattern, lighter.
+The board's dither is desaturated, and the night shade covers the whole board. The day's forgotten ground fades out
+above the clouds. Static for now; drift is open.
