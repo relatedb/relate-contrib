@@ -36,9 +36,11 @@ export async function seedWorld(engine: Engine, rows: string[]): Promise<void> {
   check(await engine.query("CREATE (:Robot {id: 'robot'})"));
   check(await engine.query("UNWIND $hexes AS h CREATE (x:Hex) SET x = h", { hexes }));
   check(await engine.query("CREATE (p:Player) SET p = $p", { p: { id: "player", ...player.properties } }));
-  check(
-    await engine.query("UNWIND $links AS l MATCH (a:Hex {id: l.source}), (b:Hex {id: l.target}) CREATE (a)-[:ADJ]->(b)", {
-      links: doc.links,
-    }),
-  );
+  for (const type of ["ADJ", "NEAR"]) {
+    check(
+      await engine.query(`UNWIND $links AS l MATCH (a:Hex {id: l.source}), (b:Hex {id: l.target}) CREATE (a)-[:${type}]->(b)`, {
+        links: doc.links.filter((l) => l.type === type),
+      }),
+    );
+  }
 }

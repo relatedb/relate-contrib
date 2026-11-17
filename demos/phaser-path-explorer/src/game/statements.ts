@@ -20,12 +20,13 @@
  */
 export const EXTEND = `
 MATCH (pl:Player {id: 'player'}), (p:Hex {id: pl.at})-[:ADJ]-(h:Hex {id: $to})
-WHERE h.state IN ['sensed', 'seen', 'path'] AND pl.steps >= coalesce(h.cost, 1)
+WHERE h.state IN ['viewed', 'sensed', 'seen', 'path'] AND pl.steps >= coalesce(h.cost, 1)
   AND NOT EXISTS { (h)-[:LOOSE]-(:Hex) }
   AND ( (p.anchor AND NOT EXISTS { (:Hex)-[:LOOSE]->(:Hex) })
         OR (EXISTS { (:Hex)-[:LOOSE]->(p) } AND NOT EXISTS { (p)-[:LOOSE]->(:Hex) }) )
 CREATE (p)-[:LOOSE {since: $now}]->(h)
-SET h.state = 'path', pl.steps = pl.steps - coalesce(h.cost, 1), pl.at = h.id
+SET h.state = 'path', h.mapped = CASE WHEN h.tower = true THEN true ELSE h.mapped END,
+    pl.steps = pl.steps - coalesce(h.cost, 1), pl.at = h.id
 WITH h, pl
 OPTIONAL MATCH (t:Thing {kind: 'cache'})-[o:ON]->(h)
 DELETE o
@@ -74,7 +75,7 @@ MATCH (pl:Player {id: 'player'}), (home:Hex {origin: true})
 OPTIONAL MATCH (a:Hex)-[r:LOOSE]->(b:Hex) DELETE r
 WITH pl, home, count(r) AS lost
 OPTIONAL MATCH (x:Hex)
-  WHERE x.state IN ['sensed', 'seen', 'path'] AND x.origin IS NULL
+  WHERE x.state IN ['viewed', 'sensed', 'seen', 'path'] AND x.origin IS NULL
     AND NOT EXISTS { (x)-[:SECURED]-() }
 WITH pl, home, lost, collect(DISTINCT x.id) AS fogged
 MATCH (y:Hex) WHERE y.id IN fogged OR y.id = home.id
@@ -144,7 +145,8 @@ const HEX_FIELDS = `
   CASE WHEN h.state = 'hidden' THEN null ELSE h.terrain END AS terrain,
   CASE WHEN h.state = 'hidden' THEN null ELSE h.feature END AS feature,
   CASE WHEN h.state = 'hidden' THEN false ELSE coalesce(h.anchor, false) END AS anchor,
-  CASE WHEN h.state = 'hidden' THEN null ELSE coalesce(h.cost, 1) END AS cost`;
+  CASE WHEN h.state = 'hidden' THEN null ELSE coalesce(h.cost, 1) END AS cost,
+  coalesce(h.mapped, false) AS mapped`;
 
 /** The whole board as the player may know it. */
 export const READ_BOARD = `MATCH (h:Hex) RETURN ${HEX_FIELDS}`;
@@ -175,8 +177,8 @@ export const UNDO_CLEAR_EDGES = `MATCH ()-[r:LOOSE|SECURED]->() DELETE r RETURN 
 export const UNDO_LOOSE = `UNWIND $edges AS e MATCH (a:Hex {id: e.from}), (b:Hex {id: e.to}) CREATE (a)-[:LOOSE {since: 0}]->(b) RETURN count(*) AS n`;
 /** Lay the secured paths back. $edges: [{from, to}]. */
 export const UNDO_SECURED = `UNWIND $edges AS e MATCH (a:Hex {id: e.from}), (b:Hex {id: e.to}) CREATE (a)-[:SECURED {since: 0}]->(b) RETURN count(*) AS n`;
-/** Put back what the explorer knows of each changed hex. $rows: [{id, state, anchor: true | null}]. */
-export const UNDO_HEXES = `UNWIND $rows AS x MATCH (h:Hex {id: x.id}) SET h.state = x.state, h.anchor = x.anchor RETURN count(h) AS n`;
+/** Put back what the explorer knows of each changed hex. $rows: [{id, state, anchor: true | null, mapped: true | null}]. */
+export const UNDO_HEXES = `UNWIND $rows AS x MATCH (h:Hex {id: x.id}) SET h.state = x.state, h.anchor = x.anchor, h.mapped = x.mapped RETURN count(h) AS n`;
 /** Put the explorer, the steps and the waymarkers back. */
 export const UNDO_PLAYER = `MATCH (pl:Player {id: 'player'}) SET pl.at = $at, pl.steps = $steps, pl.markers = $markers RETURN pl.at AS at`;
 
@@ -189,3 +191,26 @@ export const READ_TRUTH = `
 MATCH (h:Hex)
 RETURN h.id AS id, h.col AS col, h.row AS row, h.state AS state, h.terrain AS terrain, h.feature AS feature,
        coalesce(h.anchor, false) AS anchor, coalesce(h.cost, 1) AS cost`;
+
+/**
+ * The signposts: from every settlement the explorer has arrived at (and from the camp), the way to each settlement within
+ * a day's walk that has not been reached. Only the axial difference comes back, never where the settlement is.
+ */
+export const READ_SIGNPOSTS = `
+MATCH (a:Hex)-[:NEAR]->(b:Hex)
+WHERE a.mapped = true AND b.tower = true AND b.mapped IS NULL
+RETURN a.id AS at, b.q - a.q AS dq, b.r - a.r AS dr`;
+
+/**
+ * The field of view (ADR-011, amended): wherever the explorer stands, the six hexes around it are viewed (hidden or sensed
+ * ground becomes viewed: seen in full, with its features, but still reached by extending the path, not stepped onto) and
+ * the ring beyond them is sensed. Answers with both sets, so the client's cache can read them.
+ */
+export const VIEW_AROUND = `
+MATCH (pl:Player {id: 'player'}), (h:Hex {id: pl.at})
+OPTIONAL MATCH (h)-[:ADJ]-(n:Hex) WHERE n.state IN ['hidden', 'sensed']
+SET n.state = 'viewed'
+WITH h, collect(DISTINCT n.id) AS viewed
+OPTIONAL MATCH (h)-[:ADJ]-(:Hex)-[:ADJ]-(m:Hex) WHERE m.state = 'hidden'
+SET m.state = 'sensed'
+RETURN viewed, collect(DISTINCT m.id) AS sensed`;

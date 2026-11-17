@@ -19,10 +19,10 @@ import {
   type Point,
   type Tile,
 } from "../hex/core/index.js";
-import { addSceneTexture, addSpriteTexture, colourNumber, drawGraph, drawVectorTile, mixColour, strokeHex } from "../hex/phaser/index.js";
+import { addSceneTexture, addSpriteTexture, colourNumber, drawGraph, drawVectorTile, fillHex, mixColour, strokeHex } from "../hex/phaser/index.js";
 import { addGameSprite } from "./sprites.js";
 import { cloudCell, cloudDensity } from "./clouds.js";
-import { robotCells, robotSlot } from "./robot.js";
+import { ROBOT_COLOURS, robotCells, robotSlot } from "./robot.js";
 import { paletteAsset, spritesAsset } from "../hex/assets/index.js";
 import { routeToGraph, routes, withCrossings, type Route } from "./routes.js";
 import type { DuskHex, GameState, HexState } from "./state.js";
@@ -92,6 +92,8 @@ export class MapScene extends Phaser.Scene {
       }
     | undefined;
   private overlay!: Phaser.GameObjects.Graphics;
+  /** The signposts: arrowheads just outside each settlement the explorer has arrived at, pointing the way. */
+  private signs!: Phaser.GameObjects.Graphics;
   private ground?: Phaser.GameObjects.Image;
   private drawn = -1;
   /** The sun and the day's light: the clock that is not a meter. */
@@ -110,11 +112,16 @@ export class MapScene extends Phaser.Scene {
   /** The grey clouds over the unknown, and the hexes they were last painted for. */
   private clouds: Phaser.GameObjects.Image | undefined;
   private cloudKey = "";
+  /** How far the weather has drifted east, in board cells; the clouds are sampled this far behind. */
+  private cloudDrift = 0;
   /** The robot along the bottom row: its parts so far, and the faint outline of the whole of it. */
   private robot: Phaser.GameObjects.Image | undefined;
   private robotGhost: Phaser.GameObjects.Image | undefined;
   private robotParts = -1;
   private robotSlotNow = -1;
+  /** The mist clears along the top row as far as the sun has come, and along the bottom row as far as the robot. */
+  private clearBand!: Phaser.GameObjects.Graphics;
+  private sunSlotNow = -1;
   /** The end of the game: the board revealed, the robots arriving. Started once, when the game is over. */
   private finaleStarted = false;
   private finaleActive_ = false;
@@ -164,11 +171,21 @@ export class MapScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor("#002b43");
     this.paintEmptyBoard();
     this.makeRobotTextures();
+    this.time.addEvent({
+      delay: 1100,
+      loop: true,
+      callback: () => {
+        this.cloudDrift += 5;
+        this.paintClouds();
+      },
+    });
     this.vector = this.add.graphics().setScale(this.k).setDepth(LAYER.vector);
     // Beneath every terrain: a sinking shore must pass under pixel-art and vector neighbours alike.
     this.reliefFaces = this.add.graphics().setScale(this.k).setDepth(LAYER.board + 0.1);
     this.thread = this.add.graphics().setScale(this.k).setDepth(LAYER.graph);
     this.bankThread = this.add.graphics().setScale(this.k).setDepth(LAYER.graph + 0.3);
+    this.clearBand = this.add.graphics().setScale(this.k).setDepth(LAYER.clouds + 0.02);
+    this.signs = this.add.graphics().setScale(this.k).setDepth(LAYER.clouds + 0.05); // above the mist, so a signpost reads over unknown ground
     this.overlay = this.add.graphics().setScale(this.k).setDepth(LAYER.overlay);
     this.sky = this.add.graphics().setScale(this.k).setDepth(LAYER.sky);
     addGameSprite(this, "explorer", "explorer");
@@ -296,7 +313,9 @@ export class MapScene extends Phaser.Scene {
     this.drawThread();
     this.syncSprites();
     this.syncRobot();
+    this.drawSignposts();
     this.paintClouds();
+    this.drawClearBands();
     this.drawOverlay();
     this.startDusk();
     this.drawSky();
@@ -309,26 +328,25 @@ export class MapScene extends Phaser.Scene {
    */
   private paintClouds(): void {
     const hidden = [...this.state.tiles.values()].filter((t) => t.state === "hidden");
-    const key = hidden.map((t) => t.id).join("|");
+    const key = `${this.cloudDrift}:${hidden.map((t) => t.id).join("|")}`;
     if (key === this.cloudKey) return;
     this.cloudKey = key;
     const { width, height } = boardSizePx(1);
-    this.clouds?.destroy();
-    if (this.textures.exists("clouds")) this.textures.remove("clouds");
-    const texture = this.textures.createCanvas("clouds", width, height);
+    const texture = this.textures.exists("clouds") ? (this.textures.get("clouds") as Phaser.Textures.CanvasTexture) : this.textures.createCanvas("clouds", width, height);
     if (!texture) throw new Error('could not create texture "clouds"');
     const ctx = texture.getContext();
+    ctx.clearRect(0, 0, width, height);
     // The cloud keeps the board's own checker (same cells, same two tones) and lifts both a little towards grey, so
     // it is the same dither, lighter: subtle weather, not a second pattern.
     const grey = colourNumber("light-gray");
-    const lift: Record<string, number> = { wisp: 0.05, shade: 0.05, dither: 0.1, body: 0.1 };
+    const lift: Record<string, number> = { wisp: 0.1, shade: 0.1, dither: 0.2, body: 0.2 };
     const tone = (even: boolean, kind: string) =>
       `#${mix(even ? MapScene.BOARD_LIGHT : MapScene.BOARD_DARK, grey, lift[kind]!).toString(16).padStart(6, "0")}`;
     for (const t of hidden) {
       const [ox, oy] = tileOrigin(t.col, t.row);
       // one density per hex, so a cloud is a cluster of whole hexes and its edges follow the hex borders
       const [cx, cy] = tileCentre(t.col, t.row);
-      const density = cloudDensity(cx, cy);
+      const density = cloudDensity(cx - this.cloudDrift, cy); // the weather drifts across the board
       for (let y = 0; y < 17; y++) {
         const w = hexSpan(y);
         for (let x = (16 - w) / 2; x < (16 + w) / 2; x++) {
@@ -343,7 +361,7 @@ export class MapScene extends Phaser.Scene {
     }
     texture.refresh();
     texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
-    this.clouds = this.add.image(0, 0, "clouds").setOrigin(0).setScale(this.k).setDepth(LAYER.clouds).setAlpha(0.8);
+    this.clouds ??= this.add.image(0, 0, "clouds").setOrigin(0).setScale(this.k).setDepth(LAYER.clouds).setAlpha(0.8);
   }
 
   /**
@@ -488,7 +506,7 @@ export class MapScene extends Phaser.Scene {
       const ctx = texture.getContext();
       for (const [x, y, ch] of cells) {
         const name = colour ?? (ch === "K" ? "black" : spritesAsset.palette[ch]);
-        ctx.fillStyle = paletteAsset.colours[name!]!;
+        ctx.fillStyle = colour ? paletteAsset.colours[colour]! : (ROBOT_COLOURS[ch] ?? paletteAsset.colours[name!]!);
         ctx.fillRect(x, y, 1, 1);
       }
       texture.refresh();
@@ -518,6 +536,7 @@ export class MapScene extends Phaser.Scene {
     const grew = parts > this.robotParts && !first;
     this.robotParts = parts;
     this.robotSlotNow = slot;
+    this.drawClearBands();
     robot.setTexture(`robot-${parts}`);
     ghost.setPosition(x, y);
     this.tweens.killTweensOf(robot);
@@ -527,6 +546,25 @@ export class MapScene extends Phaser.Scene {
       robot.setAlpha(0.2);
       this.tweens.add({ targets: robot, alpha: 1, duration: 700, ease: "Quad.easeOut" }); // the new part switches on
     } else robot.setAlpha(1);
+  }
+
+  /**
+   * The sun and the robot are clocks, and each clears the mist as it progresses: the top row from the left edge to the
+   * sun, wherever it is now, and the bottom row from the left edge to the robot. Cleared hexes show the open sky.
+   */
+  private drawClearBands(): void {
+    const g = this.clearBand;
+    if (!g) return;
+    g.clear();
+    const sky = "dark-baltic";
+    const clear = (row: number, upTo: number) => {
+      for (let col = 0; col <= upTo && col < COLS; col++) {
+        const t = this.state.tileAt(col, row);
+        if (t && t.state === "hidden") fillHex(g, col, row, sky);
+      }
+    };
+    if (this.sunSlotNow >= 0) clear(0, this.sunSlotNow);
+    if (this.robotSlotNow >= 0) clear(ROWS - 1, this.robotSlotNow);
   }
 
   /** Where a sprite's corner goes so that it stands on a tile: the explorer's 16 by 16 sits in the tile's 16 by 17. */
@@ -783,6 +821,10 @@ export class MapScene extends Phaser.Scene {
       // A straight, grid-aligned crossing: dawn at the leftmost centre, noon at the middle, dusk at the right.
       slot = Math.round(f * (COLS - 1));
     }
+    if (slot !== this.sunSlotNow) {
+      this.sunSlotNow = slot;
+      this.drawClearBands();
+    }
     const [x, y] = tileCentre(slot, 0);
     const body = f < 0.5 ? mix(0xffb45f, 0xfff4c8, 2 * f) : mix(0xfff4c8, 0xff6b3d, 2 * (f - 0.5));
     const noon = Math.sin(Math.PI * f);
@@ -994,9 +1036,41 @@ export class MapScene extends Phaser.Scene {
     drawGraph(g, { pieces: bank.newPieces, links: bank.newLinks, nodes: [] }, securedAlpha);
   }
 
-  /** The empty board's two dither tones: the design system's dark blue drawn towards grey, close to each other. */
-  private static readonly BOARD_LIGHT = mixColour("dark-baltic", "dark-gray", 0.65);
-  private static readonly BOARD_DARK = mixColour("dark-baltic", "darkest-baltic", 0.25);
+  /** The empty board's two dither tones: a neutral mist, with no hue at all, so it is never taken for water or rock. */
+  private static readonly BOARD_LIGHT = mixColour("dark-gray", "light-gray", 0.6);
+  private static readonly BOARD_DARK = mixColour("dark-gray", "light-gray", 0.52);
+
+  /**
+   * Signposts: from each settlement the explorer has arrived at (and the camp), an arrowhead beside the hex for each of
+   * the six directions in which an unreached settlement lies within a day's walk. They say which way, not how far.
+   */
+  private drawSignposts(): void {
+    const g = this.signs;
+    g.clear();
+    if (this.state.over) return;
+    const SIDE_ANGLE: Record<string, number> = { e: 0, se: 60, sw: 120, w: 180, nw: 240, ne: 300 };
+    for (const [id, sides] of this.state.signposts) {
+      const t = this.state.tiles.get(id);
+      if (!t || t.state === "hidden") continue;
+      const [cx, cy] = tileCentre(t.col, t.row);
+      for (const side of sides) {
+        const a = (SIDE_ANGLE[side]! * Math.PI) / 180;
+        const ux = Math.cos(a);
+        const uy = Math.sin(a);
+        const px = -uy;
+        const py = ux;
+        // just outside the hex's edge, pointing away from it: clear of the camp's tent and the explorer
+        const tip = [cx + ux * 13.2, cy + uy * 13.2];
+        const b1 = [cx + ux * 9.2 + px * 2.6, cy + uy * 9.2 + py * 2.6];
+        const b2 = [cx + ux * 9.2 - px * 2.6, cy + uy * 9.2 - py * 2.6];
+        const tri = [new Phaser.Math.Vector2(tip[0], tip[1]), new Phaser.Math.Vector2(b1[0], b1[1]), new Phaser.Math.Vector2(b2[0], b2[1])];
+        g.lineStyle(1.5, colourNumber("cream"), 1);
+        g.strokePoints(tri, true);
+        g.fillStyle(colourNumber("black"), 1);
+        g.fillPoints(tri, true);
+      }
+    }
+  }
 
   /** Where a path's end-cap stands: against the edge of the tile (the apothem of the 16 wide hexagon). */
   private static readonly CAP_R = 7.5;

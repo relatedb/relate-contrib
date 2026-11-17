@@ -3,7 +3,7 @@
 import type { Client, GraphDocument, Properties } from "@relate/web";
 import { neighbours, toAxial, type Tile, type Terrain, type Feature } from "../hex/core/index.js";
 import { latticeAsset } from "../hex/assets/index.js";
-import { START_MARKERS, START_STEPS, terrainCost } from "./world.js";
+import { START_MARKERS, START_STEPS, landDistances, terrainCost } from "./world.js";
 
 export const APPLICATION = { name: "phaser-path-explorer", version: 1 } as const;
 
@@ -19,11 +19,15 @@ export function worldDocument(rows: string[]): GraphDocument {
   });
   let camp = "";
   const campNeighbours = new Set<string>();
+  const campRing2 = new Set<string>();
   rows.forEach((r, row) => {
     for (let col = 0; col < r.length; col++) {
       if (r[col] === "t") {
         camp = `${col},${row}`;
-        for (const [x, y] of neighbours(col, row)) campNeighbours.add(`${x},${y}`);
+        for (const [x, y] of neighbours(col, row)) {
+          campNeighbours.add(`${x},${y}`);
+          for (const [x2, y2] of neighbours(x, y)) campRing2.add(`${x2},${y2}`);
+        }
       }
     }
   });
@@ -38,12 +42,16 @@ export function worldDocument(rows: string[]): GraphDocument {
       const props: Properties = {
         col, row, ...toAxial(col, row), terrain,
         cost: terrainCost(ch), // steps to enter this hex; water costs more than any day
-        state: isCamp ? "path" : campNeighbours.has(key) ? "sensed" : "hidden",
+        // the camp stands in the open: the six hexes round it are in view, and the ring beyond is sensed
+        state: isCamp ? "path" : campNeighbours.has(key) ? "viewed" : campRing2.has(key) ? "sensed" : "hidden",
       };
       if (feature) props["feature"] = feature;
       if (feature) props["anchor"] = true; // the camp and the towers are anchors
       if (feature === "tower") props["tower"] = true; // a settlement to save: the win and the score read these
-      if (isCamp) props["origin"] = true;
+      if (isCamp) {
+        props["origin"] = true;
+        props["mapped"] = true; // the camp starts with its signposts: the first direction to head in
+      }
       nodes.push({ id: hexId(col, row), labels: ["Hex"], properties: props });
       // one direction per pair: link to the neighbours that come later in raster order
       for (const [x, y] of neighbours(col, row)) {
@@ -52,6 +60,19 @@ export function worldDocument(rows: string[]): GraphDocument {
       }
     }
   });
+  // Signposts (ADR-011, amended): a settlement, and the camp, knows the settlements within a day's walk of it (by cost,
+  // over land). A signpost shows only the direction of each one, once the explorer has arrived there.
+  const towers: [number, number][] = [];
+  rows.forEach((r, row) => [...r].forEach((ch, col) => (ch === "R" || ch === "U") && towers.push([col, row])));
+  const [campCol, campRow] = camp.split(",").map(Number) as [number, number];
+  for (const from of [[campCol, campRow] as [number, number], ...towers]) {
+    const dist = landDistances(rows, from);
+    for (const to of towers) {
+      if (to[0] === from[0] && to[1] === from[1]) continue;
+      if ((dist.get(`${to[0]},${to[1]}`) ?? Infinity) <= START_STEPS)
+        links.push({ source: hexId(from[0], from[1]), target: hexId(to[0], to[1]), type: "NEAR" });
+    }
+  }
   nodes.push({ id: "robot", labels: ["Robot"], properties: {} }); // the rogue AI, assembled a part a night
   nodes.push({ id: "player", labels: ["Player"], properties: { at: hexId(...(camp.split(",").map(Number) as [number, number])), steps: START_STEPS, markers: START_MARKERS } });
   return { version: 1, nodes, links };

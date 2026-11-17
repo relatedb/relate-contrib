@@ -16,7 +16,13 @@ const box = (x0: number, y0: number, x1: number, y1: number, edge: string, fill:
   ...rect(x0 + 1, y0 + 1, x1 - 1, y1 - 1, fill),
 ];
 
-// K is the outline, C light-baltic, c baltic, g dark-gray (a dead eye), Y yellow (a lit eye, the lamp), as in sprites.json
+/**
+ * The robot's colours: magentas and purples, which the design system's palette does not have (it is kept for the
+ * explorer's world; the rogue AI is meant to look like something else). A recorded deviation. K is the outline (black,
+ * from the palette), C the head's light purple, c the body, arms and legs' purple, g a dead eye (a dark violet), and Y
+ * a lit eye and the antenna's lamp (a hot magenta).
+ */
+export const ROBOT_COLOURS: Record<string, string> = { C: "#C77DFF", c: "#7B2CBF", g: "#3A1262", Y: "#FF2BD6" };
 export const PART_CELLS: Record<Part, Cell[]> = {
   head: box(3, 2, 12, 7, "K", "C"),
   eyes: [...rect(5, 4, 6, 5, "g"), ...rect(9, 4, 10, 5, "g")],

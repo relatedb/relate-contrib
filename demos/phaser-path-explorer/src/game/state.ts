@@ -6,12 +6,18 @@ import type { Bridge, Row } from "./bridge.js";
 import {
   END_DAY, EXTEND, PLACE_WAYMARKER, READ_BOARD, READ_EDGES, READ_HEXES, READ_PLAYER, REEL_IN, SECURE, STEP, TRAVEL, TOWERS,
   UNDO_CLEAR_EDGES, UNDO_CLEAR_PARTS, UNDO_HEXES, UNDO_LOOSE, UNDO_PARTS, UNDO_PLAYER, UNDO_SECURED,
-  GAME_OVER, MARKERS_USED, READ_PARTS, READ_TRUTH,
+  GAME_OVER, MARKERS_USED, READ_PARTS, READ_SIGNPOSTS, READ_TRUTH, VIEW_AROUND,
 } from "./statements.js";
 import { PARTS, computeScore, type Outcome } from "./score.js";
+import { groupSignposts } from "./signposts.js";
 import { DAYS, START_STEPS } from "./world.js";
 
-export type Knowledge = "hidden" | "sensed" | "seen" | "path";
+/**
+ * What the explorer knows of a hex: hidden (nothing); sensed (its colour: where the path can go); viewed (in sight, in
+ * full, features and all, but still reached by extending the path); seen (walked or remembered: it can be stepped onto);
+ * path (on a path).
+ */
+export type Knowledge = "hidden" | "sensed" | "viewed" | "seen" | "path";
 
 export interface HexState {
   id: string;
@@ -24,6 +30,8 @@ export interface HexState {
   terrain?: Terrain;
   feature?: Feature;
   anchor?: boolean;
+  /** The explorer has arrived here, and its signposts show (a settlement), or it is the camp. */
+  mapped?: boolean;
 }
 
 export interface PlayerState {
@@ -65,6 +73,7 @@ function toHex(r: Row): HexState {
   if (r["terrain"]) hex.terrain = r["terrain"] as Terrain;
   if (r["feature"]) hex.feature = r["feature"] as Feature;
   if (r["anchor"]) hex.anchor = true;
+  if (r["mapped"]) hex.mapped = true;
   if (typeof r["cost"] === "number") hex.cost = r["cost"] as number;
   return hex;
 }
@@ -90,6 +99,8 @@ export class GameState {
   player: PlayerState = { at: "", steps: 0, markers: 0 };
   /** The robot's parts, one a night, in order: the days that have passed (see score.ts). */
   parts: string[] = [];
+  /** The signposts: from each mapped settlement, the directions of the settlements within a day's walk not yet reached. */
+  signposts = new Map<string, Side[]>();
   message = "";
   /** The hex an action is waiting on, while its reply is awaited. */
   pending: string | null = null;
@@ -124,12 +135,14 @@ export class GameState {
   }
 
   async load(): Promise<void> {
-    const [board, player, edges, parts] = await Promise.all([
+    const [board, player, edges, parts, signs] = await Promise.all([
       this.bridge.enqueue(READ_BOARD),
       this.bridge.enqueue(READ_PLAYER),
       this.bridge.enqueue(READ_EDGES),
       this.bridge.enqueue(READ_PARTS),
+      this.bridge.enqueue(READ_SIGNPOSTS),
     ]);
+    this.signposts = groupSignposts(signs.map((r) => ({ at: r["at"] as string, dq: r["dq"] as number, dr: r["dr"] as number })));
     this.parts = parts.map((r) => r["kind"] as string);
     this.tiles.clear();
     this.byPos.clear();
@@ -177,6 +190,19 @@ export class GameState {
     this.touch();
   }
 
+  /** The field of view: the hexes round where the explorer stands are viewed in full, the ring beyond sensed. */
+  private async viewAround(): Promise<void> {
+    const r = (await this.bridge.enqueue(VIEW_AROUND))[0];
+    if (!r) return;
+    const ids = [...((r["viewed"] as string[]) ?? []), ...((r["sensed"] as string[]) ?? [])];
+    if (ids.length) this.merge(await this.bridge.enqueue(READ_HEXES, { ids }));
+  }
+
+  private async readSignposts(): Promise<Map<string, Side[]>> {
+    const rows = await this.bridge.enqueue(READ_SIGNPOSTS);
+    return groupSignposts(rows.map((r) => ({ at: r["at"] as string, dq: r["dq"] as number, dr: r["dr"] as number })));
+  }
+
   /** The day, from 1 to seven: the robot's parts so far, plus one. */
   get day(): number {
     return Math.min(DAYS, this.parts.length + 1);
@@ -215,11 +241,11 @@ export class GameState {
     if (!snap || this.pending || this.over) return;
     this.undoSnap = null;
     return this.act("undo", async () => {
-      const changed: { id: string; state: Knowledge; anchor: boolean | null }[] = [];
+      const changed: { id: string; state: Knowledge; anchor: boolean | null; mapped: boolean | null }[] = [];
       for (const [id, t] of snap.tiles) {
         const now = this.tiles.get(id);
-        if (!now || now.state !== t.state || Boolean(now.anchor) !== Boolean(t.anchor))
-          changed.push({ id, state: t.state, anchor: t.anchor ? true : null });
+        if (!now || now.state !== t.state || Boolean(now.anchor) !== Boolean(t.anchor) || Boolean(now.mapped) !== Boolean(t.mapped))
+          changed.push({ id, state: t.state, anchor: t.anchor ? true : null, mapped: t.mapped ? true : null });
       }
       const edgesOf = (kind: Edge["kind"]) => snap.edges.filter((e) => e.kind === kind).map((e) => ({ from: e.from, to: e.to }));
       await this.bridge.enqueue(UNDO_CLEAR_EDGES);
@@ -234,6 +260,7 @@ export class GameState {
       this.edges = snap.edges;
       this.player = snap.player;
       this.parts = snap.parts;
+      this.signposts = await this.readSignposts();
       this.facing = snap.facing;
       this.lastFogged = [];
       this.lastBanked = null;
@@ -325,7 +352,7 @@ export class GameState {
       const crossing = target.state === "path" && this.loose().length === 0;
       if (!crossing && this.canExtend(id)) return { kind: "extend" };
       if (known) return { kind: "step" };
-      if (target.state === "sensed") {
+      if (target.state === "sensed" || target.state === "viewed") {
         const cost = target.cost ?? 1;
         return {
           kind: "none",
@@ -415,9 +442,15 @@ export class GameState {
         if (t) t.state = "sensed";
       }
       if (sensed.length) this.merge(await this.bridge.enqueue(READ_HEXES, { ids: sensed }));
+      await this.viewAround();
       if (r["anchor"]) {
         secured = true;
         await this.bridge.enqueue(SECURE);
+        const here = this.tiles.get(id)!;
+        if (here.feature === "tower") {
+          here.mapped = true; // arrived at a settlement: its signposts show
+          this.signposts = await this.readSignposts();
+        }
         this.edges = this.edges.map((e) => ({ ...e, kind: "SECURED" as const }));
         this.message = "Anchor reached: the path is secured.";
       }
@@ -446,6 +479,7 @@ export class GameState {
       // face the hex just left, so the next extension runs the way the thread did
       const now = this.here();
       if (now && left) this.facing = sideTo(now, left);
+      await this.viewAround();
     });
     if (this.player.steps <= 0) await this.endDay(true); // the day ends when the steps run out
   }
@@ -466,6 +500,7 @@ export class GameState {
       this.applied = true;
       this.facing = sideTo(here, target);
       this.player = { ...this.player, at: rows[0]["at"] as string, steps: rows[0]["steps"] as number };
+      await this.viewAround();
     });
     if (this.player.steps <= 0) await this.endDay(true); // the day ends when the steps run out
   }
@@ -484,6 +519,7 @@ export class GameState {
       }
       this.applied = true;
       this.player = { ...this.player, at: r["at"] as string, steps: r["steps"] as number };
+      await this.viewAround();
     });
     if (this.player.steps <= 0) await this.endDay(true); // the day ends when the steps run out
   }
@@ -578,6 +614,7 @@ export class GameState {
       if (fogged.length) this.merge(await this.bridge.enqueue(READ_HEXES, { ids: fogged })); // some come back disclosed
       this.parts = [...this.parts, part];
       this.player = { ...this.player, at: r["at"] as string, steps: r["steps"] as number, over: n >= DAYS };
+      await this.viewAround(); // home again, and the camp's field of view with it
       const lost = r["lost"] as number;
       this.message = lost ? `Day over: ${lost} step${lost === 1 ? "" : "s"} of path lost to the fog.` : "Day over. Back at camp.";
       this.touch();

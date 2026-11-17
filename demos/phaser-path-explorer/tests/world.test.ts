@@ -95,8 +95,7 @@ describe("world document", () => {
   it("links neighbours once per pair and never to a hex outside the map", () => {
     const ids = new Set(hexes.map((h) => h.id));
     const pairs = new Set<string>();
-    for (const l of doc.links) {
-      expect(l.type).toBe("ADJ");
+    for (const l of doc.links.filter((x) => x.type === "ADJ")) {
       expect(ids.has(l.source) && ids.has(l.target)).toBe(true);
       const key = [l.source, l.target].sort().join("|");
       expect(pairs.has(key), key).toBe(false);
@@ -106,11 +105,24 @@ describe("world document", () => {
     expect(doc.links.length).toBeGreaterThan(COLS * ROWS * 2);
   });
 
-  it("starts with the camp on the path, its neighbours sensed and the rest hidden", () => {
+  it("links the camp and each settlement to the settlements within a day's walk, and never back to the camp", () => {
+    const near = doc.links.filter((l) => l.type === "NEAR");
+    expect(near.length).toBeGreaterThan(0);
+    const camp = hexes.find((h) => h.properties!["feature"] === "tent")!.id;
+    const towers = new Set(hexes.filter((h) => h.properties!["feature"] === "tower").map((h) => h.id));
+    for (const l of near) {
+      expect(towers.has(l.target), `${l.source} to ${l.target}`).toBe(true);
+      expect(l.source === camp || towers.has(l.source)).toBe(true);
+    }
+    expect(near.some((l) => l.source === camp)).toBe(true);
+  });
+
+  it("starts with the camp on the path, its neighbours in view, the ring beyond sensed and the rest hidden", () => {
     const states = hexes.map((h) => h.properties!["state"]);
     expect(states.filter((s) => s === "path")).toHaveLength(1);
-    expect(states.filter((s) => s === "sensed")).toHaveLength(6);
-    expect(states.filter((s) => s === "hidden")).toHaveLength(COLS * ROWS - 7);
+    expect(states.filter((s) => s === "viewed")).toHaveLength(6);
+    expect(states.filter((s) => s === "hidden")).toHaveLength(COLS * ROWS - 19);
+    expect(states.filter((s) => s === "sensed")).toHaveLength(12);
   });
 
   it("marks the camp and the towers as anchors", () => {

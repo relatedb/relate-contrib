@@ -31,6 +31,8 @@ click on it), **down** acts on the hex behind, **shift** steps instead of extend
 a waymarker, **e** ends the day, **backspace** or **cmd-Z** undoes the last action (one level, the end of a day included). **Esc**, **h** or **?** open the splash screen: the premise, the keys, your last and best scores, **Enter** to continue and **n** for a new game on a random island (the confirmation that abandons the one in progress). A translucent preview shows what the next press would do. The explorer faces the way it
 last moved; clicking a neighbour turns it to face that hex.
 
+The hexes round the explorer are in view in full (a settlement beside the path is seen) and the ring beyond is shown in flat colour; neither can be stepped onto, only the path extended there.
+
 A path is wavy while it is loose and straightens when it is banked as secured ground (a waymarker, or a tower):
 then it is drawn with the design system's hex elbows and straight connectors, with an arrow at each end (`<->`). A loose
 path is anchored by a bar at its start and ends in an arrow (`|~>`). The explorer is a sprite; the waymarkers still in the

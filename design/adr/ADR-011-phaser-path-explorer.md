@@ -384,3 +384,31 @@ to that settlement, so its nearest settlement is its own. Where the settlement i
 heart rises from the robot; where it is not, the robot turns red, the screen shakes, the settlement is swept away (bare
 ground) and a fire burns. Then the splash tells the score. A game already over at load shows the same end state without
 the walk. The hearts and fires are the design system's `heart` and `fire` sprites.
+
+### 2026-11-17: signposts, and the mist
+
+Playtesting the seven day game found it a resource constrained open search: nothing but cost to choose a direction by.
+
+- **Signposts.** The graph has `(:Hex)-[:NEAR]->(:Hex)` edges from the camp and from each settlement to every settlement
+  within a day's walk (cost at most the day's steps, over land), made by the seed; never to the camp. The camp starts
+  `mapped`; arriving at a settlement (the extension that reaches it secures the route, as before) marks it `mapped`.
+  From every mapped hex the signposts point to the settlements that are not yet reached (`READ_SIGNPOSTS`, which returns
+  only the axial difference, never the position), each to the nearest of the six hex directions, and settlements the same
+  way share one arrow: the imprecision is in the rules. They are drawn as arrowheads just outside the settlement's hex,
+  above the mist, and are not shown once the game is over. Undo takes a signpost back with its arrival.
+- **Mist, not weather.** The unknown was read as water or rock because it was blue-grey and dark. It is now a neutral,
+  hueless light grey in the board's checker, lighter than any land, with clouds lighter still; blue is left to water. The
+  clouds drift east, a hex at a time, the cloud noise sampled further behind every 1.1 seconds.
+
+**The field of view, and the clocks clearing the mist (2026-11-17).**
+- A fifth knowledge state, `viewed`: a hex in sight, drawn in full with its features (a settlement in view is seen as one),
+  but still reached by extending the path, not stepped onto (`seen` stays the walkable state). Wherever the explorer
+  stands, `VIEW_AROUND` makes the six hexes round it viewed and the ring beyond sensed; it runs after every move, after
+  the day ends (at the camp) and in the seed. A hex stays viewed until the night forgets it, as any other. So a player can
+  no longer walk past a settlement unseen: the ground does not have to be covered to be searched.
+- The sun clears the mist along the top row from the left edge to where it is (the moon too, at night), and the robot along
+  the bottom row to where it is, each including its own hex; the cleared hexes show open sky.
+
+**The robot's colours (2026-11-17).** The robot is magenta and purple: a light purple head, a purple body, arms and legs,
+a dark violet dead eye and a hot magenta lit eye and lamp. The design system's palette has no magenta or purple (only
+periwinkle), so these four colours are a recorded deviation, held in `src/game/robot.ts`, for brand review.
