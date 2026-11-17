@@ -22,9 +22,11 @@ import {
 import { addSceneTexture, colourNumber, drawGraph, drawVectorTile, mixColour, strokeHex } from "../hex/phaser/index.js";
 import { addGameSprite } from "./sprites.js";
 import { cloudCell, cloudDensity } from "./clouds.js";
+import { robotCells, robotSlot } from "./robot.js";
+import { paletteAsset, spritesAsset } from "../hex/assets/index.js";
 import { routeToGraph, routes, withCrossings, type Route } from "./routes.js";
 import type { DuskHex, GameState, HexState } from "./state.js";
-import { COLS, ROWS, START_MARKERS, START_STEPS } from "./world.js";
+import { COLS, DAYS, ROWS, START_MARKERS, START_STEPS } from "./world.js";
 
 /** Screen pixels per lattice cell; a whole number keeps pixel edges crisp. */
 export const DEFAULT_PIXEL = 3;
@@ -108,6 +110,11 @@ export class MapScene extends Phaser.Scene {
   /** The grey clouds over the unknown, and the hexes they were last painted for. */
   private clouds: Phaser.GameObjects.Image | undefined;
   private cloudKey = "";
+  /** The robot along the bottom row: its parts so far, and the faint outline of the whole of it. */
+  private robot: Phaser.GameObjects.Image | undefined;
+  private robotGhost: Phaser.GameObjects.Image | undefined;
+  private robotParts = -1;
+  private robotSlotNow = -1;
   /** The day's clock as drawn: it runs after the steps, so the sun crosses the sky instead of jumping. */
   private clock = -1;
   private clockTarget = -1;
@@ -143,6 +150,7 @@ export class MapScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor("#002b43");
     this.paintEmptyBoard();
+    this.makeRobotTextures();
     this.vector = this.add.graphics().setScale(this.k).setDepth(LAYER.vector);
     // Beneath every terrain: a sinking shore must pass under pixel-art and vector neighbours alike.
     this.reliefFaces = this.add.graphics().setScale(this.k).setDepth(LAYER.board + 0.1);
@@ -268,6 +276,7 @@ export class MapScene extends Phaser.Scene {
     }
     this.drawThread();
     this.syncSprites();
+    this.syncRobot();
     this.paintClouds();
     this.drawOverlay();
     this.startDusk();
@@ -343,6 +352,55 @@ export class MapScene extends Phaser.Scene {
     texture.refresh();
     texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.add.image(0, 0, "board").setOrigin(0).setScale(this.k).setDepth(LAYER.board);
+  }
+
+  /** The robot as 8 textures (0 to 7 parts), and one of its whole outline for the faint plan of it. */
+  private makeRobotTextures(): void {
+    const paint = (key: string, cells: ReturnType<typeof robotCells>, colour?: string) => {
+      const texture = this.textures.createCanvas(key, 16, 16);
+      if (!texture) throw new Error(`could not create texture "${key}"`);
+      const ctx = texture.getContext();
+      for (const [x, y, ch] of cells) {
+        const name = colour ?? (ch === "K" ? "black" : spritesAsset.palette[ch]);
+        ctx.fillStyle = paletteAsset.colours[name!]!;
+        ctx.fillRect(x, y, 1, 1);
+      }
+      texture.refresh();
+      texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    };
+    for (let n = 0; n <= DAYS; n++) paint(`robot-${n}`, robotCells(n));
+    paint("robot-ghost", robotCells(DAYS), "light-gray");
+    this.robotGhost = this.add.image(0, 0, "robot-ghost").setOrigin(0).setScale(this.k).setDepth(LAYER.sun - 0.6).setAlpha(0.14);
+    this.robot = this.add.image(0, 0, "robot-0").setOrigin(0).setScale(this.k).setDepth(LAYER.sun - 0.5);
+  }
+
+  /**
+   * The robot being built along the bottom row (the day counter, which is the robot's parts in the graph): one more
+   * part a night, and an even hop to the right each day. Until midnight of a night it still shows the day that ended;
+   * then it steps to its new place and the new part appears.
+   */
+  private syncRobot(): void {
+    const robot = this.robot;
+    const ghost = this.robotGhost;
+    if (!robot || !ghost) return;
+    const total = this.state.parts.length;
+    const parts = this.nightT >= 0 && !this.nightReturned ? Math.max(0, total - 1) : total;
+    const slot = robotSlot(Math.min(DAYS, parts + 1), COLS);
+    const [x, y] = this.spotOf(slot, ROWS - 1);
+    if (this.robotParts === parts && this.robotSlotNow === slot) return;
+    const first = this.robotParts < 0;
+    const grew = parts > this.robotParts && !first;
+    this.robotParts = parts;
+    this.robotSlotNow = slot;
+    robot.setTexture(`robot-${parts}`);
+    ghost.setPosition(x, y);
+    this.tweens.killTweensOf(robot);
+    if (first) robot.setPosition(x, y);
+    else this.tweens.add({ targets: robot, x, y, duration: 500, ease: "Sine.easeInOut" });
+    if (grew) {
+      robot.setAlpha(0.2);
+      this.tweens.add({ targets: robot, alpha: 1, duration: 700, ease: "Quad.easeOut" }); // the new part switches on
+    } else robot.setAlpha(1);
   }
 
   /** Where a sprite's corner goes so that it stands on a tile: the explorer's 16 by 16 sits in the tile's 16 by 17. */
@@ -651,6 +709,7 @@ export class MapScene extends Phaser.Scene {
         if (!this.nightReturned && current >= MIDNIGHT) {
           this.nightReturned = true;
           this.syncSprites(); // midnight: the explorer is home
+          this.syncRobot(); // and the robot grows a part
         }
         this.drawSky();
       },
@@ -665,6 +724,7 @@ export class MapScene extends Phaser.Scene {
     this.nightTween = undefined;
     this.nightT = -1;
     this.nightReturned = true;
+    this.syncRobot();
     this.clock = this.clockTarget = Math.max(0, Math.min(1, 1 - this.state.player.steps / START_STEPS));
     this.syncSprites();
     this.drawSky();

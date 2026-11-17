@@ -369,3 +369,10 @@ Isolated ones are destroyed.
   not have passed. The seed now flags towers.
 
 Existing stored worlds lack the `Robot` node and need `?reset=1` once.
+
+**The robot on the bottom row (2026-11-17).** The day counter is drawn along the bottom row: a 16 by 16 robot in the
+design system's sprite style (new art, pending brand review), with one more part each night in the order of the parts in
+the graph, and an even hop of four tiles to the right each day (on a 25 wide board: columns 0, 4, 8, 12, 16, 20, 24). A
+faint outline of the whole robot marks where it is going. Until midnight of a night the row still shows the day that ended;
+at midnight the robot steps to its new place and the new part switches on. The seventh part, power, lights the eyes and
+the antenna.
