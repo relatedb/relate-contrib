@@ -315,3 +315,10 @@ The goal is a coherent world with no text or interface added to it. Decisions, t
   overlay (first visit, then `h`) with a one-sentence statement of the game and the plain meaning of each key.
 - **Fix.** The end of the day on exhausting the steps was unreachable code (a `return` before it); it now runs.
 
+
+**End-caps, refined (2026-11-17).** Arrowheads stay on the wavy, exploratory path only. A secured path ends in `)` and
+`(`: arcs of the circle inscribed in the tile, against its edge, joined to the line with no spoke. A loose path starts
+with a bar as long as a side of the hexagon inscribed one cell inside the tile's edge, so six meeting in a tile close an
+inner hex. These caps are drawn by hand, not from the design system's arrow glyphs, which have no `)`: a recorded
+deviation. Casings go under the graph and the black over it, so a cap and its line read as one stroke. Waymarker flags
+are 4 by 6 cells with no outline, standing top-centre on their hex.

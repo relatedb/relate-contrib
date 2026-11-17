@@ -21,7 +21,7 @@ import {
 } from "../hex/core/index.js";
 import { addSceneTexture, colourNumber, drawGraph, drawVectorTile, mixColour, strokeHex } from "../hex/phaser/index.js";
 import { addGameSprite } from "./sprites.js";
-import { routeToGraph, routes, withCrossings } from "./routes.js";
+import { routeToGraph, routes, withCrossings, type Route } from "./routes.js";
 import type { DuskHex, GameState, HexState } from "./state.js";
 import { COLS, ROWS, START_MARKERS, START_STEPS } from "./world.js";
 
@@ -55,16 +55,16 @@ const LAYER = {
   sun: 5,
 } as const;
 
-/** Where the waymarkers pile round the camp, as offsets of the 5 by 8 flag from the camp tile's corner: its rim. */
+/** Where the waymarkers pile round the camp, as offsets of the 4 by 6 flag from the camp tile's corner: its rim. */
 const PILE: [number, number][] = [
-  [2, 2],
-  [10, 2],
-  [0, 8],
-  [11, 8],
-  [5, 10],
+  [2, 3],
+  [10, 3],
+  [0, 9],
+  [12, 9],
+  [6, 11],
 ];
-/** Where a waymarker stands on its tile, left of the explorer. */
-const STAND: [number, number] = [1, 4];
+/** Where a waymarker stands on its tile: middle, top. */
+const STAND: [number, number] = [6, 0];
 
 export class MapScene extends Phaser.Scene {
   private vector!: Phaser.GameObjects.Graphics;
@@ -303,7 +303,7 @@ export class MapScene extends Phaser.Scene {
       if (this.flags.has(id) || this.flying.has(id)) continue;
       const t = tiles.get(id)!;
       const [x, y] = this.spotOf(t.col, t.row);
-      this.flags.set(id, this.add.image(x + STAND[0] * this.k, y + STAND[1] * this.k, "flag").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites));
+      this.flags.set(id, this.add.image(x + STAND[0] * this.k, y + STAND[1] * this.k, "flag").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites + 0.3));
     }
     // the bag, round the camp
     const camp = [...tiles.values()].find((t) => t.state !== "hidden" && t.feature === "tent");
@@ -324,7 +324,7 @@ export class MapScene extends Phaser.Scene {
     const [x0, y0] = this.spotOf(target.col, target.row);
     const [x, y] = [x0 + STAND[0] * this.k, y0 + STAND[1] * this.k];
     this.flying.add(waymark);
-    const flyer = this.add.image(from.x, from.y, "flag").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites + 0.1);
+    const flyer = this.add.image(from.x, from.y, "flag").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites + 0.3);
     this.tweens.add({
       targets: flyer,
       x,
@@ -637,8 +637,9 @@ export class MapScene extends Phaser.Scene {
       const t = tiles.get(id);
       if (t) nodes.push({ id, col: t.col, row: t.row, size: MapScene.RING });
     }
-    const oldParts = routeToGraph(oldRoute, tiles, MapScene.RING);
-    const securedParts = routeToGraph(securedRoute, tiles, MapScene.RING);
+    const oldParts = this.routeParts(oldRoute, tiles, 0);
+    const securedParts = this.routeParts(securedRoute, tiles, 1);
+    nodes.push(...oldParts.nodes, ...securedParts.nodes);
     const secured = layoutGraph(nodes, securedParts.edges, {}, withCrossings(securedParts.pieces));
     const turn = { t: 0 };
     this.bank = {
@@ -684,6 +685,33 @@ export class MapScene extends Phaser.Scene {
     drawGraph(g, { pieces: bank.newPieces, links: bank.newLinks, nodes: [] }, securedAlpha);
   }
 
+  /** Where a path's end-cap stands: against the edge of the tile (the apothem of the 16 wide hexagon). */
+  private static readonly CAP_R = 7.5;
+  /**
+   * Where a loose path's bar stands: its cream outline ends one cell inside the tile's edge, so six bars meeting in a
+   * tile make a tighter inner hexagon (apothem 6, side 6.93) than the tile itself.
+   */
+  private static readonly BAR_R = 6;
+
+  /**
+   * A route as graph parts whose lines run to the cap: a node as wide as the tile stands in for each anchor the
+   * route leaves from or arrives at, so a secured line starts at the edge of the tile and a spoke is not needed.
+   */
+  private routeParts(r: Route, tiles: ReadonlyMap<string, HexState>, index: number) {
+    const size = r.kind === "LOOSE" ? MapScene.BAR_R * 2 - 2 : MapScene.CAP_R * 2 - 2;
+    const route = routeToGraph(r, tiles, size);
+    const nodes: GraphNode[] = [];
+    const swap = (end: GraphEdge["from"], id: string, which: string): GraphEdge["from"] => {
+      if (end !== id) return end;
+      const t = tiles.get(id)!;
+      const cap = `cap:${index}:${which}`;
+      nodes.push({ id: cap, col: t.col, row: t.row, size });
+      return cap;
+    };
+    const edges = route.edges.map((e) => ({ ...e, from: swap(e.from, r.from, "from"), to: swap(e.to, r.to, "to") }));
+    return { ...route, edges, nodes };
+  }
+
   /** The size of the rings that mark the camp, the towers and the explorer: all the same. */
   private static readonly RING = 8;
 
@@ -712,28 +740,57 @@ export class MapScene extends Phaser.Scene {
     const pieces: GraphPiece[] = [];
     const edges: GraphEdge[] = [];
     const waves: Point[][] = [];
-    for (const r of found) {
-      if (this.bank && r.kind === "SECURED" && `${r.from}>${r.to}` === this.bank.key) continue; // the transition draws this one
-      const route = routeToGraph(r, tiles, MapScene.RING);
+    found.forEach((r, i) => {
+      if (this.bank && r.kind === "SECURED" && `${r.from}>${r.to}` === this.bank.key) return; // the transition draws this one
+      const route = this.routeParts(r, tiles, i);
+      nodes.push(...route.nodes);
       pieces.push(...route.pieces);
       edges.push(...route.edges);
       waves.push(...route.waves);
-    }
+    });
     // the routes only; the markers are rings, drawn after
     const placed = layoutGraph(nodes, edges, {}, withCrossings(pieces));
     placed.pieces.push(...waves.map((w) => placeWave(w)));
-    drawGraph(g, { ...placed, nodes: [] });
-    // a loose path is anchored at its start: a short bar across the line, the `|` of the design system's arrows
-    for (const w of waves) {
-      const [a, b] = [w[0]!, w[1]!];
-      const d = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-      const nx = -(b[1] - a[1]) / d;
-      const ny = (b[0] - a[0]) / d;
-      for (const [width, colour] of [[2.1, "cream"], [1, "black"]] as const) {
+    // The end-caps belong to their lines (the design system's arrows are one shape). A secured path ends in `)` and
+    // `(`; a loose path is anchored at its start by a bar as long as a side of the hexagon inside the tile, so six
+    // meeting in a tile would close an inner hex, and six arcs a circle: both invite the way out. Casings go under the
+    // graph and the black over it, so cap and line read as one stroke.
+    const R = MapScene.CAP_R;
+    const side = (2 * MapScene.BAR_R) / Math.sqrt(3);
+    const capStrokes: ((width: number, colour: "cream" | "black") => void)[] = [];
+    const cap = (anchor: string, towards: string, kind: "arc" | "bar") => {
+      const a0 = tiles.get(anchor);
+      const a1 = tiles.get(towards);
+      if (!a0 || !a1) return;
+      const [cx, cy] = tileCentre(a0.col, a0.row);
+      const [tx, ty] = tileCentre(a1.col, a1.row);
+      const angle = Math.atan2(ty - cy, tx - cx);
+      capStrokes.push((width, colour) => {
         g.lineStyle(width, colourNumber(colour), 1);
-        g.lineBetween(a[0] - nx * 2.5, a[1] - ny * 2.5, a[0] + nx * 2.5, a[1] + ny * 2.5);
-      }
+        if (kind === "arc") {
+          g.beginPath();
+          g.arc(cx, cy, R, angle - 0.5, angle + 0.5);
+          g.strokePath();
+        } else {
+          const px = cx + Math.cos(angle) * MapScene.BAR_R;
+          const py = cy + Math.sin(angle) * MapScene.BAR_R;
+          const nx = -Math.sin(angle) * (side / 2);
+          const ny = Math.cos(angle) * (side / 2);
+          g.lineBetween(px - nx, py - ny, px + nx, py + ny);
+        }
+      });
+    };
+    for (const r of found) {
+      const first = r.between[0] ?? r.to;
+      const last = r.between[r.between.length - 1] ?? r.from;
+      if (r.kind === "SECURED") {
+        cap(r.from, first, "arc");
+        cap(r.to, last, "arc");
+      } else cap(r.from, first, "bar");
     }
+    for (const stroke of capStrokes) stroke(2.1, "cream");
+    drawGraph(g, { ...placed, nodes: [] });
+    for (const stroke of capStrokes) stroke(1, "black");
   }
 
   /**

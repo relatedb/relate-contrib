@@ -24,8 +24,8 @@ export const GAME_SPRITES: Record<string, string[]> = {
     ".....KK..KK.....",
     "................",
   ],
-  // a waymarker: a red pennant on a pole, 5 by 8 cells
-  flag: ["KK...", "KhK..", "KhhK.", "KhK..", "KK...", "K....", "K....", "K...."],
+  // a waymarker: a small red pennant on a darker pole, 4 by 6 cells, with no outline
+  flag: ["Hh..", "Hhh.", "Hh..", "H...", "H...", "H..."],
 };
 
 /** Register a game sprite as a texture (nearest-neighbour). The outline is black. */
