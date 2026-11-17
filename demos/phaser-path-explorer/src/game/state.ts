@@ -3,7 +3,10 @@
 // contain, so it shows as pending until the reply arrives, and a further action waits for it.
 import { neighbourAt, neighbours, oppositeSide, sideTo, turnSide, type Feature, type Side, type Terrain } from "../hex/core/index.js";
 import type { Bridge, Row } from "./bridge.js";
-import { END_DAY, EXTEND, PLACE_WAYMARKER, READ_BOARD, READ_EDGES, READ_HEXES, READ_PLAYER, REEL_IN, SECURE, STEP, TRAVEL, TOWERS } from "./statements.js";
+import {
+  END_DAY, EXTEND, PLACE_WAYMARKER, READ_BOARD, READ_EDGES, READ_HEXES, READ_PLAYER, REEL_IN, SECURE, STEP, TRAVEL, TOWERS,
+  UNDO_CLEAR_EDGES, UNDO_HEXES, UNDO_LOOSE, UNDO_PLAYER, UNDO_SECURED,
+} from "./statements.js";
 import { START_STEPS } from "./world.js";
 
 export type Knowledge = "hidden" | "sensed" | "seen" | "path";
@@ -62,6 +65,14 @@ function toHex(r: Row): HexState {
   return hex;
 }
 
+/** The board as it was before the last action: what one undo puts back (ADR-011, amended). */
+interface Snapshot {
+  tiles: Map<string, HexState>;
+  edges: Edge[];
+  player: PlayerState;
+  facing: Side;
+}
+
 /** What acting on a hex would do (see `GameState.intent`). */
 export type Intent = { kind: "reel" | "extend" | "step" | "travel" } | { kind: "none"; reason: string };
 
@@ -82,6 +93,12 @@ export class GameState {
   /** The path the last waymarker banked. The scene consumes this to pull the loose wave taut. */
   lastBanked: BankedPath | null = null;
   private moves = 0;
+  /** The state before the last action, or null when there is nothing to undo. One level only. */
+  private undoSnap: Snapshot | null = null;
+  /** Set by an action when its reply changed the board, so `act` knows to keep the snapshot it took. */
+  private applied = false;
+  /** Bumped by every undo, so the scene can tell a step back from a step forward. */
+  undone = 0;
 
   constructor(private readonly bridge: Bridge) {}
 
@@ -124,6 +141,53 @@ export class GameState {
 
   private adjacent(a: HexState, b: HexState): boolean {
     return neighbours(a.col, a.row).some(([c, r]) => c === b.col && r === b.row);
+  }
+
+  // --- undo ---
+
+  private snapshot(): Snapshot {
+    return {
+      tiles: new Map([...this.tiles].map(([id, t]) => [id, { ...t }])),
+      edges: this.edges.map((e) => ({ ...e })),
+      player: { ...this.player },
+      facing: this.facing,
+    };
+  }
+
+  canUndo(): boolean {
+    return this.undoSnap !== null && !this.pending;
+  }
+
+  /**
+   * Take back the last action, the end of a day included, and nothing before it. The graph is put back as it was
+   * (the edges, the hexes whose knowledge or anchor changed, the explorer), then the cache.
+   */
+  async undo(): Promise<void> {
+    const snap = this.undoSnap;
+    if (!snap || this.pending) return;
+    this.undoSnap = null;
+    return this.act("undo", async () => {
+      const changed: { id: string; state: Knowledge; anchor: boolean | null }[] = [];
+      for (const [id, t] of snap.tiles) {
+        const now = this.tiles.get(id);
+        if (!now || now.state !== t.state || Boolean(now.anchor) !== Boolean(t.anchor))
+          changed.push({ id, state: t.state, anchor: t.anchor ? true : null });
+      }
+      const edgesOf = (kind: Edge["kind"]) => snap.edges.filter((e) => e.kind === kind).map((e) => ({ from: e.from, to: e.to }));
+      await this.bridge.enqueue(UNDO_CLEAR_EDGES);
+      await this.bridge.enqueue(UNDO_LOOSE, { edges: edgesOf("LOOSE") });
+      await this.bridge.enqueue(UNDO_SECURED, { edges: edgesOf("SECURED") });
+      await this.bridge.enqueue(UNDO_HEXES, { rows: changed });
+      await this.bridge.enqueue(UNDO_PLAYER, { at: snap.player.at, steps: snap.player.steps, markers: snap.player.markers });
+      this.tiles.clear();
+      for (const [id, t] of snap.tiles) this.tiles.set(id, t);
+      this.edges = snap.edges;
+      this.player = snap.player;
+      this.facing = snap.facing;
+      this.lastFogged = [];
+      this.lastBanked = null;
+      this.undone++;
+    }, { keepUndo: true });
   }
 
   // --- the thread ---
@@ -173,12 +237,15 @@ export class GameState {
   }
 
   /** Run one action: it is pending until its reply is applied, and never throws. */
-  private async act(target: string, run: () => Promise<void>): Promise<void> {
+  private async act(target: string, run: () => Promise<void>, opts: { keepUndo?: boolean } = {}): Promise<void> {
     this.pending = target;
     this.message = "";
+    this.applied = false;
+    const snap = this.snapshot();
     this.touch();
     try {
       await run();
+      if (this.applied && !opts.keepUndo) this.undoSnap = snap; // an automatic follow-up (the day ending) undoes with its cause
     } catch (err) {
       this.message = `ERR: ${err instanceof Error ? err.message : String(err)}`;
     } finally {
@@ -276,13 +343,14 @@ export class GameState {
   async extend(id: string): Promise<void> {
     if (!this.canExtend(id)) return this.say("The thread will not go there.");
     const from = this.player.at;
-    return this.act(id, async () => {
+    await this.act(id, async () => {
       const rows = await this.bridge.enqueue(EXTEND, { to: id, now: ++this.moves });
       const r = rows[0];
       if (!r) {
         this.message = "The thread will not go there.";
         return;
       }
+      this.applied = true;
       const hex = this.tiles.get(id)!;
       this.facing = sideTo(this.tiles.get(from)!, hex);
       hex.state = "path";
@@ -300,7 +368,7 @@ export class GameState {
         this.message = "Anchor reached: the path is secured.";
       }
     });
-    if (this.player.steps <= 0) await this.endDay(); // the day ends when the steps run out
+    if (this.player.steps <= 0) await this.endDay(true); // the day ends when the steps run out
   }
 
   /** Reel in: step back along the thread and take its last edge in. Costs a step. */
@@ -308,13 +376,14 @@ export class GameState {
     const back = this.predecessor();
     if (!back) return this.say("There is no thread to reel in.");
     const from = this.player.at;
-    return this.act(back, async () => {
+    await this.act(back, async () => {
       const rows = await this.bridge.enqueue(REEL_IN);
       const r = rows[0];
       if (!r) {
         this.message = "The thread will not come in.";
         return;
       }
+      this.applied = true;
       this.edges = this.edges.filter((e) => !(e.kind === "LOOSE" && e.to === from));
       const left = this.tiles.get(from);
       if (left) left.state = this.edges.some((e) => e.kind === "SECURED" && (e.from === from || e.to === from)) ? "path" : "seen";
@@ -323,7 +392,7 @@ export class GameState {
       const now = this.here();
       if (now && left) this.facing = sideTo(now, left);
     });
-    if (this.player.steps <= 0) await this.endDay();
+    if (this.player.steps <= 0) await this.endDay(true); // the day ends when the steps run out
   }
 
   /** Step one hex over known ground; lays no thread. */
@@ -333,16 +402,17 @@ export class GameState {
     if (!target || !here || !this.adjacent(here, target) || (target.state !== "seen" && target.state !== "path"))
       return this.say("You can only step onto ground you know, next to you.");
     if (this.player.steps < (target.cost ?? 1)) return this.say("Too steep: you cannot afford that step.");
-    return this.act(id, async () => {
+    await this.act(id, async () => {
       const rows = await this.bridge.enqueue(STEP, { to: id });
       if (!rows[0]) {
         this.message = "You cannot step there.";
         return;
       }
+      this.applied = true;
       this.facing = sideTo(here, target);
       this.player = { ...this.player, at: rows[0]["at"] as string, steps: rows[0]["steps"] as number };
     });
-    if (this.player.steps <= 0) await this.endDay();
+    if (this.player.steps <= 0) await this.endDay(true); // the day ends when the steps run out
   }
 
   /** Travel between anchors joined by secured paths for one step. Refused while a path is in play. */
@@ -350,16 +420,17 @@ export class GameState {
     const target = this.tiles.get(id);
     if (!target?.anchor || !this.here()?.anchor) return this.say("You can only travel between anchors.");
     if (this.loose().length > 0) return this.say("Bank or abandon your path before travelling.");
-    return this.act(id, async () => {
+    await this.act(id, async () => {
       const rows = await this.bridge.enqueue(TRAVEL, { to: id });
       const r = rows[0];
       if (!r) {
         this.message = "No secured path leads there.";
         return;
       }
+      this.applied = true;
       this.player = { ...this.player, at: r["at"] as string, steps: r["steps"] as number };
     });
-    if (this.player.steps <= 0) await this.endDay();
+    if (this.player.steps <= 0) await this.endDay(true); // the day ends when the steps run out
   }
 
   /**
@@ -380,6 +451,7 @@ export class GameState {
         this.message = "The waymarker will not take here.";
         return;
       }
+      this.applied = true;
       here.anchor = true;
       this.lastBanked = { waymark: here.id, from: path[0]?.from ?? here.id, edges: path };
       this.edges = this.edges.map((e) => ({ ...e, kind: "SECURED" as const }));
@@ -394,7 +466,7 @@ export class GameState {
    * End the day: the loose path is abandoned, the explorer returns to the camp, the steps refill, and everything the
    * secured network does not disclose fogs over. Fogged hexes are forgotten here, not patched.
    */
-  async endDay(): Promise<void> {
+  async endDay(auto = false): Promise<void> {
     return this.act("day", async () => {
       const rows = await this.bridge.enqueue(END_DAY, { budget: START_STEPS });
       const r = rows[0];
@@ -402,6 +474,7 @@ export class GameState {
         this.message = "The day will not end.";
         return;
       }
+      this.applied = true;
       // What the day forgot, ordered outward from the abandoned thread, so the fog can close from the path out.
       const fogged = (r["fogged"] as string[]) ?? [];
       const thread = new Set<string>();
@@ -445,7 +518,7 @@ export class GameState {
       const lost = r["lost"] as number;
       this.message = lost ? `Day over: ${lost} step${lost === 1 ? "" : "s"} of path lost to the fog.` : "Day over. Back at camp.";
       this.touch();
-    });
+    }, { keepUndo: auto });
   }
 
   /** Has the expedition won: both towers joined to the camp by secured paths? */

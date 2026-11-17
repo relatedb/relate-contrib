@@ -101,7 +101,7 @@ export function routeToGraph(
   const secured = route.kind === "SECURED";
   const at = (id: string) => tiles.get(id)!;
   if (route.between.length === 0)
-    return { pieces: [], edges: [{ from: route.from, to: route.to, form: secured ? "->" : "~>" }], waves: [] };
+    return { pieces: [], edges: [{ from: route.from, to: route.to, form: secured ? "<->" : "|~>" }], waves: [] };
   const cells = [route.from, ...route.between, route.to].map(at);
   const firstCell = cells[1]!;
   const lastCell = cells[cells.length - 2]!;
@@ -126,7 +126,7 @@ export function routeToGraph(
   return {
     pieces,
     edges: [
-      { from: route.from, to: [firstCell.col, firstCell.row], form: "-" },
+      { from: route.from, to: [firstCell.col, firstCell.row], form: "<-" },
       { from: [lastCell.col, lastCell.row], to: route.to, form: "->" },
     ],
     waves: [],

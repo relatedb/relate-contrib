@@ -55,7 +55,7 @@ describe("routes", () => {
     const g = routeToGraph({ kind: "LOOSE", from: id(3, 2), between: [], to: id(4, 2) }, tiles);
     expect(g.pieces).toEqual([]);
     expect(g.waves).toEqual([]);
-    expect(g.edges).toEqual([{ from: id(3, 2), to: id(4, 2), form: "~>" }]);
+    expect(g.edges).toEqual([{ from: id(3, 2), to: id(4, 2), form: "|~>" }]);
   });
 
   it("straightens once secured: a straight route of connectors and elbows, with a plain arrow at each end", () => {
@@ -68,14 +68,14 @@ describe("routes", () => {
     expect(["se", "sw"]).toContain(g.pieces[1]!.ends[1]); // (5,2): it turns down, an elbow
     expect(g.pieces.every((p) => p.shaft === "line")).toBe(true); // no double stroke
     expect(g.edges).toEqual([
-      { from: id(3, 2), to: [4, 2], form: "-" },
+      { from: id(3, 2), to: [4, 2], form: "<-" },
       { from: [5, 3], to: id(6, 3), form: "->" },
     ]);
   });
 
   it("is a plain arrow when a secured path joins neighbours", () => {
     const g = routeToGraph({ kind: "SECURED", from: id(3, 2), between: [], to: id(4, 2) }, tiles);
-    expect(g.edges).toEqual([{ from: id(3, 2), to: id(4, 2), form: "->" }]);
+    expect(g.edges).toEqual([{ from: id(3, 2), to: id(4, 2), form: "<->" }]);
   });
 });
 

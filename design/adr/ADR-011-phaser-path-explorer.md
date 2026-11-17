@@ -288,3 +288,30 @@ edges from the camp to both towers. These are specified and tested against the e
 extending from its new waymarker without ending the day, a day ended by exhaustion, travel between anchors costing one
 step, and the win test. Browser checks are by hand in one browser for v1; the Playwright setup for the demo and the
 cross-browser run are deferred.
+
+### 2026-11-17: polish: layers, sprites, path end-caps, undo, and no status line
+
+The goal is a coherent world with no text or interface added to it. Decisions, to be iterated:
+
+- **Layers**, back to front: the empty board (every hex position in a two-blue checker dither, the design system's
+  shading device, replacing the flat fog tile), the vector tiles, the pixelated terrain, the graph paths, the
+  sprites, then the sun and the sky. Hover and preview are translucent aids between the paths and the sprites.
+- **Rings are dropped.** A path says what it joins by its end-caps: secured is `<->` (travel runs both ways); loose is
+  anchored at its start by a bar and ends in an arrow (`|~>`). The camp and towers are the terrain's own pixel art; the
+  explorer and the waymarkers are sprites.
+- **Sprites (new art, pending brand review).** The explorer is a 16 by 16 figure and a waymarker a 5 by 8 red pennant,
+  both in the design system's sprite notation and palette. The waymarkers in the bag pile round the camp tile; a
+  placed one flies to its hex.
+- **Hidden cost is time.** The sun crosses the top row as steps are spent, tweened, not jumping. A faint sun shows the
+  slot the faced (or hovered) move would reach; one the day cannot afford is shown beyond dusk, in the night's colour.
+- **Undo replaces confirmation.** One level: the last action, the end of a day included (an automatic end of day after
+  the last step undoes with the step that caused it). Backspace and cmd-Z. The graph is restored from a snapshot of the
+  cache by a short fixed sequence of bounded statements (clear the path edges, lay the loose and the secured ones back,
+  restore the state and anchor of each changed hex, restore the player); the sequence is not one atomic statement, and
+  a page closed part-way through could leave the graph part restored. Reeling in stays on the down key and a click
+  behind the explorer.
+- **No status line.** Messages stay in the state for tests and the language is unchanged, but nothing narrates the game;
+  only a failure of the graph, or storage that will not keep the world, is told in words. One concession: a help
+  overlay (first visit, then `h`) with a one-sentence statement of the game and the plain meaning of each key.
+- **Fix.** The end of the day on exhausting the steps was unreachable code (a `return` before it); it now runs.
+

@@ -27,13 +27,15 @@ still loose is abandoned, and everything the secured network does not disclose f
 its neighbours coming back as sensed. A found cache adds one waymarker.
 
 Keyboard, as in a space shooter: **left and right turn** a sixth of a turn, **up** acts on the hex ahead (the same as a
-click on it), **down** acts on the hex behind, **shift** steps instead of extending, **backspace** reels in, **p** places
-a waymarker, **e** ends the day. A translucent preview shows what the next press would do. The explorer faces the way it
+click on it), **down** acts on the hex behind, **shift** steps instead of extending, **p** places
+a waymarker, **e** ends the day, **backspace** or **cmd-Z** undoes the last action (one level, the end of a day included), **h** shows a short help. A translucent preview shows what the next press would do. The explorer faces the way it
 last moved; clicking a neighbour turns it to face that hex.
 
 A path is wavy while it is loose and straightens when it is banked as secured ground (a waymarker, or a tower):
-then it is drawn with the design system's hex elbows and straight connectors, with an arrow into the target. The camp
-(red), towers (light blue) and the explorer (yellow) are hollow rings of one size.
+then it is drawn with the design system's hex elbows and straight connectors, with an arrow at each end (`<->`). A loose
+path is anchored by a bar at its start and ends in an arrow (`|~>`). The explorer is a sprite; the waymarkers still in the
+bag pile round the camp and fly to the hex they mark. The sun is the clock: a faint sun shows where the faced move
+would carry the day, and a climb the day cannot pay for puts it beyond dusk. There is no status line; the world shows it.
 Progress survives a reload. Snags, cues, hazards, a clock and the
 cross-browser run are deferred (ADR-011, amended 2026-11-16).
 

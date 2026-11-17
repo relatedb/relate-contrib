@@ -19,10 +19,11 @@ import {
   type Point,
   type Tile,
 } from "../hex/core/index.js";
-import { addSceneTexture, colourNumber, drawGraph, drawRing, drawVectorTile, fillHex, mixColour, strokeHex } from "../hex/phaser/index.js";
+import { addSceneTexture, colourNumber, drawGraph, drawVectorTile, mixColour, strokeHex } from "../hex/phaser/index.js";
+import { addGameSprite } from "./sprites.js";
 import { routeToGraph, routes, withCrossings } from "./routes.js";
 import type { DuskHex, GameState, HexState } from "./state.js";
-import { COLS, ROWS, START_STEPS } from "./world.js";
+import { COLS, ROWS, START_MARKERS, START_STEPS } from "./world.js";
 
 /** Screen pixels per lattice cell; a whole number keeps pixel edges crisp. */
 export const DEFAULT_PIXEL = 3;
@@ -37,6 +38,33 @@ function mix(a: number, b: number, t: number): number {
     Math.round(ca.blue + (cb.blue - ca.blue) * t),
   );
 }
+
+/**
+ * The board's layers, back to front (ADR-011, amended): the empty board, the vector tiles, the pixelated terrain, the
+ * graph paths, the sprites, then the sun and the sky. Raised relief and the dusk ghosts sit within the layer they
+ * belong to; the overlay (hover and preview) is a translucent aid between the paths and the sprites.
+ */
+const LAYER = {
+  board: -0.3,
+  vector: 0,
+  terrain: 1,
+  graph: 2,
+  overlay: 3,
+  sprites: 3.5,
+  sky: 4,
+  sun: 5,
+} as const;
+
+/** Where the waymarkers pile round the camp, as offsets of the 5 by 8 flag from the camp tile's corner: its rim. */
+const PILE: [number, number][] = [
+  [2, 2],
+  [10, 2],
+  [0, 8],
+  [11, 8],
+  [5, 10],
+];
+/** Where a waymarker stands on its tile, left of the explorer. */
+const STAND: [number, number] = [1, 4];
 
 export class MapScene extends Phaser.Scene {
   private vector!: Phaser.GameObjects.Graphics;
@@ -62,6 +90,18 @@ export class MapScene extends Phaser.Scene {
   private sun: Phaser.GameObjects.Image | undefined;
   private sunTexture: Phaser.Textures.CanvasTexture | undefined;
   private hover: HexState | undefined;
+  /** The explorer, and the faint one that shows where the faced move would take them. */
+  private explorer: Phaser.GameObjects.Image | undefined;
+  private explorerAt = "";
+  private ghost: Phaser.GameObjects.Image | undefined;
+  /** The waymarkers still in the bag, piled round the camp, and those standing on the board. */
+  private pile: Phaser.GameObjects.Image[] = [];
+  private flags = new Map<string, Phaser.GameObjects.Image>();
+  private flying = new Set<string>();
+  /** The day's clock as drawn: it runs after the steps, so the sun crosses the sky instead of jumping. */
+  private clock = -1;
+  private clockTarget = -1;
+  private sunGhost: Phaser.GameObjects.Image | undefined;
   /** The terrain next to the explorer with relief: mountains lifted, water dropped. */
   private relief = new Map<string, { image: Phaser.GameObjects.Image; offset: number; flat: boolean }>();
   private reliefFaces!: Phaser.GameObjects.Graphics;
@@ -85,24 +125,33 @@ export class MapScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor("#002b43");
-    this.vector = this.add.graphics().setScale(this.k).setDepth(0);
+    this.paintEmptyBoard();
+    this.vector = this.add.graphics().setScale(this.k).setDepth(LAYER.vector);
     // Beneath every terrain: a sinking shore must pass under pixel-art and vector neighbours alike.
-    this.reliefFaces = this.add.graphics().setScale(this.k).setDepth(-0.2);
-    this.thread = this.add.graphics().setScale(this.k).setDepth(2);
-    this.bankThread = this.add.graphics().setScale(this.k).setDepth(2.3);
-    this.overlay = this.add.graphics().setScale(this.k).setDepth(3);
-    this.sky = this.add.graphics().setScale(this.k).setDepth(4);
+    this.reliefFaces = this.add.graphics().setScale(this.k).setDepth(LAYER.board + 0.1);
+    this.thread = this.add.graphics().setScale(this.k).setDepth(LAYER.graph);
+    this.bankThread = this.add.graphics().setScale(this.k).setDepth(LAYER.graph + 0.3);
+    this.overlay = this.add.graphics().setScale(this.k).setDepth(LAYER.overlay);
+    this.sky = this.add.graphics().setScale(this.k).setDepth(LAYER.sky);
+    addGameSprite(this, "explorer", "explorer");
+    addGameSprite(this, "flag", "flag");
+    this.explorer = this.add.image(0, 0, "explorer").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites + 0.2).setVisible(false);
+    this.ghost = this.add.image(0, 0, "explorer").setOrigin(0).setScale(this.k).setDepth(LAYER.overlay).setAlpha(0.5).setVisible(false);
+    for (let i = 0; i < START_MARKERS; i++)
+      this.pile.push(this.add.image(0, 0, "flag").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites).setVisible(false));
+
     // One texture pixel per board cell, like the terrain: the large sun is pixel art, not a smooth vector disc.
     const sunTexture = this.textures.createCanvas("sun", 16, 17);
     if (!sunTexture) throw new Error('could not create texture "sun"');
     this.sunTexture = sunTexture;
     this.sunTexture.setFilter(Phaser.Textures.FilterMode.NEAREST);
-    this.sun = this.add.image(0, 0, "sun").setScale(this.k).setDepth(5);
+    this.sun = this.add.image(0, 0, "sun").setScale(this.k).setDepth(LAYER.sun);
+    this.sunGhost = this.add.image(0, 0, "sun").setScale(this.k).setDepth(LAYER.sun - 0.1).setAlpha(0.4).setVisible(false);
 
     // keys, as in a space shooter: left and right turn (a sixth of a turn each), up acts on the hex ahead and down
-    // on the hex behind; shift steps instead of extending; backspace reels in
+    // on the hex behind; shift steps instead of extending; backspace or cmd-Z undoes the last action
     const kb = this.input.keyboard;
-    kb?.addCapture("LEFT,RIGHT,UP,DOWN,BACKSPACE"); // keep the page from scrolling
+    kb?.addCapture("LEFT,RIGHT,UP,DOWN,BACKSPACE,SPACE"); // keep the page from scrolling
     const key = (name: string, run: (e: KeyboardEvent) => void) =>
       kb?.on(`keydown-${name}`, (e: KeyboardEvent) => {
         this.keyboard = true;
@@ -113,7 +162,13 @@ export class MapScene extends Phaser.Scene {
     key("RIGHT", () => this.state.turn(1));
     key("UP", (e) => void this.state.go(false, { step: e.shiftKey }));
     key("DOWN", (e) => void this.state.go(true, { step: e.shiftKey }));
-    key("BACKSPACE", () => void this.state.reelIn());
+    key("BACKSPACE", () => void this.state.undo());
+    key("Z", (e) => {
+      if (e.metaKey || e.ctrlKey) {
+        e.preventDefault();
+        void this.state.undo();
+      }
+    });
     key("P", () => void this.state.placeWaymarker());
     key("E", () => void this.state.endDay());
     this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
@@ -164,7 +219,7 @@ export class MapScene extends Phaser.Scene {
     for (const t of this.state.tiles.values()) {
       if (raised.has(t.id)) continue; // its relief sprite takes this tile's place
       if (t.state === "hidden") {
-        fillHex(g, t.col, t.row, "dark-baltic"); // fog: one flat colour, no outline
+        continue; // the empty board shows through: layer one is drawn once
       } else if (t.state === "sensed" && t.terrain) {
         drawVectorTile(g, { col: t.col, row: t.row, terrain: t.terrain }, "flat", 0.2); // the ground's colour, dimmed: known, not yet walked
       } else if (t.terrain) {
@@ -177,12 +232,111 @@ export class MapScene extends Phaser.Scene {
     if (discovered.length) {
       const blank = Array.from({ length: ROWS }, () => " ".repeat(COLS));
       addSceneTexture(this, "ground", paintScene(discovered, blank));
-      this.ground = this.add.image(0, 0, "ground").setOrigin(0, 0).setScale(this.k).setDepth(1);
+      this.ground = this.add.image(0, 0, "ground").setOrigin(0, 0).setScale(this.k).setDepth(LAYER.terrain);
     }
     this.drawThread();
+    this.syncSprites();
     this.drawOverlay();
     this.startDusk();
     this.drawSky();
+  }
+
+  /**
+   * Layer one, the empty board: every hex position dithered in two near-black blues, in the design system's checker
+   * (one cell per square, on the board's own grid so neighbouring hexes meet without a seam). Everything the explorer
+   * knows is drawn over it; what it does not know is left as this.
+   */
+  private paintEmptyBoard(): void {
+    const { width, height } = boardSizePx(1);
+    const texture = this.textures.createCanvas("board", width, height);
+    if (!texture) throw new Error('could not create texture "board"');
+    const ctx = texture.getContext();
+    const light = `#${colourNumber("dark-baltic").toString(16).padStart(6, "0")}`;
+    const dark = `#${mixColour("dark-baltic", "darkest-baltic", 0.55).toString(16).padStart(6, "0")}`;
+    for (const [col, row] of Array.from({ length: ROWS }, (_, r) => Array.from({ length: COLS }, (_, c) => [c, r] as const)).flat()) {
+      const [ox, oy] = tileOrigin(col, row);
+      for (let y = 0; y < 17; y++) {
+        const w = hexSpan(y);
+        for (let x = (16 - w) / 2; x < (16 + w) / 2; x++) {
+          ctx.fillStyle = (ox + x + oy + y) % 2 === 0 ? light : dark;
+          ctx.fillRect(ox + x, oy + y, 1, 1);
+        }
+      }
+    }
+    texture.refresh();
+    texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    this.add.image(0, 0, "board").setOrigin(0).setScale(this.k).setDepth(LAYER.board);
+  }
+
+  /** Where a sprite's corner goes so that it stands on a tile: the explorer's 16 by 16 sits in the tile's 16 by 17. */
+  private spotOf(col: number, row: number): [number, number] {
+    const [ox, oy] = tileOrigin(col, row);
+    return [ox * this.k, (oy + 0.5) * this.k];
+  }
+
+  /**
+   * Layer five, the sprites: the explorer, the waymarkers standing where they were placed, and the ones still in the
+   * bag, piled round the camp. (The camp and the towers are the terrain's own pixel art.)
+   */
+  private syncSprites(): void {
+    const tiles = this.state.tiles;
+    const here = this.state.here();
+    if (here && this.explorer) {
+      const [x, y] = this.spotOf(here.col, here.row);
+      if (!this.explorer.visible) this.explorer.setPosition(x, y).setVisible(true);
+      else if (this.explorerAt !== here.id) {
+        this.tweens.killTweensOf(this.explorer);
+        this.tweens.add({ targets: this.explorer, x, y, duration: 140, ease: "Sine.easeOut" });
+      }
+      this.explorerAt = here.id;
+    }
+    // waymarkers standing on the board: an anchor that is neither the camp nor a tower
+    const standing = new Set<string>();
+    for (const t of tiles.values())
+      if (t.anchor && !t.feature && t.state !== "hidden") standing.add(t.id);
+    for (const [id, image] of this.flags)
+      if (!standing.has(id)) {
+        image.destroy();
+        this.flags.delete(id);
+      }
+    for (const id of standing) {
+      if (this.flags.has(id) || this.flying.has(id)) continue;
+      const t = tiles.get(id)!;
+      const [x, y] = this.spotOf(t.col, t.row);
+      this.flags.set(id, this.add.image(x + STAND[0] * this.k, y + STAND[1] * this.k, "flag").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites));
+    }
+    // the bag, round the camp
+    const camp = [...tiles.values()].find((t) => t.state !== "hidden" && t.feature === "tent");
+    this.pile.forEach((image, i) => {
+      image.setVisible(Boolean(camp) && i < this.state.player.markers);
+      if (camp) {
+        const [x, y] = this.spotOf(camp.col, camp.row);
+        image.setPosition(x + PILE[i]![0] * this.k, y + PILE[i]![1] * this.k);
+      }
+    });
+  }
+
+  /** A waymarker leaves the pile and travels to the hex it marks. */
+  private flyFlag(slot: number, waymark: string): void {
+    const target = this.state.tiles.get(waymark);
+    const from = this.pile[slot];
+    if (!target || !from) return;
+    const [x0, y0] = this.spotOf(target.col, target.row);
+    const [x, y] = [x0 + STAND[0] * this.k, y0 + STAND[1] * this.k];
+    this.flying.add(waymark);
+    const flyer = this.add.image(from.x, from.y, "flag").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites + 0.1);
+    this.tweens.add({
+      targets: flyer,
+      x,
+      y,
+      duration: 420,
+      ease: "Sine.easeInOut",
+      onComplete: () => {
+        flyer.destroy();
+        this.flying.delete(waymark);
+        this.syncSprites();
+      },
+    });
   }
 
   /**
@@ -221,7 +375,7 @@ export class MapScene extends Phaser.Scene {
       const tile = this.state.tiles.get(ghost.id);
       if (!tile) continue;
       const [ox, oy] = tileOrigin(tile.col, tile.row);
-      const image = this.add.image(ox * this.k, oy * this.k, key).setOrigin(0).setScale(this.k).setDepth(2.4);
+      const image = this.add.image(ox * this.k, oy * this.k, key).setOrigin(0).setScale(this.k).setDepth(LAYER.graph + 0.4);
       this.tweens.add({
         targets: image,
         alpha: 0,
@@ -303,7 +457,7 @@ export class MapScene extends Phaser.Scene {
         }
         const [ox, oy] = tileOrigin(t.col, t.row);
         // Raised land stands over the board; sunk water slides underneath every kind of neighbouring terrain.
-        const depth = t.terrain === "mountain" ? 1.5 : -0.1;
+        const depth = t.terrain === "mountain" ? LAYER.terrain + 0.5 : LAYER.board + 0.2;
         const image = this.add.image(ox * this.k, oy * this.k, key).setOrigin(0).setScale(this.k).setDepth(depth);
         entry = { image, offset: 0, flat };
         this.relief.set(t.id, entry);
@@ -367,7 +521,21 @@ export class MapScene extends Phaser.Scene {
     const sky = this.sky;
     if (!sky) return;
     sky.clear();
-    const f = Math.max(0, Math.min(1, 1 - this.state.player.steps / START_STEPS)); // 0 dawn, 1 dusk
+    const target = Math.max(0, Math.min(1, 1 - this.state.player.steps / START_STEPS)); // 0 dawn, 1 dusk
+    if (this.clock < 0) this.clock = this.clockTarget = target;
+    if (target !== this.clockTarget) {
+      // the sun runs after the steps: spent steps are time passing, so it crosses the sky rather than jumping
+      this.clockTarget = target;
+      this.tweens.killTweensOf(this);
+      this.tweens.add({
+        targets: this,
+        clock: target,
+        duration: Math.min(900, 220 + 700 * Math.abs(target - this.clock)),
+        ease: "Sine.easeInOut",
+        onUpdate: () => this.drawSky(),
+      });
+    }
+    const f = this.clock;
     const [x0, yTop] = tileCentre(0, 0);
     const [x1, yBottom] = tileCentre(COLS - 1, ROWS - 1);
     // A straight, grid-aligned crossing: dawn at the leftmost centre, noon at the middle, dusk at the right.
@@ -447,6 +615,7 @@ export class MapScene extends Phaser.Scene {
     const banked = this.state.lastBanked;
     if (!banked) return;
     this.state.lastBanked = null;
+    this.flyFlag(this.state.player.markers, banked.waymark); // the slot the placed waymarker left
     if (this.bank) {
       this.tweens.killTweensOf(this.bank.turn);
       this.bankThread.clear();
@@ -513,11 +682,6 @@ export class MapScene extends Phaser.Scene {
       waveAlpha,
     );
     drawGraph(g, { pieces: bank.newPieces, links: bank.newLinks, nodes: [] }, securedAlpha);
-    const pulse = smooth(clamp((t - 0.58) / 0.42));
-    if (pulse > 0) {
-      const tile = this.state.tiles.get(bank.waymark);
-      if (tile) drawRing(g, tile.col, tile.row, 9.5 + 6.5 * pulse, "light-baltic", 1, 0.5, 0.8 * (1 - pulse));
-    }
   }
 
   /** The size of the rings that mark the camp, the towers and the explorer: all the same. */
@@ -559,13 +723,17 @@ export class MapScene extends Phaser.Scene {
     const placed = layoutGraph(nodes, edges, {}, withCrossings(pieces));
     placed.pieces.push(...waves.map((w) => placeWave(w)));
     drawGraph(g, { ...placed, nodes: [] });
-    for (const id of marked) {
-      const t = tiles.get(id);
-      if (!t || t.id === here?.id) continue; // the explorer's ring takes the place of an anchor's
-      const colour = t.anchor ? (t.feature === "tent" ? "mid-hibiscus" : "light-baltic") : "dark-gray";
-      if (t.anchor || ends.has(id)) drawRing(g, t.col, t.row, MapScene.RING, colour);
+    // a loose path is anchored at its start: a short bar across the line, the `|` of the design system's arrows
+    for (const w of waves) {
+      const [a, b] = [w[0]!, w[1]!];
+      const d = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const nx = -(b[1] - a[1]) / d;
+      const ny = (b[0] - a[0]) / d;
+      for (const [width, colour] of [[2.1, "cream"], [1, "black"]] as const) {
+        g.lineStyle(width, colourNumber(colour), 1);
+        g.lineBetween(a[0] - nx * 2.5, a[1] - ny * 2.5, a[0] + nx * 2.5, a[1] + ny * 2.5);
+      }
     }
-    if (here) drawRing(g, here.col, here.row, MapScene.RING, "yellow");
   }
 
   /**
@@ -580,7 +748,6 @@ export class MapScene extends Phaser.Scene {
     const i = this.state.intent(ahead.id);
     if (i.kind === "none" || i.kind === "travel") return;
     const alpha = 0.55;
-    drawRing(o, ahead.col, ahead.row, MapScene.RING, "yellow", 1, 0.5, alpha);
     if (i.kind === "step") return;
     const form = i.kind === "extend" ? "~>" : "->";
     const nodes: GraphNode[] = [
@@ -600,6 +767,46 @@ export class MapScene extends Phaser.Scene {
       if (p) strokeHex(o, p.col, p.row, "light-baltic", 0.7, 1);
     }
     if (this.keyboard) this.drawPreview(o);
+    this.drawGhosts();
+  }
+
+  /** The hex the pointer is over, or with the keyboard in use the one the explorer faces. */
+  private previewTarget(): HexState | undefined {
+    return this.keyboard ? this.state.faced() : this.hover;
+  }
+
+  /**
+   * The faint explorer on the hex the faced move would reach (keyboard only), and the faint sun at the place in the
+   * sky that move would carry the day to: the cost of a step is time. A climb the day cannot afford puts the ghost
+   * beyond dusk, in the cold colour of the night.
+   */
+  private drawGhosts(): void {
+    const ghost = this.ghost;
+    const sun = this.sunGhost;
+    if (!ghost || !sun) return;
+    ghost.setVisible(false);
+    sun.setVisible(false);
+    const here = this.state.here();
+    const t = this.previewTarget();
+    if (!here || !t || t.id === here.id || this.state.pending) return;
+    const i = this.state.intent(t.id);
+    const steps = this.state.player.steps;
+    let cost: number | undefined;
+    if (i.kind === "reel" || i.kind === "travel") cost = 1;
+    else if (i.kind === "extend" || i.kind === "step") cost = t.cost ?? 1;
+    else if (t.terrain && t.state !== "hidden" && steps > 0 && steps < (t.cost ?? 1) && neighbours(here.col, here.row).some(([c, r]) => c === t.col && r === t.row))
+      cost = t.cost ?? 1; // too steep: the day cannot pay for it
+    if (cost === undefined) return;
+    if (this.keyboard && i.kind !== "none" && i.kind !== "travel") {
+      const [x, y] = this.spotOf(t.col, t.row);
+      ghost.setPosition(x, y).setVisible(true);
+    }
+    const left = steps - cost;
+    const f = Math.max(0, Math.min(1, 1 - left / START_STEPS));
+    const [sx, sy] = tileCentre(Math.round(f * (COLS - 1)), 0);
+    sun.setPosition(sx * this.k, sy * this.k).setVisible(true);
+    if (left < 0) sun.setTint(0x6b7fa0);
+    else sun.clearTint();
   }
 }
 

@@ -9,6 +9,8 @@ import { engineBuilt, openEngine, seedWorld } from "./helpers/engine.js";
 const neighboursOf = (a: { col: number; row: number }, b: { col: number; row: number }) =>
   neighbours(a.col, a.row).some(([c, r]) => c === b.col && r === b.row);
 
+const sorted = <T extends { from: string; to: string }>(edges: T[]): T[] => [...edges].sort((a, b) => `${a.from}>${a.to}`.localeCompare(`${b.from}>${b.to}`));
+
 describe.skipIf(!engineBuilt)("game state, on the engine", () => {
   let state: GameState;
   let bridge: Bridge;
@@ -402,6 +404,48 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       expect(secondGhost.ring).toBe(0);
       expect(secondGhost.terrain).toBeDefined();
       expect(state.lastFogged.at(-1)!.ring).toBeGreaterThan(0);
+    });
+
+    it("undoes the last action, and only that one", async () => {
+      expect(state.canUndo()).toBe(false);
+      const camp = state.player.at;
+      const first = [...state.tiles.values()].find((t) => t.state === "sensed" && state.canExtend(t.id))!;
+      await state.click(first.id);
+      const second = [...state.tiles.values()].find((t) => t.state === "sensed" && state.canExtend(t.id))!;
+      await state.click(second.id);
+      const steps = state.player.steps;
+      await state.undo(); // takes back the second extension
+      expect(state.player.at).toBe(first.id);
+      expect(state.player.steps).toBe(steps + (second.cost ?? 1));
+      expect(state.loose()).toEqual([{ from: camp, to: first.id, kind: "LOOSE" }]);
+      expect(state.tiles.get(second.id)!.state).toBe("sensed");
+      expect(state.canUndo()).toBe(false); // one level
+      // the graph agrees with the cache
+      const reread = new GameState(bridge);
+      await reread.load();
+      expect(reread.player).toEqual(state.player);
+      expect(sorted(reread.edges)).toEqual(sorted(state.edges));
+      expect([...reread.tiles.values()].map((t) => t.state)).toEqual([...state.tiles.values()].map((t) => t.state));
+    });
+
+    it("undoes the end of the day: the path, the steps and the fogged ground come back", async () => {
+      const first = [...state.tiles.values()].find((t) => t.state === "sensed" && state.canExtend(t.id))!;
+      await state.click(first.id);
+      const second = [...state.tiles.values()].find((t) => t.state === "sensed" && state.canExtend(t.id))!;
+      await state.click(second.id);
+      const before = { player: { ...state.player }, edges: state.edges.map((e) => ({ ...e })) };
+      const terrain = state.tiles.get(second.id)!.terrain;
+      await state.endDay();
+      expect(state.tiles.get(second.id)!.state).toBe("hidden");
+      await state.undo();
+      expect(state.player).toEqual(before.player);
+      expect(state.edges).toEqual(before.edges);
+      expect(state.tiles.get(second.id)!.state).toBe("path");
+      expect(state.tiles.get(second.id)!.terrain).toBe(terrain);
+      const reread = new GameState(bridge);
+      await reread.load();
+      expect(reread.tiles.get(second.id)!.state).toBe("path");
+      expect(sorted(reread.edges)).toEqual(sorted(state.edges));
     });
 
     it("reports the win only when both towers are joined", async () => {

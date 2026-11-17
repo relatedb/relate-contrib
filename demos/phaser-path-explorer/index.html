@@ -12,11 +12,40 @@
       #game { line-height: 0; }
       #game canvas { image-rendering: pixelated; }
       #status { font-size: 13px; color: var(--ink-muted); }
+      #status[hidden] { display: none; }
+      #stage { position: relative; }
+      #help { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+              background: rgba(0, 43, 67, 0.88); }
+      #help[hidden] { display: none; }
+      #help .card { max-width: 440px; padding: 0 24px; font-size: 14px; line-height: 1.5; }
+      #help p { margin: 0 0 14px; }
+      #help dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 0 0 14px; }
+      #help dt { font-weight: 600; white-space: nowrap; }
+      #help dd { margin: 0; }
+      #help .dismiss { color: var(--ink-muted); font-size: 12px; margin: 0; }
     </style>
   </head>
   <body>
-    <div id="game"></div>
-    <div id="status">Loading…</div>
+    <div id="stage">
+      <div id="game"></div>
+      <div id="help" hidden>
+        <div class="card">
+          <p>Start from the camp and secure a path to each tower. A day is 12 steps; when the sun sets the day ends, and any ground not on a secured path is forgotten.</p>
+          <dl>
+            <dt>← →</dt><dd>Turn</dd>
+            <dt>↑</dt><dd>Move ahead. On new ground this lays path.</dd>
+            <dt>↓</dt><dd>Move back. Along your path this takes it in.</dd>
+            <dt>Shift + ↑ ↓</dt><dd>Step over known ground without laying path</dd>
+            <dt>P</dt><dd>Place a waymarker here and secure the path</dd>
+            <dt>E</dt><dd>End the day</dd>
+            <dt>Backspace, ⌘Z</dt><dd>Undo the last action</dd>
+            <dt>H</dt><dd>Show or hide this help</dd>
+          </dl>
+          <p class="dismiss">Press any key to close.</p>
+        </div>
+      </div>
+    </div>
+    <div id="status" hidden></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

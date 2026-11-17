@@ -152,3 +152,17 @@ export const READ_PLAYER = `MATCH (pl:Player {id: 'player'}) RETURN pl.at AS at,
 
 /** The path and the secured routes, for drawing. */
 export const READ_EDGES = `MATCH (a:Hex)-[r:LOOSE|SECURED]->(b:Hex) RETURN a.id AS from, b.id AS to, type(r) AS kind`;
+
+// --- undo: put the graph back as a snapshot of the cache says it was. One level, so the statements are a short
+// fixed sequence; each is bounded and safe to run again. ---
+
+/** Remove every path edge, loose or secured. */
+export const UNDO_CLEAR_EDGES = `MATCH ()-[r:LOOSE|SECURED]->() DELETE r RETURN count(r) AS n`;
+/** Lay the loose path back. $edges: [{from, to}]. */
+export const UNDO_LOOSE = `UNWIND $edges AS e MATCH (a:Hex {id: e.from}), (b:Hex {id: e.to}) CREATE (a)-[:LOOSE {since: 0}]->(b) RETURN count(*) AS n`;
+/** Lay the secured paths back. $edges: [{from, to}]. */
+export const UNDO_SECURED = `UNWIND $edges AS e MATCH (a:Hex {id: e.from}), (b:Hex {id: e.to}) CREATE (a)-[:SECURED {since: 0}]->(b) RETURN count(*) AS n`;
+/** Put back what the explorer knows of each changed hex. $rows: [{id, state, anchor: true | null}]. */
+export const UNDO_HEXES = `UNWIND $rows AS x MATCH (h:Hex {id: x.id}) SET h.state = x.state, h.anchor = x.anchor RETURN count(h) AS n`;
+/** Put the explorer, the steps and the waymarkers back. */
+export const UNDO_PLAYER = `MATCH (pl:Player {id: 'player'}) SET pl.at = $at, pl.steps = $steps, pl.markers = $markers RETURN pl.at AS at`;

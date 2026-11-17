@@ -17,7 +17,11 @@ const pixel = Number(params.get("pixel") ?? DEFAULT_PIXEL);
 // the pixel art crisp
 const dpr = Math.max(1, Math.min(3, Number(params.get("dpr")) || Math.round(window.devicePixelRatio) || 1));
 const status = document.getElementById("status")!;
-const say = (text: string) => (status.textContent = text);
+const say = (text: string) => {
+  status.textContent = text;
+  status.hidden = text === "";
+};
+say("");
 
 // The world is an application graph (ADR-009, ADR-011 2.4): seeded once on first run and kept in the browser.
 // A new seed only takes effect on a first run, or with ?reset=1, which discards the stored world.
@@ -28,7 +32,6 @@ const client = createClient({
 });
 
 async function start(): Promise<void> {
-  say("Opening the graph…");
   if (params.get("reset") === "1") {
     await client.resetApplication();
     // drop ?reset from the address, so a reload (or the dev server's hot reload) does not reset the world again
@@ -41,11 +44,12 @@ async function start(): Promise<void> {
   // for driving the game from the browser console while developing (not in a production build)
   if (import.meta.env.DEV) Object.assign(window, { __state: state, __bridge: bridge });
   const { width, height } = boardSizePx(pixel);
+  // No status line: the world says what it can. Only a failure of the system itself, or storage that will not keep
+  // the world, is told in words.
   const hud = (s: GameState) => {
     const storage = client.storage;
-    say(
-      `steps ${s.player.steps} · waymarkers ${s.player.markers}${s.message ? ` · ${s.message}` : ""} · ←/→ turn · ↑ forward · ↓ back · shift step · backspace reel in · p place waymarker · e end the day · storage: ${storage.kind}${storage.reason ? ` (${storage.reason})` : ""} · seed: ${seed}`,
-    );
+    const lost = storage.kind === "memory" ? `Progress is not being saved${storage.reason ? ` (${storage.reason})` : ""}.` : "";
+    say(s.message.startsWith("ERR:") ? s.message : lost);
   };
   const game = new Phaser.Game({
     type: Phaser.AUTO,
@@ -65,6 +69,33 @@ async function start(): Promise<void> {
     game.canvas.style.height = `${height}px`;
   });
 }
+
+// The one piece of interface: a plain statement of the game and its keys. Shown on the first visit; H or ? brings it
+// back, and any key or a click puts it away.
+const help = document.getElementById("help")!;
+const seen = (() => {
+  try {
+    return localStorage.getItem("path-explorer-help") === "1";
+  } catch {
+    return false;
+  }
+})();
+const showHelp = (on: boolean) => {
+  help.hidden = !on;
+  if (!on)
+    try {
+      localStorage.setItem("path-explorer-help", "1");
+    } catch {
+      /* the help simply shows again next time */
+    }
+};
+showHelp(!seen);
+window.addEventListener("keydown", (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === "h" || e.key === "H" || e.key === "?") showHelp(Boolean(help.hidden));
+  else if (!help.hidden) showHelp(false);
+});
+help.addEventListener("pointerdown", () => showHelp(false));
 
 start().catch((err: unknown) => {
   say(`ERR: ${err instanceof Error ? err.message : String(err)}`);
