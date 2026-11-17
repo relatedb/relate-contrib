@@ -18,6 +18,8 @@ export interface SplashOptions {
   /** Is there a game in progress to go back to? A finished game is not. */
   canContinue: () => boolean;
   onNew: () => void;
+  /** The splash was left by a key, to play. */
+  onContinue?: () => void;
   scores: () => Scores;
   /** The board, so the bubbles sit on its hexes: the size of a cell in screen pixels, and the board's tiles across and down. */
   pixel: number;
@@ -188,7 +190,9 @@ export function createSplash(opts: SplashOptions): Splash {
       e.stopImmediatePropagation();
       if (e.repeat || performance.now() < guardUntil) return;
       if (e.key === "n" || e.key === "N") return opts.onNew();
-      return opts.canContinue() ? hide() : opts.onNew();
+      if (!opts.canContinue()) return opts.onNew();
+      hide();
+      opts.onContinue?.();
     },
     true,
   );

@@ -434,3 +434,12 @@ the hex points, and it moves a tile at a time, so it always lies on the board's 
 has several rows, top 2 to 4, middle 8 to 11, bottom 14 to 17, and a bubble takes a different one each time. The font is
 Share Tech Mono (SIL Open Font License, the `@fontsource/share-tech-mono` package, bundled, no request to a font service),
 a recorded deviation from the design system's type for the game's own words, for brand review.
+
+**The demo behind the splash (2026-11-17, slice 2).** On load, when the saved game is not over, the board behind the bubbles
+is a demo: an explorer wanders a random island of its own at random, laying no path, with a lantern round them (the hexes
+within two in sight, the ring beyond dimmed, the fog back on everything behind). It is a second Phaser game over a second
+client holding the world as a graph given as data, with no descriptor, so it has no store: it is never the saved game, and
+nothing of it is kept. Any key on the splash stops the demo, destroys its game and starts the saved one. If the demo
+cannot start, the saved game shows behind the bubbles as before. The walk is `wanderStep` in `src/demo.ts`: it favours the
+way it was going and avoids water. It uses three small statements (`DEMO_AT`, `DEMO_DARKEN`, `DEMO_LIGHT`) that exist only
+for the demo. Robots, and the explorer fleeing them, are slice 3.

@@ -214,3 +214,14 @@ WITH h, collect(DISTINCT n.id) AS viewed
 OPTIONAL MATCH (h)-[:ADJ]-(:Hex)-[:ADJ]-(m:Hex) WHERE m.state = 'hidden'
 SET m.state = 'sensed'
 RETURN viewed, collect(DISTINCT m.id) AS sensed`;
+
+// --- the demo behind the splash: a throwaway world where the explorer wanders with a lantern (not part of the game) ---
+
+/** Move the demo's explorer. $to: a hex id. */
+export const DEMO_AT = `MATCH (pl:Player {id: 'player'}) SET pl.at = $to RETURN pl.at AS at`;
+
+/** Put the fog back on every hex that is not in $ids. */
+export const DEMO_DARKEN = `MATCH (h:Hex) WHERE NOT h.id IN $ids AND h.state <> 'hidden' SET h.state = 'hidden' RETURN count(h) AS n`;
+
+/** Light some hexes. $ids: hex ids; $state: 'viewed' (in sight) or 'sensed' (the dimmed ring beyond). */
+export const DEMO_LIGHT = `MATCH (h:Hex) WHERE h.id IN $ids SET h.state = $state RETURN count(h) AS n`;

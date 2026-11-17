@@ -8,6 +8,7 @@ import { COLS, ROWS, generateRows } from "./game/world.js";
 import { APPLICATION, worldDocument } from "./game/graph.js";
 import { loadScores, recordScore, type KeyValueStore } from "./game/scores.js";
 import { createSplash, type Splash } from "./splash.js";
+import { runDemo } from "./demo.js";
 
 const params = new URLSearchParams(location.search);
 const seed = params.get("seed") ?? "first-light";
@@ -79,31 +80,69 @@ async function start(): Promise<void> {
     const lost = storage.kind === "memory" ? `Progress is not being saved${storage.reason ? ` (${storage.reason})` : ""}.` : "";
     say(s.message.startsWith("ERR:") ? s.message : lost);
   };
-  const game = new Phaser.Game({
-    type: Phaser.AUTO,
-    parent: "game",
-    width: width * dpr,
-    height: height * dpr,
-    // smooth vector shapes (links, rings, nodes); the terrain texture is set to nearest-neighbour filtering itself
-    pixelArt: false,
-    antialias: true,
-    roundPixels: false,
-    backgroundColor: "#002b43",
-    scene: [(scene = new MapScene(state, pixel, dpr, hud, () => splash?.open ?? true, () => { finaleDone = true; tellResult(); }))],
-  });
-  // the canvas holds dpr times the pixels, shown at the chosen size
-  game.events.once(Phaser.Core.Events.READY, () => {
-    game.canvas.style.width = `${width}px`;
-    game.canvas.style.height = `${height}px`;
-  });
+  const makeGame = (make: () => MapScene): Phaser.Game => {
+    const g = new Phaser.Game({
+      type: Phaser.AUTO,
+      parent: "game",
+      width: width * dpr,
+      height: height * dpr,
+      // smooth vector shapes (links, rings, nodes); the terrain texture is set to nearest-neighbour filtering itself
+      pixelArt: false,
+      antialias: true,
+      roundPixels: false,
+      backgroundColor: "#002b43",
+      scene: [make()],
+    });
+    // the canvas holds dpr times the pixels, shown at the chosen size
+    g.events.once(Phaser.Core.Events.READY, () => {
+      g.canvas.style.width = `${width}px`;
+      g.canvas.style.height = `${height}px`;
+    });
+    return g;
+  };
+  const startReal = () => makeGame(() => (scene = new MapScene(state, pixel, dpr, hud, () => splash?.open ?? true, () => { finaleDone = true; tellResult(); })));
+
+  // Behind the splash, a demo: an explorer wandering a throwaway island of its own, on an in-memory graph that is never
+  // the saved game. A game that is already over shows its own end state instead.
+  let stopDemo: (() => void) | undefined;
+  let demoGame: Phaser.Game | undefined;
+  const openDemo = async (): Promise<boolean> => {
+    try {
+      const rows = generateRows(Math.random().toString(36).slice(2, 8), cols, rowsCount);
+      // a graph given as data, with no descriptor: no store, so nothing of it is kept
+      const demoClient = createClient({ engineUrl, navigation: "multi-page", graph: { document: worldDocument(rows) } });
+      const demoBridge = new Bridge((statement, p) => demoClient.query(statement, p));
+      const demoState = new GameState(demoBridge);
+      await demoState.load();
+      if (demoState.tiles.size === 0) return false;
+      demoGame = makeGame(() => new MapScene(demoState, pixel, dpr, () => {}, () => true));
+      stopDemo = runDemo({ rows, state: demoState, bridge: demoBridge, start: [Math.floor(cols / 2), Math.floor(rowsCount / 2)] });
+      return true;
+    } catch (err) {
+      console.warn("the demo could not start", err);
+      return false;
+    }
+  };
+  /** Any key, on the splash over the demo: the demo goes, and the saved game takes its place. */
+  const leaveDemo = () => {
+    if (!demoGame) return;
+    stopDemo?.();
+    demoGame.destroy(true);
+    demoGame = undefined;
+    stopDemo = undefined;
+    startReal();
+  };
+  const demoWanted = !playNow && !state.over;
+  if (!(demoWanted && (await openDemo()))) startReal();
   splash = createSplash({
     canContinue: () => !state.over || (scene?.finaleActive ?? false), // the finale can be watched again, not played on
     scores: () => loadScores(store),
+    // a new game is a new random island: a reload with a fresh seed and a reset, straight past the splash
+    onNew: () => location.assign(`${location.pathname}?seed=${Math.random().toString(36).slice(2, 8)}&reset=1&play=1`),
+    onContinue: leaveDemo,
     pixel,
     cols,
     rows: rowsCount,
-    // a new game is a new random island: a reload with a fresh seed and a reset, straight past the splash
-    onNew: () => location.assign(`${location.pathname}?seed=${Math.random().toString(36).slice(2, 8)}&reset=1&play=1`),
   });
   if (playNow) splash.hide();
   else splash.show(state.over ? { result: await state.score() } : {});
