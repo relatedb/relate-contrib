@@ -28,7 +28,7 @@ its neighbours coming back as sensed. A found cache adds one waymarker.
 
 Keyboard, as in a space shooter: **left and right turn** a sixth of a turn, **up** acts on the hex ahead (the same as a
 click on it), **down** acts on the hex behind, **shift** steps instead of extending, **p** places
-a waymarker, **e** ends the day, **backspace** or **cmd-Z** undoes the last action (one level, the end of a day included), **h** shows a short help. A translucent preview shows what the next press would do. The explorer faces the way it
+a waymarker, **e** ends the day, **backspace** or **cmd-Z** undoes the last action (one level, the end of a day included). **Esc**, **h** or **?** open the splash screen: the premise, the keys, your last and best scores, **Enter** to continue and **n** for a new game on a random island (the confirmation that abandons the one in progress). A translucent preview shows what the next press would do. The explorer faces the way it
 last moved; clicking a neighbour turns it to face that hex.
 
 A path is wavy while it is loose and straightens when it is banked as secured ground (a waymarker, or a tower):

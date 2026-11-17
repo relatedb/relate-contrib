@@ -133,6 +133,8 @@ export class MapScene extends Phaser.Scene {
     pixel = DEFAULT_PIXEL,
     dpr = 1,
     private readonly onChange: (state: GameState) => void = () => {},
+    /** True while something (the splash) has the keyboard and the pointer. */
+    private readonly blocked: () => boolean = () => false,
   ) {
     super("map");
     this.k = pixel * dpr;
@@ -174,6 +176,7 @@ export class MapScene extends Phaser.Scene {
     kb?.addCapture("LEFT,RIGHT,UP,DOWN,BACKSPACE,SPACE"); // keep the page from scrolling
     const key = (name: string, run: (e: KeyboardEvent) => void) =>
       kb?.on(`keydown-${name}`, (e: KeyboardEvent) => {
+        if (this.blocked()) return;
         if (this.nightT >= 0 && name !== "BACKSPACE" && name !== "Z") return; // the night is not interrupted
         this.keyboard = true;
         run(e);
@@ -202,7 +205,7 @@ export class MapScene extends Phaser.Scene {
     });
     this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
       const t = this.tileUnder(p);
-      if (t && this.nightT < 0) void this.state.click(t.id, { step: p.event.shiftKey });
+      if (t && this.nightT < 0 && !this.blocked()) void this.state.click(t.id, { step: p.event.shiftKey });
     });
   }
 
@@ -986,8 +989,8 @@ export class MapScene extends Phaser.Scene {
     const left = steps - cost;
     const f = Math.max(0, Math.min(1, 1 - left / START_STEPS));
     const [sx, sy] = tileCentre(Math.round(f * (COLS - 1)), 0);
-    // a move that spends the last step ends the day: the sun is shown as the moon it will become
-    sun.setTexture(left === 0 ? "moon" : "sun").setAlpha(left === 0 ? 0.6 : 0.4);
+    // a move that spends the last step (or more than the day has) reaches the night: the sun is shown as the moon it will become
+    sun.setTexture(left <= 0 ? "moon" : "sun").setAlpha(left <= 0 ? 0.6 : 0.4);
     sun.setPosition(sx * this.k, sy * this.k).setVisible(true);
     if (left < 0) sun.setTint(0x6b7fa0);
     else sun.clearTint();

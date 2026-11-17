@@ -6,6 +6,8 @@ import { Bridge } from "./game/bridge.js";
 import { GameState } from "./game/state.js";
 import { COLS, ROWS, generateRows } from "./game/world.js";
 import { APPLICATION, worldDocument } from "./game/graph.js";
+import { loadScores, recordScore, type KeyValueStore } from "./game/scores.js";
+import { createSplash, type Splash } from "./splash.js";
 
 const params = new URLSearchParams(location.search);
 const seed = params.get("seed") ?? "first-light";
@@ -36,8 +38,10 @@ async function start(): Promise<void> {
     await client.resetApplication();
     // drop ?reset from the address, so a reload (or the dev server's hot reload) does not reset the world again
     params.delete("reset");
-    history.replaceState(null, "", `${location.pathname}${params.size ? `?${params}` : ""}`);
   }
+  const playNow = params.get("play") === "1"; // a new game was chosen on the splash: go straight in
+  params.delete("play");
+  history.replaceState(null, "", `${location.pathname}${params.size ? `?${params}` : ""}`);
   const bridge = new Bridge((statement, p) => client.query(statement, p));
   const state = new GameState(bridge);
   await state.load();
@@ -46,7 +50,23 @@ async function start(): Promise<void> {
   const { width, height } = boardSizePx(pixel);
   // No status line: the world says what it can. Only a failure of the system itself, or storage that will not keep
   // the world, is told in words.
+  let splash: Splash | undefined;
+  const store: KeyValueStore | undefined = (() => {
+    try {
+      return localStorage;
+    } catch {
+      return undefined; // storage can be blocked; scores are then simply not kept
+    }
+  })();
+  let ended = state.over; // a game already over when the page loaded was scored in its own time
   const hud = (s: GameState) => {
+    if (s.over && !ended) {
+      ended = true;
+      void s.score().then((score) => {
+        recordScore(store, score);
+        splash?.show({ result: score });
+      });
+    }
     const storage = client.storage;
     const lost = storage.kind === "memory" ? `Progress is not being saved${storage.reason ? ` (${storage.reason})` : ""}.` : "";
     say(s.message.startsWith("ERR:") ? s.message : lost);
@@ -61,41 +81,22 @@ async function start(): Promise<void> {
     antialias: true,
     roundPixels: false,
     backgroundColor: "#002b43",
-    scene: [new MapScene(state, pixel, dpr, hud)],
+    scene: [new MapScene(state, pixel, dpr, hud, () => splash?.open ?? true)],
   });
   // the canvas holds dpr times the pixels, shown at the chosen size
   game.events.once(Phaser.Core.Events.READY, () => {
     game.canvas.style.width = `${width}px`;
     game.canvas.style.height = `${height}px`;
   });
+  splash = createSplash({
+    canContinue: () => !state.over,
+    scores: () => loadScores(store),
+    // a new game is a new random island: a reload with a fresh seed and a reset, straight past the splash
+    onNew: () => location.assign(`${location.pathname}?seed=${Math.random().toString(36).slice(2, 8)}&reset=1&play=1`),
+  });
+  if (playNow) splash.hide();
+  else splash.show(state.over ? { result: await state.score() } : {});
 }
-
-// The one piece of interface: a plain statement of the game and its keys. Shown on the first visit; H or ? brings it
-// back, and any key or a click puts it away.
-const help = document.getElementById("help")!;
-const seen = (() => {
-  try {
-    return localStorage.getItem("path-explorer-help") === "1";
-  } catch {
-    return false;
-  }
-})();
-const showHelp = (on: boolean) => {
-  help.hidden = !on;
-  if (!on)
-    try {
-      localStorage.setItem("path-explorer-help", "1");
-    } catch {
-      /* the help simply shows again next time */
-    }
-};
-showHelp(!seen);
-window.addEventListener("keydown", (e) => {
-  if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.key === "h" || e.key === "H" || e.key === "?") showHelp(Boolean(help.hidden));
-  else if (!help.hidden) showHelp(false);
-});
-help.addEventListener("pointerdown", () => showHelp(false));
 
 start().catch((err: unknown) => {
   say(`ERR: ${err instanceof Error ? err.message : String(err)}`);
