@@ -46,7 +46,7 @@ describe.skipIf(!existsSync(wasm))("statements, in the engine's WebAssembly buil
               (:Hex {id:'d', state:'sensed'}), (:Hex {id:'e', state:'hidden'}), (:Hex {id:'f', state:'hidden'}),
               (:Hex {id:'T2', anchor:true, tower:true, state:'hidden'}),
               (:Hex {id:'g', state:'hidden', terrain:'grass'}), (:Hex {id:'x', state:'hidden', terrain:'water', cost:13}),
-              (:Player {id:'player', at:'H', steps:12, markers:2})`);
+              (:Player {id:'player', at:'H', steps:12, markers:2}), (:Robot {id:'robot'})`);
     run(`MATCH (h:Hex {id:'H'}),(a:Hex {id:'a'}),(b:Hex {id:'b'}),(c:Hex {id:'c'}),(t1:Hex {id:'T1'}),
               (d:Hex {id:'d'}),(e:Hex {id:'e'}),(f:Hex {id:'f'}),(t2:Hex {id:'T2'}),(g:Hex {id:'g'}),(x:Hex {id:'x'})
          CREATE (h)-[:ADJ]->(a),(a)-[:ADJ]->(b),(b)-[:ADJ]->(c),(c)-[:ADJ]->(t1),(h)-[:ADJ]->(d),(d)-[:ADJ]->(e),
@@ -113,7 +113,7 @@ describe.skipIf(!existsSync(wasm))("statements, in the engine's WebAssembly buil
   });
 
   it("ends the day on exhaustion: home, refilled, and everything the secured network does not disclose fogs over", () => {
-    const res = run(S.END_DAY, { budget: 12 })[0]!;
+    const res = run(S.END_DAY, { budget: 12, part: "head", n: 1, last: false })[0]!;
     res["fogged"] = [...(res["fogged"] as string[])].sort();
     expect(res).toMatchObject({ at: "H", steps: 12, lost: 2 });
     // Everything loose-path-adjacent fogs, including hexes the secured network discloses again at once.
@@ -137,9 +137,28 @@ describe.skipIf(!existsSync(wasm))("statements, in the engine's WebAssembly buil
 
   it("ends the day cleanly when nothing needs to fog", () => {
     run("MATCH (pl:Player) SET pl.steps = 0");
-    expect(run(S.END_DAY, { budget: 12 })[0]).toMatchObject({ at: "H", steps: 12, lost: 0, fogged: ["g", "x"] });
+    expect(run(S.END_DAY, { budget: 12, part: "eyes", n: 2, last: false })[0]).toMatchObject({ at: "H", steps: 12, lost: 0, fogged: ["g", "x"] });
     expect(hex("g")).toBe("sensed"); // re-sensed from the secured network at once
     expect(hex("x")).toBe("sensed"); // x neighbours e, which is now secured
+  });
+
+  it("adds a robot part each night, and the seventh night ends the game", () => {
+    expect(run(S.READ_PARTS)).toEqual([{ kind: "head", n: 1 }, { kind: "eyes", n: 2 }]);
+    expect(run(S.READ_PLAYER)[0]).toMatchObject({ over: false });
+    run(S.END_DAY, { budget: 12, part: "power", n: 7, last: true });
+    expect(run(S.READ_PARTS).map((r) => r["kind"])).toEqual(["head", "eyes", "power"]);
+    expect(run(S.READ_PLAYER)[0]).toMatchObject({ over: true });
+    run(S.UNDO_CLEAR_PARTS);
+    run(S.UNDO_PARTS, { parts: [{ kind: "head", n: 1 }] });
+    expect(run(S.READ_PARTS)).toEqual([{ kind: "head", n: 1 }]);
+    run("MATCH (pl:Player) REMOVE pl.over");
+    expect(run(S.GAME_OVER)[0]).toMatchObject({ over: true });
+    run("MATCH (h:Hex) WHERE h.anchor = true SET h.feature = 'x'"); // the camp and the towers carry a feature
+    expect(run(S.MARKERS_USED)[0]).toMatchObject({ markers: 0 }); // so they are not waymarkers
+    run("MATCH (h:Hex {id:'g'}) SET h.anchor = true");
+    expect(run(S.MARKERS_USED)[0]).toMatchObject({ markers: 1 }); // a placed waymarker is
+    run("MATCH (h:Hex {id:'g'}) REMOVE h.anchor");
+    run("MATCH (pl:Player) REMOVE pl.over");
   });
 
   it("charges the terrain's cost and refuses what the day cannot afford", () => {

@@ -5,9 +5,11 @@ import { neighbourAt, neighbours, oppositeSide, sideTo, turnSide, type Feature, 
 import type { Bridge, Row } from "./bridge.js";
 import {
   END_DAY, EXTEND, PLACE_WAYMARKER, READ_BOARD, READ_EDGES, READ_HEXES, READ_PLAYER, REEL_IN, SECURE, STEP, TRAVEL, TOWERS,
-  UNDO_CLEAR_EDGES, UNDO_HEXES, UNDO_LOOSE, UNDO_PLAYER, UNDO_SECURED,
+  UNDO_CLEAR_EDGES, UNDO_CLEAR_PARTS, UNDO_HEXES, UNDO_LOOSE, UNDO_PARTS, UNDO_PLAYER, UNDO_SECURED,
+  GAME_OVER, MARKERS_USED, READ_PARTS,
 } from "./statements.js";
-import { START_STEPS } from "./world.js";
+import { PARTS, computeScore, type Outcome } from "./score.js";
+import { DAYS, START_STEPS } from "./world.js";
 
 export type Knowledge = "hidden" | "sensed" | "seen" | "path";
 
@@ -28,6 +30,8 @@ export interface PlayerState {
   at: string;
   steps: number;
   markers: number;
+  /** The game has ended: the last night has fallen, or every settlement is routed. */
+  over?: boolean;
 }
 
 /** A hex the day forgot, kept only long enough for the scene to settle it into fog. */
@@ -71,6 +75,7 @@ interface Snapshot {
   edges: Edge[];
   player: PlayerState;
   facing: Side;
+  parts: string[];
 }
 
 /** What acting on a hex would do (see `GameState.intent`). */
@@ -83,6 +88,8 @@ export class GameState {
   /** Which of the six directions the explorer faces: what the arrow keys act on. Not stored in the graph. */
   facing: Side = "e";
   player: PlayerState = { at: "", steps: 0, markers: 0 };
+  /** The robot's parts, one a night, in order: the days that have passed (see score.ts). */
+  parts: string[] = [];
   message = "";
   /** The hex an action is waiting on, while its reply is awaited. */
   pending: string | null = null;
@@ -117,16 +124,18 @@ export class GameState {
   }
 
   async load(): Promise<void> {
-    const [board, player, edges] = await Promise.all([
+    const [board, player, edges, parts] = await Promise.all([
       this.bridge.enqueue(READ_BOARD),
       this.bridge.enqueue(READ_PLAYER),
       this.bridge.enqueue(READ_EDGES),
+      this.bridge.enqueue(READ_PARTS),
     ]);
+    this.parts = parts.map((r) => r["kind"] as string);
     this.tiles.clear();
     this.byPos.clear();
     this.merge(board);
     const p = player[0];
-    if (p) this.player = { at: p["at"] as string, steps: p["steps"] as number, markers: p["markers"] as number };
+    if (p) this.player = { at: p["at"] as string, steps: p["steps"] as number, markers: p["markers"] as number, over: p["over"] === true };
     this.edges = edges.map((e) => ({ from: e["from"] as string, to: e["to"] as string, kind: e["kind"] as Edge["kind"] }));
     this.touch();
   }
@@ -141,6 +150,15 @@ export class GameState {
     return this.tiles.get(this.player.at);
   }
 
+  /** The day, from 1 to seven: the robot's parts so far, plus one. */
+  get day(): number {
+    return Math.min(DAYS, this.parts.length + 1);
+  }
+
+  get over(): boolean {
+    return this.player.over === true;
+  }
+
   private adjacent(a: HexState, b: HexState): boolean {
     return neighbours(a.col, a.row).some(([c, r]) => c === b.col && r === b.row);
   }
@@ -153,11 +171,12 @@ export class GameState {
       edges: this.edges.map((e) => ({ ...e })),
       player: { ...this.player },
       facing: this.facing,
+      parts: [...this.parts],
     };
   }
 
   canUndo(): boolean {
-    return this.undoSnap !== null && !this.pending;
+    return this.undoSnap !== null && !this.pending && !this.over;
   }
 
   /**
@@ -166,7 +185,7 @@ export class GameState {
    */
   async undo(): Promise<void> {
     const snap = this.undoSnap;
-    if (!snap || this.pending) return;
+    if (!snap || this.pending || this.over) return;
     this.undoSnap = null;
     return this.act("undo", async () => {
       const changed: { id: string; state: Knowledge; anchor: boolean | null }[] = [];
@@ -180,11 +199,14 @@ export class GameState {
       await this.bridge.enqueue(UNDO_LOOSE, { edges: edgesOf("LOOSE") });
       await this.bridge.enqueue(UNDO_SECURED, { edges: edgesOf("SECURED") });
       await this.bridge.enqueue(UNDO_HEXES, { rows: changed });
+      await this.bridge.enqueue(UNDO_CLEAR_PARTS);
+      await this.bridge.enqueue(UNDO_PARTS, { parts: snap.parts.map((kind, i) => ({ kind, n: i + 1 })) });
       await this.bridge.enqueue(UNDO_PLAYER, { at: snap.player.at, steps: snap.player.steps, markers: snap.player.markers });
       this.tiles.clear();
       for (const [id, t] of snap.tiles) this.tiles.set(id, t);
       this.edges = snap.edges;
       this.player = snap.player;
+      this.parts = snap.parts;
       this.facing = snap.facing;
       this.lastFogged = [];
       this.lastBanked = null;
@@ -240,6 +262,7 @@ export class GameState {
 
   /** Run one action: it is pending until its reply is applied, and never throws. */
   private async act(target: string, run: () => Promise<void>, opts: { keepUndo?: boolean } = {}): Promise<void> {
+    if (this.over) return; // the game is over: nothing more is done
     this.pending = target;
     this.message = "";
     this.applied = false;
@@ -265,7 +288,7 @@ export class GameState {
   intent(id: string, step = false): Intent {
     const target = this.tiles.get(id);
     const here = this.here();
-    if (!target || !here || id === here.id) return { kind: "none", reason: "" };
+    if (!target || !here || id === here.id || this.over) return { kind: "none", reason: "" };
     if (this.pending) return { kind: "none", reason: "…" };
     if (this.adjacent(here, target)) {
       if (this.predecessor() === id) return { kind: "reel" };
@@ -345,6 +368,7 @@ export class GameState {
   async extend(id: string): Promise<void> {
     if (!this.canExtend(id)) return this.say("The thread will not go there.");
     const from = this.player.at;
+    let secured = false;
     await this.act(id, async () => {
       const rows = await this.bridge.enqueue(EXTEND, { to: id, now: ++this.moves });
       const r = rows[0];
@@ -365,11 +389,13 @@ export class GameState {
       }
       if (sensed.length) this.merge(await this.bridge.enqueue(READ_HEXES, { ids: sensed }));
       if (r["anchor"]) {
+        secured = true;
         await this.bridge.enqueue(SECURE);
         this.edges = this.edges.map((e) => ({ ...e, kind: "SECURED" as const }));
         this.message = "Anchor reached: the path is secured.";
       }
     });
+    if (secured && (await this.allRouted())) return this.finish(); // every settlement saved: the game ends early
     if (this.player.steps <= 0) await this.endDay(true); // the day ends when the steps run out
   }
 
@@ -470,7 +496,13 @@ export class GameState {
    */
   async endDay(auto = false): Promise<void> {
     return this.act("day", async () => {
-      const rows = await this.bridge.enqueue(END_DAY, { budget: START_STEPS });
+      const n = this.parts.length + 1;
+      const part = PARTS[n - 1];
+      if (!part) {
+        this.message = "The robot is complete.";
+        return;
+      }
+      const rows = await this.bridge.enqueue(END_DAY, { budget: START_STEPS, part, n, last: n >= DAYS });
       const r = rows[0];
       if (!r) {
         this.message = "The day will not end.";
@@ -517,16 +549,47 @@ export class GameState {
         delete t.anchor;
       }
       if (fogged.length) this.merge(await this.bridge.enqueue(READ_HEXES, { ids: fogged })); // some come back disclosed
-      this.player = { ...this.player, at: r["at"] as string, steps: r["steps"] as number };
+      this.parts = [...this.parts, part];
+      this.player = { ...this.player, at: r["at"] as string, steps: r["steps"] as number, over: n >= DAYS };
       const lost = r["lost"] as number;
       this.message = lost ? `Day over: ${lost} step${lost === 1 ? "" : "s"} of path lost to the fog.` : "Day over. Back at camp.";
       this.touch();
     }, { keepUndo: auto });
   }
 
-  /** Has the expedition won: both towers joined to the camp by secured paths? */
-  async won(): Promise<boolean> {
+  /** Each settlement (a tower) and whether secured paths join it to the camp. */
+  async settlements(): Promise<{ id: string; joined: boolean }[]> {
     const rows = await this.bridge.enqueue(TOWERS);
-    return rows.length > 0 && rows.every((r) => r["joined"] === true);
+    return rows.map((r) => ({ id: r["id"] as string, joined: r["joined"] === true }));
+  }
+
+  /** Is every settlement joined to the camp by secured paths? */
+  async allRouted(): Promise<boolean> {
+    const all = await this.settlements();
+    return all.length > 0 && all.every((s) => s.joined);
+  }
+
+  /** End the game now (every settlement is routed): nothing more can be done, and there is nothing to undo. */
+  async finish(): Promise<void> {
+    if (this.over) return;
+    await this.bridge.enqueue(GAME_OVER);
+    this.player = { ...this.player, over: true };
+    this.undoSnap = null;
+    this.touch();
+  }
+
+  /** How the game went: settlements routed, waymarkers placed, the day it ended on. Read from the graph. */
+  async outcome(): Promise<Outcome> {
+    const [all, markers] = await Promise.all([this.settlements(), this.bridge.enqueue(MARKERS_USED)]);
+    return {
+      routed: all.filter((s) => s.joined).length,
+      total: all.length,
+      markers: (markers[0]?.["markers"] as number) ?? 0,
+      days: this.day,
+    };
+  }
+
+  async score(): Promise<number> {
+    return computeScore(await this.outcome());
   }
 }

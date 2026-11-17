@@ -337,3 +337,35 @@ undo, which ends the night at once. The moon is a plain crescent with no phases.
 
 **Board width (2026-11-17).** The board is 25 columns by 20 rows (500 hexes), replacing 22 by 20 from 2.1. The sun
 crosses 24 column gaps in a 12 step day, so each step moves it exactly two tiles.
+
+### 2026-11-17: the seven day game (rogue robots, the score, the splash)
+
+Supersedes the goal-based win of the 2026-11-16 amendment ("both towers joined": the interface says so and offers a new
+day). The game is now time-limited. The kingdom has seven days: a rogue AI is being assembled and will go for the
+nearest settlement. Settlements (the towers) joined to the camp by secured paths are saved: the robots are made happy.
+Isolated ones are destroyed.
+
+- **The robot is the day counter.** One `(:Robot)` node, and one `(:Part {kind, n})` attached for each night that has
+  passed, in the order head, eyes, mouth, body, arms, legs, power. The day is the number of parts plus one; the seventh
+  night adds `power`, completes the robot and ends the game. No day counter and no stats are stored on the player.
+  `END_DAY` creates the part. Undo takes a night back with its part.
+- **Game over** is `Player.over`, the only new player field. It is set by the seventh night, or at once when every
+  settlement is routed (`GAME_OVER`); the game then ends early. When it is set nothing more is done and undo is off.
+- **Settlements.** Six, placed in pairs: each is within a day's reach (by cost, over land) of the camp or an earlier
+  settlement, and the first two are within reach of the camp. Par is two settlements a day, so a perfect game is
+  reachable: three days, no waymarker.
+- **Score**, derived when the game ends and never stored in the graph: 100 for each settlement routed, less 5 for each
+  waymarker placed (anchors that are neither the camp nor a tower, `MARKERS_USED`) and 10 for each day over par
+  (`ceil(settlements / 2)` days), never below zero; a perfect game is 600. The last score and the personal best are kept in
+  the browser's storage, outside the graph, so they survive the splash and reloads.
+- **Splash** (the second interface concession): shown on every load, replacing the first-visit help; premise and keys,
+  the last score and the personal best, new game (a random island) and, when a game is in progress, continue. Esc opens
+  it as the pause screen (Esc again resumes); choosing new game is the confirmation, and the abandoned game is not
+  scored. `?` and `H` still open the help.
+- **Bottom row**: the robot prototype is drawn along it, one more part each day, moving right. **Finale**: the board is
+  revealed, robots appear and head for the nearest settlements. These are the later slices; this amendment is built in
+  slices, the model first.
+- **Fix found on the way.** The win and score statements read a `tower` flag the seed never set, so the old win test could
+  not have passed. The seed now flags towers.
+
+Existing stored worlds lack the `Robot` node and need `?reset=1` once.

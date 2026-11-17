@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateRows, landDistances, COLS, ROWS, START_STEPS } from "../src/game/world.js";
+import { generateRows, landDistances, COLS, ROWS, SETTLEMENTS, START_STEPS } from "../src/game/world.js";
 import { worldDocument } from "../src/game/graph.js";
 import { neighbours } from "../src/hex/core/index.js";
 
@@ -117,5 +117,36 @@ describe("world document", () => {
     const anchors = hexes.filter((h) => h.properties!["anchor"]);
     expect(anchors.length).toBeGreaterThanOrEqual(2);
     for (const a of anchors) expect(a.properties!["feature"]).toBeTruthy();
+  });
+});
+
+describe("settlements", () => {
+  const seeds = ["first-light", "another", "tide", "ember", "moss", "x9"];
+
+  it("places six, every one within a day's reach of the camp or another settlement, two of them of the camp", () => {
+    for (const seed of seeds) {
+      const rows = generateRows(seed);
+      const camp: [number, number] = [Math.floor(COLS / 2), Math.floor(ROWS / 2)];
+      const towers: [number, number][] = [];
+      rows.forEach((r, row) => [...r].forEach((ch, col) => (ch === "R" || ch === "U") && towers.push([col, row])));
+      expect(towers.length, seed).toBe(SETTLEMENTS);
+      const fromCamp = landDistances(rows, camp);
+      expect(towers.filter(([c, r]) => (fromCamp.get(`${c},${r}`) ?? Infinity) <= START_STEPS).length, seed).toBeGreaterThanOrEqual(2);
+      // routing can spread outwards a day at a time: every settlement is reached from the camp through the others
+      const reached: [number, number][] = [camp];
+      const left = [...towers];
+      for (let grew = true; grew && left.length; ) {
+        grew = false;
+        for (const t of [...left]) {
+          const near = reached.some((from) => (landDistances(rows, from).get(`${t[0]},${t[1]}`) ?? Infinity) <= START_STEPS);
+          if (near) {
+            reached.push(t);
+            left.splice(left.indexOf(t), 1);
+            grew = true;
+          }
+        }
+      }
+      expect(left, seed).toEqual([]);
+    }
   });
 });

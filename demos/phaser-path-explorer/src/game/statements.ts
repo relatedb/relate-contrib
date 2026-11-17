@@ -66,7 +66,8 @@ RETURN h.id AS waymark, secured AS secured, pl.at AS at, pl.steps AS steps, pl.m
  * End the day: the steps ran out. The loose path is abandoned, the explorer returns to the camp, the steps refill,
  * and everything the secured network does not disclose fogs over: a hex stays known only if it lies on a secured
  * path, is the camp, or neighbours such a hex (as sensed); every other hex becomes hidden again. Answers with the
- * ids that were fogged, so the client's cache can drop them. $budget: the day's step budget.
+ * ids that were fogged, so the client's cache can drop them. Each night the robot gains a part ($part, numbered $n), and the
+ * game is over when $last says it was the seventh. $budget: the day's step budget.
  */
 export const END_DAY = `
 MATCH (pl:Player {id: 'player'}), (home:Hex {origin: true})
@@ -83,7 +84,10 @@ MATCH (k:Hex) WHERE k.origin IS NOT NULL OR EXISTS { (k)-[:SECURED]-() }
 OPTIONAL MATCH (k)-[:ADJ]-(n:Hex) WHERE n.state = 'hidden'
 SET n.state = 'sensed'
 WITH DISTINCT pl, home, lost, fogged
-SET pl.at = home.id, pl.steps = $budget
+MATCH (rb:Robot)
+CREATE (rb)-[:HAS]->(:Part {kind: $part, n: $n})
+WITH DISTINCT pl, home, lost, fogged
+SET pl.at = home.id, pl.steps = $budget, pl.over = CASE WHEN $last THEN true ELSE pl.over END
 RETURN pl.at AS at, pl.steps AS steps, lost AS lost, fogged AS fogged`;
 
 /** Step one hex over known ground (on a path, or remembered); lays no path of its own. Costs one step. */
@@ -148,7 +152,16 @@ export const READ_BOARD = `MATCH (h:Hex) RETURN ${HEX_FIELDS}`;
 /** Some hexes, as the player may know them. $ids: a list of hex ids. */
 export const READ_HEXES = `MATCH (h:Hex) WHERE h.id IN $ids RETURN ${HEX_FIELDS}`;
 
-export const READ_PLAYER = `MATCH (pl:Player {id: 'player'}) RETURN pl.at AS at, pl.steps AS steps, pl.markers AS markers`;
+export const READ_PLAYER = `MATCH (pl:Player {id: 'player'}) RETURN pl.at AS at, pl.steps AS steps, pl.markers AS markers, coalesce(pl.over, false) AS over`;
+
+/** The robot's parts so far, in the order they were added: the days that have passed. */
+export const READ_PARTS = `MATCH (:Robot)-[:HAS]->(p:Part) RETURN p.kind AS kind, p.n AS n ORDER BY p.n`;
+
+/** Waymarkers placed: anchors that are neither the camp nor a tower. */
+export const MARKERS_USED = `MATCH (h:Hex) WHERE h.anchor = true AND h.feature IS NULL RETURN count(h) AS markers`;
+
+/** The game is over: every settlement is routed, or the last night has fallen. */
+export const GAME_OVER = `MATCH (pl:Player {id: 'player'}) SET pl.over = true RETURN pl.over AS over`;
 
 /** The path and the secured routes, for drawing. */
 export const READ_EDGES = `MATCH (a:Hex)-[r:LOOSE|SECURED]->(b:Hex) RETURN a.id AS from, b.id AS to, type(r) AS kind`;
@@ -166,3 +179,7 @@ export const UNDO_SECURED = `UNWIND $edges AS e MATCH (a:Hex {id: e.from}), (b:H
 export const UNDO_HEXES = `UNWIND $rows AS x MATCH (h:Hex {id: x.id}) SET h.state = x.state, h.anchor = x.anchor RETURN count(h) AS n`;
 /** Put the explorer, the steps and the waymarkers back. */
 export const UNDO_PLAYER = `MATCH (pl:Player {id: 'player'}) SET pl.at = $at, pl.steps = $steps, pl.markers = $markers RETURN pl.at AS at`;
+
+/** Take the robot's parts back out, and put them back as they were. $parts: [{kind, n}]. */
+export const UNDO_CLEAR_PARTS = `MATCH (:Robot)-[:HAS]->(p:Part) DETACH DELETE p RETURN count(p) AS n`;
+export const UNDO_PARTS = `UNWIND $parts AS x MATCH (rb:Robot) CREATE (rb)-[:HAS]->(:Part {kind: x.kind, n: x.n}) RETURN count(*) AS n`;

@@ -33,6 +33,7 @@ export async function seedWorld(engine: Engine, rows: string[]): Promise<void> {
     if (r.error) throw new Error(r.error);
   };
   check(await engine.query("CREATE INDEX FOR (h:Hex) ON (h.id)"));
+  check(await engine.query("CREATE (:Robot {id: 'robot'})"));
   check(await engine.query("UNWIND $hexes AS h CREATE (x:Hex) SET x = h", { hexes }));
   check(await engine.query("CREATE (p:Player) SET p = $p", { p: { id: "player", ...player.properties } }));
   check(

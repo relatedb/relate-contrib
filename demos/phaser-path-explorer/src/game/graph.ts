@@ -42,6 +42,7 @@ export function worldDocument(rows: string[]): GraphDocument {
       };
       if (feature) props["feature"] = feature;
       if (feature) props["anchor"] = true; // the camp and the towers are anchors
+      if (feature === "tower") props["tower"] = true; // a settlement to save: the win and the score read these
       if (isCamp) props["origin"] = true;
       nodes.push({ id: hexId(col, row), labels: ["Hex"], properties: props });
       // one direction per pair: link to the neighbours that come later in raster order
@@ -51,6 +52,7 @@ export function worldDocument(rows: string[]): GraphDocument {
       }
     }
   });
+  nodes.push({ id: "robot", labels: ["Robot"], properties: {} }); // the rogue AI, assembled a part a night
   nodes.push({ id: "player", labels: ["Player"], properties: { at: hexId(...(camp.split(",").map(Number) as [number, number])), steps: START_STEPS, markers: START_MARKERS } });
   return { version: 1, nodes, links };
 }

@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { Bridge } from "../src/game/bridge.js";
 import { GameState } from "../src/game/state.js";
-import { COLS, ROWS, START_MARKERS, START_STEPS, generateRows } from "../src/game/world.js";
+import { COLS, ROWS, SETTLEMENTS, START_MARKERS, START_STEPS, generateRows } from "../src/game/world.js";
 import { neighbours } from "../src/hex/core/index.js";
 import { engineBuilt, openEngine, seedWorld } from "./helpers/engine.js";
 
@@ -448,10 +448,65 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       expect(sorted(reread.edges)).toEqual(sorted(state.edges));
     });
 
-    it("reports the win only when both towers are joined", async () => {
-      expect(await state.won()).toBe(false);
+    it("counts the days as the robot's parts, and the seventh night ends the game", async () => {
+      expect(state.day).toBe(1);
+      for (let d = 1; d <= 6; d++) {
+        await state.endDay();
+        expect(state.parts).toHaveLength(d);
+        expect(state.day).toBe(d + 1);
+        expect(state.over).toBe(false);
+      }
+      await state.endDay(); // the seventh night: the robot is complete
+      expect(state.parts).toEqual(["head", "eyes", "mouth", "body", "arms", "legs", "power"]);
+      expect(state.day).toBe(7);
+      expect(state.over).toBe(true);
+      const reread = new GameState(bridge);
+      await reread.load();
+      expect(reread.over).toBe(true);
+      expect(reread.parts).toEqual(state.parts);
+      expect(state.canUndo()).toBe(false);
+      const at = state.player.at;
+      const first = [...state.tiles.values()].find((t) => t.state === "sensed")!;
+      await state.click(first.id);
+      expect(state.player.at).toBe(at); // nothing more is done
+      await state.undo();
+      expect(state.parts).toHaveLength(7);
+    });
+
+    it("takes a night back with undo, robot part and all", async () => {
+      await state.endDay();
+      expect(state.parts).toEqual(["head"]);
+      await state.undo();
+      expect(state.parts).toEqual([]);
+      const reread = new GameState(bridge);
+      await reread.load();
+      expect(reread.parts).toEqual([]);
+    });
+
+    it("scores from the graph: settlements routed, waymarkers placed, the day", async () => {
       await walkToTower();
-      expect(await state.won()).toBe(false); // one tower of two
+      const out = await state.outcome();
+      expect(out).toMatchObject({ routed: 1, total: SETTLEMENTS, markers: 0, days: 1 });
+      expect(await state.score()).toBe(100);
+    });
+
+    it("ends the game when it is finished, and then does nothing more", async () => {
+      await state.finish();
+      expect(state.over).toBe(true);
+      expect(state.canUndo()).toBe(false);
+      const here = state.player.at;
+      const next = [...state.tiles.values()].find((t) => t.state === "sensed")!;
+      await state.click(next.id);
+      expect(state.player.at).toBe(here);
+      const reread = new GameState(bridge);
+      await reread.load();
+      expect(reread.over).toBe(true);
+    });
+
+    it("reports the win only when both towers are joined", async () => {
+      expect(await state.allRouted()).toBe(false);
+      await walkToTower();
+      expect(await state.allRouted()).toBe(false); // one tower of two
     });
   });
 });
