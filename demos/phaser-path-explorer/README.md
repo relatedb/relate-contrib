@@ -6,7 +6,7 @@ embedded Relate graph in the browser. The design is `design/notes/2026-11-10-pha
 
 ## Status: slice 3 (the waymarker expedition)
 
-A seeded 22 by 20 world is stored as an application graph (a durable graph in the browser, ADR-009). The board starts as
+A seeded 25 by 20 world is stored as an application graph (a durable graph in the browser, ADR-009). The board starts as
 fog; the camp and its six neighbours are known. You play in **days**: each day is **12 steps** (extending, stepping,
 reeling in and travelling all cost one) and you carry **5 waymarkers**. Join both towers to the camp with secured paths to
 win.
@@ -41,7 +41,7 @@ cross-browser run are deferred (ADR-011, amended 2026-11-16).
 
 - `?dpr=2` renders at 2x pixel density (the default is the display's, rounded); `?seed=<text>` picks the world, but only on a first run: the stored graph is the truth afterwards.
 - `?reset=1` discards the stored world and seeds it again with the seed given, then drops itself from the address.
-- `?cols=16&rows=14&pixel=4` tries another board size (with `reset=1` for a stored world); the default is 22 by 20 at 3x.
+- `?cols=16&rows=14&pixel=4` tries another board size (with `reset=1` for a stored world); the default is 25 by 20 at 3x.
 
 ## Run
 

@@ -3,7 +3,7 @@
 // seed, so a seed always gives the same map. The graph is built from these rows (graph.ts).
 import { neighbours, rng } from "../hex/core/index.js";
 
-export const COLS = 22;
+export const COLS = 25;
 export const ROWS = 20;
 
 /** Steps in a day, and waymarkers in the bag (ADR-011, amended 2026-11-16). Towers are reachable within a day. */
