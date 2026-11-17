@@ -419,3 +419,12 @@ swirl in the robot's colours, and waits as long as the player likes: the end of 
 (Up when facing it, or a click on it). The explorer steps in and is gone, and then the splash tells the score. The
 finale counts as still playing until then, so Esc opens the splash as a pause with Continue. A game already over at load
 has no portal: the splash comes at once.
+
+**The splash as message bubbles (2026-11-17).** The splash is no longer an overlay that dims the board. Grey, hex-ended
+message bubbles drift right to left across the board, which stays in view: the premise along the top row, the keys through
+the middle, the prompt and the scores along the bottom. The words are the splash's own, in `src/bubbles.ts`. Any key
+continues the game in progress (or starts a new one when it is over); N starts a new one, as before. The key is taken
+before the game sees it, so it is not also a move. A game that has just ended ignores keys for a moment, so the last move
+does not skip the result, which parks in the upper middle of the board until a key is pressed. A screen reader gets all the
+words as one block of text, and `prefers-reduced-motion` shows one still bubble a row at a time. This is slice 1 of a demo
+mode: a later slice puts a wandering explorer and hidden robots behind the bubbles, on a throwaway world, never the saved one.

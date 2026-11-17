@@ -14,49 +14,23 @@
       #status { font-size: 13px; color: var(--ink-muted); }
       #status[hidden] { display: none; }
       #stage { position: relative; }
-      #splash { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-                background: rgba(0, 43, 67, 0.92); z-index: 2; }
+      #splash { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
       #splash[hidden] { display: none; }
-      #splash .card { max-width: 460px; padding: 0 24px; font-size: 14px; line-height: 1.5; }
-      #splash h1 { font-size: 22px; margin: 0 0 12px; font-weight: 600; }
-      #splash p { margin: 0 0 14px; }
-      #splash dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 0 0 14px; }
-      #splash dt { font-weight: 600; white-space: nowrap; }
-      #splash dd { margin: 0; }
-      #splash .scores, #splash .result { color: var(--ink-muted); }
-      #splash .result { font-weight: 600; color: var(--ink); }
-      #splash .actions { display: flex; gap: 12px; margin-top: 18px; }
-      #splash button { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--ink-muted);
-                       padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-      #splash button[hidden] { display: none; }
-      #splash button:hover, #splash button:focus-visible { border-color: var(--ink); outline: none; }
-      #splash kbd { color: var(--ink-muted); font: inherit; margin-left: 6px; }
+      #bubbles { position: absolute; inset: 0; overflow: hidden; }
+      .bubble { position: absolute; left: 0; white-space: nowrap; padding: 9px 26px; background: #c4c8cc; color: #14212b;
+                font-size: 15px; line-height: 1.3; will-change: transform;
+                clip-path: polygon(13px 0, calc(100% - 13px) 0, 100% 50%, calc(100% - 13px) 100%, 13px 100%, 0 50%); }
+      .bubble b { font-weight: 700; margin-right: 8px; }
+      .bubble.parked { left: 50%; transform: translate(-50%, -50%); font-weight: 600; font-size: 17px; }
+      .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: pre-line; }
     </style>
   </head>
   <body>
     <div id="stage">
       <div id="game"></div>
       <div id="splash">
-        <div class="card">
-          <h1>Path explorer</h1>
-          <p>Rogue robots are being built, one part a night. On the seventh night they wake and head for the nearest settlement. Join each settlement to the camp by a secured path before then: the robots spare settlements that are connected and destroy the rest.</p>
-          <p class="result" id="result" hidden></p>
-          <dl>
-            <dt>← →</dt><dd>Turn</dd>
-            <dt>↑</dt><dd>Move ahead. On new ground this lays path.</dd>
-            <dt>↓</dt><dd>Move back. Along your path this takes it in.</dd>
-            <dt>Shift + ↑ ↓</dt><dd>Step over known ground without laying path</dd>
-            <dt>P</dt><dd>Place a waymarker here and secure the path</dd>
-            <dt>E</dt><dd>End the day</dd>
-            <dt>Backspace, ⌘Z</dt><dd>Undo the last action</dd>
-            <dt>Esc, H, ?</dt><dd>Show or hide this screen</dd>
-          </dl>
-          <p class="scores" id="scores"></p>
-          <div class="actions">
-            <button id="continue">Continue <kbd>Enter</kbd></button>
-            <button id="new">New game <kbd>N</kbd></button>
-          </div>
-        </div>
+        <div id="bubbles" aria-hidden="true"></div>
+        <div id="splash-text" class="sr-only" role="status"></div>
       </div>
     </div>
     <div id="status" hidden></div>
