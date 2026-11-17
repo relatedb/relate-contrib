@@ -412,3 +412,10 @@ Playtesting the seven day game found it a resource constrained open search: noth
 **The robot's colours (2026-11-17).** The robot is magenta and purple: a light purple head, a purple body, arms and legs,
 a dark violet dead eye and a hot magenta lit eye and lamp. The design system's palette has no magenta or purple (only
 periwinkle), so these four colours are a recorded deviation, held in `src/game/robot.ts`, for brand review.
+
+**The exit (2026-11-17).** The splash no longer follows the finale at once. When the robots have done, a portal opens on a
+hex beside the explorer (the faced one if it is land, else the first land hex round it; the explorer turns to face it), a
+swirl in the robot's colours, and waits as long as the player likes: the end of the game is the one last move, into it
+(Up when facing it, or a click on it). The explorer steps in and is gone, and then the splash tells the score. The
+finale counts as still playing until then, so Esc opens the splash as a pause with Continue. A game already over at load
+has no portal: the splash comes at once.

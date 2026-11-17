@@ -31,6 +31,8 @@ click on it), **down** acts on the hex behind, **shift** steps instead of extend
 a waymarker, **e** ends the day, **backspace** or **cmd-Z** undoes the last action (one level, the end of a day included). **Esc**, **h** or **?** open the splash screen: the premise, the keys, your last and best scores, **Enter** to continue and **n** for a new game on a random island (the confirmation that abandons the one in progress). A translucent preview shows what the next press would do. The explorer faces the way it
 last moved; clicking a neighbour turns it to face that hex.
 
+When the game is over and the robots have been, a portal opens beside the explorer: take as long as you like in the last scene, then step into it (up when facing it, or click it) to see your score.
+
 The hexes round the explorer are in view in full (a settlement beside the path is seen) and the ring beyond is shown in flat colour; neither can be stepped onto, only the path extended there.
 
 A path is wavy while it is loose and straightens when it is banked as secured ground (a waymarker, or a tower):

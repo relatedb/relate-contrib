@@ -23,6 +23,7 @@ import { addSceneTexture, addSpriteTexture, colourNumber, drawGraph, drawVectorT
 import { addGameSprite } from "./sprites.js";
 import { cloudCell, cloudDensity } from "./clouds.js";
 import { ROBOT_COLOURS, robotCells, robotSlot } from "./robot.js";
+import { sideTo, SIDES_CLOCKWISE, neighbourAt } from "../hex/core/index.js";
 import { paletteAsset, spritesAsset } from "../hex/assets/index.js";
 import { routeToGraph, routes, withCrossings, type Route } from "./routes.js";
 import type { DuskHex, GameState, HexState } from "./state.js";
@@ -126,6 +127,9 @@ export class MapScene extends Phaser.Scene {
   private finaleStarted = false;
   private finaleActive_ = false;
   private fadeGround = false;
+  /** After the finale, a portal on a hex beside the explorer: the one last move, the exit. */
+  private portalHex: HexState | undefined;
+  private portal: Phaser.GameObjects.Graphics | undefined;
   private readonly overAtStart: boolean;
   /** The day's clock as drawn: it runs after the steps, so the sun crosses the sky instead of jumping. */
   private clock = -1;
@@ -222,8 +226,8 @@ export class MapScene extends Phaser.Scene {
       });
     key("LEFT", () => this.state.turn(-1));
     key("RIGHT", () => this.state.turn(1));
-    key("UP", (e) => void this.state.go(false, { step: e.shiftKey }));
-    key("DOWN", (e) => void this.state.go(true, { step: e.shiftKey }));
+    key("UP", (e) => this.moveOrExit(false, e.shiftKey));
+    key("DOWN", (e) => this.moveOrExit(true, e.shiftKey));
     key("BACKSPACE", () => void this.state.undo());
     key("Z", (e) => {
       if (e.metaKey || e.ctrlKey) {
@@ -243,7 +247,8 @@ export class MapScene extends Phaser.Scene {
     });
     this.input.on("pointerdown", (p: Phaser.Input.Pointer) => {
       const t = this.tileUnder(p);
-      if (t && this.nightT < 0 && !this.blocked()) void this.state.click(t.id, { step: p.event.shiftKey });
+      if (t && this.portalHex && t.id === this.portalHex.id && !this.blocked()) this.takePortal();
+      else if (t && this.nightT < 0 && !this.blocked()) void this.state.click(t.id, { step: p.event.shiftKey });
     });
   }
 
@@ -420,6 +425,97 @@ export class MapScene extends Phaser.Scene {
     this.time.delayedCall(1000, () => this.sendRobots(settlements));
   }
 
+  /** Move as the keys say; while the portal waits, the only move is into it. */
+  private moveOrExit(behind: boolean, step: boolean): void {
+    if (this.portalHex) {
+      if (this.state.faced(behind)?.id === this.portalHex.id) this.takePortal();
+      return;
+    }
+    void this.state.go(behind, { step });
+  }
+
+  /**
+   * The portal: a hex beside the explorer (the one faced if it is land, else the first land hex round), with a swirl in
+   * the robot's colours. The explorer is turned to face it. It waits as long as the player likes.
+   */
+  private openPortal(): void {
+    const here = this.state.here();
+    if (!here) {
+      this.finaleActive_ = false;
+      this.onFinaleEnd();
+      return;
+    }
+    const land = (t: HexState | undefined): t is HexState => !!t && t.terrain !== "water" && t.terrain !== "deep" && !t.feature;
+    const faced = this.state.faced();
+    const sides = SIDES_CLOCKWISE.map((side) => {
+      const n = neighbourAt(here, side);
+      return this.state.tileAt(n.col, n.row);
+    });
+    const target = land(faced) ? faced : sides.find(land) ?? sides.find((t) => !!t);
+    if (!target) {
+      this.finaleActive_ = false;
+      this.onFinaleEnd();
+      return;
+    }
+    this.portalHex = target;
+    this.state.facing = sideTo(here, target);
+    const [cx, cy] = tileCentre(target.col, target.row);
+    const g = this.add.graphics().setPosition(cx * this.k, cy * this.k).setScale(0).setDepth(LAYER.sprites + 0.3);
+    this.portal = g;
+    const colour = (hex: string) => parseInt(hex.slice(1), 16);
+    const ring = [colour(ROBOT_COLOURS["Y"]!), colour(ROBOT_COLOURS["c"]!), colour(ROBOT_COLOURS["C"]!)];
+    const spin = { phase: 0 };
+    this.tweens.add({ targets: g, scale: this.k, duration: 700, ease: "Back.easeOut" });
+    this.tweens.add({
+      targets: spin,
+      phase: Math.PI * 2,
+      duration: 2400,
+      repeat: -1,
+      onUpdate: () => {
+        g.clear();
+        g.fillStyle(0x181414, 0.85);
+        g.fillCircle(0, 0, 7.2);
+        for (let i = 0; i < 3; i++) {
+          const dir = i % 2 === 0 ? 1 : -1;
+          g.lineStyle(1.4, ring[i]!, 1);
+          g.beginPath();
+          g.arc(0, 0, 6.4 - i * 1.9, dir * spin.phase * (1 + i * 0.4) + i * 1.7, dir * spin.phase * (1 + i * 0.4) + i * 1.7 + 4.4);
+          g.strokePath();
+        }
+        g.fillStyle(ring[2]!, 1);
+        g.fillCircle(0, 0, 1);
+      },
+    });
+    this.drawOverlay();
+  }
+
+  /** The last move: the explorer steps into the portal and is gone, and the splash tells how it went. */
+  private takePortal(): void {
+    const target = this.portalHex;
+    const explorer = this.explorer;
+    if (!target || !explorer) return;
+    this.portalHex = undefined; // once
+    const [x, y] = this.spotOf(target.col, target.row);
+    const [px, py] = [x + explorer.displayWidth / 2, y + explorer.displayHeight / 2];
+    this.tweens.add({ targets: explorer, x, y, duration: 260, ease: "Sine.easeIn" });
+    this.tweens.add({
+      targets: explorer,
+      scale: 0,
+      alpha: 0,
+      angle: 360,
+      delay: 260,
+      duration: 520,
+      ease: "Quad.easeIn",
+      onUpdate: () => explorer.setOrigin(0.5).setPosition(px, py),
+      onComplete: () => {
+        this.portal?.destroy();
+        this.portal = undefined;
+        this.finaleActive_ = false;
+        this.onFinaleEnd();
+      },
+    });
+  }
+
   /** The settlements that were not saved stand no more: bare ground, and a fire. */
   private sweepAndBurn(ids: string[]): void {
     this.state.sweepAway(ids);
@@ -444,10 +540,8 @@ export class MapScene extends Phaser.Scene {
     let done = 0;
     const arrived = () => {
       if (++done < settlements.length) return;
-      this.time.delayedCall(1800, () => {
-        this.finaleActive_ = false;
-        this.onFinaleEnd();
-      });
+      // the scene is left to be enjoyed; then a portal opens beside the explorer, and stepping into it ends the game
+      this.time.delayedCall(1800, () => this.openPortal());
     };
     if (!settlements.length) return arrived();
     settlements.forEach((s, i) => {
