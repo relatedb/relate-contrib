@@ -1,8 +1,9 @@
 ---
 id: ADR-012
 title: The boundary and public interface of @relate/relate-phaser
-status: proposed
+status: accepted
 rfcs: [RFC-008, RFC-005]
+specs: [specs/009-relate-phaser-package]
 created: 2026-11-18
 ---
 

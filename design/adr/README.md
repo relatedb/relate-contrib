@@ -41,6 +41,7 @@ Created/updated via `/adr-create`. File: `design/adr/ADR-NNN-short-title.md`, `N
 | `status` | `proposed` \| `accepted` \| `rejected` \| `superseded` |
 | `rfcs` | Parent RFC id(s), a list — **required, at least one**, set at creation, only ever grows (never hand-remove an entry) |
 | `created` | ISO date (`YYYY-MM-DD`) |
+| `specs` | Spec Kit feature directories derived from this ADR, a list (optional). Maintained by the `speckit-adr-link` hook; do not hand-edit |
 
 **Required sections** (numbered `##`, renumber if one is omitted) — `status` lives only in
 front-matter, no matching body section:
@@ -69,6 +70,6 @@ Use `/adr-review` before moving a draft to `accepted`.
 | [ADR-009](ADR-009-application-graphs-in-the-core.md) | Application Graphs in the Core as a Named Durable Store with Schema Versions | accepted (amended 2026-11-10) | RFC-006, RFC-001 |
 | [ADR-010](ADR-010-graph-catalog-file.md) | A Catalog File Beside the Stores, Ordered by a Web Lock | accepted | RFC-007 |
 | [ADR-011](ADR-011-phaser-path-explorer.md) | The Phaser Path Explorer, a Demo with a Separable Hex Library and a Disclosure Graph | accepted (amended 2026-11-16) | RFC-005, RFC-006 |
-| [ADR-012](ADR-012-relate-phaser-boundary.md) | The Boundary and Public Interface of @relate/relate-phaser | proposed | RFC-008, RFC-005 |
+| [ADR-012](ADR-012-relate-phaser-boundary.md) | The Boundary and Public Interface of @relate/relate-phaser | accepted | RFC-008, RFC-005 |
 
 Package names: on 2026-11-05 the core and the Astro adapter were renamed from `related-web-core` and `related-web-astro` to `@relate/web-core` and `@relate/web-astro`, joining `@relate/web-next`. The ADRs use the new names throughout; the decisions are unchanged. On 2026-11-08 the project became `relate-contrib` and the packages `@relate/web`, `@relate/astro` and `@relate/nextjs`; the same holds for the decisions and the text of the ADRs (see `design/notes/2026-11-08-relate-contrib-rename.md`).
