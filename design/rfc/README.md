@@ -70,3 +70,4 @@ Use `/rfc-review` before moving a draft to `review`/`accepted`.
 | [RFC-005](RFC-005-community-integrations.md) | Integrations for Community Projects and Hackathons | draft | ADR-008, ADR-011 |
 | [RFC-006](RFC-006-application-graphs.md) | Application Graphs | draft | ADR-008, ADR-009, ADR-011 |
 | [RFC-007](RFC-007-client-graph-catalog.md) | The Client-Side Graph Catalog | accepted | ADR-010 |
+| [RFC-008](RFC-008-phaser-integration-package.md) | A Shared Package for Using the Engine from Phaser Games | draft | |
