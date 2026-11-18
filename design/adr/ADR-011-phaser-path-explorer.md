@@ -451,3 +451,7 @@ a little quicker than it wanders, and for a few steps after it shies from the pl
 roam: they do not chase, and they burn nothing, which the real game's finale does. `?robots=12` fills the island, to see
 them often. The logic is `fleeStep`, `placeRobots` and `wanderStep` (with its `shy` places) in `src/demo.ts`; the scene
 draws them through `setActors`.
+
+### 2026-11-18: the bridge and the generic cache mechanism move to `@relate/relate-phaser` (ADR-012)
+
+The database bridge of 2.6 (the outbox and the single pump) and the generic part of the cache (the version counter, the pending action and the reload after an engine replacement) now live in the package `@relate/relate-phaser` (`packages/phaser`, ADR-012, `specs/009-relate-phaser-package/`). Section 2.6 stands as the behaviour they implement. The demo's `GameState` keeps its game logic (knowledge states, the thread, undo, signposts, scoring) and holds a `ReplyCache` for the rest; the splash's demo world is a throwaway client from the package; and the scene redraws through `versionWatch`. The board is now also rebuilt after the core replaces a failed instance, which the demo did not do before.

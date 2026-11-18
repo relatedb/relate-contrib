@@ -68,8 +68,9 @@ browser console for driving the game by hand.
   and no Phaser), `phaser/` (the only code that imports Phaser). Nothing in it imports the game; `tests/boundary.test.ts`
   enforces that.
 - `src/game/` is the game: the world generator, the graph model, the statements (`statements.ts`, ADR-011 2.5), the
-  bridge (`bridge.ts`: outbox, pump), the cache and actions (`state.ts`) and the scene (`MapScene.ts`). The scene reads the
-  cache and never awaits.
+  cache and actions (`state.ts`) and the scene (`MapScene.ts`). The scene reads the cache and never awaits. The
+  statement queue, the generic cache mechanism (version, pending action, reload after an engine replacement), the
+  throwaway client and the version watcher are the package `@relate/relate-phaser` (`packages/phaser`, ADR-012).
 - `scripts/extract-assets.mjs` regenerates `src/hex/assets/*.json` and `tests/fixtures/hexmap-golden.json` from the
   "Relate by ABK" design system's bundle and tokens. Rerun it when the design system changes:
 

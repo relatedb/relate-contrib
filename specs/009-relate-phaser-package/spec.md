@@ -6,7 +6,7 @@
 
 **Derived From**: ADR-012 (design/adr/ADR-012-relate-phaser-boundary.md)
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Implement ADR-012 (the boundary and public interface of @relate/relate-phaser, packages/phaser): a workspace package, versioned below 1.0, with a statement queue, a generic reply cache, a throwaway in-memory client and a Phaser scene helper. The demo is changed to consume the package so its existing tests exercise the extraction. Parents: RFC-008, RFC-005."
 
@@ -77,11 +77,11 @@ The demo's own queue and its generic cache mechanism are removed and replaced by
 
 **Why this priority**: it proves the extraction in place, and it is the first consumer.
 
-**Independent Test**: run the demo's unit tests and its browser run against the changed demo, and compare with the 202 unit tests that pass before the change.
+**Independent Test**: run the demo's unit tests and its browser run against the changed demo, and compare with the 202 unit tests that pass before the change (the queue's own four move to the package).
 
 **Acceptance Scenarios**:
 
-1. **Given** the demo built on the package, **When** its unit tests run, **Then** all of the tests that passed before still pass.
+1. **Given** the demo built on the package, **When** its unit tests run, **Then** all of the tests that passed before still pass, except the queue's own, which move to the package.
 2. **Given** the real game and the splash's demo world, **When** each is started, **Then** each uses a queue and a cache from the package, and the demo world uses a throwaway client.
 3. **Given** the engine is replaced during play, **When** the new instance is ready, **Then** the board is rebuilt from the restored graph before the next frame that reads it.
 4. **Given** the demo's source, **When** it is searched for the queue's old location, **Then** no copy of the queue remains in it.
@@ -156,7 +156,7 @@ The README leads with the problem (a frame loop in front of an asynchronous engi
 - Statements pushed while the client is `loading` or `recovering`: they wait for the client (the core holds calls until ready), and the cache's `pending` reflects them.
 - A statement in flight when the instance is replaced: it rejects with `lost`; the cache rolls back its optimistic change and does not repeat it.
 - An action started while a reload is running: it queues behind the reload.
-- A `commit` that throws: the state keeps its previous value and the error reaches the caller.
+- A `commit` whose patch throws: the version does not change and the error reaches the caller (patches should fail before they mutate).
 - Two caches over one client: each follows the client independently.
 - A listener that throws in `onSettle` or a status handler: it does not stop the queue or other listeners.
 - The scene helper used with a cache whose version never changes: it never calls the redraw function.
@@ -213,7 +213,7 @@ The README leads with the problem (a frame loop in front of an asynchronous engi
 
 - **SC-001**: In a run of 1,000 statements pushed without awaiting, 100 % apply in the order pushed.
 - **SC-002**: After a forced engine replacement during play, the board is rebuilt from the restored graph with no reload by the player, and no action is applied twice.
-- **SC-003**: All 202 unit tests of the path explorer that pass before the change pass after it, with no copy of the queue left in the demo.
+- **SC-003**: Every unit test of the path explorer that passes before the change passes after it (202 before; the queue's own four have moved to the package), with no copy of the queue left in the demo.
 - **SC-004**: A game author can go from a clean project to a first action through the cache in under 15 minutes using the README alone.
 - **SC-005**: In a scene driven for 600 updates with commits on 5 of them, the redraw function is called 5 times.
 - **SC-006**: A throwaway graph and an application graph running together keep 100 % of the application graph's data across a reload and none of the throwaway's.

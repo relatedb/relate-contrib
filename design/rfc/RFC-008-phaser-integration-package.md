@@ -82,13 +82,13 @@ The hex-map toolkit is a useful idea that does not belong to the RelateDB organi
 
 ## 7. Open Questions
 
-7.1. Where is the line between the cache mechanism and a game's own state shape? How much structure can the package offer before it prescribes a game design?
+7.1. Where is the line between the cache mechanism and a game's own state shape? How much structure can the package offer before it prescribes a game design? (ADR-012 2.3 answers it for the first release: the package holds the version, the pending action, rollback and reload; the game holds the state shape and the patches.)
 
 7.2. Which of the four capabilities does a typical hackathon project actually need first? The answer may argue for releasing the queue alone before the rest.
 
-7.3. How are statements expressed: left entirely to the game, or does the package offer helpers for common shapes such as reveal-only reads and undo?
+7.3. How are statements expressed: left entirely to the game, or does the package offer helpers for common shapes such as reveal-only reads and undo? (ADR-012 2.6: left to the game.)
 
-7.4. How are faults, including a trapped engine, reported to a running game, and what does the package expect the game to do about them?
+7.4. How are faults, including a trapped engine, reported to a running game, and what does the package expect the game to do about them? (ADR-012 2.5: the core's replacement plus a reload; the cache follows the client's status.)
 
 7.5. How does a game keep more than one graph: levels in sequence, save slots that last, or several boards live at once? The core already offers named application graphs, a catalog of them, and scopes within one graph, and a second client is a second worker. Should the package wrap one of these as a "world slot", and how strictly are scopes isolated, which matters for the reveal-only guarantee? The throwaway graph is the first case of a second graph beside the first; a second consumer would show which others are common.
 

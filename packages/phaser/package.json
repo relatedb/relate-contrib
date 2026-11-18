@@ -1,0 +1,41 @@
+{
+  "name": "@relate/relate-phaser",
+  "version": "0.1.0",
+  "description": "Building blocks for a Phaser game that keeps its world in the embedded graph: a statement queue, a reply cache the frame loop reads, a throwaway client and a version watcher.",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:phaser": "vitest run --reporter=default --reporter=json --outputFile.json=reports/vitest.json",
+    "test:phaser-package": "vitest run --config vitest.package.config.ts --reporter=default --reporter=json --outputFile.json=reports/package.json",
+    "test:phaser-trace": "tsx tests/trace/check-trace.ts"
+  },
+  "peerDependencies": {
+    "@relate/web": "*",
+    "phaser": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "phaser": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@relate/relate-wasm": "*",
+    "@relate/web": "workspace:*",
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

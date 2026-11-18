@@ -2,7 +2,7 @@
 // reads this and never awaits. Actions go through the bridge; an extension needs its reply to know what the new hexes
 // contain, so it shows as pending until the reply arrives, and a further action waits for it.
 import { neighbourAt, neighbours, oppositeSide, sideTo, turnSide, type Feature, type Side, type Terrain } from "../hex/core/index.js";
-import type { Bridge, Row } from "./bridge.js";
+import { ReplyCache, type Bridge, type CacheClient, type Patch, type Row } from "@relate/relate-phaser";
 import {
   END_DAY, EXTEND, PLACE_WAYMARKER, READ_BOARD, READ_EDGES, READ_HEXES, READ_PLAYER, REEL_IN, SECURE, STEP, TRAVEL, TOWERS,
   UNDO_CLEAR_EDGES, UNDO_CLEAR_PARTS, UNDO_HEXES, UNDO_LOOSE, UNDO_PARTS, UNDO_PLAYER, UNDO_SECURED,
@@ -102,10 +102,14 @@ export class GameState {
   /** The signposts: from each mapped settlement, the directions of the settlements within a day's walk not yet reached. */
   signposts = new Map<string, Side[]>();
   message = "";
-  /** The hex an action is waiting on, while its reply is awaited. */
-  pending: string | null = null;
-  /** Bumped on every change, so the frame loop can redraw only when something changed. */
-  version = 0;
+  /** The hex an action is waiting on, while its reply is awaited (the cache holds it). */
+  get pending(): string | null {
+    return this.cache.pending;
+  }
+  /** Bumped on every change, so the frame loop can redraw only when something changed (the cache holds it). */
+  get version(): number {
+    return this.cache.version;
+  }
   /** The hexes the last day end fogged, ordered outward from the abandoned thread. The scene consumes this. */
   lastFogged: DuskHex[] = [];
   /** The path the last waymarker banked. The scene consumes this to pull the loose wave taut. */
@@ -120,10 +124,22 @@ export class GameState {
   /** Bumped when a day ends, so the scene can play the night. */
   dayEnds = 0;
 
-  constructor(private readonly bridge: Bridge) {}
+  /** The mechanism: the version, the pending action and the reload after an engine replacement (ADR-012). */
+  private readonly cache: ReplyCache<GameState>;
+  private started = false;
+
+  /** `client` lets the cache follow the engine: it rebuilds the board after a replacement. Without one the cache only loads when asked. */
+  constructor(private readonly bridge: Bridge, client?: CacheClient) {
+    this.cache = new ReplyCache<GameState>({
+      client: client ?? standalone(bridge),
+      bridge,
+      initial: this,
+      load: (b) => this.readBoard(b),
+    });
+  }
 
   private touch(): void {
-    this.version++;
+    this.cache.commit(() => undefined);
   }
 
   private merge(rows: Row[]): void {
@@ -134,23 +150,33 @@ export class GameState {
     }
   }
 
-  async load(): Promise<void> {
+  /** Fill the cache from the graph: at start, and again after the engine is replaced. */
+  load(): Promise<void> {
+    if (this.started) return this.cache.reload();
+    this.started = true;
+    return this.cache.start();
+  }
+
+  /** The reads that fill the board, and the patch that puts them in the cache in one step. */
+  private async readBoard(bridge: Bridge): Promise<Patch<GameState>> {
     const [board, player, edges, parts, signs] = await Promise.all([
-      this.bridge.enqueue(READ_BOARD),
-      this.bridge.enqueue(READ_PLAYER),
-      this.bridge.enqueue(READ_EDGES),
-      this.bridge.enqueue(READ_PARTS),
-      this.bridge.enqueue(READ_SIGNPOSTS),
+      bridge.enqueue(READ_BOARD),
+      bridge.enqueue(READ_PLAYER),
+      bridge.enqueue(READ_EDGES),
+      bridge.enqueue(READ_PARTS),
+      bridge.enqueue(READ_SIGNPOSTS),
     ]);
-    this.signposts = groupSignposts(signs.map((r) => ({ at: r["at"] as string, dq: r["dq"] as number, dr: r["dr"] as number })));
-    this.parts = parts.map((r) => r["kind"] as string);
-    this.tiles.clear();
-    this.byPos.clear();
-    this.merge(board);
-    const p = player[0];
-    if (p) this.player = { at: p["at"] as string, steps: p["steps"] as number, markers: p["markers"] as number, over: p["over"] === true };
-    this.edges = edges.map((e) => ({ from: e["from"] as string, to: e["to"] as string, kind: e["kind"] as Edge["kind"] }));
-    this.touch();
+    return (s) => {
+      s.signposts = groupSignposts(signs.map((r) => ({ at: r["at"] as string, dq: r["dq"] as number, dr: r["dr"] as number })));
+      s.parts = parts.map((r) => r["kind"] as string);
+      s.tiles.clear();
+      s.byPos.clear();
+      s.merge(board);
+      const p = player[0];
+      if (p) s.player = { at: p["at"] as string, steps: p["steps"] as number, markers: p["markers"] as number, over: p["over"] === true };
+      s.edges = edges.map((e) => ({ from: e["from"] as string, to: e["to"] as string, kind: e["kind"] as Edge["kind"] }));
+      s.undoSnap = null; // the graph may differ from what the snapshot recorded
+    };
   }
 
   tileAt(col: number, row: number): HexState | undefined {
@@ -317,20 +343,21 @@ export class GameState {
   /** Run one action: it is pending until its reply is applied, and never throws. */
   private async act(target: string, run: () => Promise<void>, opts: { keepUndo?: boolean } = {}): Promise<void> {
     if (this.over) return; // the game is over: nothing more is done
-    this.pending = target;
-    this.message = "";
-    this.applied = false;
-    const snap = this.snapshot();
-    this.touch();
-    try {
-      await run();
-      if (this.applied && !opts.keepUndo) this.undoSnap = snap; // an automatic follow-up (the day ending) undoes with its cause
-    } catch (err) {
-      this.message = `ERR: ${err instanceof Error ? err.message : String(err)}`;
-    } finally {
-      this.pending = null;
-      this.touch();
+    let snap: Snapshot | undefined;
+    const result = await this.cache.act(target, {
+      run: async () => {
+        this.message = "";
+        this.applied = false;
+        snap = this.snapshot();
+        await run();
+      },
+    });
+    if (result.ok) {
+      if (this.applied && !opts.keepUndo && snap) this.undoSnap = snap; // an automatic follow-up (the day ending) undoes with its cause
+    } else {
+      this.message = `ERR: ${result.error.message}`;
     }
+    this.touch();
   }
 
   /**
@@ -656,4 +683,15 @@ export class GameState {
   async score(): Promise<number> {
     return computeScore(await this.outcome());
   }
+}
+
+/** A client double for a state with no engine client behind it: always ready, and with nothing to follow. */
+function standalone(bridge: Bridge): CacheClient {
+  return {
+    status: "ready",
+    generation: 1,
+    query: (statement, params) => bridge.enqueue(statement, params ?? null).then((rows) => ({ error: null, rows }) as never),
+    on: () => () => undefined,
+    onGeneration: () => () => undefined,
+  } as CacheClient;
 }

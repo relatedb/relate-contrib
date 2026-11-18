@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
 import { createClient } from "@relate/web";
 import { DEFAULT_PIXEL, MapScene, boardSizePx } from "./game/MapScene.js";
-import { Bridge } from "./game/bridge.js";
+import { Bridge, createThrowawayClient } from "@relate/relate-phaser";
 import { GameState } from "./game/state.js";
 import { COLS, ROWS, generateRows } from "./game/world.js";
 import { APPLICATION, worldDocument } from "./game/graph.js";
@@ -43,8 +43,8 @@ async function start(): Promise<void> {
   const playNow = params.get("play") === "1"; // a new game was chosen on the splash: go straight in
   params.delete("play");
   history.replaceState(null, "", `${location.pathname}${params.size ? `?${params}` : ""}`);
-  const bridge = new Bridge((statement, p) => client.query(statement, p));
-  const state = new GameState(bridge);
+  const bridge = Bridge.forClient(client);
+  const state = new GameState(bridge, client); // follows the client: the board is rebuilt after an engine replacement
   await state.load();
   // for driving the game from the browser console while developing (not in a production build)
   if (import.meta.env.DEV) Object.assign(window, { __state: state, __bridge: bridge });
@@ -110,9 +110,9 @@ async function start(): Promise<void> {
     try {
       const rows = generateRows(Math.random().toString(36).slice(2, 8), cols, rowsCount);
       // a graph given as data, with no descriptor: no store, so nothing of it is kept
-      const demoClient = createClient({ engineUrl, navigation: "multi-page", graph: { document: worldDocument(rows) } });
-      const demoBridge = new Bridge((statement, p) => demoClient.query(statement, p));
-      const demoState = new GameState(demoBridge);
+      const demoClient = createThrowawayClient({ engineUrl, navigation: "multi-page" }, worldDocument(rows));
+      const demoBridge = Bridge.forClient(demoClient);
+      const demoState = new GameState(demoBridge, demoClient);
       await demoState.load();
       if (demoState.tiles.size === 0) return false;
       let demoScene: MapScene | undefined;

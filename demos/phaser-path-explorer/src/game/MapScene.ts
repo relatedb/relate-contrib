@@ -2,6 +2,7 @@
 // flat look (just the ground's colour), and discovered hexes (seen or on a path) in the pixel look. The scene reads
 // only the cache in GameState and never awaits; it redraws when the cache's version changes.
 import Phaser from "phaser";
+import { versionWatch } from "@relate/relate-phaser";
 import {
   HEX_OUTLINE,
   hexSpan,
@@ -96,7 +97,10 @@ export class MapScene extends Phaser.Scene {
   /** The signposts: arrowheads just outside each settlement the explorer has arrived at, pointing the way. */
   private signs!: Phaser.GameObjects.Graphics;
   private ground?: Phaser.GameObjects.Image;
-  private drawn = -1;
+  /** True once for each change of the cache since the last frame: the redraw runs only then. */
+  private readonly changed: () => boolean;
+  /** The first frame always draws; the watcher reports changes after it. */
+  private firstFrame = true;
   /** The sun and the day's light: the clock that is not a meter. */
   private sky: Phaser.GameObjects.Graphics | undefined;
   private sun: Phaser.GameObjects.Image | undefined;
@@ -167,6 +171,7 @@ export class MapScene extends Phaser.Scene {
     super("map");
     this.k = pixel * dpr;
     this.overAtStart = state.over;
+    this.changed = versionWatch(state);
   }
 
   /** Is the finale playing? */
@@ -267,8 +272,8 @@ export class MapScene extends Phaser.Scene {
     }
     if (this.actorsDirty) this.syncActors();
     if (this.state.over && !this.finaleStarted && this.nightT < 0) this.startFinale();
-    if (this.drawn !== this.state.version) {
-      this.drawn = this.state.version;
+    if (this.changed() || this.firstFrame) {
+      this.firstFrame = false;
       this.redraw();
       this.onChange(this.state);
     }
