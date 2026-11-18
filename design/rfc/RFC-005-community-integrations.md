@@ -3,7 +3,7 @@ id: RFC-005
 title: Integrations for Community Projects and Hackathons
 status: draft
 created: 2026-11-08
-adrs: [ADR-008, ADR-011]
+adrs: [ADR-008, ADR-011, ADR-012]
 ---
 
 # RFC-005: Integrations for Community Projects and Hackathons
@@ -119,3 +119,4 @@ This RFC states the goals and the approach. Each demo, or family of demos with t
 
 - ADR-008: a react-admin data provider over the core, with a local-first demo
 - ADR-011: the phaser-path-explorer, a Phaser demo with a separable hex library and a disclosure graph
+- ADR-012: the boundary and public interface of the Phaser package, extracted from that demo

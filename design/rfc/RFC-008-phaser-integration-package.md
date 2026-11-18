@@ -3,7 +3,7 @@ id: RFC-008
 title: A Shared Package for Using the Engine from Phaser Games
 status: draft
 created: 2026-11-18
-adrs: []
+adrs: [ADR-012]
 ---
 
 # RFC-008: A Shared Package for Using the Engine from Phaser Games
@@ -12,7 +12,7 @@ adrs: []
 
 RelateDB is an embedded property graph engine that runs in the browser, in a Web Worker, and answers queries asynchronously. Phaser is a browser game framework built around a frame loop that runs about sixty times a second and cannot wait for anything. A game that keeps its world in a graph has to join the two: the frame loop must read a picture of the world that is always available, while the engine answers questions at its own pace.
 
-Joining them well takes four things that no particular game owns: a way to send statements to the engine in order without the frame loop ever waiting; a local picture of the world that the engine's replies keep up to date; a way to put a world into a graph once and later read back only the part the player has discovered; and a throwaway in-memory graph for attract modes, tutorials and sandboxes that must not touch saved data. A first game, the path explorer, has all four. This RFC proposes extracting them into a published package inside this repository, so that a second Phaser project starts from them rather than rewriting them. It settles the scope of that package, where it lives, and when it would move to a repository of its own. Technical decisions are left to ADRs.
+Joining them well takes four things that no particular game owns: a way to send statements to the engine in order without the frame loop ever waiting; a local picture of the world that the engine's replies keep up to date; a way to put a world into a graph once and later read back only the part the game needs, such as the part a player has discovered or the dialogue branches already visited; and a throwaway in-memory graph for attract modes, tutorials and sandboxes that must not touch saved data. A first game, the path explorer, has all four. This RFC proposes extracting them into a published package inside this repository, so that a second Phaser project starts from them rather than rewriting them. It settles the scope of that package, where it lives, and when it would move to a repository of its own. Technical decisions are left to ADRs.
 
 ## 2. Problem / Motivation
 
@@ -20,7 +20,7 @@ The path explorer demo is a Phaser game whose entire world, rules and score live
 
 - A queue that runs statements strictly one at a time, in order, and resolves a promise for each caller, while a counter of statements in flight lets the game show a "thinking" indicator. The frame loop pushes work onto it and never awaits.
 - A plain-object cache of the world "as the player may know it", patched by replies. Rendering reads only this object. An action that needs a reply to know what it revealed shows as pending until the reply arrives, and a further action waits for it.
-- A seed document written to the application graph (a durable graph in the visitor's browser that a site's pages share) on first run, and reads that return only what has been revealed. The client never holds the ground truth of a tile the player has not discovered, which is what makes fog of war real rather than cosmetic.
+- A seed document written to the application graph (a durable graph in the visitor's browser that a site's pages share) on first run, and reads that return only what is needed. In the demo that is what the player has revealed: the client never holds the ground truth of a tile the player has not discovered, which makes fog of war real rather than cosmetic. The same pattern fits a dialogue tree that loads only visited branches.
 - A throwaway graph, built from a seed document with no store behind it, that runs the attract mode behind the title screen without touching the saved game.
 
 These parts are written against the demo's own types, but nothing in their design depends on hexes. RFC-005 (community integrations) expects shared libraries to be extracted from demos and asks what triggers an extraction (its question 7.3). This RFC answers it for the first library: a working demo is enough, and a second consumer is what marks the interface stable (5.4). Games are the likeliest source of hackathon projects that want to start from something, and a Phaser project that begins today copies the demo and must work out which parts are generic. Every such copy drifts from the others, and fixes to the ordering and error behaviour of the queue (the part where mistakes are subtle) reach none of them.
@@ -30,7 +30,7 @@ A related cost is the packaging question: where this shared code should live. Th
 ## 3. Goals
 
 - Give a Phaser project a small, tested set of building blocks for keeping game state in the embedded graph, with the frame loop never waiting on the engine.
-- Make the reveal-only reading pattern, and the guarantee that the client never holds undiscovered ground truth, easy to follow and hard to break.
+- Document the pattern of reading only what is needed (reveal-only reads are one case) with the demo as its reference, so a game with hidden or large state can follow it.
 - Make an in-memory throwaway graph a first-class, documented way to run attract modes, tutorials and sandboxes beside a saved game.
 - Prove the package by having the path explorer consume it, so the demo exercises the extraction.
 - Publish the package independently, under its own name and version, from this repository.
@@ -90,6 +90,10 @@ The hex-map toolkit is a useful idea that does not belong to the RelateDB organi
 
 7.4. How are faults, including a trapped engine, reported to a running game, and what does the package expect the game to do about them?
 
+7.5. How does a game keep more than one graph: levels in sequence, save slots that last, or several boards live at once? The core already offers named application graphs, a catalog of them, and scopes within one graph, and a second client is a second worker. Should the package wrap one of these as a "world slot", and how strictly are scopes isolated, which matters for the reveal-only guarantee? The throwaway graph is the first case of a second graph beside the first; a second consumer would show which others are common.
+
+7.6. Does the package serve high-volume writes, such as an entity-component system whose systems change many components a frame, or only turn-sized actions? The queue applies one statement at a time with a worker round trip each, so volume would need batching or write coalescing, and the throughput of the queue has not been measured. A non-spatial second consumer, such as a small dialogue-tree demo, would test the boundary from a direction the hex demo cannot.
+
 ## 8. ADRs
 
-_(populated automatically as `/adr-create` links ADRs to this RFC)_
+- ADR-012: the boundary and public interface of the package
