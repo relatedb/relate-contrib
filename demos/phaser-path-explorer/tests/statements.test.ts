@@ -1,5 +1,5 @@
-// ADR-011, 2.5 and 2.8: every statement against the real engine, in its WebAssembly build, in Node.
-// Skipped when the engine's browser package has not been built (`pnpm run build:wasm` at the repository root).
+// ADR-011, 2.5 (amended 2026-11-16, the waymarker expedition): every statement against the real engine, in its
+// WebAssembly build, in Node. Skipped when the engine's browser package has not been built (`pnpm run build:wasm`).
 import { beforeAll, describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -22,8 +22,15 @@ describe.skipIf(!existsSync(wasm))("statements, in the engine's WebAssembly buil
     expect(res.error, `${q.trim().split("\n")[0]}`).toBeNull();
     return res.rows;
   };
-  const extend = (to: string, now = 1) => run(S.EXTEND, { to, now });
+  const extend = (to: string, now = 1) => {
+    const rows = run(S.EXTEND, { to, now });
+    // The engine does not promise a collection order; compare sensed sets sorted.
+    for (const r of rows) r["sensed"] = [...(r["sensed"] as string[])].sort();
+    return rows;
+  };
   const at = () => run("MATCH (pl:Player) RETURN pl.at AS at")[0]!["at"];
+  const player = () => run(S.READ_PLAYER)[0]!;
+  const hex = (id: string) => run("MATCH (h:Hex {id: $id}) RETURN h.state AS s", { id })[0]!["s"];
   const edges = () =>
     run("MATCH (a)-[r]->(b) WHERE type(r) IN ['LOOSE','SECURED'] RETURN a.id AS a, type(r) AS t, b.id AS b ORDER BY a, b");
 
@@ -31,112 +38,149 @@ describe.skipIf(!existsSync(wasm))("statements, in the engine's WebAssembly buil
     const mod = await import(resolve(pkg, "relate.js"));
     mod.initSync({ module: readFileSync(wasm) });
     db = new mod.RelateDb() as Db;
-    // H (camp, anchor) -a- b - c - T (anchor); H - d - e - s (snag); a - u
-    run(`CREATE (:Hex {id:'H', origin:true, anchor:true, state:'path'}), (:Hex {id:'a', state:'sensed'}),
-         (:Hex {id:'b', state:'hidden'}), (:Hex {id:'c', state:'hidden'}), (:Hex {id:'T', anchor:true, state:'hidden'}),
-         (:Hex {id:'d', state:'sensed'}), (:Hex {id:'e', state:'hidden'}), (:Hex {id:'s', snag:true, state:'hidden'}),
-         (:Hex {id:'u', state:'sensed'}), (:Player {id:'player', at:'H', waymarks:9, health:3})`);
-    run(`MATCH (h:Hex {id:'H'}),(a:Hex {id:'a'}),(b:Hex {id:'b'}),(c:Hex {id:'c'}),(t:Hex {id:'T'}),(d:Hex {id:'d'}),
-         (e:Hex {id:'e'}),(s:Hex {id:'s'}),(u:Hex {id:'u'})
-         CREATE (h)-[:ADJ]->(a),(a)-[:ADJ]->(b),(b)-[:ADJ]->(c),(c)-[:ADJ]->(t),(h)-[:ADJ]->(d),(d)-[:ADJ]->(e),
-                (e)-[:ADJ]->(s),(a)-[:ADJ]->(u)`);
+    // H (camp, anchor) - a - b - c - T1 (tower, anchor); H - d - e - f - T2 (tower, anchor); a - g (a side branch,
+    // sensed); e - x (hidden); a cache Thing on e.
+    run(`CREATE (:Hex {id:'H', origin:true, anchor:true, state:'path'}),
+              (:Hex {id:'a', state:'sensed'}), (:Hex {id:'b', state:'hidden', terrain:'badlands', cost:2}), (:Hex {id:'c', state:'hidden'}),
+              (:Hex {id:'T1', anchor:true, tower:true, state:'hidden'}),
+              (:Hex {id:'d', state:'sensed'}), (:Hex {id:'e', state:'hidden'}), (:Hex {id:'f', state:'hidden'}),
+              (:Hex {id:'T2', anchor:true, tower:true, state:'hidden'}),
+              (:Hex {id:'g', state:'hidden', terrain:'grass'}), (:Hex {id:'x', state:'hidden', terrain:'water', cost:13}),
+              (:Player {id:'player', at:'H', steps:12, markers:2}), (:Robot {id:'robot'})`);
+    run(`MATCH (h:Hex {id:'H'}),(a:Hex {id:'a'}),(b:Hex {id:'b'}),(c:Hex {id:'c'}),(t1:Hex {id:'T1'}),
+              (d:Hex {id:'d'}),(e:Hex {id:'e'}),(f:Hex {id:'f'}),(t2:Hex {id:'T2'}),(g:Hex {id:'g'}),(x:Hex {id:'x'})
+         CREATE (h)-[:ADJ]->(a),(a)-[:ADJ]->(b),(b)-[:ADJ]->(c),(c)-[:ADJ]->(t1),(h)-[:ADJ]->(d),(d)-[:ADJ]->(e),
+                (e)-[:ADJ]->(f),(f)-[:ADJ]->(t2),(a)-[:ADJ]->(g),(e)-[:ADJ]->(x)`);
+    run(`MATCH (e:Hex {id:'e'}) CREATE (:Thing {id:'cache1', kind:'cache'})-[:ON]->(e)`);
   });
 
-  it("extends a thread from the camp, one hex at a time, sensing the neighbours", () => {
-    expect(extend("a", 1)[0]).toMatchObject({ id: "a", anchor: false, snag: false, sensed: ["b"] });
-    expect(extend("b", 2)[0]).toMatchObject({ id: "b", sensed: ["c"] });
-    expect(extend("c", 3)[0]).toMatchObject({ id: "c", sensed: ["T"] });
+  it("extends the path from the camp, one step a hex, sensing the neighbours", () => {
+    expect(extend("a", 1)[0]).toMatchObject({ id: "a", anchor: false, caches: 0, steps: 11, markers: 2, sensed: ["b", "g"].sort() });
+    expect(extend("b", 2)[0]).toMatchObject({ id: "b", steps: 9, sensed: ["c"] }); // badlands: two steps
+    expect(extend("c", 3)[0]).toMatchObject({ id: "c", steps: 8, sensed: ["T1"] });
     expect(at()).toBe("c");
   });
 
-  it("refuses a skip while a thread is in play and the explorer is not on an anchor", () => {
-    expect(run(S.SKIP, { to: "H" })).toHaveLength(0);
+  it("refuses an extension that would touch the path or start a second one mid-path", () => {
+    expect(extend("a")).toHaveLength(0); // a hex of the path itself
+    expect(run("MATCH (pl:Player) SET pl.at = 'H'")); // for the next case: at the camp, but a path is in play
+    expect(extend("d")).toHaveLength(0);
+    expect(run("MATCH (pl:Player) SET pl.at = 'c'"));
   });
 
-  it("secures the thread when it reaches an anchor", () => {
-    expect(extend("T", 4)[0]).toMatchObject({ id: "T", anchor: true });
-    expect(run(S.SECURE)[0]).toMatchObject({ secured: 4 });
-    expect(edges().map((e) => e["t"])).toEqual(["SECURED", "SECURED", "SECURED", "SECURED"]);
-    expect(run(S.SECURE)[0]).toMatchObject({ secured: 0 }); // harmless to run again
+  it("places a waymarker: the path is secured, and the explorer stays with the steps remaining", () => {
+    expect(run(S.PLACE_WAYMARKER)[0]).toMatchObject({ waymark: "c", secured: 3, at: "c", steps: 8, markers: 1 });
+    expect(edges().map((e) => e["t"])).toEqual(["SECURED", "SECURED", "SECURED"]);
+    expect(hex("a")).toBe("path"); // banked: the day's ground stays
   });
 
-  it("skips between anchors over secured paths", () => {
-    expect(run(S.SKIP, { to: "H" })[0]).toMatchObject({ at: "H" });
+  it("refuses a waymarker without a path to bank, and on an anchor", () => {
+    expect(run(S.PLACE_WAYMARKER)).toHaveLength(0); // at the new anchor: no loose path
+    // Standing on an anchor is no good either way, even with a path to bank.
+    run("MATCH (pl:Player) SET pl.at = 'H'");
+    run("MATCH (h:Hex {id:'H'}), (d:Hex {id:'d'}) CREATE (h)-[:LOOSE {since: 4}]->(d)");
+    expect(run(S.PLACE_WAYMARKER)).toHaveLength(0); // the camp is an anchor already
+    run("MATCH ()-[r:LOOSE]->() DELETE r");
   });
 
-  it("crosses a secured path: an extension onto a hex of the path is allowed, and reeling in leaves that hex on the path", () => {
-    expect(extend("a", 5)[0]).toMatchObject({ id: "a", anchor: false });
-    expect(run(S.REEL_IN)[0]).toMatchObject({ at: "H" });
-    const a = run("MATCH (h:Hex {id: 'a'}) RETURN h.state AS s")[0]!["s"];
-    expect(a).toBe("path");
-    expect(edges().every((e) => e["t"] === "SECURED")).toBe(true);
+  it("travels back to the waymarker for one step, and extends on to the tower, which secures", () => {
+    expect(run(S.TRAVEL, { to: "c" })[0]).toMatchObject({ at: "c", steps: 7 });
+    expect(extend("T1", 5)[0]).toMatchObject({ id: "T1", anchor: true, steps: 6 });
+    expect(run(S.SECURE)[0]).toMatchObject({ secured: 1 });
   });
 
-  it("starts a new thread only from an anchor, and a snag cuts the explorer off", () => {
-    expect(extend("d", 6)[0]).toMatchObject({ id: "d", snag: false });
-    expect(extend("e", 7)[0]).toMatchObject({ id: "e", sensed: ["s"] });
-    expect(extend("s", 8)[0]).toMatchObject({ id: "s", snag: true });
-    expect(run(S.TETHERED)[0]).toMatchObject({ tethered: false });
-    expect(run(S.HASTY_RETREAT)).toHaveLength(0); // cut off: no retreat
-    // the loose thread stays attached as a stub: no edge was laid onto the snag
-    expect(edges().filter((e) => e["t"] === "LOOSE")).toEqual([
-      { a: "H", t: "LOOSE", b: "d" },
-      { a: "d", t: "LOOSE", b: "e" },
+  it("reports the win per tower: one joined, one not", () => {
+    expect(run(S.TOWERS).sort((r, s) => String(r["id"]).localeCompare(String(s["id"])))).toEqual([
+      { id: "T1", joined: true },
+      { id: "T2", joined: false },
     ]);
   });
 
-  it("lets the cut-off explorer step back over known ground and is tethered again", () => {
-    expect(run(S.STEP, { to: "e" })[0]).toMatchObject({ at: "e" });
+  it("refuses travel while a path is in play, and reels it back in for a step", () => {
+    expect(extend("c", 6)[0]).toMatchObject({ id: "c" }); // cross onto the secured path
+    expect(run(S.TRAVEL, { to: "H" })).toHaveLength(0);
+    expect(run(S.REEL_IN)[0]).toMatchObject({ at: "T1", steps: 4 });
+    expect(hex("c")).toBe("path"); // a hex of the secured path stays on it
+    expect(run(S.TRAVEL, { to: "H" })[0]).toMatchObject({ at: "H", steps: 3 });
+  });
+
+  it("finds a cache on entering: one waymarker gained, found only once", () => {
+    expect(extend("d", 7)[0]).toMatchObject({ id: "d", steps: 2, sensed: ["e"] });
     expect(run(S.TETHERED)[0]).toMatchObject({ tethered: true });
+    expect(run(S.CUE_SOURCE, { ids: ["e"] })).toEqual([{ id: "e", own: true, kind: "cache" }]);
+    expect(extend("e", 8)[0]).toMatchObject({ id: "e", caches: 1, markers: 2, steps: 1, sensed: ["f", "x"].sort() });
+    expect(run("MATCH (t:Thing {id:'cache1'})-[o:ON]->() RETURN count(o) AS c")[0]).toMatchObject({ c: 0 }); // spent
   });
 
-  it("refuses a second thread from a hex that is not the head", () => {
-    run(S.STEP, { to: "d" });
-    expect(extend("e", 9)).toHaveLength(0);
-    run(S.STEP, { to: "e" });
-  });
-
-  it("reels in the last loose edge and refunds the waymark", () => {
-    const before = run("MATCH (pl:Player) RETURN pl.waymarks AS w")[0]!["w"] as number;
-    expect(run(S.REEL_IN)[0]).toMatchObject({ at: "d" });
-    expect(run("MATCH (pl:Player) RETURN pl.waymarks AS w")[0]!["w"]).toBe(before + 1);
-  });
-
-  it("makes a hasty retreat home and abandons the loose thread", () => {
-    expect(run(S.HASTY_RETREAT)[0]).toMatchObject({ at: "H", lost: 1 });
+  it("ends the day on exhaustion: home, refilled, and everything the secured network does not disclose fogs over", () => {
+    const res = run(S.END_DAY, { budget: 12, part: "head", n: 1, last: false })[0]!;
+    res["fogged"] = [...(res["fogged"] as string[])].sort();
+    expect(res).toMatchObject({ at: "H", steps: 12, lost: 2 });
+    // Everything loose-path-adjacent fogs, including hexes the secured network discloses again at once.
+    expect(new Set(res["fogged"] as string[])).toEqual(new Set(["d", "e", "f", "g", "x"]));
+    expect(hex("d")).toBe("sensed"); // the camp's neighbour is disclosed again at once
+    expect(hex("e")).toBe("hidden");
+    expect(hex("x")).toBe("hidden"); // never sensed, stays hidden
+    expect(hex("g")).toBe("sensed"); // a neighbour of the secured path stays sensed
+    expect(hex("c")).toBe("path"); // the banked network keeps its ground
     expect(edges().every((e) => e["t"] === "SECURED")).toBe(true);
   });
 
-  it("prunes a secured path, marks what is cut off, refunds it and carries the explorer home", () => {
-    run("MATCH (pl:Player) SET pl.at = 'T'");
-    const before = run("MATCH (pl:Player) RETURN pl.waymarks AS w")[0]!["w"] as number;
-    const res = run(S.PRUNE, { a: "a", b: "b" })[0] as { ids: string[]; waymarks: number; at: string };
-    expect([...res.ids].sort()).toEqual(["T", "b", "c"]);
-    expect(res.at).toBe("H");
-    expect(res.waymarks).toBe(before + 3);
-    expect(edges()).toEqual([{ a: "H", t: "SECURED", b: "a" }]);
-    const states = Object.fromEntries(run("MATCH (h:Hex) RETURN h.id AS id, h.state AS s").map((r) => [r["id"], r["s"]]));
-    expect(states).toMatchObject({ H: "path", a: "path", b: "seen", c: "seen", T: "seen", s: "seen" });
+  it("finishes the win: the second tower joined, both rows say so", () => {
+    expect(extend("d", 9)[0]).toMatchObject({ id: "d", steps: 11 });
+    expect(extend("e", 10)[0]).toMatchObject({ id: "e", caches: 0, markers: 2 }); // the cache is spent for good
+    expect(extend("f", 11)[0]).toMatchObject({ id: "f", steps: 9 });
+    expect(extend("T2", 12)[0]).toMatchObject({ id: "T2", anchor: true, steps: 8 });
+    expect(run(S.SECURE)[0]).toMatchObject({ secured: 4 }); // the whole H-d-e-f-T2 path was loose
+    expect(run(S.TOWERS).every((r) => r["joined"] === true)).toBe(true);
   });
 
-  it("reads the cue source: Things on a hex and on its neighbours", () => {
-    run("MATCH (s:Hex {id:'s'}) CREATE (:Thing {id:'t1', kind:'thorn'})-[:ON]->(s)");
-    const rows = run(S.CUE_SOURCE, { ids: ["e", "s"] });
-    expect(rows).toEqual(
-      expect.arrayContaining([
-        { id: "e", own: false, kind: "thorn" },
-        { id: "s", own: true, kind: "thorn" },
-      ]),
-    );
+  it("ends the day cleanly when nothing needs to fog", () => {
+    run("MATCH (pl:Player) SET pl.steps = 0");
+    expect(run(S.END_DAY, { budget: 12, part: "eyes", n: 2, last: false })[0]).toMatchObject({ at: "H", steps: 12, lost: 0, fogged: ["g", "x"] });
+    expect(hex("g")).toBe("sensed"); // re-sensed from the secured network at once
+    expect(hex("x")).toBe("sensed"); // x neighbours e, which is now secured
   });
 
-  it("finds orphans on a 440-hex chain, with no hop bound", () => {
-    run("UNWIND range(0, 439) AS i CREATE (:Hex {id: 'x' + toString(i), state: 'path', origin: CASE WHEN i = 0 THEN true END})");
-    run("MATCH (a:Hex), (b:Hex) WHERE a.id STARTS WITH 'x' AND b.id STARTS WITH 'x' AND toInteger(substring(b.id, 1)) = toInteger(substring(a.id, 1)) + 1 CREATE (a)-[:SECURED]->(b)");
-    // cutting at the far end orphans one hex, and cutting in the middle orphans the second half
-    const res = run(
-      "MATCH (:Hex {id: 'x219'})-[r:SECURED]->(:Hex {id: 'x220'}) DELETE r WITH count(r) AS n MATCH (t:Hex) WHERE t.id STARTS WITH 'x' AND t.origin IS NULL AND NOT EXISTS { MATCH p = shortestPath((t)-[:SECURED*]-(:Hex {origin: true})) } RETURN count(t) AS orphans",
-    );
-    expect(res[0]).toMatchObject({ orphans: 220 });
+  it("adds a robot part each night, and the seventh night ends the game", () => {
+    expect(run(S.READ_PARTS)).toEqual([{ kind: "head", n: 1 }, { kind: "eyes", n: 2 }]);
+    expect(run(S.READ_PLAYER)[0]).toMatchObject({ over: false });
+    run(S.END_DAY, { budget: 12, part: "power", n: 7, last: true });
+    expect(run(S.READ_PARTS).map((r) => r["kind"])).toEqual(["head", "eyes", "power"]);
+    expect(run(S.READ_PLAYER)[0]).toMatchObject({ over: true });
+    run(S.UNDO_CLEAR_PARTS);
+    run(S.UNDO_PARTS, { parts: [{ kind: "head", n: 1 }] });
+    expect(run(S.READ_PARTS)).toEqual([{ kind: "head", n: 1 }]);
+    run("MATCH (pl:Player) REMOVE pl.over");
+    expect(run(S.GAME_OVER)[0]).toMatchObject({ over: true });
+    run("MATCH (h:Hex) WHERE h.anchor = true SET h.feature = 'x'"); // the camp and the towers carry a feature
+    expect(run(S.MARKERS_USED)[0]).toMatchObject({ markers: 0 }); // so they are not waymarkers
+    run("MATCH (h:Hex {id:'g'}) SET h.anchor = true");
+    expect(run(S.MARKERS_USED)[0]).toMatchObject({ markers: 1 }); // a placed waymarker is
+    run("MATCH (h:Hex {id:'g'}) REMOVE h.anchor");
+    run("MATCH (pl:Player) REMOVE pl.over");
+  });
+
+  it("charges the terrain's cost and refuses what the day cannot afford", () => {
+    run("MATCH (pl:Player) SET pl.at = 'H', pl.steps = 2");
+    expect(extend("d", 13)[0]).toMatchObject({ id: "d", steps: 1 }); // grass: one step
+    run("MATCH (pl:Player) SET pl.steps = 12"); // a full day
+    expect(extend("e", 14)[0]).toMatchObject({ id: "e", steps: 11 });
+    expect(extend("x", 15)).toHaveLength(0); // water: 13 is more than any day's 12
+    run("MATCH (pl:Player) SET pl.steps = 13");
+    expect(extend("x", 16)[0]).toMatchObject({ id: "x", steps: 0 }); // affordable only by impossible means
+    // leave the board as the later tests expect it
+    run("MATCH ()-[r:LOOSE]->() DELETE r");
+    run("MATCH (pl:Player) SET pl.at = 'H', pl.steps = 12");
+    run("MATCH (h:Hex) WHERE h.id IN ['e'] SET h.state = 'sensed'");
+    run("MATCH (h:Hex) WHERE h.id IN ['x'] SET h.state = 'hidden'");
+  });
+
+  it("steps over known ground for one step, and reads the player and the edges", () => {
+    expect(run(S.STEP, { to: "a" })[0]).toMatchObject({ at: "a", steps: 11 });
+    expect(player()).toMatchObject({ at: "a", steps: 11, markers: 2 });
+    expect(run(S.READ_EDGES).every((r) => r["kind"] === "SECURED")).toBe(true);
+    const hidden = run(S.READ_BOARD).filter((r) => r["state"] === "hidden");
+    expect(hidden.every((r) => r["terrain"] === null && r["feature"] === null && r["anchor"] === false)).toBe(true);
   });
 });

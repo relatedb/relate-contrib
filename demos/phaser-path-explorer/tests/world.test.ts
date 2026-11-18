@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateRows, landDistances, COLS, ROWS, START_WAYMARKS } from "../src/game/world.js";
+import { generateRows, landDistances, COLS, ROWS, SETTLEMENTS, START_STEPS } from "../src/game/world.js";
 import { worldDocument } from "../src/game/graph.js";
 import { neighbours } from "../src/hex/core/index.js";
 
@@ -64,7 +64,7 @@ describe("terrain variety", () => {
 });
 
 describe("reach", () => {
-  it("puts at least two towers within the starting waymarks of the camp, by land, for any seed", () => {
+  it("puts at least two towers within a day's steps of the camp, by land, for any seed", () => {
     for (const seed of ["first-light", "another", "tide", "ember", "moss", "x9", "a", "b", "c", "d", "e", "f", "g", "h"]) {
       const rows = generateRows(seed);
       const dist = landDistances(rows, [Math.floor(COLS / 2), Math.floor(ROWS / 2)]);
@@ -72,7 +72,7 @@ describe("reach", () => {
       rows.forEach((r, row) =>
         [...r].forEach((ch, col) => {
           const d = dist.get(`${col},${row}`);
-          if ((ch === "R" || ch === "U") && d !== undefined && d <= START_WAYMARKS) near++;
+          if ((ch === "R" || ch === "U") && d !== undefined && d <= START_STEPS) near++;
         }),
       );
       expect(near, seed).toBeGreaterThanOrEqual(2);
@@ -95,8 +95,7 @@ describe("world document", () => {
   it("links neighbours once per pair and never to a hex outside the map", () => {
     const ids = new Set(hexes.map((h) => h.id));
     const pairs = new Set<string>();
-    for (const l of doc.links) {
-      expect(l.type).toBe("ADJ");
+    for (const l of doc.links.filter((x) => x.type === "ADJ")) {
       expect(ids.has(l.source) && ids.has(l.target)).toBe(true);
       const key = [l.source, l.target].sort().join("|");
       expect(pairs.has(key), key).toBe(false);
@@ -106,16 +105,60 @@ describe("world document", () => {
     expect(doc.links.length).toBeGreaterThan(COLS * ROWS * 2);
   });
 
-  it("starts with the camp on the path, its neighbours sensed and the rest hidden", () => {
+  it("links the camp and each settlement to the settlements within a day's walk, and never back to the camp", () => {
+    const near = doc.links.filter((l) => l.type === "NEAR");
+    expect(near.length).toBeGreaterThan(0);
+    const camp = hexes.find((h) => h.properties!["feature"] === "tent")!.id;
+    const towers = new Set(hexes.filter((h) => h.properties!["feature"] === "tower").map((h) => h.id));
+    for (const l of near) {
+      expect(towers.has(l.target), `${l.source} to ${l.target}`).toBe(true);
+      expect(l.source === camp || towers.has(l.source)).toBe(true);
+    }
+    expect(near.some((l) => l.source === camp)).toBe(true);
+  });
+
+  it("starts with the camp on the path, its neighbours in view, the ring beyond sensed and the rest hidden", () => {
     const states = hexes.map((h) => h.properties!["state"]);
     expect(states.filter((s) => s === "path")).toHaveLength(1);
-    expect(states.filter((s) => s === "sensed")).toHaveLength(6);
-    expect(states.filter((s) => s === "hidden")).toHaveLength(COLS * ROWS - 7);
+    expect(states.filter((s) => s === "viewed")).toHaveLength(6);
+    expect(states.filter((s) => s === "hidden")).toHaveLength(COLS * ROWS - 19);
+    expect(states.filter((s) => s === "sensed")).toHaveLength(12);
   });
 
   it("marks the camp and the towers as anchors", () => {
     const anchors = hexes.filter((h) => h.properties!["anchor"]);
     expect(anchors.length).toBeGreaterThanOrEqual(2);
     for (const a of anchors) expect(a.properties!["feature"]).toBeTruthy();
+  });
+});
+
+describe("settlements", () => {
+  const seeds = ["first-light", "another", "tide", "ember", "moss", "x9"];
+
+  it("places six, every one within a day's reach of the camp or another settlement, two of them of the camp", () => {
+    for (const seed of seeds) {
+      const rows = generateRows(seed);
+      const camp: [number, number] = [Math.floor(COLS / 2), Math.floor(ROWS / 2)];
+      const towers: [number, number][] = [];
+      rows.forEach((r, row) => [...r].forEach((ch, col) => (ch === "R" || ch === "U") && towers.push([col, row])));
+      expect(towers.length, seed).toBe(SETTLEMENTS);
+      const fromCamp = landDistances(rows, camp);
+      expect(towers.filter(([c, r]) => (fromCamp.get(`${c},${r}`) ?? Infinity) <= START_STEPS).length, seed).toBeGreaterThanOrEqual(2);
+      // routing can spread outwards a day at a time: every settlement is reached from the camp through the others
+      const reached: [number, number][] = [camp];
+      const left = [...towers];
+      for (let grew = true; grew && left.length; ) {
+        grew = false;
+        for (const t of [...left]) {
+          const near = reached.some((from) => (landDistances(rows, from).get(`${t[0]},${t[1]}`) ?? Infinity) <= START_STEPS);
+          if (near) {
+            reached.push(t);
+            left.splice(left.indexOf(t), 1);
+            grew = true;
+          }
+        }
+      }
+      expect(left, seed).toEqual([]);
+    }
   });
 });

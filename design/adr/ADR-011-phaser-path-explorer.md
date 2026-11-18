@@ -227,3 +227,227 @@ Flat hexes have no outline, as in the design system.
 - ADR-009 (application graphs in the core), ADR-008 (the local-first conventions this one follows, for its react-admin demo)
 - ADR-002 (the graph data format and the `id` property), ADR-001 (worker hosting)
 - `design/notes/2026-11-10-phaser-path-explorer.md` (the design, the cue vocabulary, and the checks of the statements)
+
+## 6. Amendments
+
+### 2026-11-16: a one-week scope, and the waymarker expedition
+
+The demo is cut down to something playable within a week, while still exercising the integration the ADR exists to
+show: disclosure as a query result, paths and reachability as graph structure, and a durable application graph. The
+following supersedes 2.3's waymark economy, 2.4's `Player` and `Hex` fields, the verbs and economy of 2.5, and the
+checks of 2.8. Sections 2.1 (layout), 2.2 (assets) and 2.6 (the bridge) stand.
+
+**The expedition.** A day is a budget of steps. The player starts at the camp with **5 waymarkers** and **12 steps**.
+Every move costs one step: extending the path one hex, stepping over known ground, reeling back in, and travelling
+between anchors. The path traces from the last anchor (the camp or a placed waymarker) to the explorer's position; the
+hexes it crosses no longer cost anything in themselves.
+
+- **Place a waymarker** on the hex the explorer stands on: the hex becomes an anchor, one waymarker is spent, and the
+  path from the previous anchor becomes secured. This does **not** end the day: the explorer stays on the new waymark
+  with the remaining steps, and a new loose path can grow from it. Banking is therefore a mid-day choice between
+  preserving the path followed so far and continuing to explore.
+- **A day ends when the steps run out, or when the player explicitly ends it**: the explorer returns to the camp, the
+  step budget refills, and the remaining loose path is abandoned. Everything the day revealed that is not covered by
+  the secured network fogs over: a hex stays known only if it lies on a secured path, is the camp, or neighbours such
+  a hex (and then only as sensed); every other hex, including the whole of the abandoned loose path, is hidden again.
+  What the player durably knows is exactly what the secured network discloses — knowledge is banked by placing
+  waymarkers, so sweeping ground without spending one gains nothing that survives the day. Ground secured before a
+  waymarker was placed survives even when the next loose path is abandoned at night.
+- **Travel** from an anchor to another anchor joined by secured paths costs one step, not one per hex. This applies
+  from the camp to a waymarker and between waymarkers, and is the payoff of placing markers.
+- **A tower** is a fixed anchor. Arriving on one secures the path as before but does not end the day.
+- **Winning**: both towers are joined to the camp by secured paths. The interface says so and offers a new day.
+- **Rewards**: a cache found on a hex adds one waymarker (the only `Thing` kind in v1).
+- **Terrain has a price, not a wall**: every hex carries a `cost` in steps (grass, sand, forest and hills 1;
+  badlands 2; mountain 4; water and deep water 13 — more than any day, so never affordable). Extend and step pay the
+  hex's cost; there is no passable/impassable flag. The relief itself is the interface: rises hint at the climb, the
+  coast sinks away at the drop.
+
+`Player` becomes `{id, steps, markers, at}` (no health, no waymarks); `Hex` loses the `snag` flag. Nothing else in 2.4
+changes: the same `ADJ`, `LOOSE` and `SECURED` edges, the same `anchor` and `origin` flags, and the same seed.
+
+**Deferred, not decided against.** Snags, the taut elastic line and its SPIKE-012, cut-off, hasty retreat, prune,
+hazards and health, cues and decoys, predators, a clock, scoring beyond the win, and the facet or zoomed-out look are
+out of v1. The prune and hasty-retreat statements of 2.5 are dropped rather than kept as dead code: the end of the day
+replaces the hasty retreat, and pruning a secured path has no refund now that hexes cost no waymarks. The cue statement
+stays, ready for when cues return. The statements of 2.5 remain in the text above as the starting point when those
+mechanics return.
+
+**Naming.** *Waymark* now means a placed anchor (previously the per-hex currency); *steps* is the movement currency;
+*thread* is called the **path** in the interface and the remaining prose.
+
+**Statements.** The extend statement of 2.5 loses its waymark cost and its snag branch and pays one step instead. The
+secure statement is unchanged. Two statements are added: place a waymarker (spend one, set `anchor`, and secure the
+path without moving the player or changing steps), and end the day on exhaustion or command (return to camp, refill,
+delete the loose path, and re-fog every hex the secured network does not disclose: path hexes keep their state, their
+neighbours become sensed, everything else is hidden, and the statement answers with the ids that were fogged so the
+client's cache can drop them). The skip statement charges one step. The win is read with one statement over `SECURED`
+edges from the camp to both towers. These are specified and tested against the engine before the interface uses them.
+
+**Checks.** Node tests against the engine's WebAssembly build cover every new statement, including banking a path and
+extending from its new waymarker without ending the day, a day ended by exhaustion, travel between anchors costing one
+step, and the win test. Browser checks are by hand in one browser for v1; the Playwright setup for the demo and the
+cross-browser run are deferred.
+
+### 2026-11-17: polish: layers, sprites, path end-caps, undo, and no status line
+
+The goal is a coherent world with no text or interface added to it. Decisions, to be iterated:
+
+- **Layers**, back to front: the empty board (every hex position in a two-blue checker dither, the design system's
+  shading device, replacing the flat fog tile), the vector tiles, the pixelated terrain, the graph paths, the
+  sprites, then the sun and the sky. Hover and preview are translucent aids between the paths and the sprites.
+- **Rings are dropped.** A path says what it joins by its end-caps: secured is `<->` (travel runs both ways); loose is
+  anchored at its start by a bar and ends in an arrow (`|~>`). The camp and towers are the terrain's own pixel art; the
+  explorer and the waymarkers are sprites.
+- **Sprites (new art, pending brand review).** The explorer is a 16 by 16 figure and a waymarker a 5 by 8 red pennant,
+  both in the design system's sprite notation and palette. The waymarkers in the bag pile round the camp tile; a
+  placed one flies to its hex.
+- **Hidden cost is time.** The sun crosses the top row as steps are spent, tweened, not jumping. A faint sun shows the
+  slot the faced (or hovered) move would reach; one the day cannot afford is shown beyond dusk, in the night's colour.
+- **Undo replaces confirmation.** One level: the last action, the end of a day included (an automatic end of day after
+  the last step undoes with the step that caused it). Backspace and cmd-Z. The graph is restored from a snapshot of the
+  cache by a short fixed sequence of bounded statements (clear the path edges, lay the loose and the secured ones back,
+  restore the state and anchor of each changed hex, restore the player); the sequence is not one atomic statement, and
+  a page closed part-way through could leave the graph part restored. Reeling in stays on the down key and a click
+  behind the explorer.
+- **No status line.** Messages stay in the state for tests and the language is unchanged, but nothing narrates the game;
+  only a failure of the graph, or storage that will not keep the world, is told in words. One concession: a help
+  overlay (first visit, then `h`) with a one-sentence statement of the game and the plain meaning of each key.
+- **Fix.** The end of the day on exhausting the steps was unreachable code (a `return` before it); it now runs.
+
+
+**End-caps, refined (2026-11-17).** Arrowheads stay on the wavy, exploratory path only. A secured path ends in `)` and
+`(`: arcs of the circle inscribed in the tile, against its edge, joined to the line with no spoke. A loose path starts
+with a bar as long as a side of the hexagon inscribed one cell inside the tile's edge, so six meeting in a tile close an
+inner hex. These caps are drawn by hand, not from the design system's arrow glyphs, which have no `)`: a recorded
+deviation. Casings go under the graph and the black over it, so a cap and its line read as one stroke. Waymarker flags
+are 4 by 6 cells with no outline, standing top-centre on their hex.
+
+**Fog as weather (2026-11-17).** The fog is grey cloud on the sky layer over every hex the explorer does not know, in
+whole hexes (one density per hex, so cloud edges follow hex borders) with the design system's checker dither. It keeps
+the empty board's two-tone dither and lifts both tones slightly towards grey, so it reads as the same pattern, lighter.
+The board's dither is desaturated, and the night shade covers the whole board. The day's forgotten ground fades out
+above the clouds. Static for now; drift is open.
+
+**The night (2026-11-17).** Ending a day plays a 3.6 second scripted night, cosmetic only (the graph is already on the
+new day): the sun runs on to dusk if the day ended early, turns into a crescent moon on the right, the sky darkens and the
+forgotten ground fades as night falls, the moon crosses right to left, and at midnight (the moon on the left) the
+explorer returns to camp; the sky then lightens and the moon turns back into the sun. Input is locked until dawn except
+undo, which ends the night at once. The moon is a plain crescent with no phases.
+
+**Board width (2026-11-17).** The board is 25 columns by 20 rows (500 hexes), replacing 22 by 20 from 2.1. The sun
+crosses 24 column gaps in a 12 step day, so each step moves it exactly two tiles.
+
+### 2026-11-17: the seven day game (rogue robots, the score, the splash)
+
+Supersedes the goal-based win of the 2026-11-16 amendment ("both towers joined": the interface says so and offers a new
+day). The game is now time-limited. The kingdom has seven days: a rogue AI is being assembled and will go for the
+nearest settlement. Settlements (the towers) joined to the camp by secured paths are saved: the robots are made happy.
+Isolated ones are destroyed.
+
+- **The robot is the day counter.** One `(:Robot)` node, and one `(:Part {kind, n})` attached for each night that has
+  passed, in the order head, eyes, mouth, body, arms, legs, power. The day is the number of parts plus one; the seventh
+  night adds `power`, completes the robot and ends the game. No day counter and no stats are stored on the player.
+  `END_DAY` creates the part. Undo takes a night back with its part.
+- **Game over** is `Player.over`, the only new player field. It is set by the seventh night, or at once when every
+  settlement is routed (`GAME_OVER`); the game then ends early. When it is set nothing more is done and undo is off.
+- **Settlements.** Six, placed in pairs: each is within a day's reach (by cost, over land) of the camp or an earlier
+  settlement, and the first two are within reach of the camp. Par is two settlements a day, so a perfect game is
+  reachable: three days, no waymarker.
+- **Score**, derived when the game ends and never stored in the graph: 100 for each settlement routed, less 5 for each
+  waymarker placed (anchors that are neither the camp nor a tower, `MARKERS_USED`) and 10 for each day over par
+  (`ceil(settlements / 2)` days), never below zero; a perfect game is 600. The last score and the personal best are kept in
+  the browser's storage, outside the graph, so they survive the splash and reloads.
+- **Splash** (the second interface concession): shown on every load, replacing the first-visit help; premise and keys,
+  the last score and the personal best, new game (a random island) and, when a game is in progress, continue. Esc opens
+  it as the pause screen (Esc again resumes); choosing new game is the confirmation, and the abandoned game is not
+  scored. `?` and `H` still open the help.
+- **Bottom row**: the robot prototype is drawn along it, one more part each day, moving right. **Finale**: the board is
+  revealed, robots appear and head for the nearest settlements. These are the later slices; this amendment is built in
+  slices, the model first.
+- **Fix found on the way.** The win and score statements read a `tower` flag the seed never set, so the old win test could
+  not have passed. The seed now flags towers.
+
+Existing stored worlds lack the `Robot` node and need `?reset=1` once.
+
+**The robot on the bottom row (2026-11-17).** The day counter is drawn along the bottom row: a 16 by 16 robot in the
+design system's sprite style (new art, pending brand review), with one more part each night in the order of the parts in
+the graph, and an even hop of four tiles to the right each day (on a 25 wide board: columns 0, 4, 8, 12, 16, 20, 24). A
+faint outline of the whole robot marks where it is going. Until midnight of a night the row still shows the day that ended;
+at midnight the robot steps to its new place and the new part switches on. The seventh part, power, lights the eyes and
+the antenna.
+
+**The finale (2026-11-17).** When the game is over (the seventh night has played, or every settlement is routed) the
+clouds fade and the whole board is revealed: the cache reads the board as it is (`READ_TRUTH`), cache only, the graph is
+untouched. A robot, the finished prototype, walks in from beyond the board's edge on each settlement's side of the camp
+to that settlement, so its nearest settlement is its own. Where the settlement is joined to the camp by secured paths a
+heart rises from the robot; where it is not, the robot turns red, the screen shakes, the settlement is swept away (bare
+ground) and a fire burns. Then the splash tells the score. A game already over at load shows the same end state without
+the walk. The hearts and fires are the design system's `heart` and `fire` sprites.
+
+### 2026-11-17: signposts, and the mist
+
+Playtesting the seven day game found it a resource constrained open search: nothing but cost to choose a direction by.
+
+- **Signposts.** The graph has `(:Hex)-[:NEAR]->(:Hex)` edges from the camp and from each settlement to every settlement
+  within a day's walk (cost at most the day's steps, over land), made by the seed; never to the camp. The camp starts
+  `mapped`; arriving at a settlement (the extension that reaches it secures the route, as before) marks it `mapped`.
+  From every mapped hex the signposts point to the settlements that are not yet reached (`READ_SIGNPOSTS`, which returns
+  only the axial difference, never the position), each to the nearest of the six hex directions, and settlements the same
+  way share one arrow: the imprecision is in the rules. They are drawn as arrowheads just outside the settlement's hex,
+  above the mist, and are not shown once the game is over. Undo takes a signpost back with its arrival.
+- **Mist, not weather.** The unknown was read as water or rock because it was blue-grey and dark. It is now a neutral,
+  hueless light grey in the board's checker, lighter than any land, with clouds lighter still; blue is left to water. The
+  clouds drift east, a hex at a time, the cloud noise sampled further behind every 1.1 seconds.
+
+**The field of view, and the clocks clearing the mist (2026-11-17).**
+- A fifth knowledge state, `viewed`: a hex in sight, drawn in full with its features (a settlement in view is seen as one),
+  but still reached by extending the path, not stepped onto (`seen` stays the walkable state). Wherever the explorer
+  stands, `VIEW_AROUND` makes the six hexes round it viewed and the ring beyond sensed; it runs after every move, after
+  the day ends (at the camp) and in the seed. A hex stays viewed until the night forgets it, as any other. So a player can
+  no longer walk past a settlement unseen: the ground does not have to be covered to be searched.
+- The sun clears the mist along the top row from the left edge to where it is (the moon too, at night), and the robot along
+  the bottom row to where it is, each including its own hex; the cleared hexes show open sky.
+
+**The robot's colours (2026-11-17).** The robot is magenta and purple: a light purple head, a purple body, arms and legs,
+a dark violet dead eye and a hot magenta lit eye and lamp. The design system's palette has no magenta or purple (only
+periwinkle), so these four colours are a recorded deviation, held in `src/game/robot.ts`, for brand review.
+
+**The exit (2026-11-17).** The splash no longer follows the finale at once. When the robots have done, a portal opens on a
+hex beside the explorer (the faced one if it is land, else the first land hex round it; the explorer turns to face it), a
+swirl in the robot's colours, and waits as long as the player likes: the end of the game is the one last move, into it
+(Up when facing it, or a click on it). The explorer steps in and is gone, and then the splash tells the score. The
+finale counts as still playing until then, so Esc opens the splash as a pause with Continue. A game already over at load
+has no portal: the splash comes at once.
+
+**The splash as message bubbles (2026-11-17).** The splash is no longer an overlay that dims the board. Grey, hex-ended
+message bubbles drift right to left across the board, which stays in view: the premise along the top row, the keys through
+the middle, the prompt and the scores along the bottom. The words are the splash's own, in `src/bubbles.ts`. Any key
+continues the game in progress (or starts a new one when it is over); N starts a new one, as before. The key is taken
+before the game sees it, so it is not also a move. A game that has just ended ignores keys for a moment, so the last move
+does not skip the result, which parks in the upper middle of the board until a key is pressed. A screen reader gets all the
+words as one block of text, and `prefers-reduced-motion` shows one still bubble a row at a time. This is slice 1 of a demo
+mode: a later slice puts a wandering explorer and hidden robots behind the bubbles, on a throwaway world, never the saved one.
+
+**The bubbles on the hexes (2026-11-17).** A bubble is a run of whole hexes in one row, its top and bottom edges following
+the hex points, and it moves a tile at a time, so it always lies on the board's hexes (odd rows half a tile in). Each band
+has several rows, top 2 to 4, middle 8 to 11, bottom 14 to 17, and a bubble takes a different one each time. The font is
+Share Tech Mono (SIL Open Font License, the `@fontsource/share-tech-mono` package, bundled, no request to a font service),
+a recorded deviation from the design system's type for the game's own words, for brand review.
+
+**The demo behind the splash (2026-11-17, slice 2).** On load, when the saved game is not over, the board behind the bubbles
+is a demo: an explorer wanders a random island of its own at random, laying no path, with a lantern round them (the hexes
+within two in sight, the ring beyond dimmed, the fog back on everything behind). It is a second Phaser game over a second
+client holding the world as a graph given as data, with no descriptor, so it has no store: it is never the saved game, and
+nothing of it is kept. Any key on the splash stops the demo, destroys its game and starts the saved one. If the demo
+cannot start, the saved game shows behind the bubbles as before. The walk is `wanderStep` in `src/demo.ts`: it favours the
+way it was going and avoids water. It uses three small statements (`DEMO_AT`, `DEMO_DARKEN`, `DEMO_LIGHT`) that exist only
+for the demo. Robots, and the explorer fleeing them, are slice 3.
+
+**Robots in the demo (2026-11-17, slice 3).** Three robots roam the demo island at random, slowly, starting at least six hexes
+from the explorer. They are drawn only when the explorer can see them (within two hexes, inside the lantern); in the fog they
+are not there at all. A robot in sight is run from: the explorer takes the neighbouring hex that ends furthest from it,
+a little quicker than it wanders, and for a few steps after it shies from the places it saw one. The demo robots only
+roam: they do not chase, and they burn nothing, which the real game's finale does. `?robots=12` fills the island, to see
+them often. The logic is `fleeStep`, `placeRobots` and `wanderStep` (with its `shy` places) in `src/demo.ts`; the scene
+draws them through `setActors`.

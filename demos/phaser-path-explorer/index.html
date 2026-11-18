@@ -12,11 +12,28 @@
       #game { line-height: 0; }
       #game canvas { image-rendering: pixelated; }
       #status { font-size: 13px; color: var(--ink-muted); }
+      #status[hidden] { display: none; }
+      #stage { position: relative; }
+      #splash { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+      #splash[hidden] { display: none; }
+      #bubbles { position: absolute; inset: 0; overflow: hidden; }
+      .bubble { position: absolute; left: 0; top: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+                white-space: nowrap; padding: 0 16px; background: #c4c8cc; color: #14212b;
+                font: 400 19px/1 "Share Tech Mono", ui-monospace, monospace; will-change: transform; }
+      .bubble b { font-weight: 400; color: #9b1c4a; margin-right: 8px; }
+      .bubble.parked { font-size: 22px; }
+      .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: pre-line; }
     </style>
   </head>
   <body>
-    <div id="game"></div>
-    <div id="status">Loading…</div>
+    <div id="stage">
+      <div id="game"></div>
+      <div id="splash">
+        <div id="bubbles" aria-hidden="true"></div>
+        <div id="splash-text" class="sr-only" role="status"></div>
+      </div>
+    </div>
+    <div id="status" hidden></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -3,11 +3,23 @@
 // seed, so a seed always gives the same map. The graph is built from these rows (graph.ts).
 import { neighbours, rng } from "../hex/core/index.js";
 
-export const COLS = 22;
+export const COLS = 25;
 export const ROWS = 20;
 
-/** Waymarks the explorer starts with: how many hexes of thread can be extended before reaching an anchor. */
-export const START_WAYMARKS = 8;
+/** Steps in a day, and waymarkers in the bag (ADR-011, amended 2026-11-16). Towers are reachable within a day. */
+export const START_STEPS = 12;
+export const START_MARKERS = 5;
+
+/** Settlements to save, and days to save them in (ADR-011, amended 2026-11-17: the seven day game). */
+export const SETTLEMENTS = 6;
+export const DAYS = 7;
+
+/**
+ * Steps to enter a hex of each terrain (ADR-011, amended 2026-11-16): no binary walls, every hex has a price. Water
+ * and deep water cost more than any day, so they are never affordable — a drop off the edge of the world.
+ */
+export const TERRAIN_COST: Record<string, number> = { D: 13, w: 13, m: 4, b: 2, g: 1, f: 1, h: 1, s: 1, t: 1, R: 1, U: 1 };
+export const terrainCost = (ch: string | undefined): number => (ch === undefined ? 1 : (TERRAIN_COST[ch] ?? 1));
 
 function hashSeed(seed: string): number {
   let h = 2166136261;
@@ -52,17 +64,25 @@ function fbm(x: number, y: number, seed: number): number {
 }
 
 /** Steps from a hex to every land hex it can reach on foot (not through deep or shallow water), by breadth first. */
+/** Cost-weighted distances by land: the cheapest total steps from `from` to every hex that is not water. */
 export function landDistances(rows: string[], from: [number, number]): Map<string, number> {
   const dist = new Map<string, number>([[`${from[0]},${from[1]}`, 0]]);
   const queue: [number, number][] = [from];
   for (let i = 0; i < queue.length; i++) {
+    // a small array as a priority queue: the graph is tiny and the costs are whole numbers
+    let best = i;
+    for (let j = i + 1; j < queue.length; j++) if (dist.get(`${queue[j]![0]},${queue[j]![1]}`)! < dist.get(`${queue[best]![0]},${queue[best]![1]}`)!) best = j;
+    [queue[i], queue[best]] = [queue[best]!, queue[i]!];
     const [col, row] = queue[i]!;
     const d = dist.get(`${col},${row}`)!;
     for (const [c, r] of neighbours(col, row)) {
       const ch = rows[r]?.[c];
-      if (ch === undefined || ch === "D" || ch === "w" || dist.has(`${c},${r}`)) continue;
-      dist.set(`${c},${r}`, d + 1);
-      queue.push([c, r]);
+      if (ch === undefined || ch === "D" || ch === "w") continue; // no ground: never a route
+      const via = d + terrainCost(ch);
+      if (via < (dist.get(`${c},${r}`) ?? Infinity)) {
+        dist.set(`${c},${r}`, via);
+        queue.push([c, r]);
+      }
     }
   }
   return dist;
@@ -112,11 +132,10 @@ export function generateRows(seed: string, cols = COLS, rowsCount = ROWS): strin
       if (Math.hypot(col + (row & 1 ? 0.5 : 0) - (campCol + (campRow & 1 ? 0.5 : 0)), (row - campRow) * 0.875) < 2.3)
         grid[row]![col] = R() < 0.2 ? "f" : "g";
   grid[campRow]![campCol] = "t";
-  // towers on grass or hills, away from the camp and each other. The first two are within reach of the starting
-  // waymarks (ADR-011, 2.4), so every seed has somewhere to go; the rest are anywhere on land.
+  // Settlements (the towers): on grass or hills, away from the camp and each other, placed in pairs. Each pair lies
+  // within a day's reach (by cost, over land) of the camp or an earlier settlement, so a player can always route two
+  // settlements a day and a perfect game is reachable (ADR-011, amended 2026-11-17).
   const towers: [number, number][] = [];
-  const wanted = Math.max(3, Math.round((cols * rowsCount) / 75));
-  const reach = landDistances(grid.map((l) => l.join("")), [campCol, campRow]);
   const place = (col: number, row: number) => {
     const ch = grid[row]![col]!;
     grid[row]![col] = ch === "h" ? "U" : "R";
@@ -130,16 +149,19 @@ export function generateRows(seed: string, cols = COLS, rowsCount = ROWS): strin
       towers.every(([c, r]) => Math.hypot(col - c, row - r) >= 4)
     );
   };
-  for (let tries = 0; tries < 2000 && towers.length < 2; tries++) {
-    const col = Math.floor(R() * cols);
-    const row = Math.floor(R() * rowsCount);
-    const d = reach.get(`${col},${row}`);
-    if (d !== undefined && d >= 4 && d <= START_WAYMARKS && ok(col, row)) place(col, row);
-  }
-  for (let tries = 0; tries < 800 && towers.length < wanted; tries++) {
-    const col = Math.floor(R() * cols);
-    const row = Math.floor(R() * rowsCount);
-    if (ok(col, row)) place(col, row);
+  for (let pair = 0; pair < SETTLEMENTS / 2; pair++) {
+    // how far each hex is from the camp and every settlement so far, by cost over land
+    const lines = grid.map((l) => l.join(""));
+    const maps = [[campCol, campRow] as [number, number], ...towers].map((from) => landDistances(lines, from));
+    const near = (col: number, row: number) => Math.min(...maps.map((m) => m.get(`${col},${row}`) ?? Infinity));
+    const goal = towers.length + 2;
+    for (let tries = 0; tries < 3000 && towers.length < goal; tries++) {
+      const col = Math.floor(R() * cols);
+      const row = Math.floor(R() * rowsCount);
+      // the cap relaxes late in the search, so an odd seed still gets its settlements
+      const cap = tries < 2000 ? START_STEPS : tries < 2600 ? START_STEPS * 2 : Infinity;
+      if (ok(col, row) && near(col, row) <= cap) place(col, row);
+    }
   }
   return grid.map((l) => l.join(""));
 }

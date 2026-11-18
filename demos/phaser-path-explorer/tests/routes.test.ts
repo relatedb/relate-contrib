@@ -69,13 +69,13 @@ describe("routes", () => {
     expect(g.pieces.every((p) => p.shaft === "line")).toBe(true); // no double stroke
     expect(g.edges).toEqual([
       { from: id(3, 2), to: [4, 2], form: "-" },
-      { from: [5, 3], to: id(6, 3), form: "->" },
+      { from: [5, 3], to: id(6, 3), form: "-" },
     ]);
   });
 
   it("is a plain arrow when a secured path joins neighbours", () => {
     const g = routeToGraph({ kind: "SECURED", from: id(3, 2), between: [], to: id(4, 2) }, tiles);
-    expect(g.edges).toEqual([{ from: id(3, 2), to: id(4, 2), form: "->" }]);
+    expect(g.edges).toEqual([{ from: id(3, 2), to: id(4, 2), form: "-" }]);
   });
 });
 
