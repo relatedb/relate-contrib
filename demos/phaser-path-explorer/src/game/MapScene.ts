@@ -226,6 +226,7 @@ export class MapScene extends Phaser.Scene {
     kb?.addCapture("LEFT,RIGHT,UP,DOWN,BACKSPACE,SPACE"); // keep the page from scrolling
     const key = (name: string, run: (e: KeyboardEvent) => void) =>
       kb?.on(`keydown-${name}`, (e: KeyboardEvent) => {
+        if (e.repeat) return; // a held key is one action: it must not walk the explorer, or carry a key that started the game into it
         if (this.blocked()) return;
         if (this.nightT >= 0 && name !== "BACKSPACE" && name !== "Z") return; // the night is not interrupted
         this.keyboard = true;
