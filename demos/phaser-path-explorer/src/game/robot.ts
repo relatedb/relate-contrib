@@ -1,4 +1,4 @@
-// The rogue robot being built along the bottom row, one part a night (ADR-011, amended 2026-11-17). New 16 by 16
+// The rogue robot being built along the bottom row, one part a night (ADR-011, amended 2026-11-17). New 32 by 32
 // pixel art in the design system's sprite style (palette and outline), for brand review. Each part is a set of cells; a
 // robot with n parts is the first n parts drawn over each other, so a later part can repaint an earlier one (power
 // lights the eyes).
@@ -11,32 +11,42 @@ const rect = (x0: number, y0: number, x1: number, y1: number, ch: string): Cell[
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) out.push([x, y, ch]);
   return out;
 };
-const box = (x0: number, y0: number, x1: number, y1: number, edge: string, fill: string): Cell[] => [
-  ...rect(x0, y0, x1, y1, edge),
-  ...rect(x0 + 1, y0 + 1, x1 - 1, y1 - 1, fill),
-];
 
 /**
  * The robot's colours: magentas and purples, which the design system's palette does not have (it is kept for the
- * explorer's world; the rogue AI is meant to look like something else). A recorded deviation. K is the outline (black,
- * from the palette), C the head's light purple, c the body, arms and legs' purple, g a dead eye (a dark violet), and Y
- * a lit eye and the antenna's lamp (a hot magenta).
+ * explorer's world; the rogue AI is meant to look like something else). A recorded deviation. C is the head's light
+ * purple, with E its highlight and D its shade; c the body, arms and legs' purple, with S its shade; g a dead eye and the
+ * mouth (a dark violet); Y a lit eye and the antenna's lamp (a hot magenta), with Z its glow. No black: the shape is held
+ * by these tones. The robot is drawn on a 32 by 32 grid, at half the world's cell size.
  */
-export const ROBOT_COLOURS: Record<string, string> = { C: "#C77DFF", c: "#7B2CBF", g: "#3A1262", Y: "#FF2BD6" };
+export const ROBOT_COLOURS: Record<string, string> = {
+  C: "#C77DFF", E: "#E4B5FF", D: "#9D4EDD", c: "#7B2CBF", S: "#5A189A", g: "#3A1262", Y: "#FF2BD6", Z: "#FF9BEA",
+};
 export const PART_CELLS: Record<Part, Cell[]> = {
-  head: box(3, 2, 12, 7, "K", "C"),
-  eyes: [...rect(5, 4, 6, 5, "g"), ...rect(9, 4, 10, 5, "g")],
-  mouth: rect(6, 6, 9, 6, "K"),
-  body: box(4, 8, 11, 13, "K", "c"),
+  // a head with rounded corners, lit from the top left: a highlight along the top and left, a shade along the bottom and right
+  head: [
+    ...rect(8, 9, 23, 18, "C"), ...rect(7, 10, 24, 17, "C"),
+    ...rect(9, 9, 22, 9, "E"), ...rect(7, 11, 7, 16, "E"), ...rect(8, 10, 8, 10, "E"),
+    ...rect(9, 18, 22, 18, "D"), ...rect(24, 11, 24, 16, "D"), ...rect(23, 17, 23, 17, "D"),
+  ],
+  eyes: [...rect(10, 12, 12, 14, "g"), ...rect(19, 12, 21, 14, "g")],
+  mouth: rect(12, 16, 19, 16, "g"),
+  body: [
+    ...rect(9, 19, 22, 26, "c"), ...rect(13, 21, 18, 23, "C"),
+    ...rect(9, 26, 22, 26, "S"), ...rect(22, 19, 22, 25, "S"), ...rect(13, 23, 18, 23, "D"),
+  ],
   arms: [
-    ...rect(2, 8, 3, 8, "K"), ...rect(2, 13, 3, 13, "K"), ...rect(2, 9, 2, 12, "K"), ...rect(3, 9, 3, 12, "c"),
-    ...rect(12, 8, 13, 8, "K"), ...rect(12, 13, 13, 13, "K"), ...rect(13, 9, 13, 12, "K"), ...rect(12, 9, 12, 12, "c"),
+    ...rect(5, 19, 8, 25, "c"), ...rect(23, 19, 26, 25, "c"),
+    ...rect(5, 19, 5, 25, "C"), ...rect(8, 19, 8, 25, "S"), ...rect(26, 19, 26, 25, "S"),
   ],
   legs: [
-    ...rect(4, 14, 4, 14, "K"), ...rect(5, 14, 5, 14, "c"), ...rect(6, 14, 6, 14, "K"), ...rect(4, 15, 6, 15, "K"),
-    ...rect(9, 14, 9, 14, "K"), ...rect(10, 14, 10, 14, "c"), ...rect(11, 14, 11, 14, "K"), ...rect(9, 15, 11, 15, "K"),
+    ...rect(11, 27, 14, 28, "c"), ...rect(17, 27, 20, 28, "c"),
+    ...rect(14, 27, 14, 28, "S"), ...rect(20, 27, 20, 28, "S"), ...rect(11, 28, 14, 28, "S"), ...rect(17, 28, 20, 28, "S"),
   ],
-  power: [...rect(7, 1, 8, 1, "K"), ...rect(7, 0, 8, 0, "Y"), ...rect(5, 4, 6, 5, "Y"), ...rect(9, 4, 10, 5, "Y")],
+  power: [
+    ...rect(14, 3, 17, 6, "Y"), ...rect(14, 3, 15, 4, "Z"), ...rect(15, 7, 16, 8, "g"),
+    ...rect(10, 12, 12, 14, "Y"), ...rect(19, 12, 21, 14, "Y"), ...rect(10, 12, 11, 12, "Z"), ...rect(19, 12, 20, 12, "Z"),
+  ],
 };
 
 /** The robot with its first `count` parts as cells; later parts are drawn over earlier ones. */

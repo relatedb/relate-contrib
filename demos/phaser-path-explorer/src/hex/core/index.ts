@@ -1,6 +1,7 @@
 export { rng } from "./rng.js";
 export { TILE_W, TILE_H, ROW_STEP, ODD_SHIFT, tileOrigin, tileCentre, hexSpan, sceneCells, neighbours, toAxial } from "./lattice.js";
-export { paintTile, positionSeed, stampFeature } from "./paint.js";
+export { overrideFeatureArt, paintTile, positionSeed, stampFeature } from "./paint.js";
+export type { FeatureArt } from "./paint.js";
 export type { Terrain, Feature, Grid, Cell, Painter } from "./paint.js";
 export { tilesFromRows, sceneSize, paintScene, toRgba } from "./scene.js";
 export type { Tile, PaintedScene } from "./scene.js";

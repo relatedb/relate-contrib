@@ -111,8 +111,26 @@ export function positionSeed(col: number, row: number): number {
   return col * s.col + row * s.row + s.add;
 }
 
+/** A game's own art for a feature, in place of the design system's: rows of characters, what each means, and the row it starts on. */
+export interface FeatureArt {
+  rows: string[];
+  colours: Record<string, string>;
+  y: number;
+}
+const OVERRIDES: Partial<Record<Feature, FeatureArt>> = {};
+
+/** Draw a feature from this art instead of the design system's. The port's own checks run without one. */
+export function overrideFeatureArt(feature: Feature, art: FeatureArt): void {
+  OVERRIDES[feature] = art;
+}
+
 /** Stamp a feature (town, tent or tower) onto a painted tile, centred as the design system places it. */
 export function stampFeature(p: Painter, feature: Feature): void {
+  const art = OVERRIDES[feature];
+  if (art) {
+    p.bitmap(art.rows, (TILE_W - art.rows[0]!.length) >> 1, art.y, art.colours);
+    return;
+  }
   const bm = BM[feature]!;
   const fw = bm[0]!.length;
   const y = feature === "town" ? 4 : feature === "tent" ? 6 : 3;

@@ -2,6 +2,7 @@
 // flat look (just the ground's colour), and discovered hexes (seen or on a path) in the pixel look. The scene reads
 // only the cache in GameState and never awaits; it redraws when the cache's version changes.
 import Phaser from "phaser";
+import "./camp.js"; // the yellow tent: its art and colours are registered when this is imported
 import { versionWatch } from "@relate/relate-phaser";
 import {
   HEX_OUTLINE,
@@ -20,12 +21,12 @@ import {
   type Point,
   type Tile,
 } from "../hex/core/index.js";
-import { addSceneTexture, addSpriteTexture, colourNumber, drawGraph, drawVectorTile, fillHex, mixColour, strokeHex } from "../hex/phaser/index.js";
-import { addGameSprite } from "./sprites.js";
+import { addSceneTexture, colourNumber, drawGraph, drawVectorTile, fillHex, mixColour, strokeHex } from "../hex/phaser/index.js";
+import { ACTOR_BORDER, actorScale, addGameSprite, paintGrid } from "./sprites.js";
+import { SPRITE_RES, sticker, type Grid } from "./outline.js";
 import { cloudCell, cloudDensity } from "./clouds.js";
 import { ROBOT_COLOURS, robotCells, robotSlot } from "./robot.js";
 import { sideTo, SIDES_CLOCKWISE, neighbourAt } from "../hex/core/index.js";
-import { paletteAsset, spritesAsset } from "../hex/assets/index.js";
 import { routeToGraph, routes, withCrossings, type Route } from "./routes.js";
 import type { DuskHex, GameState, HexState } from "./state.js";
 import { COLS, DAYS, ROWS, START_MARKERS, START_STEPS } from "./world.js";
@@ -49,6 +50,10 @@ function mix(a: number, b: number, t: number): number {
  * graph paths, the sprites, then the sun and the sky. Raised relief and the dusk ghosts sit within the layer they
  * belong to; the overlay (hover and preview) is a translucent aid between the paths and the sprites.
  */
+/** The sun's texture: 32 by 34 pixels, at half the world's cell size, so it fills a hex. */
+const SUN_W = 32;
+const SUN_H = 34;
+
 const LAYER = {
   board: -0.3,
   vector: 0,
@@ -202,23 +207,23 @@ export class MapScene extends Phaser.Scene {
     this.sky = this.add.graphics().setScale(this.k).setDepth(LAYER.sky);
     addGameSprite(this, "explorer", "explorer");
     addGameSprite(this, "flag", "flag");
-    this.explorer = this.add.image(0, 0, "explorer").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites + 0.2).setVisible(false);
-    this.ghost = this.add.image(0, 0, "explorer").setOrigin(0).setScale(this.k).setDepth(LAYER.overlay).setAlpha(0.5).setVisible(false);
+    this.explorer = this.add.image(0, 0, "explorer").setOrigin(0).setScale(actorScale(this.k)).setDepth(LAYER.sprites + 0.2).setVisible(false);
+    this.ghost = this.add.image(0, 0, "explorer").setOrigin(0).setScale(actorScale(this.k)).setDepth(LAYER.overlay).setAlpha(0.5).setVisible(false);
     for (let i = 0; i < START_MARKERS; i++)
       this.pile.push(this.add.image(0, 0, "flag").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites).setVisible(false));
 
-    // One texture pixel per board cell, like the terrain: the large sun is pixel art, not a smooth vector disc.
-    const sunTexture = this.textures.createCanvas("sun", 16, 17);
+    // Pixel art at twice the world's resolution, like the other actors: the sun is not a smooth vector disc.
+    const sunTexture = this.textures.createCanvas("sun", SUN_W, SUN_H);
     if (!sunTexture) throw new Error('could not create texture "sun"');
     this.sunTexture = sunTexture;
     this.sunTexture.setFilter(Phaser.Textures.FilterMode.NEAREST);
-    this.sun = this.add.image(0, 0, "sun").setScale(this.k).setDepth(LAYER.sun);
+    this.sun = this.add.image(0, 0, "sun").setScale(actorScale(this.k)).setDepth(LAYER.sun);
     // the crescent that previews a move ending the day, drawn once
-    const moonTexture = this.textures.createCanvas("moon", 16, 17);
+    const moonTexture = this.textures.createCanvas("moon", SUN_W, SUN_H);
     if (!moonTexture) throw new Error('could not create texture "moon"');
     moonTexture.setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.paintSun(0xc7dcf0, 0xc7dcf0, 0, 1, moonTexture);
-    this.sunGhost = this.add.image(0, 0, "sun").setScale(this.k).setDepth(LAYER.sun - 0.1).setAlpha(0.4).setVisible(false);
+    this.sunGhost = this.add.image(0, 0, "sun").setScale(actorScale(this.k)).setDepth(LAYER.sun - 0.1).setAlpha(0.4).setVisible(false);
 
     // keys, as in a space shooter: left and right turn (a sixth of a turn each), up acts on the hex ahead and down
     // on the hex behind; shift steps instead of extending; backspace or cmd-Z undoes the last action
@@ -506,7 +511,7 @@ export class MapScene extends Phaser.Scene {
     if (!target || !explorer) return;
     this.portalHex = undefined; // once
     const [x, y] = this.spotOf(target.col, target.row);
-    const [px, py] = [x + explorer.displayWidth / 2, y + explorer.displayHeight / 2];
+    const [px, py] = [x + 8 * this.k, y + 8 * this.k]; // the middle of the 16 by 16 art, whatever the border
     this.tweens.add({ targets: explorer, x, y, duration: 260, ease: "Sine.easeIn" });
     this.tweens.add({
       targets: explorer,
@@ -529,14 +534,13 @@ export class MapScene extends Phaser.Scene {
   /** The settlements that were not saved stand no more: bare ground, and a fire. */
   private sweepAndBurn(ids: string[]): void {
     this.state.sweepAway(ids);
-    addSpriteTexture(this, "fire", "fire");
-    this.textures.get("fire").setFilter(Phaser.Textures.FilterMode.NEAREST);
+    addGameSprite(this, "fire", "fire");
     for (const id of ids) {
       const t = this.state.tiles.get(id);
       if (!t) continue;
       const [x, y] = this.spotOf(t.col, t.row);
-      const fire = this.add.image(x, y, "fire").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites + 0.2);
-      this.tweens.add({ targets: fire, scaleY: this.k * 0.88, y: y + 1.5 * this.k, duration: 260, yoyo: true, repeat: -1 });
+      const fire = this.add.image(x, y, "fire").setOrigin(0).setScale(actorScale(this.k)).setDepth(LAYER.sprites + 0.2);
+      this.tweens.add({ targets: fire, scaleY: actorScale(this.k) * 0.88, y: y + 1.5 * this.k, duration: 260, yoyo: true, repeat: -1 });
     }
   }
 
@@ -545,8 +549,7 @@ export class MapScene extends Phaser.Scene {
     const camp = [...tiles.values()].find((t) => t.feature === "tent");
     const [cx, cy] = camp ? tileCentre(camp.col, camp.row) : [0, 0];
     const board = boardSizePx(1);
-    addSpriteTexture(this, "heart", "heart");
-    this.textures.get("heart").setFilter(Phaser.Textures.FilterMode.NEAREST);
+    addGameSprite(this, "heart", "heart");
     let done = 0;
     const arrived = () => {
       if (++done < settlements.length) return;
@@ -575,7 +578,7 @@ export class MapScene extends Phaser.Scene {
       const away = Math.hypot(sx - tx, sy - ty) || 1;
       const stopX = tx + ((sx - tx) / away) * 11;
       const stopY = ty + ((sy - ty) / away) * 11;
-      const robot = this.add.image(sx * this.k, sy * this.k, "robot-7").setScale(this.k).setDepth(LAYER.sprites + 0.4).setAlpha(0);
+      const robot = this.add.image(sx * this.k, sy * this.k, "robot-7").setScale(actorScale(this.k)).setDepth(LAYER.sprites + 0.4).setAlpha(0);
       const delay = i * 280;
       this.tweens.add({ targets: robot, alpha: 1, duration: 300, delay });
       this.tweens.add({
@@ -588,7 +591,7 @@ export class MapScene extends Phaser.Scene {
         onComplete: () => {
           if (s.joined) {
             // the settlement is joined to the camp: the robot is made happy
-            const heart = this.add.image(robot.x, robot.y - 10 * this.k, "heart").setScale(this.k).setDepth(LAYER.sprites + 0.5);
+            const heart = this.add.image(robot.x, robot.y - 10 * this.k, "heart").setScale(actorScale(this.k)).setDepth(LAYER.sprites + 0.5);
             this.tweens.add({ targets: heart, y: heart.y - 8 * this.k, alpha: 0, duration: 1400, ease: "Quad.easeOut", onComplete: () => heart.destroy() });
           } else {
             // isolated: it is swept away
@@ -611,7 +614,7 @@ export class MapScene extends Phaser.Scene {
   private syncActors(): void {
     this.actorsDirty = false;
     while (this.actorImages.length < this.actors.length)
-      this.actorImages.push(this.add.image(0, 0, "robot-7").setOrigin(0).setScale(this.k).setDepth(LAYER.sprites + 0.35));
+      this.actorImages.push(this.add.image(0, 0, "robot-7").setOrigin(0).setScale(actorScale(this.k)).setDepth(LAYER.sprites + 0.35));
     this.actorImages.forEach((img, i) => {
       const at = this.actors[i];
       img.setVisible(at !== undefined);
@@ -621,22 +624,17 @@ export class MapScene extends Phaser.Scene {
 
   /** The robot as 8 textures (0 to 7 parts), and one of its whole outline for the faint plan of it. */
   private makeRobotTextures(): void {
-    const paint = (key: string, cells: ReturnType<typeof robotCells>, colour?: string) => {
-      const texture = this.textures.createCanvas(key, 16, 16);
-      if (!texture) throw new Error(`could not create texture "${key}"`);
-      const ctx = texture.getContext();
-      for (const [x, y, ch] of cells) {
-        const name = colour ?? (ch === "K" ? "black" : spritesAsset.palette[ch]);
-        ctx.fillStyle = colour ? paletteAsset.colours[colour]! : (ROBOT_COLOURS[ch] ?? paletteAsset.colours[name!]!);
-        ctx.fillRect(x, y, 1, 1);
-      }
-      texture.refresh();
-      texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    // no black outline and, unless ACTOR_BORDER is on, no border, as the other actors; the robot's own purples come from ROBOT_COLOURS
+    const paint = (key: string, cells: ReturnType<typeof robotCells>, ghost = false) => {
+      const grid: Grid = Array.from({ length: SPRITE_RES }, () => Array<string | null>(SPRITE_RES).fill(null));
+      for (const [x, y, ch] of cells) grid[y]![x] = ch;
+      const edged = ACTOR_BORDER ? sticker(grid) : grid;
+      paintGrid(this, key, ghost ? edged.map((row) => row.map((c) => (c ? "w" : null))) : edged, ROBOT_COLOURS);
     };
     for (let n = 0; n <= DAYS; n++) paint(`robot-${n}`, robotCells(n));
-    paint("robot-ghost", robotCells(DAYS), "light-gray");
-    this.robotGhost = this.add.image(0, 0, "robot-ghost").setOrigin(0).setScale(this.k).setDepth(LAYER.sun - 0.6).setAlpha(0.14);
-    this.robot = this.add.image(0, 0, "robot-0").setOrigin(0).setScale(this.k).setDepth(LAYER.sun - 0.5);
+    paint("robot-ghost", robotCells(DAYS), true);
+    this.robotGhost = this.add.image(0, 0, "robot-ghost").setOrigin(0).setScale(actorScale(this.k)).setDepth(LAYER.sun - 0.6).setAlpha(0.14);
+    this.robot = this.add.image(0, 0, "robot-0").setOrigin(0).setScale(actorScale(this.k)).setDepth(LAYER.sun - 0.5);
   }
 
   /**
@@ -1020,58 +1018,77 @@ export class MapScene extends Phaser.Scene {
   }
 
   /**
-   * Paint whole texture pixels, exactly like a terrain sprite; the disc and its rays have no antialiased edges. `moon`
-   * (0 to 1) turns the sun into a crescent: the rays fade and a second disc bites into the first from the right.
+   * Paint the sun, or the moon, on a 32 by 34 grid of whole texture pixels, drawn at half the world's cell size like the
+   * other actors: a disc shaded in bands from a light at the top left, a darker rim, a halo, and tapering rays, with no
+   * smooth drawing primitives. `moon` (0 to 1) turns the sun into a crescent moon: the rays and halo fade, a second disc
+   * bites into the first from the right, the shade turns blue, and craters show on what is left.
    */
   private paintSun(body: number, ray: number, noon: number, moon = 0, texture = this.sunTexture): void {
     if (!texture) return;
-    const image = texture.getContext().createImageData(16, 17);
+    const W = SUN_W;
+    const H = SUN_H;
+    const image = texture.getContext().createImageData(W, H);
     const pixel = (x: number, y: number, colour: number, alpha = 255) => {
-      if (x < 0 || x >= 16 || y < 0 || y >= 17) return;
-      const i = (y * 16 + x) * 4;
+      if (x < 0 || x >= W || y < 0 || y >= H) return;
+      const i = (y * W + x) * 4;
       image.data[i] = (colour >> 16) & 255;
       image.data[i + 1] = (colour >> 8) & 255;
       image.data[i + 2] = colour & 255;
       image.data[i + 3] = alpha;
     };
-    const line = (x0: number, y0: number, x1: number, y1: number, alpha: number) => {
-      const steps = Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)));
-      for (let i = 0; i <= steps; i++) {
-        const t = steps === 0 ? 0 : i / steps;
-        pixel(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), ray, alpha);
+    const cx = W / 2;
+    const cy = H / 2;
+    const radius = 10.5;
+    const fade = 1 - moon;
+    // the tones of the body: a core, a light, the body, a shade (cooler on the moon) and a rim
+    const core = mix(body, 0xffffff, 0.6);
+    const light = mix(body, 0xffffff, 0.28);
+    const shade = mix(body, mix(0x783b36, 0x3d4f80, moon), 0.3);
+    const rim = mix(body, mix(0x5a1d25, 0x2c3a66, moon), 0.5);
+    // a halo of two flat, translucent tones round the disc (sun only)
+    if (fade > 0.02) {
+      for (let py = 0; py < H; py++) {
+        for (let px = 0; px < W; px++) {
+          const d = Math.hypot(px + 0.5 - cx, py + 0.5 - cy);
+          if (d > radius + 0.4 && d <= radius + 2.4) pixel(px, py, ray, Math.round(95 * fade * (0.5 + 0.5 * noon)));
+          else if (d > radius + 2.4 && d <= radius + 4.4) pixel(px, py, ray, Math.round(45 * fade * (0.5 + 0.5 * noon)));
+        }
       }
-    };
-    const x = 7.5;
-    const y = 8;
-    const radius = 5.65;
-    // Rasterized one-pixel rays: longer and more opaque at noon, short and subdued at the horizons; none on the moon.
-    for (let i = 0; i < 12; i++) {
-      const angle = (i * Math.PI) / 6;
-      const inner = radius + 0.3;
-      const outer = radius + 0.55 + 1.5 * noon + (i % 2 === 0 ? 0.25 : 0);
-      line(
-        x + Math.cos(angle) * inner,
-        y + Math.sin(angle) * inner,
-        x + Math.cos(angle) * outer,
-        y + Math.sin(angle) * outer,
-        Math.round(255 * (0.4 + 0.6 * noon) * (1 - moon)),
-      );
+      // twelve rays, alternately long and short, tapering to a point and lighter at the tip: longer and more opaque at noon
+      for (let i = 0; i < 12; i++) {
+        const angle = (i * Math.PI) / 6;
+        const length = (3.4 + 2 * noon) * (i % 2 === 0 ? 1.15 : 0.78);
+        const from = radius + 1.1;
+        const [dx, dy] = [Math.cos(angle), Math.sin(angle)];
+        for (let py = 0; py < H; py++) {
+          for (let px = 0; px < W; px++) {
+            const x = px + 0.5 - cx;
+            const y = py + 0.5 - cy;
+            const along = x * dx + y * dy - from;
+            if (along < 0 || along > length) continue;
+            const across = Math.abs(-x * dy + y * dx);
+            if (across <= 1.35 * (1 - along / length) + 0.4) pixel(px, py, mix(ray, 0xffffff, 0.45 * (along / length)), Math.round(255 * (0.55 + 0.45 * noon) * fade));
+          }
+        }
+      }
     }
-    // Three flat tones give the disc a lit edge and a shaded edge, without gradients or smooth drawing primitives.
-    const highlight = mix(body, 0xffffee, 0.55);
-    const shade = mix(body, 0x783b36, 0.22);
     // the bite: a disc that starts far to the right (no bite) and comes in to leave a crescent lit on the left
-    const reach = 13 * (1 - moon) + 3.4 * moon;
-    const biteX = x + reach;
-    const biteY = y - reach * 0.35;
-    const biteR = 5.2;
-    for (let py = 0; py < 17; py++) {
-      for (let px = 0; px < 16; px++) {
-        const dx = px - x;
-        const dy = py - y;
-        if (dx * dx + dy * dy > radius * radius) continue;
-        if (moon > 0 && (px - biteX) ** 2 + (py - biteY) ** 2 < biteR * biteR) continue;
-        pixel(px, py, dx + dy < -2 ? highlight : dx + dy > 4 && moon < 1 ? shade : body);
+    const reach = 26 * fade + 7 * moon;
+    const bite = { x: cx + reach, y: cy - reach * 0.32, r: 10.4 };
+    const bayer = [[0, 2], [3, 1]]; // a 2 by 2 ordered dither, so a band edge is stippled as pixel art is
+    // craters on the moon, in the shade tone
+    const craters = [[-4.5, -3.5, 2.4], [-1.5, 4.5, 1.8], [-7, 2, 1.5]] as const;
+    for (let py = 0; py < H; py++) {
+      for (let px = 0; px < W; px++) {
+        const x = px + 0.5 - cx;
+        const y = py + 0.5 - cy;
+        if (x * x + y * y > radius * radius) continue;
+        if (moon > 0 && (px + 0.5 - bite.x) ** 2 + (py + 0.5 - bite.y) ** 2 < bite.r * bite.r) continue;
+        // how far this pixel is from the light, at the top left, as a share of the disc's width (0 lit, 1 away)
+        const away = Math.hypot(x + 4.2, y + 4.2) / (2 * radius) + (bayer[py & 1]![px & 1]! - 1.5) * 0.035;
+        let colour = away < 0.2 ? core : away < 0.42 ? light : away < 0.72 ? body : away < 0.88 ? shade : rim;
+        if (moon > 0.5 && craters.some(([ox, oy, r]) => (x - ox) ** 2 + (y - oy) ** 2 < r * r)) colour = shade;
+        pixel(px, py, colour);
       }
     }
     texture.getContext().putImageData(image, 0, 0);
