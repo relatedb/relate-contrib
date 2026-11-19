@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const made: Array<{ kind: string; options: Record<string, unknown>; destroy: ReturnType<typeof vi.fn> }> = [];
-vi.mock("@relate/web", () => {
+vi.mock("@relate/contrib-web", () => {
   const make = (kind: string) => (options: Record<string, unknown>) => {
     const client = { kind, options, destroy: vi.fn() };
     made.push(client);

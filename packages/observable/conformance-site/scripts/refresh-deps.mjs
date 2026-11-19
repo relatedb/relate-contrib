@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 const site = join(dirname(fileURLToPath(import.meta.url)), "..");
 const packages = join(site, "../..");
 
-for (const [name, folder] of [["web", "web"], ["observable", "observable"]]) {
+for (const [name, folder] of [["contrib-web", "web"], ["contrib-observable", "observable"]]) {
   const source = join(packages, folder);
   const target = realpathSync(join(site, "node_modules/@relate", name));
   const manifest = JSON.parse(readFileSync(join(source, "package.json"), "utf8"));
@@ -21,4 +21,4 @@ for (const [name, folder] of [["web", "web"], ["observable", "observable"]]) {
   const [from, to] = [join(source, "package.json"), join(target, "package.json")];
   if (!existsSync(to) || statSync(from).ino !== statSync(to).ino) cpSync(from, to);
 }
-console.log("refresh-deps: injected copies of @relate/web and @relate/observable refreshed");
+console.log("refresh-deps: injected copies of @relate/contrib-web and @relate/contrib-observable refreshed");

@@ -22,7 +22,7 @@ Planning checked two things early because they could have changed ADR-009 (P-1 t
 
 **Target Platform**: desktop Chromium, Firefox, WebKit, as the core. Mobile, power loss and quota exhaustion are unmeasured (spec Assumptions).
 
-**Project Type**: library (the existing workspace package `@relate/web`).
+**Project Type**: library (the existing workspace package `@relate/contrib-web`).
 
 **Performance Goals**: one comparison, SC-007: restoring an application store is no slower than restoring a content store of the same size. Recorded with method and environment, single runs labelled so. No other threshold.
 

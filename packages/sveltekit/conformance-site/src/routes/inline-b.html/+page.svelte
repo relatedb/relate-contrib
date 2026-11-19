@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { GraphData } from "@relate/sveltekit";
+  import { GraphData } from "@relate/contrib-sveltekit";
   import InlineCount from "#lib/InlineCount.svelte";
   import RelPage from "#lib/RelPage.svelte";
   // the same id as inline A with other content, no `config`, and text that must not break out of its script element

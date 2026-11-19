@@ -1,10 +1,10 @@
 // covers-ph: FR-013
-import type { GraphDocument } from "@relate/web";
+import type { GraphDocument } from "@relate/contrib-web";
 import { describe, expect, it, vi } from "vitest";
 
 const created: unknown[] = [];
-vi.mock("@relate/web", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@relate/web")>();
+vi.mock("@relate/contrib-web", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@relate/contrib-web")>();
   return {
     ...original,
     createClient: vi.fn((options: unknown) => {

@@ -1,3 +1,3 @@
-import {worker} from "@relate/observable/loader";
+import {worker} from "@relate/contrib-observable/loader";
 
 await worker();

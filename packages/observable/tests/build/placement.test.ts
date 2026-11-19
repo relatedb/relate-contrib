@@ -15,8 +15,8 @@ const published = (): string[] => readdirSync(join(site.dist, "_file/data"));
 
 beforeAll(async () => {
   site = makeSite("placement", {
-    "docs/data/relate.wasm.js": `import { engine } from "@relate/observable/loader";\nawait engine();\n`,
-    "docs/data/relate-worker.js.js": `import { worker } from "@relate/observable/loader";\nawait worker();\n`,
+    "docs/data/relate.wasm.js": `import { engine } from "@relate/contrib-observable/loader";\nawait engine();\n`,
+    "docs/data/relate-worker.js.js": `import { worker } from "@relate/contrib-observable/loader";\nawait worker();\n`,
     "docs/index.md": "# placement\n\n```js\nconst engineUrl = await FileAttachment(\"data/relate.wasm\").url();\nconst workerUrl = await FileAttachment(\"data/relate-worker.js\").url();\ndisplay(html`<p id=\"urls\">${engineUrl} ${workerUrl}</p>`);\n```\n",
   });
   built = await site.build();

@@ -1,5 +1,5 @@
 // covers-ph: FR-007, FR-008, FR-009, FR-010, FR-011, FR-012
-import { GraphError } from "@relate/web";
+import { GraphError } from "@relate/contrib-web";
 import { describe, expect, it } from "vitest";
 import { ReplyCache, type Bridge, type CacheClient } from "../../src/index.js";
 import { openEngine } from "../helpers/engine.js";

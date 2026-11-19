@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { GraphData, graph } from "@relate/sveltekit";
+  import { GraphData, graph } from "@relate/contrib-sveltekit";
   import { onMount } from "svelte";
   import RelPage from "#lib/RelPage.svelte";
   import { small } from "#lib/documents.ts";

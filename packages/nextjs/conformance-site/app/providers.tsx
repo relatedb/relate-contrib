@@ -1,6 +1,6 @@
 "use client";
-import { RelateProvider } from "@relate/nextjs/client";
-import type { Catalog } from "@relate/nextjs/server";
+import { RelateProvider } from "@relate/contrib-nextjs/client";
+import type { Catalog } from "@relate/contrib-nextjs/server";
 import type { ReactNode } from "react";
 
 // The engine's binary is placed by the bundler; the site passes its URL.

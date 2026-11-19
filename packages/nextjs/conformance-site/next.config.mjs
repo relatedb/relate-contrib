@@ -4,7 +4,7 @@
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { withRelate } from "@relate/nextjs";
+import { withRelate } from "@relate/contrib-nextjs";
 
 const navigation = process.env.NAVIGATION === "multi-page" ? "multi-page" : "client-routing";
 const name = process.env.BUILD_NAME ?? navigation;

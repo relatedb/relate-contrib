@@ -1,6 +1,6 @@
 // `open`: a core client for a graph, tied to the cell that opened it (ADR-006 §2.3; contracts/browser-entry.md).
-import { createClient } from "@relate/web";
-import type { Client, Descriptor, GraphDocument, GraphSource, IndexSpec } from "@relate/web";
+import { createClient } from "@relate/contrib-web";
+import type { Client, Descriptor, GraphDocument, GraphSource, IndexSpec } from "@relate/contrib-web";
 import { contentOf, isAttachment, locationOf } from "./attachments.js";
 import type { Attachment } from "./attachments.js";
 import { makeCypher } from "./results/cypher.js";
@@ -95,8 +95,8 @@ function ownedBy(client: Client, invalidation: Promise<unknown>): void {
  */
 export async function open(options: OpenOptions): Promise<Opened> {
   const { engine, worker, graph, invalidation } = options;
-  if (!isAttachment(engine) || !isAttachment(worker)) throw new TypeError("@relate/observable: open(): `engine` and `worker` are file attachments, from FileAttachment(...)");
-  if (!isThenable(invalidation)) throw new TypeError("@relate/observable: open(): `invalidation` is the cell's invalidation promise; without it the client would outlive the cell");
+  if (!isAttachment(engine) || !isAttachment(worker)) throw new TypeError("@relate/contrib-observable: open(): `engine` and `worker` are file attachments, from FileAttachment(...)");
+  if (!isThenable(invalidation)) throw new TypeError("@relate/contrib-observable: open(): `invalidation` is the cell's invalidation promise; without it the client would outlive the cell");
   const [engineUrl, workerUrl] = await Promise.all([locationOf(engine), locationOf(worker)]);
   const source = await graphSource(graph);
   const client = createClient({

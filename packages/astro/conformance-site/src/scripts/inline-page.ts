@@ -1,7 +1,7 @@
 // For the pages that carry inline graphs: asks for each one, counts its nodes and shows the count. The clients are
 // exposed for the adapter's own tests (`window.__relClients`).
-import { onPage } from "@relate/astro/client";
-import type { Client } from "@relate/web";
+import { onPage } from "@relate/contrib-astro/client";
+import type { Client } from "@relate/contrib-web";
 
 onPage(
   (page) => {

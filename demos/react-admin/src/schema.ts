@@ -1,5 +1,5 @@
 // The demo's schema: three resources linked by relationships (data-model.md "Demo data" in specs/008-react-admin-provider).
-import type { Schema } from "@relate/react-admin";
+import type { Schema } from "@relate/contrib-react-admin";
 
 export const schema: Schema = {
   resources: {

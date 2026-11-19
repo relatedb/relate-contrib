@@ -1,7 +1,7 @@
 // What the provider puts in context, and the mounted provider's configuration for the direct lookup (ADR-007 §2.3, §2.4).
 import { getContext, setContext } from "svelte";
 
-const KEY = Symbol.for("@relate/sveltekit/config");
+const KEY = Symbol.for("@relate/contrib-sveltekit/config");
 
 /**
  * @typedef {{ id: string, lifetime: "page" | "visit", indexes: Array<{ label: string, property: string }> }} CatalogEntry

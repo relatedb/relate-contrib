@@ -2,7 +2,7 @@
 // no path, with a clearing in the fog round them. It runs on its own in-memory graph, never the visitor's saved game.
 import { neighbours, oppositeSide, sideTo, toAxial, turnSide, type Side } from "./hex/core/index.js";
 import { hexId } from "./game/graph.js";
-import type { Bridge } from "@relate/relate-phaser";
+import type { Bridge } from "@relate/contrib-phaser";
 import type { GameState } from "./game/state.js";
 import { DEMO_AT, DEMO_DARKEN, DEMO_LIGHT } from "./game/statements.js";
 

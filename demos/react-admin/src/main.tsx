@@ -1,7 +1,7 @@
-import { createClient } from "@relate/web";
-import { createDataProvider } from "@relate/react-admin";
+import { createClient } from "@relate/contrib-web";
+import { createDataProvider } from "@relate/contrib-react-admin";
 import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
-import workerUrl from "@relate/web/worker?worker&url";
+import workerUrl from "@relate/contrib-web/worker?worker&url";
 import { createRoot } from "react-dom/client";
 import { App } from "./App.js";
 import { schema } from "./schema.js";

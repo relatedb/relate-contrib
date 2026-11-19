@@ -2,7 +2,7 @@
 // reads this and never awaits. Actions go through the bridge; an extension needs its reply to know what the new hexes
 // contain, so it shows as pending until the reply arrives, and a further action waits for it.
 import { neighbourAt, neighbours, oppositeSide, sideTo, turnSide, type Feature, type Side, type Terrain } from "../hex/core/index.js";
-import { ReplyCache, type Bridge, type CacheClient, type Patch, type Row } from "@relate/relate-phaser";
+import { ReplyCache, type Bridge, type CacheClient, type Patch, type Row } from "@relate/contrib-phaser";
 import {
   BRANCH_EXTEND, END_DAY, EXTEND, PLACE_FLAG, PLACE_WAYMARKER, READ_BOARD, READ_EDGES, READ_HEXES, READ_PLAYER, REEL_IN, SECURE, STEP, TRAVEL, TOWERS,
   UNDO_CLEAR_EDGES, UNDO_CLEAR_PARTS, UNDO_HEXES, UNDO_LOOSE, UNDO_PARTS, UNDO_PLAYER, UNDO_SECURED,

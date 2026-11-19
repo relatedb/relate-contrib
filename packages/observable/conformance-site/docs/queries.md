@@ -3,7 +3,7 @@
 Rows from the tagged template feed a chart, a table and a select. Values interpolated into the template are bound parameters.
 
 ```js
-import {open} from "@relate/observable";
+import {open} from "@relate/contrib-observable";
 import {engine, variants, worker} from "./lib/files.js";
 const db = await open({engine, worker, graph: variants.a, invalidation});
 await db.ready;

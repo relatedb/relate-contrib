@@ -45,8 +45,8 @@ beforeAll(() => {
   writeFileSync(
     join(consumer, "src/main.js"),
     `import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
-import { createClient } from "@relate/web";
-import { validate } from "@relate/web/validate";
+import { createClient } from "@relate/contrib-web";
+import { validate } from "@relate/contrib-web/validate";
 const document = { version: 1, nodes: [{ id: "a", labels: ["Page"] }, { id: "b", labels: ["Page"] }, { id: "c" }], links: [{ source: "a", target: "b", type: "T" }] };
 window.validated = validate(document).ok;
 const client = createClient({ engineUrl, graph: { document }, navigation: "client-routing" });
@@ -70,7 +70,7 @@ describe("the packed core in a clean project", () => {
     expect(listing).toContain("package/dist/conformance/run.js");
     expect(listing.some((f) => f.includes("example-site/public/descriptor.json"))).toBe(true);
     expect(listing.some((f) => /\b(tests|vendor|node_modules)\//.test(f))).toBe(false);
-    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/web/package.json"), "utf8"));
+    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/contrib-web/package.json"), "utf8"));
     expect(manifest.dependencies).toBeUndefined();
     expect(Object.keys(manifest.peerDependencies)).toContain("@relate/relate-wasm");
   });

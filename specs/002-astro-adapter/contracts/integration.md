@@ -1,7 +1,7 @@
-# Contract: the integration (`@relate/astro`)
+# Contract: the integration (`@relate/contrib-astro`)
 
 ```ts
-import relate from "@relate/astro";
+import relate from "@relate/contrib-astro";
 relate(options?: {
   graphs?: Record<string, {
     source: string;                       // path to a module (default export: () => Doc | Promise<Doc>) or a .json file

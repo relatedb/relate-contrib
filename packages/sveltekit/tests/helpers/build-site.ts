@@ -1,5 +1,5 @@
 // Builds a small fixture SvelteKit app with the adapter under test. The app lives in `conformance-site/.fixtures/<unique>` so that it
-// resolves SvelteKit, Svelte, the adapters and `@relate/sveltekit` from the conformance site's `node_modules`, as a workspace package does.
+// resolves SvelteKit, Svelte, the adapters and `@relate/contrib-sveltekit` from the conformance site's `node_modules`, as a workspace package does.
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";

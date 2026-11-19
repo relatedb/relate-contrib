@@ -1,11 +1,11 @@
 // The graph loaders: a source's document, validated and in canonical text, and the ADR-003 descriptor that names its revision.
-import { descriptorOf, evaluate } from "@relate/web/build";
-import type { Evaluated } from "@relate/web/build";
-import { validateDescriptor } from "@relate/web/validate";
-import type { IndexSpec } from "@relate/web/validate";
+import { descriptorOf, evaluate } from "@relate/contrib-web/build";
+import type { Evaluated } from "@relate/contrib-web/build";
+import { validateDescriptor } from "@relate/contrib-web/validate";
+import type { IndexSpec } from "@relate/contrib-web/validate";
 import { fail } from "./fail.js";
 
-export const OWNER = "@relate/observable";
+export const OWNER = "@relate/contrib-observable";
 
 /** A module's default export: a function returning an ADR-002 document, or a promise of one. */
 export type Source = () => unknown;

@@ -26,10 +26,10 @@ const revision = async (): Promise<string> => JSON.parse((await get("/_file/data
 
 beforeAll(async () => {
   site = makeSite("preview", {
-    "docs/data/relate.wasm.js": `import { engine } from "@relate/observable/loader";\nawait engine();\n`,
-    "docs/data/relate-worker.js.js": `import { worker } from "@relate/observable/loader";\nawait worker();\n`,
-    "docs/data/pantry.descriptor.json.js": `import { descriptor } from "@relate/observable/loader";\nimport source from "../lib/pantry.js";\nawait descriptor("pantry", source);\n`,
-    "docs/data/broken.graph.json.js": `import { document } from "@relate/observable/loader";\nawait document("broken", () => ({ version: 1, nodes: [{ labels: ["x"] }], links: [] }));\n`,
+    "docs/data/relate.wasm.js": `import { engine } from "@relate/contrib-observable/loader";\nawait engine();\n`,
+    "docs/data/relate-worker.js.js": `import { worker } from "@relate/contrib-observable/loader";\nawait worker();\n`,
+    "docs/data/pantry.descriptor.json.js": `import { descriptor } from "@relate/contrib-observable/loader";\nimport source from "../lib/pantry.js";\nawait descriptor("pantry", source);\n`,
+    "docs/data/broken.graph.json.js": `import { document } from "@relate/contrib-observable/loader";\nawait document("broken", () => ({ version: 1, nodes: [{ labels: ["x"] }], links: [] }));\n`,
     "docs/lib/pantry.js": lib(10),
     "docs/index.md": "# preview\n\n```js\nconst a = await FileAttachment(\"data/relate.wasm\").url();\nconst b = await FileAttachment(\"data/relate-worker.js\").url();\nconst c = await FileAttachment(\"data/pantry.descriptor.json\").json();\nconst d = FileAttachment(\"data/broken.graph.json\");\ndisplay(html`<p>${a} ${b} ${c.revision} ${d.name}</p>`);\n```\n",
   });

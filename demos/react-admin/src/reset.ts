@@ -1,4 +1,4 @@
-import { resetCatalog, type Client } from "@relate/web";
+import { resetCatalog, type Client } from "@relate/contrib-web";
 
 /**
  * Discard the stored records and load the demo data again. A catalog file that does not parse is never written over,

@@ -1,6 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
-import GraphData from "@relate/astro/graph-data";
+import GraphData from "@relate/contrib-astro/graph-data";
 const nodes = Array.from({ length: 12 }, (_, i) => ({ id: `n${i}`, labels: ["Item"], properties: { n: i } }));
 const links = nodes.slice(1).map((n, i) => ({ source: `n${i}`, target: n.id, type: "NEXT" }));
 ---

@@ -27,8 +27,8 @@ export default defineConfig({
     // The adapter is imported by name; here the name points at the package's own build output.
     resolve: {
       alias: {
-        "@relate/astro/client": here("../dist/client/index.js"),
-        "@relate/astro/graph-data": here("../src/GraphData.astro"),
+        "@relate/contrib-astro/client": here("../dist/client/index.js"),
+        "@relate/contrib-astro/graph-data": here("../src/GraphData.astro"),
       },
     },
     server: { fs: { allow: [here("../../../")] } },

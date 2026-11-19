@@ -1,4 +1,4 @@
-# Contract: client entry (`@relate/nextjs/client`)
+# Contract: client entry (`@relate/contrib-nextjs/client`)
 
 A `'use client'` module. Hook names and result shapes may change when tasks are written (ADR-005 §2.4).
 

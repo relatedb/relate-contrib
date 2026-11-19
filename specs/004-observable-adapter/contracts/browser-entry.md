@@ -1,4 +1,4 @@
-# Contract: browser entry (`@relate/observable`)
+# Contract: browser entry (`@relate/contrib-observable`)
 
 Imported from a page's cells or a module the page imports. Starts nothing until `open` is called (FR-015).
 

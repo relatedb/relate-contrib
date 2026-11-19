@@ -20,19 +20,19 @@ Observable Framework builds a static site from markdown pages whose fenced `js` 
 
 A bundler fault specific to Framework applies to the repository's own checks: it could not resolve a package installed as a symlink whose real path lies outside the project (`Could not resolve entry module`), and built when the package was copied in or linked from inside the project (SPIKE-001 §4.6). A site inside the repository's workspace gets symlinks to `packages/*`, which are outside the site.
 
-The core package `@relate/web` provides the client, loader, descriptor handling, profiles and a conformance check (ADR-001, ADR-002, ADR-003), the build-time helpers in `@relate/web/build` and a `workerFactory` option that replaces how the worker is constructed (ADR-005). The Astro and Next adapters (ADR-004, ADR-005) add build-time endpoints and a lifecycle on the router's events. What remains for Framework is placing the engine and the worker, declaring graph data through loaders, tying a client to a cell, and shaping results. RFC-001 §5.1 frames the adapter as owning only that wiring; RFC-002 §5.1 and §5.4 list the data sources and the page shapes it has to cover.
+The core package `@relate/contrib-web` provides the client, loader, descriptor handling, profiles and a conformance check (ADR-001, ADR-002, ADR-003), the build-time helpers in `@relate/contrib-web/build` and a `workerFactory` option that replaces how the worker is constructed (ADR-005). The Astro and Next adapters (ADR-004, ADR-005) add build-time endpoints and a lifecycle on the router's events. What remains for Framework is placing the engine and the worker, declaring graph data through loaders, tying a client to a cell, and shaping results. RFC-001 §5.1 frames the adapter as owning only that wiring; RFC-002 §5.1 and §5.4 list the data sources and the page shapes it has to cover.
 
 ## 2. Decision
 
-### 2.1 Package: `@relate/observable`, helpers and no integration
+### 2.1 Package: `@relate/contrib-observable`, helpers and no integration
 
-A workspace package `packages/observable`, published as `@relate/observable`, with three entry points:
+A workspace package `packages/observable`, published as `@relate/contrib-observable`, with three entry points:
 
-- `@relate/observable`, a browser module that pages and components import (section 2.3);
-- `@relate/observable/loader`, helpers that data loaders call (section 2.2);
-- `@relate/observable/results`, the normalization of the engine's envelope (section 2.4), also used by the main entry.
+- `@relate/contrib-observable`, a browser module that pages and components import (section 2.3);
+- `@relate/contrib-observable/loader`, helpers that data loaders call (section 2.2);
+- `@relate/contrib-observable/results`, the normalization of the engine's envelope (section 2.4), also used by the main entry.
 
-Peer dependencies are `@observablehq/framework` (version 1; the spikes ran 1.13.4), `@relate/web` and `@relate/relate-wasm`. The runtime dependencies are `esbuild`, used by the worker loader, and nothing else. The package ships no UI components: a force-directed graph, tables and charts remain the site's own, and `toGraph` (section 2.4) supplies the data for the first.
+Peer dependencies are `@observablehq/framework` (version 1; the spikes ran 1.13.4), `@relate/contrib-web` and `@relate/relate-wasm`. The runtime dependencies are `esbuild`, used by the worker loader, and nothing else. The package ships no UI components: a force-directed graph, tables and charts remain the site's own, and `toGraph` (section 2.4) supplies the data for the first.
 
 ### 2.2 Build time: loaders place the engine and the worker, and declare graphs
 
@@ -42,22 +42,22 @@ A site adds data loaders, each a few lines that call a helper. Nothing is inject
 
 ```js
 // data/relate.wasm.js            // data/relate-worker.js.js
-import { engine } from "@relate/observable/loader";   import { worker } from "@relate/observable/loader";
+import { engine } from "@relate/contrib-observable/loader";   import { worker } from "@relate/contrib-observable/loader";
 await engine();                                        await worker();
 ```
 
-`engine()` writes the bytes of the `.wasm` file of the site's installed `@relate/relate-wasm` to standard output. `worker()` bundles the core's worker entry (`@relate/web/worker`) and the engine's JavaScript glue into one self-contained ES module with esbuild and writes it to standard output. The bundle is made when the site builds, from the engine the site has installed, so the glue and the binary always come from the same package version; a bundle shipped inside `@relate/observable` could be paired with a different engine version, and the glue and the binary only work together. The published names are `relate.wasm` and `relate-worker.js` (the second keeps a JavaScript extension so a static host serves it with a script's content type).
+`engine()` writes the bytes of the `.wasm` file of the site's installed `@relate/relate-wasm` to standard output. `worker()` bundles the core's worker entry (`@relate/contrib-web/worker`) and the engine's JavaScript glue into one self-contained ES module with esbuild and writes it to standard output. The bundle is made when the site builds, from the engine the site has installed, so the glue and the binary always come from the same package version; a bundle shipped inside `@relate/contrib-observable` could be paired with a different engine version, and the glue and the binary only work together. The published names are `relate.wasm` and `relate-worker.js` (the second keeps a JavaScript extension so a static host serves it with a script's content type).
 
 **Graph data.** A graph has an id (the id rule of ADR-003) and a source: a module that default-exports a function returning an ADR-002 document, or a promise of one, as in ADR-004 and ADR-005. A graph is declared as a pair of loaders sharing that source, or as a single loader when it needs no stored copy:
 
 ```js
 // data/pantry.graph.json.js                              // data/pantry.descriptor.json.js
-import { document } from "@relate/observable/loader";      import { descriptor } from "@relate/observable/loader";
+import { document } from "@relate/contrib-observable/loader";      import { descriptor } from "@relate/contrib-observable/loader";
 import source from "../../src/pantry.js";                   import source from "../../src/pantry.js";
 await document("pantry", source);                           await descriptor("pantry", source, { indexes: [{ label: "Page", property: "id" }] });
 ```
 
-`document` evaluates the source, validates the result with `@relate/web/validate` and writes the canonical text (`@relate/web/build`) with the revision it hashes to in the document's own `revision` key (ADR-002). `descriptor` evaluates the same source and writes the ADR-003 descriptor (a small JSON file that names a graph's data location, revision and counts, so a page can restore a stored copy of the graph, kept in the browser, instead of fetching the data), with `revision` computed from the canonical text, counts for `data.nodes` and `data.links`, and `data.url` set to the logical name of the data file (`data/pantry.graph.json`) because the published name is not known when the descriptor is written. The page replaces it (section 2.3). A source that is invalid, or a loader that fails, fails the build with the first problem's path, because Framework fails a build whose loader exits with an error. The two loaders evaluate the source independently, so a source that is not deterministic gives a descriptor whose revision disagrees with the document; the core's agreement check (which compares the descriptor's revision and counts with the document's) reports that at load as a `mismatch`, and the package test builds twice and compares.
+`document` evaluates the source, validates the result with `@relate/contrib-web/validate` and writes the canonical text (`@relate/contrib-web/build`) with the revision it hashes to in the document's own `revision` key (ADR-002). `descriptor` evaluates the same source and writes the ADR-003 descriptor (a small JSON file that names a graph's data location, revision and counts, so a page can restore a stored copy of the graph, kept in the browser, instead of fetching the data), with `revision` computed from the canonical text, counts for `data.nodes` and `data.links`, and `data.url` set to the logical name of the data file (`data/pantry.graph.json`) because the published name is not known when the descriptor is written. The page replaces it (section 2.3). A source that is invalid, or a loader that fails, fails the build with the first problem's path, because Framework fails a build whose loader exits with an error. The two loaders evaluate the source independently, so a source that is not deterministic gives a descriptor whose revision disagrees with the document; the core's agreement check (which compares the descriptor's revision and counts with the document's) reports that at load as a `mismatch`, and the package test builds twice and compares.
 
 **Freshness.** A loader's output is refreshed only when its cache is cleared (section 1), so an edit to a graph source, a content change that a source reads, or an engine upgrade reaches the published files only after a clean. The site's `build` and `dev` scripts therefore remove the cache folder (`docs/.observablehq/cache`; Framework 1.13 has no `clean` command, and its own templates clear the folder with a script) first, so every loader reruns on every build and the document and the descriptor cannot go stale independently of each other; the package's README gives the scripts. In the preview server, after the server has started, a source edit takes effect only when a loader script is saved or the server is restarted after a clean. A wrapper command that removes only the adapter's cached outputs is follow-up work.
 
@@ -65,7 +65,7 @@ A graph with no loader is also possible: a cell passes a document it holds as a 
 
 ### 2.3 Client module: one call, tied to the cell
 
-`@relate/observable` exports `open(options)`:
+`@relate/contrib-observable` exports `open(options)`:
 
 ```js
 const db = await open({
@@ -91,7 +91,7 @@ Framework does not render cells on a server, so a cell's output never has to mat
 
 ### 2.4 Results: the spike's normalization and tagged template
 
-The core returns the envelope unaltered, and it stays so. `@relate/observable/results` holds what SPIKE-001 built, adjusted to the current engine:
+The core returns the envelope unaltered, and it stays so. `@relate/contrib-observable/results` holds what SPIKE-001 built, adjusted to the current engine:
 
 - `normalize(envelope)` returns `{ columns, columnTypes, rows, tableRows, stats, error, elapsedMs }`. Rows are keyed in column order. `rows` keep the engine's tagged entities and `tableRows` flatten them (`{ id, labels, ...properties }` for a node, `{ id, type, start, end, ...properties }` for a relationship, an array for a path) with a non-enumerable `toString` so Inputs.table shows a readable cell.
 - `toGraph(result)` collects every node and relationship in a result into `{ nodes: [{ id, label, name, properties }], links: [{ source, target, type }] }` for a force layout, dropping relationships whose endpoints are not in the result. A result with no entities gives an empty graph.
@@ -109,15 +109,15 @@ The spike's reorder by `columns` is kept; if the engine later returns column ord
 
 ### 2.6 Checked against the core's conformance scenarios
 
-`packages/observable/conformance-site` is a Framework project, not published, that reproduces the example pages' `data-rel-*` markup (defined in the core's `conformance/example-site/rel-page.ts`) from cells, using only `@relate/observable`. It has a page for each way a graph is used: a graph from a descriptor and data pair, a page with its own document, a page with two graphs, and the pages the scenarios navigate between. It is built once, with `observable build`, and served as static files. `runConformance` from `@relate/web/conformance` runs against it with the per-page profile in Chromium, Firefox and WebKit; the scenarios that need a retained instance belong to the other profile and are not run. A failure blocks the adapter's release.
+`packages/observable/conformance-site` is a Framework project, not published, that reproduces the example pages' `data-rel-*` markup (defined in the core's `conformance/example-site/rel-page.ts`) from cells, using only `@relate/contrib-observable`. It has a page for each way a graph is used: a graph from a descriptor and data pair, a page with its own document, a page with two graphs, and the pages the scenarios navigate between. It is built once, with `observable build`, and served as static files. `runConformance` from `@relate/contrib-web/conformance` runs against it with the per-page profile in Chromium, Firefox and WebKit; the scenarios that need a retained instance belong to the other profile and are not run. A failure blocks the adapter's release.
 
-The conformance site installs `@relate/observable` and `@relate/web` as copies (pnpm injected workspace dependencies), so they are real directories inside the project, because Framework's bundler failed on symlinks whose target is outside it. The adapter's own tests, in `packages/observable/tests`, cover: the loaders' output against `@relate/web/build` (revision and canonical text), a build failure for an invalid document, a client destroyed on invalidation and on `pagehide`, and the normalization and the tagged template against the real engine in Node (the spike's fourteen tests, rewritten for the current engine). A package test packs `@relate/observable`, the core and the engine, installs them in a clean Framework project outside the repository, builds it, and runs a page.
+The conformance site installs `@relate/contrib-observable` and `@relate/contrib-web` as copies (pnpm injected workspace dependencies), so they are real directories inside the project, because Framework's bundler failed on symlinks whose target is outside it. The adapter's own tests, in `packages/observable/tests`, cover: the loaders' output against `@relate/contrib-web/build` (revision and canonical text), a build failure for an invalid document, a client destroyed on invalidation and on `pagehide`, and the normalization and the tagged template against the real engine in Node (the spike's fourteen tests, rewritten for the current engine). A package test packs `@relate/contrib-observable`, the core and the engine, installs them in a clean Framework project outside the repository, builds it, and runs a page.
 
 ## 3. Alternatives Considered
 
 - **Copy the `.wasm` into `data/` with a script run before `dev` and `build`** (the spike's `sync-wasm`). Rejected: it adds a step to every site's scripts, runs before the preview server only when the site remembers to, and cannot serve a worker. A loader runs in both modes and its output is hashed.
 - **Import the core and let Framework's bundler place the worker.** Rejected: observed not to work. The worker's module is not emitted, so the page requests a file that does not exist.
-- **Ship a prebuilt worker bundle inside `@relate/observable`.** Rejected: the bundle contains the engine's glue, which has to match the binary the site serves, and the site's installed engine can differ from the one the adapter was built with.
+- **Ship a prebuilt worker bundle inside `@relate/contrib-observable`.** Rejected: the bundle contains the engine's glue, which has to match the binary the site serves, and the site's installed engine can differ from the one the adapter was built with.
 - **Build the worker from a Blob URL over the bundle's text.** Rejected: the bundle's text still has to reach the page as a file, so a loader is needed either way, and some content security policies block workers made from blob URLs.
 - **Load the engine and the worker from a CDN.** Rejected: the version served can drift from the one the site was built and tested with, and the site gains a third-party dependency and fails offline.
 - **An instance on the main thread, as in the spike.** Rejected: the core supports only a worker (ADR-001), where a trapped or runaway instance is replaced without freezing the page; the spike's main-thread instance cannot be stopped.

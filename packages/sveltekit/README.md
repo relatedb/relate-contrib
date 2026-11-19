@@ -1,11 +1,11 @@
-# @relate/sveltekit
+# @relate/contrib-sveltekit
 
-Implements [ADR-007](../../design/adr/ADR-007-sveltekit-adapter.md). Needs SvelteKit 3, Svelte 5, `@relate/web` and `@relate/relate-wasm` (all peer dependencies). The static and Node adapters are supported; edge and serverless adapters, SvelteKit 2 and hash routing are not.
+Implements [ADR-007](../../design/adr/ADR-007-sveltekit-adapter.md). Needs SvelteKit 3, Svelte 5, `@relate/contrib-web` and `@relate/relate-wasm` (all peer dependencies). The static and Node adapters are supported; edge and serverless adapters, SvelteKit 2 and hash routing are not.
 
 Two entries:
 
-- `@relate/sveltekit/server`: plain TypeScript for server code: `createGraphRoute(graphs)` and `catalog(graphs)`.
-- `@relate/sveltekit`: Svelte source your build compiles (`.svelte` components and `.svelte.js` rune modules): `RelateProvider`, `GraphData`, `useGraph`, `useQuery`, `graph`.
+- `@relate/contrib-sveltekit/server`: plain TypeScript for server code: `createGraphRoute(graphs)` and `catalog(graphs)`.
+- `@relate/contrib-sveltekit`: Svelte source your build compiles (`.svelte` components and `.svelte.js` rune modules): `RelateProvider`, `GraphData`, `useGraph`, `useQuery`, `graph`.
 
 There is no Vite plugin and no change to your build configuration.
 
@@ -26,7 +26,7 @@ A `source` returns an ADR-002 document (or a promise of one). `lifetime` is `"pa
 
 ```ts
 // src/routes/relate/[id]/[file]/+server.ts
-import { createGraphRoute } from "@relate/sveltekit/server";
+import { createGraphRoute } from "@relate/contrib-sveltekit/server";
 import { graphs } from "#lib/graphs.ts";
 export const prerender = true;
 export const { GET, entries } = createGraphRoute(graphs);
@@ -38,7 +38,7 @@ At build time each graph gets `relate/<id>/descriptor.json` and `relate/<id>/gra
 
 ```ts
 // src/routes/+layout.server.ts
-import { catalog } from "@relate/sveltekit/server";
+import { catalog } from "@relate/contrib-sveltekit/server";
 import { graphs } from "#lib/graphs.ts";
 export const load = () => ({ catalog: catalog(graphs) });
 ```
@@ -48,7 +48,7 @@ export const load = () => ({ catalog: catalog(graphs) });
 ```svelte
 <script>
   import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
-  import { RelateProvider } from "@relate/sveltekit";
+  import { RelateProvider } from "@relate/contrib-sveltekit";
   let { data, children } = $props();
 </script>
 <RelateProvider catalog={data.catalog} {engineUrl}>{@render children()}</RelateProvider>
@@ -60,7 +60,7 @@ export const load = () => ({ catalog: catalog(graphs) });
 
 ```svelte
 <script>
-  import { useQuery } from "@relate/sveltekit";
+  import { useQuery } from "@relate/contrib-sveltekit";
   const pages = useQuery("pantry", "MATCH (p:Page) RETURN count(p) AS n");
 </script>
 <p>{pages.rows ? pages.rows[0].n : "…"} pages ({pages.status})</p>
@@ -72,7 +72,7 @@ export const load = () => ({ catalog: catalog(graphs) });
 
 ```svelte
 <script>
-  import { GraphData } from "@relate/sveltekit";
+  import { GraphData } from "@relate/contrib-sveltekit";
   const document = { version: 1, nodes: [/* ... */], links: [] };
 </script>
 <GraphData id="recipe" {document} page="/recipes/soup" config={{ indexes: [{ label: "Step", property: "id" }] }} />
@@ -98,7 +98,7 @@ The helpers pass the core's client, status and events through unaltered: recover
 ```sh
 pnpm run build:wasm
 pnpm install
-pnpm --filter @relate/sveltekit build
+pnpm --filter @relate/contrib-sveltekit build
 pnpm test:sveltekit              # route builder, registry, inline lookup, build failures, development server
 pnpm test:sveltekit-browsers     # lifetimes, inline graphs, direct lookup, hydration, on-demand rendering
 pnpm test:sveltekit-conformance  # the core's conformance scenarios over conformance-site/ (both profiles, both outputs)

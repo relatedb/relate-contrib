@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { useQuery } from "@relate/sveltekit";
+  import { useQuery } from "@relate/contrib-sveltekit";
   import RelPage from "#lib/RelPage.svelte";
   // one holder whose id changes: it must release the old graph and acquire the new one
   let which = $state("small");

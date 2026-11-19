@@ -1,10 +1,10 @@
 "use client";
 // For the pages that carry inline graphs: asks for the graph, counts its nodes and shows the count in the page's static
 // markup. The clients are exposed for the adapter's own tests (`window.__relClients`).
-import { useGraph } from "@relate/nextjs/client";
+import { useGraph } from "@relate/contrib-nextjs/client";
 import { visible } from "./visible";
 import { useEffect } from "react";
-import type { Client } from "@relate/web";
+import type { Client } from "@relate/contrib-web";
 
 type Win = { __relClients?: Record<string, Client> };
 

@@ -5,11 +5,11 @@
 
 <script lang="ts">
   // The markup the core's conformance scenarios drive (packages/web/conformance/example-site/rel-page.ts): every observable thing is a
-  // `data-rel-*` element. The behavior is written against `@relate/sveltekit` only. Query parameters: `navigation` (the profile) and
+  // `data-rel-*` element. The behavior is written against `@relate/contrib-sveltekit` only. Query parameters: `navigation` (the profile) and
   // `variant` (a, b, mismatch, broken: which descriptor the shared graph uses).
-  import { useGraph } from "@relate/sveltekit";
-  import { attachView } from "@relate/web";
-  import type { Client, View } from "@relate/web";
+  import { useGraph } from "@relate/contrib-sveltekit";
+  import { attachView } from "@relate/contrib-web";
+  import type { Client, View } from "@relate/contrib-web";
   import Nav from "./Nav.svelte";
 
   let { title, graph = "example", label = "Page", notesPage = false, variant: pageVariant, bare = false, children }: { title: string; graph?: string; label?: string; notesPage?: boolean; variant?: string; bare?: boolean; children?: import("svelte").Snippet } = $props();

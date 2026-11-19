@@ -1,6 +1,6 @@
 // The cache and the actions against the real engine (WebAssembly, in Node): what a player may know, and an extension.
 import { beforeEach, describe, expect, it } from "vitest";
-import { Bridge } from "@relate/relate-phaser";
+import { Bridge } from "@relate/contrib-phaser";
 import { GameState } from "../src/game/state.js";
 import { COLS, ROWS, SETTLEMENTS, START_MARKERS, START_STEPS, generateRows } from "../src/game/world.js";
 import { neighbours } from "../src/hex/core/index.js";

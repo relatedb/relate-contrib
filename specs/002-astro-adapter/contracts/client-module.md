@@ -1,7 +1,7 @@
-# Contract: the client module (`@relate/astro/client`)
+# Contract: the client module (`@relate/contrib-astro/client`)
 
 ```ts
-import { onPage, graph } from "@relate/astro/client";
+import { onPage, graph } from "@relate/contrib-astro/client";
 
 onPage(
   (page) => {

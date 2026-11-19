@@ -12,7 +12,7 @@ const build = (...args: Parameters<typeof buildSite>) => {
 afterAll(() => built.forEach((b) => b.remove()));
 
 const page = (jsx: string) => ({
-  "app/inline/page.jsx": `import { GraphData } from "@relate/nextjs/server";
+  "app/inline/page.jsx": `import { GraphData } from "@relate/contrib-nextjs/server";
 const ok = { version: 1, nodes: [{ id: "a" }, { id: "b" }], links: [] };
 export default function Page() { return <main>${jsx}</main>; }
 `,
@@ -34,7 +34,7 @@ describe("inline graphs in a build", () => {
   });
 
   it("fails, saying what is missing, when the page prop is left out", () => {
-    const b = build({ files: { "app/inline/page.jsx": `import { GraphData } from "@relate/nextjs/server";\nexport default function Page() { return <main><GraphData id="a" document={{ version: 1, nodes: [], links: [] }} /></main>; }\n` } });
+    const b = build({ files: { "app/inline/page.jsx": `import { GraphData } from "@relate/contrib-nextjs/server";\nexport default function Page() { return <main><GraphData id="a" document={{ version: 1, nodes: [], links: [] }} /></main>; }\n` } });
     expect(b.status).not.toBe(0);
     expect(b.output).toMatch(/GraphData needs a page prop/);
   });

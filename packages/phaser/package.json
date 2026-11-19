@@ -1,5 +1,5 @@
 {
-  "name": "@relate/relate-phaser",
+  "name": "@relate/contrib-phaser",
   "version": "0.1.0",
   "description": "Building blocks for a Phaser game that keeps its world in the embedded graph: a statement queue, a reply cache the frame loop reads, a throwaway client and a version watcher.",
   "private": true,
@@ -22,7 +22,7 @@
     "test:phaser-trace": "tsx tests/trace/check-trace.ts"
   },
   "peerDependencies": {
-    "@relate/web": "*",
+    "@relate/contrib-web": "*",
     "phaser": "^4.0.0"
   },
   "peerDependenciesMeta": {
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@relate/relate-wasm": "*",
-    "@relate/web": "workspace:*",
+    "@relate/contrib-web": "workspace:*",
     "@types/node": "^26.6.6",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

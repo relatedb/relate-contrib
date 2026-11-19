@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build ADR-012 as a package, `@relate/relate-phaser` (`packages/phaser`): a statement queue (`Bridge`), a generic reply cache (`ReplyCache<S>`), a throwaway client, and a version watcher with a thin Phaser scene helper. The package is extracted from the path explorer, and the demo is changed to consume it, so the demo's 202 unit tests are the first check of the extraction.
+Build ADR-012 as a package, `@relate/contrib-phaser` (`packages/phaser`): a statement queue (`Bridge`), a generic reply cache (`ReplyCache<S>`), a throwaway client, and a version watcher with a thin Phaser scene helper. The package is extracted from the path explorer, and the demo is changed to consume it, so the demo's 202 unit tests are the first check of the extraction.
 
 Planning read the demo's code and the core's client against the ADR, and found three places where the ADR's wording needs a concrete shape ([research.md](research.md)): the demo's `act` takes a closure, not a statement; the core runs generation listeners after the client is `ready`, once for the first instance too; and the demo's scene must order other work around its redraw. None changes a decision of ADR-012; each is settled in research as a refinement the contract records.
 
@@ -14,7 +14,7 @@ Planning read the demo's code and the core's client against the ADR, and found t
 
 **Language/Version**: TypeScript (ESM), as the other packages; Node 24 for unit tests.
 
-**Primary Dependencies**: peers `@relate/web` (types, `GraphError`, `createClient`) and `phaser` (optional; the scene helper is structural and imports no Phaser value). The package imports no engine code (constitution VI) and references no repository path.
+**Primary Dependencies**: peers `@relate/contrib-web` (types, `GraphError`, `createClient`) and `phaser` (optional; the scene helper is structural and imports no Phaser value). The package imports no engine code (constitution VI) and references no repository path.
 
 **Storage**: none. The package stores nothing; the demo's application graph and its throwaway graph are unchanged.
 
@@ -66,8 +66,8 @@ specs/009-relate-phaser-package/
 ### Source Code
 
 ```text
-packages/phaser/                 # new: @relate/relate-phaser
-├── package.json                 #   0.1.0, private until the first release; peers @relate/web and phaser (optional)
+packages/phaser/                 # new: @relate/contrib-phaser
+├── package.json                 #   0.1.0, private until the first release; peers @relate/contrib-web and phaser (optional)
 ├── src/
 │   ├── errors.ts                #   StatementError
 │   ├── bridge.ts                #   Bridge: the statement queue

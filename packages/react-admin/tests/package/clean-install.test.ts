@@ -28,7 +28,7 @@ const files: Record<string, string> = {
   "check.mjs": `import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
-import { createDataProvider } from "@relate/react-admin";
+import { createDataProvider } from "@relate/contrib-react-admin";
 
 // the engine, in memory, initialised from the installed package's binary
 const dir = dirname(createRequire(import.meta.url).resolve("@relate/relate-wasm"));
@@ -62,7 +62,7 @@ const searched = await provider.getList("people", { pagination: { page: 1, perPa
 const duplicate = await provider.create("people", { data: { id: list.data[0].id, name: "dup" } }).then(() => "created", (e) => String(e.status));
 console.log(JSON.stringify({ company: company.data, total: list.total, searched: searched.data.map((r) => r.name), names: list.data.map((r) => r.name), companyOfFirst: list.data[0].company, duplicate }));
 `,
-  "types.ts": `import { createDataProvider, ensureSchema, ProviderError, type ProviderClient, type Schema } from "@relate/react-admin";
+  "types.ts": `import { createDataProvider, ensureSchema, ProviderError, type ProviderClient, type Schema } from "@relate/contrib-react-admin";
 import type { DataProvider } from "react-admin";
 
 const schema: Schema = { resources: { things: { label: "Thing", fields: [{ name: "name", type: "string", sortable: true }] } } };
@@ -81,7 +81,7 @@ beforeAll(() => {
   run("pnpm", ["run", "build"], pkg);
   run("pnpm", ["pack", "--pack-destination", work], core);
   run("pnpm", ["pack", "--pack-destination", work], pkg);
-  tarball = tarballIn(work, "relate-react-admin-");
+  tarball = tarballIn(work, "relate-contrib-react-admin-");
 
   consumer = join(work, "consumer");
   mkdirSync(consumer, { recursive: true });
@@ -89,7 +89,7 @@ beforeAll(() => {
   writeFileSync(join(consumer, "pnpm-workspace.yaml"), "allowBuilds:\n  esbuild: true\n");
   run(
     "pnpm",
-    ["add", "--prefer-offline", tarball, tarballIn(work, "relate-web-"), `file:${engine}`, "react-admin@5.15.6", "react@^19", "react-dom@^19", "react-router@^7", "react-hook-form@^7", "@tanstack/react-query@^5", "typescript@^7"],
+    ["add", "--prefer-offline", tarball, tarballIn(work, "relate-contrib-web-"), `file:${engine}`, "react-admin@5.15.6", "react@^19", "react-dom@^19", "react-router@^7", "react-hook-form@^7", "@tanstack/react-query@^5", "typescript@^7"],
     consumer,
   );
   for (const [path, text] of Object.entries(files)) writeFileSync(join(consumer, path), text);
@@ -104,12 +104,12 @@ describe("the packed package in a clean project", () => {
     const listing = run("tar", ["-tzf", tarball], work).split("\n").filter(Boolean);
     for (const f of ["package/package.json", "package/dist/index.js", "package/dist/index.d.ts", "package/dist/provider.js"]) expect(listing, f).toContain(f);
     expect(listing.some((f) => /\b(tests|src|specs|vendor|node_modules)\//.test(f))).toBe(false);
-    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/react-admin/package.json"), "utf8"));
+    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/contrib-react-admin/package.json"), "utf8"));
     expect(manifest.dependencies).toBeUndefined();
-    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@relate/web", "react-admin"]);
+    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@relate/contrib-web", "react-admin"]);
     expect(manifest.peerDependencies["react-admin"]).toMatch(/^\^5/);
     // nothing in what was installed points back into this repository
-    const installed = join(consumer, "node_modules/@relate/react-admin");
+    const installed = join(consumer, "node_modules/@relate/contrib-react-admin");
     const all = readdirSync(installed, { recursive: true, encoding: "utf8" }).filter((f) => /\.(js|ts|json)$/.test(f));
     for (const f of all) expect(readFileSync(join(installed, f), "utf8"), f).not.toContain(repo);
   });

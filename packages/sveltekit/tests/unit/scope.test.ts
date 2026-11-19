@@ -18,8 +18,8 @@ describe("what this feature leaves alone (FR-033)", () => {
       const text = readFileSync(file, "utf8");
       for (const m of text.matchAll(/from\s+["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)/g)) {
         const spec = (m[1] ?? m[2])!;
-        expect(spec, file).not.toMatch(/packages\/|@relate\/(astro|nextjs|observable|sveltekit)\b/);
-        const core = /^@relate\/web(\/.*)?$/.exec(spec);
+        expect(spec, file).not.toMatch(/packages\/|@relate\/contrib-(astro|nextjs|observable|sveltekit)\b/);
+        const core = /^@relate\/contrib-web(\/.*)?$/.exec(spec);
         if (core) expect(exported.has(core[1] ?? "."), `${file}: ${spec}`).toBe(true);
       }
     }

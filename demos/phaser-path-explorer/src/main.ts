@@ -1,8 +1,8 @@
 import Phaser from "phaser";
 import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
-import { createClient } from "@relate/web";
+import { createClient } from "@relate/contrib-web";
 import { DEFAULT_PIXEL, MapScene, boardSizePx } from "./game/MapScene.js";
-import { Bridge, createThrowawayClient } from "@relate/relate-phaser";
+import { Bridge, createThrowawayClient } from "@relate/contrib-phaser";
 import { GameState } from "./game/state.js";
 import { COLS, ROWS, generateRows } from "./game/world.js";
 import { APPLICATION, worldDocument } from "./game/graph.js";

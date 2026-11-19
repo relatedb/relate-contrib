@@ -6,11 +6,11 @@
 
 **Status**: Implemented (ADR-006)
 
-**Input**: User description: "The Observable Framework adapter (`@relate/observable`): a workspace package in `packages/observable` that implements accepted ADR-006 (and builds on ADR-001 to ADR-005 and the SPIKE-001 findings) so an Observable Framework 1.x site can embed the browser graph database through the shared core package `@relate/web`. It supplies loaders that place the engine and the worker and publish graph data, a browser call that ties a client to a notebook cell, the result shaping and tagged template carried over from SPIKE-001, a conformance site, adapter tests, and a package test."
+**Input**: User description: "The Observable Framework adapter (`@relate/contrib-observable`): a workspace package in `packages/observable` that implements accepted ADR-006 (and builds on ADR-001 to ADR-005 and the SPIKE-001 findings) so an Observable Framework 1.x site can embed the browser graph database through the shared core package `@relate/contrib-web`. It supplies loaders that place the engine and the worker and publish graph data, a browser call that ties a client to a notebook cell, the result shaping and tagged template carried over from SPIKE-001, a conformance site, adapter tests, and a package test."
 
 ## Overview
 
-The shared core package (`@relate/web`, specification `specs/001-core-package/spec.md`) runs the embedded graph database in a page and knows nothing about any framework. The Astro and Next adapters (`specs/002-astro-adapter/spec.md`, `specs/003-next-adapter/spec.md`) added build-time publishing of graphs, a way for a page to ask for one, and lifetimes that follow the page or its components. Observable Framework, a generator of static sites from markdown pages made of reactive notebook cells, needs the same things in a different shape: it has no plugin or route-injection interface, it places neither the engine's binary nor the core's worker script, every page load is a new document, and the unit of lifetime is a cell that re-runs when a value it reads changes.
+The shared core package (`@relate/contrib-web`, specification `specs/001-core-package/spec.md`) runs the embedded graph database in a page and knows nothing about any framework. The Astro and Next adapters (`specs/002-astro-adapter/spec.md`, `specs/003-next-adapter/spec.md`) added build-time publishing of graphs, a way for a page to ask for one, and lifetimes that follow the page or its components. Observable Framework, a generator of static sites from markdown pages made of reactive notebook cells, needs the same things in a different shape: it has no plugin or route-injection interface, it places neither the engine's binary nor the core's worker script, every page load is a new document, and the unit of lifetime is a cell that re-runs when a value it reads changes.
 
 Three kinds of people depend on it:
 
@@ -178,7 +178,7 @@ The items ADR-006 left for implementation are tested, and the ADR is amended wit
 
 **Package**
 
-- **FR-001**: The package MUST be a workspace package `@relate/observable` with a browser entry, a loader entry and a results entry, and MUST declare Observable Framework (version 1), the core package and the engine package as peer dependencies, with `esbuild` as its only runtime dependency.
+- **FR-001**: The package MUST be a workspace package `@relate/contrib-observable` with a browser entry, a loader entry and a results entry, and MUST declare Observable Framework (version 1), the core package and the engine package as peer dependencies, with `esbuild` as its only runtime dependency.
 - **FR-002**: The package MUST ship no user-interface component and MUST NOT import the engine's binary, so server and loader code that imports the loader entry needs no binary.
 
 **Build time: engine and worker**
@@ -257,4 +257,4 @@ The items ADR-006 left for implementation are tested, and the ADR is amended wit
 - **Graph contents**: the adapter does not decide what a graph contains. The conformance site uses small hand-written graphs, and RFC-003 and RFC-002's decisions will govern real ones.
 - **Evidence**: SPIKE-001 (the engine in Framework, result shapes, the symlink failure) and a scratch Framework build on 2026-11-08 (a worker module is not emitted by default; a binary loader is published under a hashed name; a loader with a JavaScript output name is served as a script; a loader that exits with an error stops the build). This feature depends on those findings and re-checks them through the package test.
 - **Out of scope**: any client-routing profile (Framework has none), a main-thread instance, user-interface components, a generator that writes the loaders, a site-wide graph or navigation element (RFC-003, RFC-004), a default content extractor, dashboards that fetch their data at load, Framework versions other than 1.x, and changes to the core other than anything ADR-006 names.
-- **Names**: the package is `@relate/observable`, in the `@relate` namespace beside `@relate/web`, `@relate/astro` and `@relate/nextjs`. The engine package is `@relate/relate-wasm`.
+- **Names**: the package is `@relate/contrib-observable`, in the `@relate` namespace beside `@relate/contrib-web`, `@relate/contrib-astro` and `@relate/contrib-nextjs`. The engine package is `@relate/relate-wasm`.

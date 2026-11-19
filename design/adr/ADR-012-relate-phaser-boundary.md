@@ -1,13 +1,13 @@
 ---
 id: ADR-012
-title: The boundary and public interface of @relate/relate-phaser
+title: The boundary and public interface of @relate/contrib-phaser
 status: accepted
 rfcs: [RFC-008, RFC-005]
 specs: [specs/009-relate-phaser-package]
 created: 2026-11-18
 ---
 
-# ADR-012: The boundary and public interface of @relate/relate-phaser
+# ADR-012: The boundary and public interface of @relate/contrib-phaser
 
 ## 1. Context
 
@@ -28,7 +28,7 @@ RFC-008 proposes extracting the reusable parts into a package in this repository
 
 ### 2.1 Package and dependencies
 
-A workspace package, `@relate/relate-phaser`, in `packages/phaser`, versioned below 1.0 and documented as unstable until a second consumer has used it (RFC-008, 5.4). It has two peer dependencies: `@relate/web` for the client, and `phaser` for the optional scene helper in 2.4. It does not bundle either and does not import the engine's WebAssembly package; `@relate/web` loads that.
+A workspace package, `@relate/contrib-phaser`, in `packages/phaser`, versioned below 1.0 and documented as unstable until a second consumer has used it (RFC-008, 5.4). It has two peer dependencies: `@relate/contrib-web` for the client, and `phaser` for the optional scene helper in 2.4. It does not bundle either and does not import the engine's WebAssembly package; `@relate/contrib-web` loads that.
 
 ### 2.2 The statement queue
 
@@ -83,7 +83,7 @@ The first release contains the statement queue, the cache mechanism, the throwaw
 - **A check that the cache holds nothing undiscovered.** Rejected for the first release: it needs a game to declare what "discovered" means, which is a statement-level decision this package does not take. It may return with a second consumer.
 - **A fault mechanism in the package** (its own retry, queue replay). Rejected: the core already replaces and bounds recovery (ADR-001), and replaying queued statements after a replacement would apply writes whose intent the player has since moved past.
 - **Build the cache on `client.subscribe`.** Rejected: a subscription re-runs one read and delivers rows, and the client re-runs it after every replacement; the cache instead patches from write replies and holds a pending action with rollback, which subscriptions do not carry. The cache still uses `onGeneration` for the reload.
-- **Put the machinery into `@relate/web`.** Rejected: it serves one kind of consumer and would tie the core's releases to a game framework (RFC-008, 6).
+- **Put the machinery into `@relate/contrib-web`.** Rejected: it serves one kind of consumer and would tie the core's releases to a game framework (RFC-008, 6).
 
 ## 4. Consequences
 
@@ -102,3 +102,9 @@ The first release contains the statement queue, the cache mechanism, the throwaw
 - ADR-001: the client's status, replacement of a failed instance and rejection reasons
 - ADR-009: application graphs in the core, which seed a world on first run
 - ADR-011: the path explorer, the first consumer
+
+## 6. Amendments
+
+### 2026-11-19: the package is `@relate/contrib-phaser`
+
+The package was named `@relate/relate-phaser` when this ADR was accepted. Every package from this repository now has the prefix `@relate/contrib-` (ADR-013 2.9), so it is `@relate/contrib-phaser`. The text above uses the new name; nothing else in the decision changes, and the directory is still `packages/phaser`.

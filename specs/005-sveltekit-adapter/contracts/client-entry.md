@@ -1,4 +1,4 @@
-# Contract: main entry (`@relate/sveltekit`)
+# Contract: main entry (`@relate/contrib-sveltekit`)
 
 Svelte source (`.svelte` components, `.svelte.js` rune modules with `.d.ts` beside each; research D-1) with `svelte` and `default` export conditions (FR-002). Nothing here touches the instance on the server or before mount (FR-022, FR-026).
 

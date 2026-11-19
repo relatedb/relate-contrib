@@ -3,7 +3,7 @@
 Two independent graphs on one page, each with its own worker. A button crashes the first one's engine.
 
 ```js
-import {open} from "@relate/observable";
+import {open} from "@relate/contrib-observable";
 import {engine, smallFile, variants, worker} from "./lib/files.js";
 const one = await open({engine, worker, graph: {document: smallFile}, invalidation});
 const two = await open({engine, worker, graph: variants.a, invalidation});

@@ -1,8 +1,8 @@
-# Contract: the inline graph component (`@relate/astro/graph-data`)
+# Contract: the inline graph component (`@relate/contrib-astro/graph-data`)
 
 ```astro
 ---
-import GraphData from "@relate/astro/graph-data";
+import GraphData from "@relate/contrib-astro/graph-data";
 ---
 <GraphData id="recipe" document={document} config={{ indexes: [{ label: "Step", property: "id" }] }} />
 ```

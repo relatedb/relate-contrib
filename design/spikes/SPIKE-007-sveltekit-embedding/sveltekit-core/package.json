@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@relate/relate-wasm": "file:../../../../vendor/relate-wasm/pkg",
-    "@relate/web": "file:../../../../packages/web"
+    "@relate/contrib-web": "file:../../../../packages/web"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^6.0.1",

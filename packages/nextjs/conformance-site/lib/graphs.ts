@@ -1,5 +1,5 @@
 // The registered graphs of the conformance site.
-import type { Graphs } from "@relate/nextjs/server";
+import type { Graphs } from "@relate/contrib-nextjs/server";
 import { sized, small } from "./documents";
 
 export const graphs = {

@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@relate/relate-wasm": "*",
-    "@relate/sveltekit": "workspace:*",
-    "@relate/web": "workspace:*"
+    "@relate/contrib-sveltekit": "workspace:*",
+    "@relate/contrib-web": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^6.0.1",

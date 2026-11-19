@@ -21,18 +21,18 @@ SvelteKit builds a site from files under `src/routes`, renders pages on a server
 
 An inline graph is a `<script type="application/json">` element written with `{@html}`; with the document escaped by the core's `escapeJson`, text containing `</script>`, `<!--` and `&` survived the round trip, and after a navigation and after going back the document held one such element, since SvelteKit replaces the page.
 
-The core package `@relate/web` provides the client, loader, descriptor handling and profiles (ADR-001, ADR-002, ADR-003), and the build-time code in `@relate/web/build` (canonical text, revision, document preparation, descriptor construction, the inline-document check and JSON escaping; ADR-005). The Astro, Next and Observable adapters (ADR-004, ADR-005, ADR-006) show the shape of an adapter: publish graphs at build time, let a page ask for one, tie its client to the page's lifetime. RFC-001 §5.1 frames an adapter as owning only that wiring; RFC-002 §5.1 and §5.2 list the data sources and page shapes it has to cover.
+The core package `@relate/contrib-web` provides the client, loader, descriptor handling and profiles (ADR-001, ADR-002, ADR-003), and the build-time code in `@relate/contrib-web/build` (canonical text, revision, document preparation, descriptor construction, the inline-document check and JSON escaping; ADR-005). The Astro, Next and Observable adapters (ADR-004, ADR-005, ADR-006) show the shape of an adapter: publish graphs at build time, let a page ask for one, tie its client to the page's lifetime. RFC-001 §5.1 frames an adapter as owning only that wiring; RFC-002 §5.1 and §5.2 list the data sources and page shapes it has to cover.
 
 ## 2. Decision
 
-### 2.1 Package: `@relate/sveltekit`, two entries
+### 2.1 Package: `@relate/contrib-sveltekit`, two entries
 
-A workspace package `packages/sveltekit`, published as `@relate/sveltekit`, for SvelteKit 3 and Svelte 5:
+A workspace package `packages/sveltekit`, published as `@relate/contrib-sveltekit`, for SvelteKit 3 and Svelte 5:
 
-- `@relate/sveltekit`: Svelte source for the browser and for rendering: `RelateProvider`, `GraphData`, `useGraph`, `useQuery`, `graph` (section 2.3 and 2.4), shipped as `.svelte` components (which may use TypeScript) and `.svelte.js` rune modules (plain JavaScript with JSDoc types and a `.d.ts` beside each), with `svelte` and `default` export conditions pointing at them, so the site's build compiles them (a `.svelte.ts` module in a package fails the development server's dependency optimization);
-- `@relate/sveltekit/server`: plain TypeScript for server code: `createGraphRoute` and `catalog` (section 2.2).
+- `@relate/contrib-sveltekit`: Svelte source for the browser and for rendering: `RelateProvider`, `GraphData`, `useGraph`, `useQuery`, `graph` (section 2.3 and 2.4), shipped as `.svelte` components (which may use TypeScript) and `.svelte.js` rune modules (plain JavaScript with JSDoc types and a `.d.ts` beside each), with `svelte` and `default` export conditions pointing at them, so the site's build compiles them (a `.svelte.ts` module in a package fails the development server's dependency optimization);
+- `@relate/contrib-sveltekit/server`: plain TypeScript for server code: `createGraphRoute` and `catalog` (section 2.2).
 
-Peer dependencies are `@sveltejs/kit` (version 3), `svelte` (version 5), `@relate/web` and `@relate/relate-wasm`. There is no other runtime dependency and no Vite plugin: nothing in the adapter needs the bundler's cooperation. The package never imports the engine's binary; the site imports it as a `?url` asset and hands the URL to the provider.
+Peer dependencies are `@sveltejs/kit` (version 3), `svelte` (version 5), `@relate/contrib-web` and `@relate/relate-wasm`. There is no other runtime dependency and no Vite plugin: nothing in the adapter needs the bundler's cooperation. The package never imports the engine's binary; the site imports it as a `?url` asset and hands the URL to the provider.
 
 ### 2.2 Build time: a prerendered route, a catalog from a layout
 
@@ -41,7 +41,7 @@ A graph is identified by an id (the id rule of ADR-003) and declared as in ADR-0
 **The route.** The site writes `src/routes/relate/[id]/[file]/+server.ts`:
 
 ```ts
-import { createGraphRoute } from "@relate/sveltekit/server";
+import { createGraphRoute } from "@relate/contrib-sveltekit/server";
 import { graphs } from "#lib/graphs.ts"; // any module path: the site's declarations
 export const prerender = true;
 export const { GET, entries } = createGraphRoute(graphs);
@@ -57,7 +57,7 @@ export const { GET, entries } = createGraphRoute(graphs);
 
 ```ts
 // src/routes/+layout.server.ts
-import { catalog } from "@relate/sveltekit/server";
+import { catalog } from "@relate/contrib-sveltekit/server";
 import { graphs } from "#lib/graphs.ts";
 export const load = () => ({ catalog: catalog(graphs) });
 ```
@@ -94,11 +94,11 @@ Everything lifetime-related is done in the browser only: a holder acquires its g
 
 ### 2.6 Checked against the core's conformance scenarios
 
-`packages/sveltekit/conformance-site` is a SvelteKit app, not published, that reproduces the example pages' `data-rel-*` markup (defined in the core's `conformance/example-site/rel-page.ts`) using only `@relate/sveltekit`. It has pages for each way a graph is used: a shared registered graph (`"visit"`), a page with its own inline graph, a page that holds a registered `"page"` graph, a page with two graphs, and a page for the direct lookup. It is built once per profile and once per adapter (a static build served as files, a Node build served by its own server), and `runConformance` from `@relate/web/conformance` runs against each in Chromium, Firefox and WebKit. A failure blocks the adapter's release.
+`packages/sveltekit/conformance-site` is a SvelteKit app, not published, that reproduces the example pages' `data-rel-*` markup (defined in the core's `conformance/example-site/rel-page.ts`) using only `@relate/contrib-sveltekit`. It has pages for each way a graph is used: a shared registered graph (`"visit"`), a page with its own inline graph, a page that holds a registered `"page"` graph, a page with two graphs, and a page for the direct lookup. It is built once per profile and once per adapter (a static build served as files, a Node build served by its own server), and `runConformance` from `@relate/contrib-web/conformance` runs against each in Chromium, Firefox and WebKit. A failure blocks the adapter's release.
 
 The adapter's own behaviors have their own tests: a page-lifetime client is destroyed on departure and its store is free for the next page; consecutive pages that use one registered page graph keep its client; `graph()` rejects page-lifetime and inline ids; the build fails for an invalid document, a source that is not deterministic, a duplicate id, an id both registered and inline; the revision in a data file's name matches the descriptor's.
 
-A package test packs `@relate/sveltekit`, the core and the engine, installs them in a clean SvelteKit 3 project outside the repository, builds it with each adapter, and runs a page.
+A package test packs `@relate/contrib-sveltekit`, the core and the engine, installs them in a clean SvelteKit 3 project outside the repository, builds it with each adapter, and runs a page.
 
 ## 3. Alternatives Considered
 

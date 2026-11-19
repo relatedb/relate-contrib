@@ -1,13 +1,13 @@
 // covers: FR-010, SC-002
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { checkAgreement } from "@relate/web/validate";
+import { checkAgreement } from "@relate/contrib-web/validate";
 import { afterAll, describe, expect, it } from "vitest";
 import { makeSite, type Site } from "../helpers/framework-site.js";
 
 const files = (lib: string) => ({
-  "docs/data/pantry.graph.json.js": `import { document } from "@relate/observable/loader";\nimport source from "../lib/pantry.js";\nawait document("pantry", source);\n`,
-  "docs/data/pantry.descriptor.json.js": `import { descriptor } from "@relate/observable/loader";\nimport source from "../lib/pantry.js";\nawait descriptor("pantry", source);\n`,
+  "docs/data/pantry.graph.json.js": `import { document } from "@relate/contrib-observable/loader";\nimport source from "../lib/pantry.js";\nawait document("pantry", source);\n`,
+  "docs/data/pantry.descriptor.json.js": `import { descriptor } from "@relate/contrib-observable/loader";\nimport source from "../lib/pantry.js";\nawait descriptor("pantry", source);\n`,
   "docs/index.md": "# pantry\n\n```js\nconst d = await FileAttachment(\"data/pantry.descriptor.json\").json();\nconst g = await FileAttachment(\"data/pantry.graph.json\").json();\ndisplay(html`<p>${d.revision} ${g.nodes.length}</p>`);\n```\n",
   "docs/lib/pantry.js": lib,
 });

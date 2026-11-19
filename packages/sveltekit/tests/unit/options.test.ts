@@ -4,7 +4,7 @@ import { config, installDocument, stubClient } from "../helpers/stubs.js";
 
 const createClient = vi.fn((_o: unknown) => stubClient());
 const createSiteClient = vi.fn((_o: unknown) => stubClient());
-vi.mock("@relate/web", () => ({ createClient: (o: unknown) => createClient(o), createSiteClient: (o: unknown) => createSiteClient(o) }));
+vi.mock("@relate/contrib-web", () => ({ createClient: (o: unknown) => createClient(o), createSiteClient: (o: unknown) => createSiteClient(o) }));
 
 const registry = await import("../../src/registry.js");
 const cfg = config([{ id: "small", lifetime: "page" }], "client-routing", "/engine.wasm");

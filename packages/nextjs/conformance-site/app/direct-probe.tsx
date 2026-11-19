@@ -1,6 +1,6 @@
 "use client";
 // Code that asks for a visit-lifetime graph directly, outside any hook, twice, after the provider has mounted.
-import { graph } from "@relate/nextjs/client";
+import { graph } from "@relate/contrib-nextjs/client";
 import { visible } from "./visible";
 import { useEffect } from "react";
 

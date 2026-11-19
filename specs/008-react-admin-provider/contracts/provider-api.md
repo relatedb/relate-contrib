@@ -4,7 +4,7 @@
 
 Names are those ADR-008 and the spec fix (`createDataProvider`, `ensureSchema`); the remaining names are working names, chosen at implementation.
 
-## Exports of `@relate/react-admin`
+## Exports of `@relate/contrib-react-admin`
 
 ```ts
 export function createDataProvider(
@@ -15,7 +15,7 @@ export function createDataProvider(
 
 export function ensureSchema(client: ProviderClient, schema: Schema, options?: ProviderOptions): Promise<void>;
 
-export type ProviderClient = Pick<Client, "query" | "status" | "diagnostic">;   // Client from @relate/web
+export type ProviderClient = Pick<Client, "query" | "status" | "diagnostic">;   // Client from @relate/contrib-web
 export interface Schema { resources: Record<string, ResourceSchema>; }
 export interface ResourceSchema { label: string; fields: FieldSchema[]; references?: ReferenceSchema[]; }
 export interface FieldSchema { name: string; type: "string" | "number" | "boolean"; sortable?: boolean; filterable?: boolean; searchable?: boolean; }
@@ -68,5 +68,5 @@ Called once per statement, immediately before it is sent, with the statement tex
 
 ## Peer and dependency rules
 
-- Peers: `react-admin` ^5 (types), `@relate/web` (types).
+- Peers: `react-admin` ^5 (types), `@relate/contrib-web` (types).
 - No dependency on the vendored engine path or on any repository file (FR-031); the contract tests may use `@relate/relate-wasm` as a dev dependency.

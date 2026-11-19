@@ -10,7 +10,7 @@ created: 2026-11-10
 
 ## 1. Context
 
-The core package (`@relate/web`, which hosts the embedded database in a dedicated worker) persists two kinds of graph in the browser's origin-private file storage, and each keeps its own record of what it holds.
+The core package (`@relate/contrib-web`, which hosts the embedded database in a dedicated worker) persists two kinds of graph in the browser's origin-private file storage, and each keeps its own record of what it holds.
 
 - A **content cache** (store `rel-<id>`) has a stored copy of its descriptor in a file at `relate-web/<id>.json`, outside the engine's directory. It is removed before a reset and written after a complete load, so a present file describes a complete store (ADR-003).
 - An **application graph** (store `app-<name>`) has a node labelled `_RelateApplication` inside the graph, holding format, schema version and state (`seeding`, `ready`, `importing`) (ADR-009).

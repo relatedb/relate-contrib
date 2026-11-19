@@ -6,11 +6,11 @@
 
 **Status**: Implemented (ADR-007)
 
-**Input**: User description: "The SvelteKit adapter (`@relate/sveltekit`): a workspace package in `packages/sveltekit` that implements accepted ADR-007 (and builds on ADR-001 to ADR-006 and the SPIKE-007 findings) so a SvelteKit 3 / Svelte 5 site can embed the browser graph database through the shared core package. It publishes registered graphs from a prerendered route the site writes, writes inline page graphs into pages, supplies Svelte 5 helpers whose lifetimes follow components, and is checked with a conformance site and a package test."
+**Input**: User description: "The SvelteKit adapter (`@relate/contrib-sveltekit`): a workspace package in `packages/sveltekit` that implements accepted ADR-007 (and builds on ADR-001 to ADR-006 and the SPIKE-007 findings) so a SvelteKit 3 / Svelte 5 site can embed the browser graph database through the shared core package. It publishes registered graphs from a prerendered route the site writes, writes inline page graphs into pages, supplies Svelte 5 helpers whose lifetimes follow components, and is checked with a conformance site and a package test."
 
 ## Overview
 
-The shared core package (`@relate/web`, specification `specs/001-core-package/spec.md`) runs the embedded graph database in a page and knows nothing about any framework. The Astro, Next and Observable adapters (`specs/002-astro-adapter`, `specs/003-next-adapter`, `specs/004-observable-adapter`) showed what an adapter supplies: graph data and descriptors at build time, a way for a page to ask for a graph, and lifetimes that follow the page or its components. SvelteKit needs the same things in its own shape: it has no route injection, so the published files come from a route the site writes; it renders pages on a server or at build time and hydrates them, with a lifecycle in which `onMount` and `$effect` do not run on the server but `onDestroy` does; and its router destroys the old page before the new page mounts.
+The shared core package (`@relate/contrib-web`, specification `specs/001-core-package/spec.md`) runs the embedded graph database in a page and knows nothing about any framework. The Astro, Next and Observable adapters (`specs/002-astro-adapter`, `specs/003-next-adapter`, `specs/004-observable-adapter`) showed what an adapter supplies: graph data and descriptors at build time, a way for a page to ask for a graph, and lifetimes that follow the page or its components. SvelteKit needs the same things in its own shape: it has no route injection, so the published files come from a route the site writes; it renders pages on a server or at build time and hydrates them, with a lifecycle in which `onMount` and `$effect` do not run on the server but `onDestroy` does; and its router destroys the old page before the new page mounts.
 
 Three kinds of people depend on it:
 
@@ -206,7 +206,7 @@ The items ADR-007 left for implementation are tested, and the ADR is amended wit
 
 **Package and configuration**
 
-- **FR-001**: The package MUST be a workspace package `@relate/sveltekit` with a main entry and a server entry, and MUST declare SvelteKit 3, Svelte 5, the core package and the engine package as peer dependencies with no other runtime dependency.
+- **FR-001**: The package MUST be a workspace package `@relate/contrib-sveltekit` with a main entry and a server entry, and MUST declare SvelteKit 3, Svelte 5, the core package and the engine package as peer dependencies with no other runtime dependency.
 - **FR-002**: The main entry MUST be shipped as Svelte source (`.svelte` and `.svelte.ts` files) with `svelte` and `default` export conditions, so the site's build compiles it; the server entry MUST be plain TypeScript with no dependency on the browser, on a Svelte file or on any SvelteKit virtual module.
 - **FR-003**: The package MUST NOT import the engine's binary, and MUST NOT require a Vite plugin or any change to the site's build configuration beyond the site's own route file, layout load and provider.
 
@@ -286,4 +286,4 @@ The items ADR-007 left for implementation are tested, and the ADR is amended wit
 - **Graph contents**: the adapter does not decide what a graph contains. The conformance site uses small hand-written graphs, and RFC-003 and RFC-002's decisions will govern real ones.
 - **Workspace sites**: a site that installs the core by a workspace link needs the development server's file-serving allow list to include the repository root; an installed package does not (SPIKE-007).
 - **Out of scope**: SvelteKit 2 and Svelte 4, edge and serverless adapters, hash routing, running the engine on the server, a default content extractor or site-graph schema (RFC-003), the navigation element (RFC-004), dashboards that fetch their data at load, main-thread instances, and changes to the core.
-- **Names**: the package is `@relate/sveltekit`, in the `@relate` namespace beside `@relate/web`, `@relate/astro`, `@relate/nextjs` and `@relate/observable`. The engine package is `@relate/relate-wasm`.
+- **Names**: the package is `@relate/contrib-sveltekit`, in the `@relate` namespace beside `@relate/contrib-web`, `@relate/contrib-astro`, `@relate/contrib-nextjs` and `@relate/contrib-observable`. The engine package is `@relate/relate-wasm`.

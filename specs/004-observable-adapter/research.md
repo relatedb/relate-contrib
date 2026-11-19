@@ -12,7 +12,7 @@ This file records the checks made while writing ADR-006 and planning (V-1 to V-8
 
 ### V-2. A bundled worker, placed by a loader, runs the core
 
-`data/relate-worker.js.js` bundled `@relate/web/worker` with esbuild (`bundle`, `format: "esm"`, `platform: "browser"`) and wrote the text to standard output: 45.4 kB, published as `_file/data/relate-worker.<hash>.js` and served as `text/javascript`. A cell created the core's client with `workerFactory: () => new Worker(workerUrl, { type: "module" })`; the engine's glue was inside the bundle and the binary came from V-1. The worker started, loaded the 20-node document and answered `MATCH (n:Item) RETURN count(n) AS c` with `[{"c":20}]` in Chromium, Firefox and WebKit. Without a loader, a module containing `new Worker(new URL("./inner.js", import.meta.url))` was copied to `_import/` and `inner.js` was not emitted (ADR-006 §1).
+`data/relate-worker.js.js` bundled `@relate/contrib-web/worker` with esbuild (`bundle`, `format: "esm"`, `platform: "browser"`) and wrote the text to standard output: 45.4 kB, published as `_file/data/relate-worker.<hash>.js` and served as `text/javascript`. A cell created the core's client with `workerFactory: () => new Worker(workerUrl, { type: "module" })`; the engine's glue was inside the bundle and the binary came from V-1. The worker started, loaded the 20-node document and answered `MATCH (n:Item) RETURN count(n) AS c` with `[{"c":20}]` in Chromium, Firefox and WebKit. Without a loader, a module containing `new Worker(new URL("./inner.js", import.meta.url))` was copied to `_import/` and `inner.js` was not emitted (ADR-006 §1).
 
 ### V-3. Framework's cells run in headless browsers
 
@@ -28,7 +28,7 @@ A loader that wrote to standard error and exited 1 ended the build with "loader 
 
 ### V-6. A symlinked workspace package fails; pnpm's injected copy builds
 
-With `node_modules/@relate/web` a symlink to `packages/web`, `observable build` failed with `Could not resolve entry module "@relate/web"` (rollup `UNRESOLVED_ENTRY`), as SPIKE-001 §4.6 found for a package outside the project. With it a symlink into pnpm's store copy made by an injected workspace dependency (`dependenciesMeta: { "@relate/web": { injected: true } }`, a hard-linked copy under the repository's `node_modules/.pnpm`), the same build passed. The failing case is a symlink whose target is a plain directory outside the project; a target inside a `node_modules` folder resolved. A copy placed directly in the project's `node_modules` also built (the stand-in's setup). pnpm needs the engine declared as a direct dependency of the injecting project for the peer to resolve (`@relate/relate-wasm: "*"`, which the workspace override links).
+With `node_modules/@relate/contrib-web` a symlink to `packages/web`, `observable build` failed with `Could not resolve entry module "@relate/contrib-web"` (rollup `UNRESOLVED_ENTRY`), as SPIKE-001 §4.6 found for a package outside the project. With it a symlink into pnpm's store copy made by an injected workspace dependency (`dependenciesMeta: { "@relate/contrib-web": { injected: true } }`, a hard-linked copy under the repository's `node_modules/.pnpm`), the same build passed. The failing case is a symlink whose target is a plain directory outside the project; a target inside a `node_modules` folder resolved. A copy placed directly in the project's `node_modules` also built (the stand-in's setup). pnpm needs the engine declared as a direct dependency of the injecting project for the peer to resolve (`@relate/relate-wasm: "*"`, which the workspace override links).
 
 ### V-7. `await` in a loop body defeats a cell's top-level await
 
@@ -36,13 +36,13 @@ An earlier stand-in cell used `while (client.status === "loading") await …`; t
 
 ### V-8. The core's browser code bundles from a copied package
 
-The cell's `import {createClient} from "@relate/web"` was bundled by Framework into `_node/@relate/web@0.0.0/index.<hash>.js` from a copy of the core's `dist` in `node_modules`. The worker module was not pulled in by the import (it is started by URL), which is why the loader supplies it.
+The cell's `import {createClient} from "@relate/contrib-web"` was bundled by Framework into `_node/@relate/contrib-web@0.0.0/index.<hash>.js` from a copy of the core's `dist` in `node_modules`. The worker module was not pulled in by the import (it is started by URL), which is why the loader supplies it.
 
 ## Decisions
 
 ### D-1. Loaders resolve packages from the site's root
 
-`engine()` and `worker()` resolve `@relate/relate-wasm` and `@relate/web` with `createRequire(process.cwd() + "/package.json")`. Framework runs a loader with the project root as the working directory, and under pnpm the adapter's own folder may not see the site's copies of its peers. Rejected: resolving from the adapter's location (finds another copy, or none, under pnpm's layout).
+`engine()` and `worker()` resolve `@relate/relate-wasm` and `@relate/contrib-web` with `createRequire(process.cwd() + "/package.json")`. Framework runs a loader with the project root as the working directory, and under pnpm the adapter's own folder may not see the site's copies of its peers. Rejected: resolving from the adapter's location (finds another copy, or none, under pnpm's layout).
 
 ### D-2. Loader tests run the scripts as processes
 
@@ -54,7 +54,7 @@ The loader helpers write to standard output and exit non-zero on failure, so tes
 
 ### D-4. The conformance site gets its packages as pnpm injected dependencies, and a refresh step
 
-The conformance site declares `@relate/observable` and `@relate/web` as injected workspace dependencies and the engine as a direct dependency (V-6). pnpm makes the injected copy at install time as hard links. Checked while implementing (single run, pnpm 11.7): an edit to an existing built file shows through the link at once; a file added to the package's `dist` does not appear in the copy, and neither `pnpm install --offline --frozen-lockfile` nor `--force` adds it. The site therefore runs `scripts/refresh-deps.mjs` before every build; it removes each published folder in the injected copy and copies the package's own over it (`files` from its manifest), and it also copies `package.json`. Rejected: relying on a reinstall (does not refresh) and on pack-and-unpack (the script copies the same files without a tarball).
+The conformance site declares `@relate/contrib-observable` and `@relate/contrib-web` as injected workspace dependencies and the engine as a direct dependency (V-6). pnpm makes the injected copy at install time as hard links. Checked while implementing (single run, pnpm 11.7): an edit to an existing built file shows through the link at once; a file added to the package's `dist` does not appear in the copy, and neither `pnpm install --offline --frozen-lockfile` nor `--force` adds it. The site therefore runs `scripts/refresh-deps.mjs` before every build; it removes each published folder in the injected copy and copies the package's own over it (`files` from its manifest), and it also copies `package.json`. Rejected: relying on a reinstall (does not refresh) and on pack-and-unpack (the script copies the same files without a tarball).
 
 ### D-5. Graph sources are plain modules the loader imports
 

@@ -1,7 +1,7 @@
 {
-  "name": "@relate/astro",
+  "name": "@relate/contrib-astro",
   "version": "0.0.0",
-  "description": "Astro integration for @relate/web: serves graphs built from a site's content, carries small graphs in pages, and ties a page's graph clients to the router.",
+  "description": "Astro integration for @relate/contrib-web: serves graphs built from a site's content, carries small graphs in pages, and ties a page's graph clients to the router.",
   "private": true,
   "type": "module",
   "sideEffects": false,
@@ -35,13 +35,13 @@
   "peerDependencies": {
     "@relate/relate-wasm": "*",
     "astro": "^7.4.0",
-    "@relate/web": "*"
+    "@relate/contrib-web": "*"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
     "@types/node": "^26.6.6",
     "astro": "^7.4.5",
-    "@relate/web": "workspace:*",
+    "@relate/contrib-web": "workspace:*",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",

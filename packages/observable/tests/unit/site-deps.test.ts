@@ -11,14 +11,14 @@ describe("the conformance site's packages (research V-6)", () => {
   const manifest = JSON.parse(readFileSync(join(site, "package.json"), "utf8"));
 
   it("declares the adapter and the core as injected workspace dependencies", () => {
-    for (const name of ["@relate/observable", "@relate/web"]) {
+    for (const name of ["@relate/contrib-observable", "@relate/contrib-web"]) {
       expect(manifest.dependencies[name]).toBe("workspace:*");
       expect(manifest.dependenciesMeta[name]).toEqual({ injected: true });
     }
   });
 
   it("has them installed as copies, not as links to a plain directory under packages/", () => {
-    for (const name of ["observable", "web"]) {
+    for (const name of ["contrib-observable", "contrib-web"]) {
       const installed = join(site, "node_modules/@relate", name);
       const real = realpathSync(installed);
       expect(real.startsWith(join(packages, "packages") + sep), `${installed} resolves to ${real}`).toBe(false);

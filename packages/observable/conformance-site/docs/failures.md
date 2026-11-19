@@ -3,7 +3,7 @@
 Two graphs that cannot load, and text beside them that must not depend on them.
 
 ```js
-import {open} from "@relate/observable";
+import {open} from "@relate/contrib-observable";
 import {engine, worker} from "./lib/files.js";
 const nowhere = {url: async () => "/missing-worker.js", json: async () => null};
 const invalid = await open({engine, worker, graph: {document: {version: 1, nodes: [{labels: ["Item"]}], links: []}}, invalidation});

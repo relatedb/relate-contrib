@@ -14,7 +14,7 @@ pnpm test:sveltekit-trace         # every requirement and success criterion has 
 
 ## A site, by hand
 
-1. In a SvelteKit 3 project add `@relate/sveltekit`, `@relate/web` and `@relate/relate-wasm`.
+1. In a SvelteKit 3 project add `@relate/contrib-sveltekit`, `@relate/contrib-web` and `@relate/relate-wasm`.
 2. Write a declaration module (`#lib/graphs.ts`): an id mapped to `{ source, indexes?, lifetime? }`.
 3. Add the route file and the layout load from [contracts/server-entry.md](contracts/server-entry.md).
 4. Place `RelateProvider` in the root layout with the catalog and the engine's `?url` import ([contracts/client-entry.md](contracts/client-entry.md)).

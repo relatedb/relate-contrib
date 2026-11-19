@@ -1,6 +1,6 @@
 // The visit client in module state, as the Astro and Next adapters hold theirs.
 import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
-import { createClient, type Client } from "@relate/web";
+import { createClient, type Client } from "@relate/contrib-web";
 
 export const DOC = { version: 1 as const, nodes: [{ id: "a", labels: ["Item"] }, { id: "b", labels: ["Item"] }, { id: "c", labels: ["Item"] }], links: [] };
 

@@ -7,7 +7,7 @@ export default defineConfig({
     fs: { allow: ["../.."] },
   },
   // the worker and the engine's loader locate their files by import.meta.url; leave them unbundled in development
-  optimizeDeps: { exclude: ["@relate/web", "@relate/relate-wasm"] },
+  optimizeDeps: { exclude: ["@relate/contrib-web", "@relate/relate-wasm"] },
   worker: { format: "es" },
   build: { target: "es2022" },
 });

@@ -69,4 +69,4 @@ runs:
 
     - name: Install Playwright browsers
       shell: bash
-      run: pnpm --filter @relate/web exec playwright install --with-deps ${{ inputs.browsers }}
+      run: pnpm --filter @relate/contrib-web exec playwright install --with-deps ${{ inputs.browsers }}

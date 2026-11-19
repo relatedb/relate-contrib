@@ -21,7 +21,7 @@ Each prints a statement and its result. After the probes become tests they run w
 
 ```sh
 pnpm test:react-admin             # contract tests against the real engine, in Node
-pnpm test:react-admin-package     # packs the package, installs it in a clean project with react-admin and @relate/web, runs a list call
+pnpm test:react-admin-package     # packs the package, installs it in a clean project with react-admin and @relate/contrib-web, runs a list call
 pnpm test:react-admin-trace       # every requirement and success criterion has a passing, tagged test
 ```
 

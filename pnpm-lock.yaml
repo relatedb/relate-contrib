@@ -16,15 +16,15 @@ importers:
       '@fontsource/share-tech-mono':
         specifier: ^5.3.0
         version: 5.3.0
-      '@relate/relate-phaser':
+      '@relate/contrib-phaser':
         specifier: workspace:*
         version: link:../../packages/phaser
+      '@relate/contrib-web':
+        specifier: workspace:*
+        version: link:../../packages/web
       '@relate/relate-wasm':
         specifier: link:../../vendor/relate-wasm/pkg
         version: link:../../vendor/relate-wasm/pkg
-      '@relate/web':
-        specifier: workspace:*
-        version: link:../../packages/web
       phaser:
         specifier: 4.2.1
         version: 4.2.1
@@ -47,10 +47,10 @@ importers:
 
   demos/react-admin:
     dependencies:
-      '@relate/react-admin':
+      '@relate/contrib-react-admin':
         specifier: workspace:*
         version: link:../../packages/react-admin
-      '@relate/web':
+      '@relate/contrib-web':
         specifier: workspace:*
         version: link:../../packages/web
       '@tanstack/react-query':
@@ -112,7 +112,7 @@ importers:
       '@playwright/test':
         specifier: ^1.64.1
         version: 1.64.1
-      '@relate/web':
+      '@relate/contrib-web':
         specifier: workspace:*
         version: link:../web
       '@types/node':
@@ -143,7 +143,7 @@ importers:
       '@playwright/test':
         specifier: ^1.64.1
         version: 1.64.1
-      '@relate/web':
+      '@relate/contrib-web':
         specifier: workspace:*
         version: link:../web
       '@types/node':
@@ -176,15 +176,15 @@ importers:
 
   packages/nextjs/conformance-site:
     dependencies:
-      '@relate/nextjs':
+      '@relate/contrib-nextjs':
         specifier: workspace:*
         version: link:..
+      '@relate/contrib-web':
+        specifier: workspace:*
+        version: link:../../web
       '@relate/relate-wasm':
         specifier: link:../../../vendor/relate-wasm/pkg
         version: link:../../../vendor/relate-wasm/pkg
-      '@relate/web':
-        specifier: workspace:*
-        version: link:../../web
       next:
         specifier: ^16.4.5
         version: 16.4.5(@playwright/test@1.64.1)(@types/node@26.6.6)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -223,7 +223,7 @@ importers:
       '@playwright/test':
         specifier: ^1.64.1
         version: 1.64.1
-      '@relate/web':
+      '@relate/contrib-web':
         specifier: workspace:*
         version: link:../web
       '@types/node':
@@ -244,19 +244,19 @@ importers:
       '@observablehq/framework':
         specifier: ^1.13.4
         version: 1.13.4(@types/markdown-it@14.2.0)
-      '@relate/observable':
+      '@relate/contrib-observable':
         specifier: workspace:*
-        version: file:packages/observable(@observablehq/framework@1.13.4(@types/markdown-it@14.2.0))(@relate/relate-wasm@vendor+relate-wasm+pkg)(@relate/web@file:packages/web(@playwright/test@1.64.1)(@relate/relate-wasm@vendor+relate-wasm+pkg))
+        version: file:packages/observable(@observablehq/framework@1.13.4(@types/markdown-it@14.2.0))(@relate/contrib-web@file:packages/web(@playwright/test@1.64.1)(@relate/relate-wasm@vendor+relate-wasm+pkg))(@relate/relate-wasm@vendor+relate-wasm+pkg)
+      '@relate/contrib-web':
+        specifier: workspace:*
+        version: file:packages/web(@playwright/test@1.64.1)(@relate/relate-wasm@vendor+relate-wasm+pkg)
       '@relate/relate-wasm':
         specifier: link:../../../vendor/relate-wasm/pkg
         version: link:../../../vendor/relate-wasm/pkg
-      '@relate/web':
-        specifier: workspace:*
-        version: file:packages/web(@playwright/test@1.64.1)(@relate/relate-wasm@vendor+relate-wasm+pkg)
     dependenciesMeta:
-      '@relate/observable':
+      '@relate/contrib-observable':
         injected: true
-      '@relate/web':
+      '@relate/contrib-web':
         injected: true
 
   packages/phaser:
@@ -265,12 +265,12 @@ importers:
         specifier: ^4.0.0
         version: 4.2.1
     devDependencies:
+      '@relate/contrib-web':
+        specifier: workspace:*
+        version: link:../web
       '@relate/relate-wasm':
         specifier: link:../../vendor/relate-wasm/pkg
         version: link:../../vendor/relate-wasm/pkg
-      '@relate/web':
-        specifier: workspace:*
-        version: link:../web
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6
@@ -289,12 +289,12 @@ importers:
       '@playwright/test':
         specifier: ^1.64.1
         version: 1.64.1
+      '@relate/contrib-web':
+        specifier: workspace:*
+        version: link:../web
       '@relate/relate-wasm':
         specifier: link:../../vendor/relate-wasm/pkg
         version: link:../../vendor/relate-wasm/pkg
-      '@relate/web':
-        specifier: workspace:*
-        version: link:../web
       '@tanstack/react-query':
         specifier: ^5.83.0
         version: 5.107.1(@types/react@19.3.0)(react@19.3.1)
@@ -341,7 +341,7 @@ importers:
       '@playwright/test':
         specifier: ^1.64.1
         version: 1.64.1
-      '@relate/web':
+      '@relate/contrib-web':
         specifier: workspace:*
         version: link:../web
       '@sveltejs/adapter-node':
@@ -377,15 +377,15 @@ importers:
 
   packages/sveltekit/conformance-site:
     dependencies:
+      '@relate/contrib-sveltekit':
+        specifier: workspace:*
+        version: link:..
+      '@relate/contrib-web':
+        specifier: workspace:*
+        version: link:../../web
       '@relate/relate-wasm':
         specifier: link:../../../vendor/relate-wasm/pkg
         version: link:../../../vendor/relate-wasm/pkg
-      '@relate/sveltekit':
-        specifier: workspace:*
-        version: link:..
-      '@relate/web':
-        specifier: workspace:*
-        version: link:../../web
     devDependencies:
       '@sveltejs/adapter-node':
         specifier: ^6.0.1
@@ -1457,14 +1457,14 @@ packages:
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
 
-  '@relate/observable@file:packages/observable':
+  '@relate/contrib-observable@file:packages/observable':
     resolution: {directory: packages/observable, type: directory}
     peerDependencies:
       '@observablehq/framework': ^1.13.0
+      '@relate/contrib-web': '*'
       '@relate/relate-wasm': '*'
-      '@relate/web': '*'
 
-  '@relate/web@file:packages/web':
+  '@relate/contrib-web@file:packages/web':
     resolution: {directory: packages/web, type: directory}
     peerDependencies:
       '@playwright/test': '*'
@@ -5015,14 +5015,14 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@relate/observable@file:packages/observable(@observablehq/framework@1.13.4(@types/markdown-it@14.2.0))(@relate/relate-wasm@vendor+relate-wasm+pkg)(@relate/web@file:packages/web(@playwright/test@1.64.1)(@relate/relate-wasm@vendor+relate-wasm+pkg))':
+  '@relate/contrib-observable@file:packages/observable(@observablehq/framework@1.13.4(@types/markdown-it@14.2.0))(@relate/contrib-web@file:packages/web(@playwright/test@1.64.1)(@relate/relate-wasm@vendor+relate-wasm+pkg))(@relate/relate-wasm@vendor+relate-wasm+pkg)':
     dependencies:
       '@observablehq/framework': 1.13.4(@types/markdown-it@14.2.0)
+      '@relate/contrib-web': file:packages/web(@playwright/test@1.64.1)(@relate/relate-wasm@vendor+relate-wasm+pkg)
       '@relate/relate-wasm': link:vendor/relate-wasm/pkg
-      '@relate/web': file:packages/web(@playwright/test@1.64.1)(@relate/relate-wasm@vendor+relate-wasm+pkg)
       esbuild: 0.28.2
 
-  '@relate/web@file:packages/web(@playwright/test@1.64.1)(@relate/relate-wasm@vendor+relate-wasm+pkg)':
+  '@relate/contrib-web@file:packages/web(@playwright/test@1.64.1)(@relate/relate-wasm@vendor+relate-wasm+pkg)':
     dependencies:
       '@relate/relate-wasm': link:vendor/relate-wasm/pkg
     optionalDependencies:

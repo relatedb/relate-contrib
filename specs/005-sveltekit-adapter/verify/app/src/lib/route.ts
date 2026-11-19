@@ -1,6 +1,6 @@
 // A stand-in for createGraphRoute: entries() evaluates each source twice, independently; the base path comes from the request;
 // in development GET evaluates on each request and a revision that is not current is 404.
-import { descriptorOf, evaluate, type Evaluated } from "@relate/web/build";
+import { descriptorOf, evaluate, type Evaluated } from "@relate/contrib-web/build";
 import { dev } from "$app/environment";
 import { error } from "@sveltejs/kit";
 

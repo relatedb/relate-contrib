@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build ADR-008 in two parts: a package `@relate/react-admin` whose `createDataProvider(client, schema)` turns react-admin's list, read and write calls into parameterised statements over a core client, and an unpublished Vite and React demo, `demos/react-admin`, whose records persist in an application graph (ADR-009, ADR-010). The package depends on a narrow slice of the core's client (`query`, `status`, `diagnostic`), so its contract tests run against the real engine in Node and the demo's browser tests run the same provider through the real client, worker and store.
+Build ADR-008 in two parts: a package `@relate/contrib-react-admin` whose `createDataProvider(client, schema)` turns react-admin's list, read and write calls into parameterised statements over a core client, and an unpublished Vite and React demo, `demos/react-admin`, whose records persist in an application graph (ADR-009, ADR-010). The package depends on a narrow slice of the core's client (`query`, `status`, `diagnostic`), so its contract tests run against the real engine in Node and the demo's browser tests run the same provider through the real client, worker and store.
 
 The engine behaviours the ADR listed as "to confirm" were probed during planning ([research.md](research.md), [probes/](probes/)), and the probes changed three decisions: the engine enforces per-label uniqueness constraints and the package creates one on each resource's `id` (which also supplies the lookup index, replacing the `schemaIndexes` of the ADR's review amendment); the ADR's relationship replacement deletes the old relationship when the target is missing, so writes match every target first; and a plain reference fill duplicates rows when a node has two relationships of the type, so the fill uses `head(collect())`. SKIP and LIMIT accept parameters, so the interpolation fallback is not needed. The remaining items to confirm are small and have early tasks.
 
@@ -14,7 +14,7 @@ The engine behaviours the ADR listed as "to confirm" were probed during planning
 
 **Language/Version**: TypeScript (ESM), as the other packages; Node 24 for unit tests.
 
-**Primary Dependencies**: `react-admin` ^5 and `@relate/web` as peers of the package (types only at run time); the demo pins `react-admin` to an exact 5.x (5.15.6 at planning), with React, Vite and the peers react-admin names. `@relate/relate-wasm` as a dev dependency for the contract tests.
+**Primary Dependencies**: `react-admin` ^5 and `@relate/contrib-web` as peers of the package (types only at run time); the demo pins `react-admin` to an exact 5.x (5.15.6 at planning), with React, Vite and the peers react-admin names. `@relate/relate-wasm` as a dev dependency for the contract tests.
 
 **Storage**: the demo's application graph, store `react-admin-demo` (ADR-009), catalog entry per ADR-010. The package stores nothing.
 
@@ -68,8 +68,8 @@ specs/008-react-admin-provider/
 ### Source Code
 
 ```text
-packages/react-admin/            # new: @relate/react-admin
-├── package.json                 #   peers react-admin ^5, @relate/web; scripts test:react-admin, ...-package, ...-trace
+packages/react-admin/            # new: @relate/contrib-react-admin
+├── package.json                 #   peers react-admin ^5, @relate/contrib-web; scripts test:react-admin, ...-package, ...-trace
 ├── src/
 │   ├── schema.ts                #   Schema types, validation, ensureSchema (the constraints)
 │   ├── filter.ts                #   filter and sort translation: names checked, values coerced and bound

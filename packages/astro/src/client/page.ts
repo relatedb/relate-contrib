@@ -3,7 +3,7 @@
 // and a registration is run at most once for each page it is eligible for.
 import { PageClients, type GraphOptions } from "./registry.js";
 import { checkProfile } from "./profile.js";
-import type { Client } from "@relate/web";
+import type { Client } from "@relate/contrib-web";
 
 export interface Page {
   /** The core's client for a graph this page uses: an inline graph of the page first, then a registered one. */

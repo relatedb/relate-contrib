@@ -1,5 +1,5 @@
 // The route builder (spec FR-005, FR-006, FR-009, ADR-005 §2.2). Used from `app/relate/[id]/[file]/route.ts`.
-import { descriptorOf } from "@relate/web/build";
+import { descriptorOf } from "@relate/contrib-web/build";
 import { Evaluations, OWNER, declare, isDevelopment, registeredNames } from "./graphs.js";
 import type { Graphs } from "./graphs.js";
 

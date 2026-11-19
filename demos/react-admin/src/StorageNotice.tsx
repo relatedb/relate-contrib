@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Client } from "@relate/web";
+import type { Client } from "@relate/contrib-web";
 
 /**
  * Says where the visitor's records are kept, from the client's storage report (FR-024), and offers to ask the browser to

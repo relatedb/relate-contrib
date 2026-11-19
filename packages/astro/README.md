@@ -1,17 +1,17 @@
-# @relate/astro
+# @relate/contrib-astro
 
-Astro integration for [`@relate/web`](../web/README.md): it puts the embedded
+Astro integration for [`@relate/contrib-web`](../web/README.md): it puts the embedded
 graph database into an Astro 7 static site. It serves graphs built from the site's content, carries small graphs inside
 pages, and ties each page's graph clients to the router's arrival and departure. Instances, faults, loading and
 navigation profiles are the core's; this package only wires them into Astro. Decisions: `design/adr/ADR-004-astro-adapter.md`.
 
 ## Install
 
-Peer dependencies: `astro` (7.x), `@relate/web` and `@relate/relate-wasm`. Static output only.
+Peer dependencies: `astro` (7.x), `@relate/contrib-web` and `@relate/relate-wasm`. Static output only.
 
 ```js
 // astro.config.mjs
-import relate from "@relate/astro";
+import relate from "@relate/contrib-astro";
 export default defineConfig({
   integrations: [
     relate({
@@ -37,7 +37,7 @@ first problem; in `astro dev` the server keeps running, prints the error and ans
 
 ```astro
 ---
-import GraphData from "@relate/astro/graph-data";
+import GraphData from "@relate/contrib-astro/graph-data";
 const entry = await getEntry("recipes", Astro.params.slug);
 ---
 <GraphData id="recipe" document={graphOf(entry)} config={{ indexes: [{ label: "Step", property: "id" }] }} />
@@ -48,7 +48,7 @@ The build fails for an invalid document or `config`, a duplicate `id` on a page,
 ## In the browser
 
 ```ts
-import { onPage, graph } from "@relate/astro/client";
+import { onPage, graph } from "@relate/contrib-astro/client";
 
 onPage(
   (page) => {

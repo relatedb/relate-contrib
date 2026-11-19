@@ -1,6 +1,6 @@
 <script lang="ts">
   import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
-  import { RelateProvider } from "@relate/sveltekit";
+  import { RelateProvider } from "@relate/contrib-sveltekit";
   import { goto } from "$app/navigation";
   let { data, children } = $props();
   // for the adapter's own tests: navigation by script

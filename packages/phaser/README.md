@@ -1,4 +1,4 @@
-# @relate/relate-phaser
+# @relate/contrib-phaser
 
 Building blocks for a [Phaser](https://phaser.io) game that keeps its world in the embedded graph. Version 0.x: the interface is unstable until a second game has used it (ADR-012).
 
@@ -14,9 +14,9 @@ A Phaser game redraws about sixty times a second and cannot wait for anything. T
 ## Example
 
 ```js
-import { Bridge, ReplyCache } from "@relate/relate-phaser";
+import { Bridge, ReplyCache } from "@relate/contrib-phaser";
 
-// `client` comes from createClient(...) in @relate/web
+// `client` comes from createClient(...) in @relate/contrib-web
 const cache = new ReplyCache({
   client,
   initial: { cells: {} },

@@ -1,13 +1,13 @@
 // covers: FR-006, FR-007, FR-008, FR-009, FR-025, SC-002, SC-005
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { canonicalText, revisionOf } from "@relate/web/build";
+import { canonicalText, revisionOf } from "@relate/contrib-web/build";
 import { afterAll, describe, expect, it } from "vitest";
 import { makeSite, type Site } from "../helpers/framework-site.js";
 
 const loaders = (extra = "") => ({
-  "docs/data/pantry.graph.json.js": `import { document } from "@relate/observable/loader";\nimport source from "../lib/pantry.js";\nawait document("pantry", source);\n`,
-  "docs/data/pantry.descriptor.json.js": `import { descriptor } from "@relate/observable/loader";\nimport source from "../lib/pantry.js";\nawait descriptor("pantry", source, { indexes: [{ label: "Page", property: "id" }] });\n${extra}`,
+  "docs/data/pantry.graph.json.js": `import { document } from "@relate/contrib-observable/loader";\nimport source from "../lib/pantry.js";\nawait document("pantry", source);\n`,
+  "docs/data/pantry.descriptor.json.js": `import { descriptor } from "@relate/contrib-observable/loader";\nimport source from "../lib/pantry.js";\nawait descriptor("pantry", source, { indexes: [{ label: "Page", property: "id" }] });\n${extra}`,
   "docs/index.md": "# pantry\n\n```js\nconst d = await FileAttachment(\"data/pantry.descriptor.json\").json();\nconst g = await FileAttachment(\"data/pantry.graph.json\").json();\ndisplay(html`<p id=\"n\">${d.data.nodes} ${g.nodes.length}</p>`);\n```\n",
 });
 
@@ -84,7 +84,7 @@ describe("a graph that cannot be published stops the build with the graph's name
 
   it("a malformed id", () => {
     const site = makeSite("graphs-id", {
-      "docs/data/x.graph.json.js": `import { document } from "@relate/observable/loader";\nimport source from "../lib/s.js";\nawait document("Bad Name", source);\n`,
+      "docs/data/x.graph.json.js": `import { document } from "@relate/contrib-observable/loader";\nimport source from "../lib/s.js";\nawait document("Bad Name", source);\n`,
       "docs/lib/s.js": source(NODES, LINKS),
     });
     sites.push(site);
@@ -109,7 +109,7 @@ describe("a graph that cannot be published stops the build with the graph's name
 
   it("an index the descriptor rules refuse", () => {
     const site = makeSite("graphs-index", {
-      "docs/data/pantry.descriptor.json.js": `import { descriptor } from "@relate/observable/loader";\nimport source from "../lib/pantry.js";\nawait descriptor("pantry", source, { indexes: [{ label: "", property: "id" }] });\n`,
+      "docs/data/pantry.descriptor.json.js": `import { descriptor } from "@relate/contrib-observable/loader";\nimport source from "../lib/pantry.js";\nawait descriptor("pantry", source, { indexes: [{ label: "", property: "id" }] });\n`,
       "docs/lib/pantry.js": source(NODES, LINKS),
     });
     sites.push(site);

@@ -18,7 +18,7 @@ A catalog has to do four things: enumerate the graphs, say whether each is whole
 
 ## 2. Problem / Motivation
 
-The core package (the library that hosts the database in a page, `@relate/web`) keeps two kinds of persistent store, and each keeps its own record of what it holds.
+The core package (the library that hosts the database in a page, `@relate/contrib-web`) keeps two kinds of persistent store, and each keeps its own record of what it holds.
 
 - **A content cache** is a store named `rel-<id>` for a graph the site ships, with a small file, outside the store, at the root of the origin's private storage (`relate-web/<id>.json`). The file holds the graph descriptor, which carries the revision. It is written last after a complete load and removed before a reset, so a file that is present describes a complete store. A different revision in the file means the store is stale and is wiped.
 - **An application graph** is a store named `app-<name>` for a graph the visitor writes, with a marker node labelled `_RelateApplication` inside the graph. The marker holds the store's format, schema version and state (`seeding`, `ready`, `importing`).

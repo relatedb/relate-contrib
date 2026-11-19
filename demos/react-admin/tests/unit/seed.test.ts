@@ -1,7 +1,7 @@
 // covers-ra: FR-021
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { validate } from "@relate/web/validate";
+import { validate } from "@relate/contrib-web/validate";
 import { makeSeed } from "../../scripts/make-seed.js";
 
 const committed = JSON.parse(readFileSync(new URL("../../src/seed.json", import.meta.url), "utf8")) as ReturnType<typeof makeSeed>;

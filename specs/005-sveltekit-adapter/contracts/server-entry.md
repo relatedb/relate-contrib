@@ -1,4 +1,4 @@
-# Contract: server entry (`@relate/sveltekit/server`)
+# Contract: server entry (`@relate/contrib-sveltekit/server`)
 
 Imported only from server code (a route file and a server-only layout load). Plain TypeScript; needs no browser, no Svelte file, no SvelteKit virtual module (FR-002), and no engine binary (FR-003).
 
@@ -7,7 +7,7 @@ Imported only from server code (a route file and a server-only layout load). Pla
 `createGraphRoute(graphs)` returns `{ GET, entries }`, meant to be exported by a route file the site writes at `src/routes/relate/[id]/[file]/+server.ts`:
 
 ```ts
-import { createGraphRoute } from "@relate/sveltekit/server";
+import { createGraphRoute } from "@relate/contrib-sveltekit/server";
 import { graphs } from "#lib/graphs.ts";   // any module path
 export const prerender = true;
 export const { GET, entries } = createGraphRoute(graphs);
@@ -25,7 +25,7 @@ export const { GET, entries } = createGraphRoute(graphs);
 
 ```ts
 // src/routes/+layout.server.ts
-import { catalog } from "@relate/sveltekit/server";
+import { catalog } from "@relate/contrib-sveltekit/server";
 import { graphs } from "#lib/graphs.ts";
 export const load = () => ({ catalog: catalog(graphs) });
 ```

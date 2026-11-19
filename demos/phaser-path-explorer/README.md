@@ -58,7 +58,7 @@ From the repository root (the engine's browser package must be built once: `pnpm
 
 ```sh
 pnpm install
-pnpm --filter @relate/web build
+pnpm --filter @relate/contrib-web build
 pnpm --filter phaser-path-explorer dev      # http://localhost:5174
 pnpm --filter phaser-path-explorer test     # unit tests, including the golden test below
 pnpm --filter phaser-path-explorer build
@@ -75,7 +75,7 @@ browser console for driving the game by hand.
 - `src/game/` is the game: the world generator, the graph model, the statements (`statements.ts`, ADR-011 2.5), the
   cache and actions (`state.ts`) and the scene (`MapScene.ts`). The scene reads the cache and never awaits. The
   statement queue, the generic cache mechanism (version, pending action, reload after an engine replacement), the
-  throwaway client and the version watcher are the package `@relate/relate-phaser` (`packages/phaser`, ADR-012).
+  throwaway client and the version watcher are the package `@relate/contrib-phaser` (`packages/phaser`, ADR-012).
 - `scripts/extract-assets.mjs` regenerates `src/hex/assets/*.json` and `tests/fixtures/hexmap-golden.json` from the
   "Relate by ABK" design system's bundle and tokens. Rerun it when the design system changes:
 

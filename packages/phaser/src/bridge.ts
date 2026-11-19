@@ -1,6 +1,6 @@
 // The statement queue (ADR-012, 2.2). A Phaser frame loop never awaits: actions push statements here, a single pump
 // outside the frame loop drains them in order, one statement at a time, and each caller holds a promise of its rows.
-import type { Client } from "@relate/web";
+import type { Client } from "@relate/contrib-web";
 import { StatementError } from "./errors.js";
 
 export type Row = Record<string, unknown>;

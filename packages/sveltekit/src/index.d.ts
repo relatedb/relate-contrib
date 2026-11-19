@@ -1,5 +1,5 @@
-import type { Client, Status } from "@relate/web";
-import type { InlineConfig } from "@relate/web/build";
+import type { Client, Status } from "@relate/contrib-web";
+import type { InlineConfig } from "@relate/contrib-web/build";
 import type { Component, Snippet } from "svelte";
 
 export type Navigation = "client-routing" | "multi-page";

@@ -3,7 +3,7 @@
 // only the cache in GameState and never awaits; it redraws when the cache's version changes.
 import Phaser from "phaser";
 import "./camp.js"; // the yellow tent: its art and colours are registered when this is imported
-import { versionWatch } from "@relate/relate-phaser";
+import { versionWatch } from "@relate/contrib-phaser";
 import {
   HEX_OUTLINE,
   hexSpan,

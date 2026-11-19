@@ -1,11 +1,11 @@
 // covers-ph: FR-015, FR-016, SC-003
-// The path explorer runs on @relate/relate-phaser: it keeps no copy of the queue, and its board is rebuilt from the graph
+// The path explorer runs on @relate/contrib-phaser: it keeps no copy of the queue, and its board is rebuilt from the graph
 // when the client moves to a new generation (the unit-level check; the browser run traps a real engine).
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { Bridge } from "@relate/relate-phaser";
+import { Bridge } from "@relate/contrib-phaser";
 import { GameState } from "../src/game/state.js";
 import { generateRows } from "../src/game/world.js";
 import { engineBuilt, openEngine, seedWorld } from "./helpers/engine.js";
@@ -19,7 +19,7 @@ describe("the path explorer on the package", () => {
     const sources = walk(src).filter((f) => f.endsWith(".ts"));
     for (const f of sources) expect(readFileSync(f, "utf8"), f).not.toMatch(/from "\.{1,2}\/(game\/)?bridge\.js"/);
     const text = (name: string) => readFileSync(join(src, name), "utf8");
-    expect(text("main.ts")).toMatch(/import \{[^}]*Bridge[^}]*createThrowawayClient[^}]*\} from "@relate\/relate-phaser"/);
+    expect(text("main.ts")).toMatch(/import \{[^}]*Bridge[^}]*createThrowawayClient[^}]*\} from "@relate\/contrib-phaser"/);
     expect(text("game/state.ts")).toContain("ReplyCache");
     expect(text("game/MapScene.ts")).toContain("versionWatch");
   });

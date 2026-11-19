@@ -9,15 +9,15 @@
   },
   "dependencies": {
     "@observablehq/framework": "^1.13.4",
-    "@relate/observable": "workspace:*",
+    "@relate/contrib-observable": "workspace:*",
     "@relate/relate-wasm": "*",
-    "@relate/web": "workspace:*"
+    "@relate/contrib-web": "workspace:*"
   },
   "dependenciesMeta": {
-    "@relate/observable": {
+    "@relate/contrib-observable": {
       "injected": true
     },
-    "@relate/web": {
+    "@relate/contrib-web": {
       "injected": true
     }
   }

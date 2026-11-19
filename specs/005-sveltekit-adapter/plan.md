@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build `@relate/sveltekit` (`packages/sveltekit`): a server entry that turns registered graph sources into prerendered, revision-named files and descriptors and returns a plain-data catalog, and a main entry shipped as Svelte source with a provider, an inline-graph component and helpers whose lifetimes follow components. Check it with a SvelteKit conformance site and the core's conformance runner in three browsers, as static files and as a Node server, and with a clean-install package test.
+Build `@relate/contrib-sveltekit` (`packages/sveltekit`): a server entry that turns registered graph sources into prerendered, revision-named files and descriptors and returns a plain-data catalog, and a main entry shipped as Svelte source with a provider, an inline-graph component and helpers whose lifetimes follow components. Check it with a SvelteKit conformance site and the core's conformance runner in three browsers, as static files and as a Node server, and with a clean-install package test.
 
 Planning checked ADR-007's open items early (V-1 to V-8 in [research.md](research.md)): the endpoint under the Node output, build failures for a throwing, a non-deterministic and an invalid source, the development server following an edit, hydration of a holder on an on-demand page, the `$app/paths` import from a package compiled by the site's build, and `data-sveltekit-reload` all behave as ADR-007 assumes. Three statements needed amending and were (ADR-007 §6, 2026-11-08): rune modules in the package are `.svelte.js`, not `.svelte.ts` (the development server rejects `.svelte.ts` from `node_modules`); `resolve()` gives the server render a page-relative path, so only the browser's location matters; and `GraphData` writes the same element on both sides, since a server-only element is removed by hydration.
 
@@ -14,7 +14,7 @@ Planning checked ADR-007's open items early (V-1 to V-8 in [research.md](researc
 
 **Language/Version**: TypeScript 7 for the server entry and the tests (as the other packages), plain JavaScript with JSDoc for rune modules and the registry, Svelte 5 components (which may use TypeScript), Node 24, ES2022 browser target
 
-**Primary Dependencies**: peers `@sveltejs/kit` ^3, `svelte` ^5, `@relate/web`, `@relate/relate-wasm`; no other runtime dependency. Dev: `@playwright/test`, `vitest`, `typescript`, `@sveltejs/kit`, `svelte`, `vite`, `@sveltejs/vite-plugin-svelte`, `@sveltejs/adapter-static`, `@sveltejs/adapter-node`.
+**Primary Dependencies**: peers `@sveltejs/kit` ^3, `svelte` ^5, `@relate/contrib-web`, `@relate/relate-wasm`; no other runtime dependency. Dev: `@playwright/test`, `vitest`, `typescript`, `@sveltejs/kit`, `svelte`, `vite`, `@sveltejs/vite-plugin-svelte`, `@sveltejs/adapter-static`, `@sveltejs/adapter-node`.
 
 **Storage**: none of its own. Registered graphs are prerendered files; the core's origin-private store is used through the core.
 
@@ -71,7 +71,7 @@ specs/005-sveltekit-adapter/
 
 ```text
 packages/sveltekit/
-├── package.json                    # @relate/sveltekit; exports "." (svelte and default conditions) and "./server"
+├── package.json                    # @relate/contrib-sveltekit; exports "." (svelte and default conditions) and "./server"
 ├── tsconfig.json                   # for src/server and the tests
 ├── README.md                       # use, lifetimes, the placeholder-first rule, route file, base path, cell-free notes
 ├── src/
@@ -96,7 +96,7 @@ packages/sveltekit/
 │   ├── package/clean-install.test.ts
 │   └── trace/check-trace.ts
 └── conformance-site/               # unpublished SvelteKit app; built once per profile and output
-    ├── package.json                # depends on @relate/sveltekit and @relate/web by workspace
+    ├── package.json                # depends on @relate/contrib-sveltekit and @relate/contrib-web by workspace
     ├── vite.config.js              # ADAPTER, BASE, OUT, PORT; server.fs.allow for the repository root
     ├── src/hooks.server.ts         # NAVIGATION=multi-page adds data-sveltekit-reload to the body
     ├── src/lib/graphs.ts           # example sources (variant a; a small one for inline and page graphs)

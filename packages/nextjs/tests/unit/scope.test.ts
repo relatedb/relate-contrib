@@ -15,7 +15,7 @@ describe("the server entry", () => {
     for (const file of sources) {
       const text = readFileSync(join(dir, file), "utf8");
       expect(text, file).not.toMatch(/relate-wasm|\.wasm|\bwindow\b|\bdocument\./);
-      for (const m of text.matchAll(/from "([^"]+)"/g)) expect(m[1], file).not.toBe("@relate/web"); // only its build and validate subpaths
+      for (const m of text.matchAll(/from "([^"]+)"/g)) expect(m[1], file).not.toBe("@relate/contrib-web"); // only its build and validate subpaths
       expect(text, file).not.toMatch(/\.\.\/client\//);
     }
   });

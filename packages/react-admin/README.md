@@ -1,6 +1,6 @@
-# @relate/react-admin
+# @relate/contrib-react-admin
 
-A [react-admin](https://marmelab.com/react-admin/) data provider over a client of [`@relate/web`](../web/README.md): lists with sorting,
+A [react-admin](https://marmelab.com/react-admin/) data provider over a client of [`@relate/contrib-web`](../web/README.md): lists with sorting,
 filters and paging, records with references, and writes, all as parameterised statements over the embedded graph. A team that
 declares its resources gets react-admin's lists, filters, edit forms and relation pickers over a graph, with no server.
 
@@ -11,16 +11,16 @@ The package holds no interface components and no hosting code. It works over any
 ## Install
 
 ```sh
-pnpm add @relate/react-admin @relate/web @relate/relate-wasm react-admin
+pnpm add @relate/contrib-react-admin @relate/contrib-web @relate/relate-wasm react-admin
 ```
 
-`react-admin` (^5) and `@relate/web` are peer dependencies, used as types only; the package has no runtime dependency.
+`react-admin` (^5) and `@relate/contrib-web` are peer dependencies, used as types only; the package has no runtime dependency.
 
 ## Use
 
 ```ts
-import { createClient } from "@relate/web";
-import { createDataProvider, type Schema } from "@relate/react-admin";
+import { createClient } from "@relate/contrib-web";
+import { createDataProvider, type Schema } from "@relate/contrib-react-admin";
 
 const schema: Schema = {
   resources: {
@@ -143,7 +143,7 @@ replaces a crashed worker itself.
   warm package store and the engine's WebAssembly already built (building it from source is not included).
 
 The query figures are measured in Node with the engine in the same process; they are not a claim about a browser worker or about other
-data. Regenerate them with `pnpm --filter @relate/react-admin measure`.
+data. Regenerate them with `pnpm --filter @relate/contrib-react-admin measure`.
 
 ## Tests
 

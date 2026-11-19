@@ -1,10 +1,10 @@
 "use client";
 // For the lifetime pages: a registered page-lifetime graph (`small`), with a log of what happened, kept in module state so
 // it survives router navigations. The adapter's own tests read `window.__relLog`.
-import { useGraph } from "@relate/nextjs/client";
+import { useGraph } from "@relate/contrib-nextjs/client";
 import { visible } from "./visible";
 import { useEffect } from "react";
-import type { Client } from "@relate/web";
+import type { Client } from "@relate/contrib-web";
 
 type Win = { __relLog?: string[]; __relClient?: Client };
 const log: string[] = [];

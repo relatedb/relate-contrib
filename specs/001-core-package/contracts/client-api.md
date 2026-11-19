@@ -1,4 +1,4 @@
-# Contract: Public API of `@relate/web`
+# Contract: Public API of `@relate/contrib-web`
 
 **Feature**: [spec.md](../spec.md) | **Plan**: [plan.md](../plan.md)
 
@@ -7,7 +7,7 @@ during implementation if the behavior stays the same. `Envelope` is the engine's
 it arrives (a parsed object with `columns`, `rows`, `stats`, `error`, and the rest); the package does not
 reshape it (FR-003).
 
-## Module `@relate/web`
+## Module `@relate/contrib-web`
 
 ```ts
 export type Status = "loading" | "ready" | "recovering" | "failed";
@@ -109,7 +109,7 @@ export interface Events {
   (FR-021, FR-027).
 - A page may call `createClient` more than once; clients share nothing (FR-035).
 
-## Module `@relate/web/validate`
+## Module `@relate/contrib-web/validate`
 
 ```ts
 export type ValidationResult =
@@ -126,6 +126,6 @@ node properties (FR-018). The first problem is reported with a path such as `nod
 in place of `document`. A separate check, `checkAgreement(descriptor, document)`, reports a `revision` or count
 mismatch between the two (FR-039).
 
-## Module `@relate/web/conformance`
+## Module `@relate/contrib-web/conformance`
 
 See [conformance.md](conformance.md).

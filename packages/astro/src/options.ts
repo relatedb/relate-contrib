@@ -1,8 +1,8 @@
 // The integration's options: parsing, defaults and the configuration-time failures (spec FR-002 to FR-005).
 import { existsSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
-import { validateDescriptor } from "@relate/web/validate";
-import type { IndexSpec } from "@relate/web/validate";
+import { validateDescriptor } from "@relate/contrib-web/validate";
+import type { IndexSpec } from "@relate/contrib-web/validate";
 
 export type Lifetime = "page" | "visit";
 export type Navigation = "multi-page" | "client-routing";
@@ -34,7 +34,7 @@ export interface ResolvedOptions {
 }
 
 const fail = (message: string): never => {
-  throw new Error(`@relate/astro: ${message}`);
+  throw new Error(`@relate/contrib-astro: ${message}`);
 };
 
 /** Parse and check the options. `root` is the site's root, which relative sources are resolved against. */

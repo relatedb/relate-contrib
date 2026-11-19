@@ -1,10 +1,10 @@
 // Registered graphs: the declaration check (FR-004, FR-012) and the evaluation of a source (FR-008, FR-009).
-import { evaluate } from "@relate/web/build";
-import type { Evaluated } from "@relate/web/build";
-import { validateDescriptor } from "@relate/web/validate";
-import type { GraphDocument, IndexSpec } from "@relate/web/validate";
+import { evaluate } from "@relate/contrib-web/build";
+import type { Evaluated } from "@relate/contrib-web/build";
+import { validateDescriptor } from "@relate/contrib-web/validate";
+import type { GraphDocument, IndexSpec } from "@relate/contrib-web/validate";
 
-export const OWNER = "@relate/sveltekit";
+export const OWNER = "@relate/contrib-sveltekit";
 
 export type Lifetime = "page" | "visit";
 

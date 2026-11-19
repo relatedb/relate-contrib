@@ -32,7 +32,7 @@ export function withRelate<T extends NextConfigLike, A extends never[]>(nextConf
 export function withRelate<T extends NextConfigLike>(nextConfig: ConfigInput<T> = {} as T, options: RelateOptions = {}): unknown {
   const navigation = options.navigation ?? "client-routing";
   if (!NAVIGATIONS.includes(navigation)) {
-    throw new Error(`@relate/nextjs: navigation "${String(navigation)}" is not one of ${NAVIGATIONS.map((n) => `"${n}"`).join(", ")}`);
+    throw new Error(`@relate/contrib-nextjs: navigation "${String(navigation)}" is not one of ${NAVIGATIONS.map((n) => `"${n}"`).join(", ")}`);
   }
   if (typeof nextConfig === "function") {
     return async (...args: never[]) => wrap(await nextConfig(...args), navigation);

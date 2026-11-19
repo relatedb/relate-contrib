@@ -13,7 +13,7 @@ describe("declaring registered graphs", () => {
   });
 
   it("rejects a name that breaks ADR-003's id rule, naming the graph", () => {
-    expect(() => declare({ "Bad Name": { source } })).toThrow(/@relate\/nextjs: graph "Bad Name"/);
+    expect(() => declare({ "Bad Name": { source } })).toThrow(/@relate\/contrib-nextjs: graph "Bad Name"/);
     expect(() => declare({ "": { source } })).toThrow(/graph ""/);
   });
 

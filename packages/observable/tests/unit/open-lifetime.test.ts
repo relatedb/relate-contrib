@@ -8,7 +8,7 @@ const createClient = vi.fn((_options: unknown) => {
   clients.push(c);
   return c;
 });
-vi.mock("@relate/web", () => ({ createClient: (o: unknown) => createClient(o) }));
+vi.mock("@relate/contrib-web", () => ({ createClient: (o: unknown) => createClient(o) }));
 
 let page: ReturnType<typeof installPage>;
 let open: typeof import("../../src/open.js").open;

@@ -1,4 +1,4 @@
-import { catalog } from "@relate/nextjs/server";
+import { catalog } from "@relate/contrib-nextjs/server";
 import type { ReactNode } from "react";
 import { graphs } from "../lib/graphs";
 import { Providers } from "./providers";

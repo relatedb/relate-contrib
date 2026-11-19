@@ -1,4 +1,4 @@
-import { GraphData } from "@relate/nextjs/server";
+import { GraphData } from "@relate/contrib-nextjs/server";
 import { DirectProbe } from "../direct-probe";
 import { Nav } from "../rel-shell";
 

@@ -1,5 +1,5 @@
 // covers: FR-022, FR-023, SC-004
-import { formatReport, runConformance, scenarios } from "@relate/web/conformance";
+import { formatReport, runConformance, scenarios } from "@relate/contrib-web/conformance";
 import { expect, origin, test } from "./fixtures.js";
 
 // Variant a is the loader-published pair, whose data file is named by a content hash; variant b is a plain file, which Framework

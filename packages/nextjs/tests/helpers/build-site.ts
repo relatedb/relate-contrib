@@ -1,5 +1,5 @@
 // Builds a small fixture Next app with the adapter under test. The app lives in `conformance-site/.fixtures/<unique>` so that
-// it resolves `next`, `react` and `@relate/nextjs` from the conformance site's `node_modules`, as a workspace package does.
+// it resolves `next`, `react` and `@relate/contrib-nextjs` from the conformance site's `node_modules`, as a workspace package does.
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -32,7 +32,7 @@ export interface Built {
   remove(): void;
 }
 
-const ROUTE = `import { createGraphRoute } from "@relate/nextjs/server";
+const ROUTE = `import { createGraphRoute } from "@relate/contrib-nextjs/server";
 import { graphs } from "../../../../lib/graphs.js";
 export const dynamic = "force-static";
 export const dynamicParams = false;
@@ -42,7 +42,7 @@ export const { GET, generateStaticParams } = createGraphRoute(graphs);
 const GRAPHS = `export const graphs = { g: { source: () => ({ version: 1, nodes: [{ id: "a", labels: ["X"] }, { id: "b", labels: ["X"] }], links: [{ source: "a", target: "b", type: "T" }] }) } };
 `;
 
-const LAYOUT = `import { catalog } from "@relate/nextjs/server";
+const LAYOUT = `import { catalog } from "@relate/contrib-nextjs/server";
 import { graphs } from "../lib/graphs.js";
 export default function Layout({ children }) { catalog(graphs); return <html lang="en"><body>{children}</body></html>; }
 `;
@@ -60,7 +60,7 @@ function writeFixture(fixture: Fixture): string {
     "app/layout.jsx": LAYOUT,
     "app/page.jsx": PAGE,
     "next.config.mjs": `import { fileURLToPath } from "node:url";
-import { withRelate } from "@relate/nextjs";
+import { withRelate } from "@relate/contrib-nextjs";
 const root = fileURLToPath(new URL("../../../../../", import.meta.url));
 export default withRelate({ distDir: ${JSON.stringify(mode === "export" ? "out" : ".next")}, ${mode === "export" ? 'output: "export",' : ""} ${fixture.basePath ? `basePath: ${JSON.stringify(fixture.basePath)},` : ""} turbopack: { root }, outputFileTracingRoot: root, ${fixture.config ?? ""} }, {});
 `,

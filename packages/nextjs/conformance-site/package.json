@@ -9,11 +9,11 @@
   },
   "dependencies": {
     "@relate/relate-wasm": "*",
-    "@relate/nextjs": "workspace:*",
+    "@relate/contrib-nextjs": "workspace:*",
     "next": "^16.4.5",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "@relate/web": "workspace:*"
+    "@relate/contrib-web": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

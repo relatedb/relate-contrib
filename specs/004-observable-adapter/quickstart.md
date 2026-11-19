@@ -14,7 +14,7 @@ pnpm test:observable-trace         # every requirement and success criterion has
 
 ## A site, by hand
 
-1. In a Framework 1.x project add `@relate/observable`, `@relate/web` and `@relate/relate-wasm`.
+1. In a Framework 1.x project add `@relate/contrib-observable`, `@relate/contrib-web` and `@relate/relate-wasm`.
 2. Add the four loaders from [contracts/loader-entry.md](contracts/loader-entry.md): the engine, the worker, and a graph's document and descriptor over a source module.
 3. Set the site's scripts to clean before building: `"clean": "rm -rf docs/.observablehq/cache"`, `"build": "npm run clean && observable build"`, `"dev": "npm run clean && observable preview"` (Framework 1.13 has no `clean` command; its templates clear the cache folder with a script).
 4. In a cell, call `open` as in [contracts/browser-entry.md](contracts/browser-entry.md), `await db.ready`, and pass `await db.cypher\`…\`` to a chart or table.

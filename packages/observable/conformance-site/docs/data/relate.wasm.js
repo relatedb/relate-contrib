@@ -1,3 +1,3 @@
-import {engine} from "@relate/observable/loader";
+import {engine} from "@relate/contrib-observable/loader";
 
 await engine();

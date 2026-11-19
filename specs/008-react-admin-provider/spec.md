@@ -6,7 +6,7 @@
 
 **Status**: Implemented
 
-**Input**: User description: "React-admin data provider and local-first demo: implement accepted ADR-008 (parent RFC-005 and RFC-006; builds on ADR-001, ADR-002, ADR-003, ADR-009 and ADR-010) in two deliverables: a package `@relate/react-admin` exporting `createDataProvider(client, schema)` and `ensureSchema(client, schema)`, and an unpublished demo application `demos/react-admin` whose records persist in an application graph. Early tasks confirm the engine behaviours the ADR assumes and amend ADR-008 with the results."
+**Input**: User description: "React-admin data provider and local-first demo: implement accepted ADR-008 (parent RFC-005 and RFC-006; builds on ADR-001, ADR-002, ADR-003, ADR-009 and ADR-010) in two deliverables: a package `@relate/contrib-react-admin` exporting `createDataProvider(client, schema)` and `ensureSchema(client, schema)`, and an unpublished demo application `demos/react-admin` whose records persist in an application graph. Early tasks confirm the engine behaviours the ADR assumes and amend ADR-008 with the results."
 
 ## Overview
 
@@ -14,7 +14,7 @@ react-admin is a React framework for administrative applications: lists with sor
 
 This feature builds two things from ADR-008:
 
-- **The package** `@relate/react-admin` (`packages/react-admin`): a data provider that works over any client of the core (`@relate/web`), and a helper that creates the uniqueness constraint on each resource's `id`. It holds no interface components and no hosting code.
+- **The package** `@relate/contrib-react-admin` (`packages/react-admin`): a data provider that works over any client of the core (`@relate/contrib-web`), and a helper that creates the uniqueness constraint on each resource's `id`. It holds no interface components and no hosting code.
 - **The demo** `demos/react-admin`: an unpublished Vite and React application with three linked resources (companies, people and projects) whose records persist in the visitor's browser, built on the application graphs of ADR-009 and the catalog of ADR-010.
 
 Three kinds of people depend on it:
@@ -143,7 +143,7 @@ A visitor can tell whether their records are stored durably, are held in memory 
 
 ### User Story 6 - The package installs cleanly and is checked with the rest (Priority: P2)
 
-The package can be packed, installed in a clean project beside `react-admin` and `@relate/web`, and used. Its contract tests run against the real engine, the demo's browser tests run in Chromium, Firefox and WebKit, and both run in the repository's routine checks so they do not decay between launches.
+The package can be packed, installed in a clean project beside `react-admin` and `@relate/contrib-web`, and used. Its contract tests run against the real engine, the demo's browser tests run in Chromium, Firefox and WebKit, and both run in the repository's routine checks so they do not decay between launches.
 
 **Why this priority**: RFC-005 asks for an automated check that each demo builds and answers a query; constitution V requires tests for every MUST.
 
@@ -195,7 +195,7 @@ Before the provider's statements are fixed, early tasks confirm the engine behav
 
 **The package**
 
-- **FR-001**: The package `@relate/react-admin` MUST export `createDataProvider(client, schema)`, taking any client of the core, with peer dependencies on `react-admin` ^5 and `@relate/web`, no interface components, and no hosting code (ADR-008 2.1).
+- **FR-001**: The package `@relate/contrib-react-admin` MUST export `createDataProvider(client, schema)`, taking any client of the core, with peer dependencies on `react-admin` ^5 and `@relate/contrib-web`, no interface components, and no hosting code (ADR-008 2.1).
 - **FR-002**: The package MUST export `ensureSchema(client, schema)`, which creates one uniqueness constraint on `id` per resource label with `CREATE CONSTRAINT … IF NOT EXISTS`, and the provider MUST complete it once before its first statement. It MUST NOT create a separate index on `id`. If creating a constraint fails (for example because the store already holds duplicate ids), the call MUST reject with `status` 400 naming the resource and MUST be tried again on the next call.
 - **FR-003**: A schema MUST declare, per resource, its node label, its fields (each string, number or boolean, with flags for sortable, filterable and searchable) and its references (field name, target resource, relationship type, direction); a reference MUST be many-to-one (ADR-008 2.2). A schema that is malformed MUST be rejected when the provider is created, naming the problem.
 - **FR-004**: `id` MUST be implicitly declared on every resource as a string field that is sortable and filterable; the record `id` MUST be the node's `id` property; `create` MUST generate one with `crypto.randomUUID()` when the data has none; engine element ids MUST NOT appear in records (ADR-008 2.2).

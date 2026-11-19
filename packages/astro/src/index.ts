@@ -8,18 +8,18 @@ export type { RelateOptions, GraphOption, Lifetime, Navigation } from "./options
 
 export default function relate(options?: RelateOptions): AstroIntegration {
   return {
-    name: "@relate/astro",
+    name: "@relate/contrib-astro",
     hooks: {
       "astro:config:setup": ({ command, config, injectRoute, updateConfig }) => {
         if (config.output !== "static") {
-          throw new Error(`@relate/astro: only static output is supported, but output is "${config.output}"`);
+          throw new Error(`@relate/contrib-astro: only static output is supported, but output is "${config.output}"`);
         }
         const resolved = resolveOptions(options, fileURLToPath(config.root));
         updateConfig({
           vite: {
             plugins: [relatePlugin(resolved, { base: config.base, dev: command === "dev" })],
             // The component is an .astro file in this package, which Vite must compile instead of externalizing.
-            ssr: { noExternal: ["@relate/astro"] },
+            ssr: { noExternal: ["@relate/contrib-astro"] },
             // The engine's binary is placed by the bundler; the dev server must not pre-bundle it.
             optimizeDeps: { exclude: ["@relate/relate-wasm"] },
           },

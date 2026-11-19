@@ -20,7 +20,7 @@ A data provider is a small contract with a broad payoff: a team that describes t
 
 ### 2.1 Two deliverables
 
-A package, `@relate/react-admin` in `packages/react-admin`, exports `createDataProvider(client, schema)`. It takes any core client, from `createClient`, `createSiteClient` or an adapter's helper, and has peer dependencies on `react-admin` ^5 and `@relate/web`. It contains no interface components and no hosting code.
+A package, `@relate/contrib-react-admin` in `packages/react-admin`, exports `createDataProvider(client, schema)`. It takes any core client, from `createClient`, `createSiteClient` or an adapter's helper, and has peer dependencies on `react-admin` ^5 and `@relate/contrib-web`. It contains no interface components and no hosting code.
 
 A demo application, `demos/react-admin`, is a Vite and React app that uses the package. It is unpublished, and it is where later demos' shared needs get noticed (RFC-005 5.3).
 

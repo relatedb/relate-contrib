@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { config, installDocument, stubClient } from "../helpers/stubs.js";
 
 const createClient = vi.fn((_o: unknown) => stubClient());
-vi.mock("@relate/web", () => ({ createClient: (o: unknown) => createClient(o), createSiteClient: (o: unknown) => createClient(o) }));
+vi.mock("@relate/contrib-web", () => ({ createClient: (o: unknown) => createClient(o), createSiteClient: (o: unknown) => createClient(o) }));
 
 const { mount } = await import("../../src/context.js");
 const { graph } = await import("../../src/use-graph.svelte.js");

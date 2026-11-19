@@ -1,8 +1,8 @@
-# @relate/nextjs
+# @relate/contrib-nextjs
 
-Next.js (app router) integration for `@relate/web`. It publishes graphs built from a site's content as revision-named static files, carries small graphs inside pages, and ties each graph's client to React components. The core does the rest: the worker, loading, faults, status.
+Next.js (app router) integration for `@relate/contrib-web`. It publishes graphs built from a site's content as revision-named static files, carries small graphs inside pages, and ties each graph's client to React components. The core does the rest: the worker, loading, faults, status.
 
-Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, React 19, `@relate/web` and `@relate/relate-wasm` (all peer dependencies). Static export and the Node server are supported; the pages router, edge and serverless runtimes are not.
+Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, React 19, `@relate/contrib-web` and `@relate/relate-wasm` (all peer dependencies). Static export and the Node server are supported; the pages router, edge and serverless runtimes are not.
 
 ## Use, in five steps
 
@@ -10,7 +10,7 @@ Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, R
 
    ```js
    // next.config.mjs
-   import { withRelate } from "@relate/nextjs";
+   import { withRelate } from "@relate/contrib-nextjs";
    export default withRelate({ /* your config */ }, { navigation: "client-routing" });
    ```
 
@@ -18,7 +18,7 @@ Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, R
 
    ```ts
    // lib/graphs.ts
-   import type { Graphs } from "@relate/nextjs/server";
+   import type { Graphs } from "@relate/contrib-nextjs/server";
    export const graphs = {
      site: { source: async () => buildSiteGraph(), lifetime: "visit", indexes: [{ label: "Page", property: "id" }] },
    } satisfies Graphs;
@@ -28,7 +28,7 @@ Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, R
 
    ```ts
    // app/relate/[id]/[file]/route.ts
-   import { createGraphRoute } from "@relate/nextjs/server";
+   import { createGraphRoute } from "@relate/contrib-nextjs/server";
    import { graphs } from "../../../../lib/graphs";
    export const dynamic = "force-static";
    export const dynamicParams = false;
@@ -50,7 +50,7 @@ Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, R
 
    ```tsx
    "use client";
-   import { useQuery } from "@relate/nextjs/client";
+   import { useQuery } from "@relate/contrib-nextjs/client";
    const { status, rows } = useQuery("site", "MATCH (n:Page) RETURN count(n) AS c");
    ```
 
@@ -68,7 +68,7 @@ Implements [ADR-005](../../design/adr/ADR-005-next-adapter.md). Needs Next 16, R
 
 ## Layout, tests
 
-`src/` (`index.ts`, `env.ts`, `server/`, `client/`), `tests/` (unit, build, browser, package, trace), `conformance-site/` (an unpublished Next app built once per profile, as a server build and as an export, plus a `cacheComponents` build and a base-path build). The shared build code lives in `@relate/web/build`.
+`src/` (`index.ts`, `env.ts`, `server/`, `client/`), `tests/` (unit, build, browser, package, trace), `conformance-site/` (an unpublished Next app built once per profile, as a server build and as an export, plus a `cacheComponents` build and a base-path build). The shared build code lives in `@relate/contrib-web/build`.
 
 ```sh
 pnpm test:next                # unit, build and development-server tests

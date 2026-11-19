@@ -1,6 +1,6 @@
 "use client";
 // Shows how long the core says a graph took to load, for the load-figure pages (single measurements).
-import { useGraph } from "@relate/nextjs/client";
+import { useGraph } from "@relate/contrib-nextjs/client";
 import { useEffect } from "react";
 import { visible } from "./visible";
 

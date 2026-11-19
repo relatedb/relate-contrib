@@ -1,7 +1,7 @@
 {
-  "name": "@relate/nextjs",
+  "name": "@relate/contrib-nextjs",
   "version": "0.0.0",
-  "description": "Next.js integration for @relate/web: serves graphs built from a site's content, carries small graphs in pages, and ties graph clients to React components.",
+  "description": "Next.js integration for @relate/contrib-web: serves graphs built from a site's content, carries small graphs in pages, and ties graph clients to React components.",
   "private": true,
   "type": "module",
   "sideEffects": false,
@@ -35,7 +35,7 @@
     "@relate/relate-wasm": "*",
     "next": "^16.0.0",
     "react": "^19.0.0",
-    "@relate/web": "*"
+    "@relate/contrib-web": "*"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
@@ -45,7 +45,7 @@
     "next": "^16.4.5",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "@relate/web": "workspace:*",
+    "@relate/contrib-web": "workspace:*",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"

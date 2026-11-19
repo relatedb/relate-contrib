@@ -1,5 +1,5 @@
 // covers: FR-028, FR-029, SC-005
-import { formatReport, runConformance, type Profile } from "@relate/web/conformance";
+import { formatReport, runConformance, type Profile } from "@relate/contrib-web/conformance";
 import { builds } from "./builds.js";
 import { expect, test } from "./fixtures.js";
 

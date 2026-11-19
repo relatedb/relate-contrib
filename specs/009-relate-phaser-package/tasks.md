@@ -24,10 +24,10 @@ description: "Task list for the relate-phaser package and the path explorer's ad
 
 **Purpose**: The workspace project, its configuration, its test helpers and the trace check
 
-- [X] T001 Create `packages/phaser/package.json` (`name` `@relate/relate-phaser`, `version` `0.1.0`, `private` true, `type` module, `sideEffects` false, `exports` `.` pointing at `dist/index.js` and `dist/index.d.ts`, `peerDependencies` `@relate/web` `*` and `phaser` `^4.0.0` with `peerDependenciesMeta` marking `phaser` optional; `devDependencies` as `packages/react-admin/package.json` has them for `@relate/relate-wasm`, `@relate/web`, `@types/node`, `tsx`, `typescript`, `vitest`; scripts `build`, `typecheck`, `test:phaser`, `test:phaser-package`, `test:phaser-trace` written like react-admin's), plus `packages/phaser/tsconfig.json`, `vitest.config.ts` and `vitest.package.config.ts` copied from `packages/react-admin` with the names changed (FR-001, research R10)
+- [X] T001 Create `packages/phaser/package.json` (`name` `@relate/contrib-phaser`, `version` `0.1.0`, `private` true, `type` module, `sideEffects` false, `exports` `.` pointing at `dist/index.js` and `dist/index.d.ts`, `peerDependencies` `@relate/contrib-web` `*` and `phaser` `^4.0.0` with `peerDependenciesMeta` marking `phaser` optional; `devDependencies` as `packages/react-admin/package.json` has them for `@relate/relate-wasm`, `@relate/contrib-web`, `@types/node`, `tsx`, `typescript`, `vitest`; scripts `build`, `typecheck`, `test:phaser`, `test:phaser-package`, `test:phaser-trace` written like react-admin's), plus `packages/phaser/tsconfig.json`, `vitest.config.ts` and `vitest.package.config.ts` copied from `packages/react-admin` with the names changed (FR-001, research R10)
 - [X] T002 [P] Create `packages/phaser/tests/trace/check-trace.ts`, modelled on `packages/react-admin/tests/trace/check-trace.ts`: read `specs/009-relate-phaser-package/spec.md` for `**FR-nnn**` and `**SC-nnn**`, read `// covers-ph:` tags from the test files of the package and of the demo's browser tests, require the tagged files to pass in `reports/` (FR-017)
 - [X] T003 [P] Create `packages/phaser/tests/helpers/engine.ts` (the in-process engine, a query function over the real WebAssembly build in Node, as `demos/phaser-path-explorer/tests/helpers/engine.ts` and `packages/react-admin/tests/helpers/in-process-client.ts` do; research R2) and `packages/phaser/tests/helpers/fake-client.ts` (a client double with `query`, `status`, `generation`, `on("status", …)` and `onGeneration` and methods that emit a status change, a new generation and a `lost` rejection; research R3)
-- [X] T004 Create `packages/phaser/src/index.ts` as an empty export, run `pnpm install` and `pnpm --filter @relate/relate-phaser typecheck` to confirm the workspace resolves the package; fix configuration until it does
+- [X] T004 Create `packages/phaser/src/index.ts` as an empty export, run `pnpm install` and `pnpm --filter @relate/contrib-phaser typecheck` to confirm the workspace resolves the package; fix configuration until it does
 
 ---
 
@@ -50,7 +50,7 @@ description: "Task list for the relate-phaser package and the path explorer's ad
 ### Implementation
 
 - [X] T006 [US1] Create `packages/phaser/src/errors.ts` (`StatementError`, extends `Error`, same message as the engine's) and `packages/phaser/src/bridge.ts` (`Bridge` moved from `demos/phaser-path-explorer/src/game/bridge.ts`, with `forClient`, `onSettle`, `idle` built on settle notification rather than polling, `GraphError` passed through and an envelope error turned into `StatementError`; contract `contracts/package-api.md` "Queue"; research R9) and export both from `src/index.ts` (FR-003 to FR-006)
-- [X] T007 [US1] Run `pnpm --filter @relate/relate-phaser test:phaser` until T005 passes; the Queue entity in `data-model.md` (`Queue.pending`) is the count the tests assert
+- [X] T007 [US1] Run `pnpm --filter @relate/contrib-phaser test:phaser` until T005 passes; the Queue entity in `data-model.md` (`Queue.pending`) is the count the tests assert
 
 **Checkpoint**: the queue works and is tested alone.
 
@@ -69,7 +69,7 @@ description: "Task list for the relate-phaser package and the path explorer's ad
 ### Implementation
 
 - [X] T009 [US2] Create `packages/phaser/src/cache.ts` (`ReplyCache<S>`: state, `version`, `pending`, `status`, `loadedGeneration` per `data-model.md` Cache; `start`, `commit`, `act` in the closure shape of research R1, `reload` that applies the game's load patch in one commit, a generation listener that catches its own errors, `destroy`; the contract's `CacheClient` is the narrow client interface of research R3) and export it from `src/index.ts`. It contains no undo, no snapshot across actions, no knowledge states and no statements (FR-007 to FR-012; contract "Cache")
-- [X] T010 [US2] Run `pnpm --filter @relate/relate-phaser test:phaser` until T008 passes
+- [X] T010 [US2] Run `pnpm --filter @relate/contrib-phaser test:phaser` until T008 passes
 
 **Checkpoint**: the queue and the cache work and are tested in the package.
 
@@ -87,8 +87,8 @@ description: "Task list for the relate-phaser package and the path explorer's ad
 
 ### Implementation
 
-- [X] T012 [US3] Add `"@relate/relate-phaser": "workspace:*"` to `demos/phaser-path-explorer/package.json` `dependencies` and build the package so the demo resolves it (`pnpm -r build` or the filter build)
-- [X] T013 [US3] In `demos/phaser-path-explorer`, move `tests/bridge.test.ts` into the package (its cases are in T005, so delete the demo's copy), point `tests/helpers/engine.ts`, `tests/state.test.ts`, `src/demo.ts` and `src/main.ts` at `Bridge` and `Envelope`/`QueryFn` from `@relate/relate-phaser`, and delete `src/game/bridge.ts` so no copy of the queue remains (FR-015, SC-003)
+- [X] T012 [US3] Add `"@relate/contrib-phaser": "workspace:*"` to `demos/phaser-path-explorer/package.json` `dependencies` and build the package so the demo resolves it (`pnpm -r build` or the filter build)
+- [X] T013 [US3] In `demos/phaser-path-explorer`, move `tests/bridge.test.ts` into the package (its cases are in T005, so delete the demo's copy), point `tests/helpers/engine.ts`, `tests/state.test.ts`, `src/demo.ts` and `src/main.ts` at `Bridge` and `Envelope`/`QueryFn` from `@relate/contrib-phaser`, and delete `src/game/bridge.ts` so no copy of the queue remains (FR-015, SC-003)
 - [X] T014 [US3] In `demos/phaser-path-explorer/src/game/state.ts`, make `GameState` own a `ReplyCache<GameState>` whose state is the game state itself: `version` and `pending` read from the cache, `touch()` is `cache.commit(() => {})`, and `act` delegates to `cache.act` with the demo's message, `applied` flag and one-level undo snapshot kept around it; `load()` becomes the cache's load function so one reload rebuilds the board. Game logic, statements and `MapScene`'s use of the public fields are unchanged (FR-015, FR-016; research R1, R5)
 - [X] T015 [US3] In `demos/phaser-path-explorer/src/main.ts`, build the queue with `Bridge.forClient(client)` for the real game, start the cache, and keep it following the client so a new generation rebuilds the board; keep the dev hooks. Run `pnpm --filter phaser-path-explorer test` and confirm all 202 tests that passed before still pass (SC-003), then `pnpm --filter phaser-path-explorer test:phaser-browsers` until T011's recovery case passes
 
@@ -142,11 +142,11 @@ description: "Task list for the relate-phaser package and the path explorer's ad
 
 ### Tests
 
-- [X] T022 [US6] Create `packages/phaser/tests/package/clean-install.test.ts` (`// covers-ph: FR-001, FR-002, SC-004`), modelled on `packages/react-admin/tests/package/clean-install.test.ts`: pack the package, install it with `@relate/web` and `phaser` into a clean temporary project, build a page that creates a queue and a cache and runs one action (the README's first example, so the check also confirms the README's code runs; SC-004's fifteen-minute figure is a reader check, labelled unmeasured and not asserted), and assert the manifest's version is below 1.0, `@relate/web` and `phaser` are peers and neither is bundled, and the installed package lists no statements, seeding or drawing among its exports
+- [X] T022 [US6] Create `packages/phaser/tests/package/clean-install.test.ts` (`// covers-ph: FR-001, FR-002, SC-004`), modelled on `packages/react-admin/tests/package/clean-install.test.ts`: pack the package, install it with `@relate/contrib-web` and `phaser` into a clean temporary project, build a page that creates a queue and a cache and runs one action (the README's first example, so the check also confirms the README's code runs; SC-004's fifteen-minute figure is a reader check, labelled unmeasured and not asserted), and assert the manifest's version is below 1.0, `@relate/contrib-web` and `phaser` are peers and neither is bundled, and the installed package lists no statements, seeding or drawing among its exports
 
 ### Implementation
 
-- [X] T023 [US6] Add the root scripts to `package.json`: `test:phaser`, `test:phaser-browsers`, `test:phaser-package` and `test:phaser-trace` (filtered to `@relate/relate-phaser` and, for the browsers, `phaser-path-explorer`), and add each to the aggregate `test:units`, `test:browsers-all`, `test:packages-all` and `test:traces-all`; add the four commands and the package and demo layout to `CLAUDE.md` (FR-017)
+- [X] T023 [US6] Add the root scripts to `package.json`: `test:phaser`, `test:phaser-browsers`, `test:phaser-package` and `test:phaser-trace` (filtered to `@relate/contrib-phaser` and, for the browsers, `phaser-path-explorer`), and add each to the aggregate `test:units`, `test:browsers-all`, `test:packages-all` and `test:traces-all`; add the four commands and the package and demo layout to `CLAUDE.md` (FR-017)
 - [X] T024 [US6] Run `pnpm test:phaser-trace` and fix any requirement or success criterion without a passing tagged test, then `pnpm test:phaser-package`
 
 ---
@@ -164,7 +164,7 @@ description: "Task list for the relate-phaser package and the path explorer's ad
 
 ## Phase 10: Polish and Cross-Cutting Concerns
 
-- [X] T027 [P] Add a dated amendment to `design/adr/ADR-011-phaser-path-explorer.md` saying the bridge and the generic cache mechanism now live in `@relate/relate-phaser` (ADR-012) and that its 2.6 stands as the behaviour they implement; update `demos/phaser-path-explorer/README.md` to point at the package
+- [X] T027 [P] Add a dated amendment to `design/adr/ADR-011-phaser-path-explorer.md` saying the bridge and the generic cache mechanism now live in `@relate/contrib-phaser` (ADR-012) and that its 2.6 stands as the behaviour they implement; update `demos/phaser-path-explorer/README.md` to point at the package
 - [X] T028 [P] Update `design/rfc/RFC-008-phaser-integration-package.md` open questions 7.1, 7.3 and 7.4 with a pointer to ADR-012's resolution, and leave 7.2, 7.5 and 7.6 open
 - [X] T029 Run the full set once: `pnpm -r build`, `pnpm test:phaser`, `pnpm --filter phaser-path-explorer test`, `pnpm test:phaser-browsers`, `pnpm test:phaser-package`, `pnpm test:phaser-trace`, and `pnpm test:units` to confirm no other package changed; follow `quickstart.md` scenarios 1 to 6 and record any figure with its method and environment, labelled as a single run
 - [X] T030 Set the spec's `**Status**` to Implemented and the commit or PR text cites ADR-012

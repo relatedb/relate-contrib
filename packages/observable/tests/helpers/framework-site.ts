@@ -48,8 +48,8 @@ export function makeSite(name: string, files: Record<string, string>): Site {
   mkdirSync(join(dir, "docs"), { recursive: true });
   writeFileSync(join(dir, "package.json"), JSON.stringify({ name, private: true, type: "module" }));
   writeFileSync(join(dir, "observablehq.config.js"), baseConfig);
-  copyPackage("web", join(repoRoot, "packages/web"), dir, ["package.json", "dist"]);
-  copyPackage("observable", packageRoot, dir, ["package.json", "dist"]);
+  copyPackage("contrib-web", join(repoRoot, "packages/web"), dir, ["package.json", "dist"]);
+  copyPackage("contrib-observable", packageRoot, dir, ["package.json", "dist"]);
   symlinkSync(realpathSync(join(repoRoot, "vendor/relate-wasm/pkg")), join(dir, "node_modules/@relate/relate-wasm"));
   mkdirSync(join(dir, "node_modules/@observablehq"), { recursive: true });
   symlinkSync(frameworkRoot(), join(dir, "node_modules/@observablehq/framework"));

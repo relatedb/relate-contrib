@@ -4,8 +4,8 @@ A small administrative application over the embedded graph, with no server. It s
 filterable, paged lists, edit forms with pickers for related records, and a company page that lists its people and projects.
 The records live in the visitor's browser and are still there after a reload.
 
-It is built from [react-admin](https://marmelab.com/react-admin/), the [`@relate/react-admin`](../../packages/react-admin/README.md)
-data provider, and an *application graph* of the core package ([`@relate/web`](../../packages/web/README.md)): a durable, named graph
+It is built from [react-admin](https://marmelab.com/react-admin/), the [`@relate/contrib-react-admin`](../../packages/react-admin/README.md)
+data provider, and an *application graph* of the core package ([`@relate/contrib-web`](../../packages/web/README.md)): a durable, named graph
 that is seeded once. The decisions are in `design/adr/ADR-008` (the provider and this demo), `ADR-009` (application graphs) and
 `ADR-010` (the catalog); the specification is `specs/008-react-admin-provider/`. RFC-005 and ADR-008 call this application a
 *starter*; this demo and its documents say demo.
@@ -69,7 +69,7 @@ then find their stores without a record. On a shared origin, reset only after th
 3. **Change the data.** Edit `scripts/make-seed.ts` and run `pnpm seed`, or replace `src/seed.json` with a graph data document
    (`design/adr/ADR-002`). Every node needs a unique string `id`. If you change the schema in a way that stored data must follow, raise
    the application's `version` in `src/main.tsx` and give it migrations (the core's README has the rule for them).
-4. Nothing needs changing in `@relate/react-admin`.
+4. Nothing needs changing in `@relate/contrib-react-admin`.
 
 ## Dependencies
 

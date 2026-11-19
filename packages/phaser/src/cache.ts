@@ -1,8 +1,8 @@
 // The reply cache (ADR-012, 2.3 and 2.5). The frame loop reads `state` and never awaits; actions change it through the
 // queue, the engine's replies patch it, and a new client generation rebuilds it. The game defines the shape of the
 // state and writes the patches; the cache holds what is the same in every game.
-import { GraphError } from "@relate/web";
-import type { Client } from "@relate/web";
+import { GraphError } from "@relate/contrib-web";
+import type { Client } from "@relate/contrib-web";
 import { Bridge } from "./bridge.js";
 
 export type CacheStatus = "loading" | "ready" | "recovering" | "failed";

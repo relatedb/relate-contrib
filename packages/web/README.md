@@ -1,4 +1,4 @@
-# @relate/web
+# @relate/contrib-web
 
 The name follows the `@relate` namespace; see `design/notes/2026-11-08-relate-contrib-rename.md`.
 
@@ -14,7 +14,7 @@ format), `ADR-003` (the graph descriptor). The specification and plan are in `sp
 ## Install
 
 ```sh
-pnpm add @relate/web @relate/relate-wasm
+pnpm add @relate/contrib-web @relate/relate-wasm
 ```
 
 `@relate/relate-wasm` is a peer dependency. Until it is published to npm this repository vendors a
@@ -24,7 +24,7 @@ pinned build (see `vendor/README.md`). The package has no other runtime dependen
 
 ```js
 import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url"; // the bundler places the binary
-import { createSiteClient, attachView } from "@relate/web";
+import { createSiteClient, attachView } from "@relate/contrib-web";
 
 const client = createSiteClient({
   engineUrl,                                     // where the engine's binary is served from
@@ -64,7 +64,7 @@ engine's JSON envelope, unaltered (`columns`, `rows`, `stats`, `error`, ...); an
 ## Graph data
 
 - **Data document** (`graph-data.schema.json`): `{ version: 1, nodes: [{ id, labels?, properties? }], links: [{ source, target, type, properties? }] }`.
-  Properties live only under `properties`. Validate in a build step with `import { validate } from "@relate/web/validate"`.
+  Properties live only under `properties`. Validate in a build step with `import { validate } from "@relate/contrib-web/validate"`.
 - **Descriptor** (`graph-descriptor.schema.json`): `{ version: 1, id, revision, data: { url, nodes, links }, indexes? }`, served beside the
   data. With a descriptor, a store can be restored without fetching the data when the `revision` has not
   changed (the cache's record is its entry in the catalog, below). Without one there is no store and no revision.
@@ -83,7 +83,7 @@ named, durable graph in the browser, seeded once and carried forward by migratio
 entry (ADR-010, below); the tests are in `tests/application/` and `tests/catalog/`.
 
 ```ts
-import { createClient, inRanges } from "@relate/web";
+import { createClient, inRanges } from "@relate/contrib-web";
 
 const client = createClient({
   engineUrl,
@@ -182,7 +182,7 @@ Three calls are exported. None opens a store, and each needs the origin-private 
 reason `unavailable` otherwise).
 
 ```ts
-import { listGraphs, removeGraph, resetCatalog } from "@relate/web";
+import { listGraphs, removeGraph, resetCatalog } from "@relate/contrib-web";
 
 const { catalog, items } = await listGraphs({ sizes: true });
 // catalog: "ok" | "missing" | "unreadable" | "newer"
@@ -218,7 +218,7 @@ default WebKit context is not); where the store is unavailable the package loads
 
 ## Conformance check for adapters
 
-`@relate/web/conformance` exports `runConformance({ baseUrl, profile, browser })` and the scenarios. Serve the
+`@relate/contrib-web/conformance` exports `runConformance({ baseUrl, profile, browser })` and the scenarios. Serve the
 example pages (`conformance/example-site/`) through your adapter and run it for each profile and browser; a failure
 names the broken behavior. Playwright is an optional peer dependency used by the runner. The contract is in
 `specs/001-core-package/contracts/conformance.md`.
@@ -228,15 +228,15 @@ names the broken behavior. Playwright is an optional peer dependency used by the
 ```sh
 pnpm run build:wasm          # build the vendored engine (needs Rust, wasm-bindgen-cli, binaryen)
 pnpm install
-pnpm --filter @relate/web build
-pnpm --filter @relate/web test:unit
-pnpm --filter @relate/web test:browsers      # Chromium, Firefox and WebKit
-pnpm --filter @relate/web test:conformance
-pnpm --filter @relate/web test:package       # packs the core and installs it in a clean project
-pnpm --filter @relate/web test:trace         # every requirement has a passing, tagged test
-pnpm --filter @relate/web test:application           # application graphs: unit tests against the real engine in Node
-pnpm --filter @relate/web test:application-browsers  # Chromium, Firefox and WebKit
-pnpm --filter @relate/web test:application-trace     # every requirement of specs/006 has a passing, tagged test
+pnpm --filter @relate/contrib-web build
+pnpm --filter @relate/contrib-web test:unit
+pnpm --filter @relate/contrib-web test:browsers      # Chromium, Firefox and WebKit
+pnpm --filter @relate/contrib-web test:conformance
+pnpm --filter @relate/contrib-web test:package       # packs the core and installs it in a clean project
+pnpm --filter @relate/contrib-web test:trace         # every requirement has a passing, tagged test
+pnpm --filter @relate/contrib-web test:application           # application graphs: unit tests against the real engine in Node
+pnpm --filter @relate/contrib-web test:application-browsers  # Chromium, Firefox and WebKit
+pnpm --filter @relate/contrib-web test:application-trace     # every requirement of specs/006 has a passing, tagged test
 ```
 
 Load-time baselines are in `tests/baselines/` (one file per browser and environment; `REL_ENV` names the

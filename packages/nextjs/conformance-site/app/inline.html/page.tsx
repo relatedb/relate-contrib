@@ -1,4 +1,4 @@
-import { GraphData } from "@relate/nextjs/server";
+import { GraphData } from "@relate/contrib-nextjs/server";
 import { Nav } from "../rel-shell";
 import { InlineCount } from "../inline-count";
 

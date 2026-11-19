@@ -1,4 +1,4 @@
-// The Node-only entry (`@relate/web/validate`): validators for build steps. No browser APIs.
+// The Node-only entry (`@relate/contrib-web/validate`): validators for build steps. No browser APIs.
 export { validate } from "./data/validate.js";
 export type { ValidationResult } from "./data/validate.js";
 export { validateDescriptor, checkAgreement } from "./data/descriptor.js";

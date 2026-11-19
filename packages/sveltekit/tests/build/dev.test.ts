@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { startDev } from "../helpers/build-site.js";
 
 const graphs = (rev: string, extra = "") => `export const graphs = { example: { source: () => ({ version: 1, nodes: [{ id: "a", properties: { rev: "${rev}" } }], links: [] }) }${extra} };\n`;
-const route = `import { createGraphRoute } from "@relate/sveltekit/server";
+const route = `import { createGraphRoute } from "@relate/contrib-sveltekit/server";
 import { graphs } from "#lib/graphs.ts";
 export const prerender = true;
 export const { GET, entries } = createGraphRoute(graphs);

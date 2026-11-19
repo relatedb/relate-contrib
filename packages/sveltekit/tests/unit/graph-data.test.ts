@@ -3,7 +3,7 @@ import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 import GraphData from "../../src/GraphData.svelte";
 
-const KEY = Symbol.for("@relate/sveltekit/config");
+const KEY = Symbol.for("@relate/contrib-sveltekit/config");
 const context = (registered: string[] = []) => new Map([[KEY, { catalog: registered.map((id) => ({ id, lifetime: "page", indexes: [] })), engineUrl: "/e", profile: "client-routing", renderIds: new Set<string>() }]]);
 const doc = { version: 1, nodes: [{ id: "a", labels: ["Item"], properties: { note: "<" + "/script><b>x</b> & <" + "!-- y\u2028\u2029" } }], links: [] };
 const html = (props: Record<string, unknown>, ctx = context()) => render(GraphData, { props: { id: "g", document: doc, page: "/inline.html", ...props } as never, context: ctx }).body;

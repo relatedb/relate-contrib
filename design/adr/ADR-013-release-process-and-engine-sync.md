@@ -1,7 +1,7 @@
 ---
 id: ADR-013
 title: The release process for the packages, and how they stay in step with the engine
-status: proposed
+status: accepted
 rfcs: [RFC-009]
 created: 2026-11-19
 ---

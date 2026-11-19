@@ -12,5 +12,5 @@ const adapter = process.env.ADAPTER === "node" ? adapterNode({ out }) : adapterS
 export default defineConfig({
   plugins: [sveltekit({ adapter, paths: { base: process.env.BASE ?? "" } })],
   server: { host: "127.0.0.1", port: Number(process.env.PORT ?? 5400), ...(process.env.ALLOW === "1" ? { fs: { allow: ["../../../.."] } } : {}) },
-  ...(process.env.OPTIMIZE === "exclude" ? { optimizeDeps: { exclude: ["@relate/web", "@relate/relate-wasm"] } } : {})
+  ...(process.env.OPTIMIZE === "exclude" ? { optimizeDeps: { exclude: ["@relate/contrib-web", "@relate/relate-wasm"] } } : {})
 });

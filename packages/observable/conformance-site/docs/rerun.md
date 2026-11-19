@@ -7,14 +7,14 @@ const level = view(Inputs.range([0, 100], {value: 0, step: 1, label: "level"}));
 ```
 
 ```js
-import {open} from "@relate/observable";
+import {open} from "@relate/contrib-observable";
 import {engine, smallFile, worker} from "./lib/files.js";
 const stable = await open({engine, worker, graph: {document: smallFile}, invalidation});
 window.__stable = stable;
 ```
 
 ```js
-import {open as openAgain} from "@relate/observable";
+import {open as openAgain} from "@relate/contrib-observable";
 import {engine as engineFile, smallFile as smallAgain, worker as workerFile} from "./lib/files.js";
 level; // this cell runs again whenever the input moves
 const dependent = await openAgain({engine: engineFile, worker: workerFile, graph: {document: smallAgain}, invalidation});

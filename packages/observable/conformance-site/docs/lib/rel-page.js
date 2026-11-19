@@ -1,9 +1,9 @@
-// The behavior shared by the conformance pages, written against `@relate/observable`. Every observable thing is a `data-rel-*`
+// The behavior shared by the conformance pages, written against `@relate/contrib-observable`. Every observable thing is a `data-rel-*`
 // element, the contract the core's conformance scenarios drive (packages/web/conformance/example-site/rel-page.ts).
 //
 // Query parameters: variant=a|b|mismatch|broken (which descriptor). Only the per-page profile exists in this framework.
-import {open} from "@relate/observable";
-import {attachView} from "@relate/web";
+import {open} from "@relate/contrib-observable";
+import {attachView} from "@relate/contrib-web";
 import {engine, variants, worker} from "./files.js";
 
 const trap = `RETURN ${"(".repeat(1000)}1${")".repeat(1000)} AS x`;

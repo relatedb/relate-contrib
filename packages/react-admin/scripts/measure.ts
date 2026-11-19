@@ -1,6 +1,6 @@
 // Measures what SC-009 states, as a single run on this machine, and records it in figures.json: how many statements a call
 // costs, and what a list and a lookup by id cost with and without the uniqueness constraint's index. The engine runs in this
-// process (Node), not in a browser worker, so the figures are not a claim about a page. Run: pnpm --filter @relate/react-admin measure
+// process (Node), not in a browser worker, so the figures are not a claim about a page. Run: pnpm --filter @relate/contrib-react-admin measure
 import { readFileSync, writeFileSync } from "node:fs";
 import { arch, cpus, platform, release } from "node:os";
 import { performance } from "node:perf_hooks";

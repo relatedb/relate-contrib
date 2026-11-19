@@ -40,25 +40,25 @@ export default defineConfig({ plugins: [sveltekit({ adapter, outDir: ".svelte-ki
   "tsconfig.json": `{ "extends": "$app/tsconfig", "include": ["src", "*"] }\n`,
   "src/app.html": `<!doctype html><html lang="en"><head><meta charset="utf-8" />%sveltekit.head%</head><body><div style="display: contents">%sveltekit.body%</div></body></html>\n`,
   "src/lib/graphs.ts": `export const graphs = { things: { source: () => ({ version: 1, nodes: Array.from({ length: 7 }, (_, i) => ({ id: "t" + i, labels: ["Thing"] })), links: [] }), indexes: [{ label: "Thing", property: "id" }] } };\n`,
-  "src/routes/relate/[id]/[file]/+server.ts": `import { createGraphRoute } from "@relate/sveltekit/server";
+  "src/routes/relate/[id]/[file]/+server.ts": `import { createGraphRoute } from "@relate/contrib-sveltekit/server";
 import { graphs } from "#lib/graphs.ts";
 export const prerender = true;
 export const { GET, entries } = createGraphRoute(graphs);
 `,
   "src/routes/+layout.ts": `export const prerender = true;\n`,
-  "src/routes/+layout.server.ts": `import { catalog } from "@relate/sveltekit/server";
+  "src/routes/+layout.server.ts": `import { catalog } from "@relate/contrib-sveltekit/server";
 import { graphs } from "#lib/graphs.ts";
 export const load = () => ({ catalog: catalog(graphs) });
 `,
   "src/routes/+layout.svelte": `<script>
   import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
-  import { RelateProvider } from "@relate/sveltekit";
+  import { RelateProvider } from "@relate/contrib-sveltekit";
   let { data, children } = $props();
 </script>
 <RelateProvider catalog={data.catalog} {engineUrl}>{@render children()}</RelateProvider>
 `,
   "src/routes/+page.svelte": `<script>
-  import { GraphData, useQuery } from "@relate/sveltekit";
+  import { GraphData, useQuery } from "@relate/contrib-sveltekit";
   const registered = useQuery("things", "MATCH (n:Thing) RETURN count(n) AS c");
   const inline = useQuery("mini", "MATCH (n:Item) RETURN count(n) AS c");
   const mini = { version: 1, nodes: [{ id: "x", labels: ["Item"] }, { id: "y", labels: ["Item"] }], links: [] };
@@ -75,13 +75,13 @@ beforeAll(() => {
   run("pnpm", ["run", "build"], pkg);
   run("pnpm", ["pack", "--pack-destination", work], core);
   run("pnpm", ["pack", "--pack-destination", work], pkg);
-  adapterTarball = tarballIn(work, "relate-sveltekit-");
+  adapterTarball = tarballIn(work, "relate-contrib-sveltekit-");
 
   consumer = join(work, "consumer");
   mkdirSync(consumer, { recursive: true });
   writeFileSync(join(consumer, "package.json"), JSON.stringify({ name: "consumer", private: true, type: "module", imports: { "#lib/*": "./src/lib/*" } }));
   writeFileSync(join(consumer, "pnpm-workspace.yaml"), "allowBuilds:\n  esbuild: true\n");
-  run("pnpm", ["add", "--prefer-offline", adapterTarball, tarballIn(work, "relate-web-"), `file:${engine}`, "@sveltejs/kit@^3", "svelte@^5", "vite@^8", "@sveltejs/vite-plugin-svelte@^7", "@sveltejs/adapter-static@^4", "@sveltejs/adapter-node@^6", "typescript@^6"], consumer);
+  run("pnpm", ["add", "--prefer-offline", adapterTarball, tarballIn(work, "relate-contrib-web-"), `file:${engine}`, "@sveltejs/kit@^3", "svelte@^5", "vite@^8", "@sveltejs/vite-plugin-svelte@^7", "@sveltejs/adapter-static@^4", "@sveltejs/adapter-node@^6", "typescript@^6"], consumer);
   for (const [path, text] of Object.entries(files)) {
     mkdirSync(join(consumer, path, ".."), { recursive: true });
     writeFileSync(join(consumer, path), text);
@@ -128,9 +128,9 @@ describe("the packed adapter in a clean project", () => {
     for (const f of ["src/index.js", "src/index.d.ts", "src/RelateProvider.svelte", "src/GraphData.svelte", "src/use-graph.svelte.js", "src/registry.js", "dist/server/index.js", "dist/server/route.js"]) expect(listing).toContain(`package/${f}`);
     expect(listing.some((f) => /\b(tests|conformance-site|vendor|node_modules)\//.test(f))).toBe(false);
     expect(listing.some((f) => f.endsWith(".wasm") || f.endsWith(".svelte.ts"))).toBe(false);
-    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/sveltekit/package.json"), "utf8"));
+    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/contrib-sveltekit/package.json"), "utf8"));
     expect(manifest.dependencies).toBeUndefined();
-    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@relate/relate-wasm", "@relate/web", "@sveltejs/kit", "svelte"]);
+    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@relate/contrib-web", "@relate/relate-wasm", "@sveltejs/kit", "svelte"]);
     expect(JSON.stringify(manifest)).not.toContain(repo);
   });
 

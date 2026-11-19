@@ -1,5 +1,5 @@
 // covers: FR-005, FR-006, FR-007, FR-008, FR-009, FR-010, FR-030
-import { canonicalText, revisionOf } from "@relate/web/build";
+import { canonicalText, revisionOf } from "@relate/contrib-web/build";
 import { afterEach, describe, expect, it } from "vitest";
 import { createGraphRoute } from "../../src/server/route.js";
 

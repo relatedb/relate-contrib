@@ -1,7 +1,7 @@
 {
-  "name": "@relate/observable",
+  "name": "@relate/contrib-observable",
   "version": "0.0.0",
-  "description": "Observable Framework helpers for @relate/web: loaders that place the engine and the worker and publish graph data, a call that ties a graph client to a cell, and result shaping for Framework's components.",
+  "description": "Observable Framework helpers for @relate/contrib-web: loaders that place the engine and the worker and publish graph data, a call that ties a graph client to a cell, and result shaping for Framework's components.",
   "private": true,
   "type": "module",
   "sideEffects": false,
@@ -34,7 +34,7 @@
   "peerDependencies": {
     "@observablehq/framework": "^1.13.0",
     "@relate/relate-wasm": "*",
-    "@relate/web": "*"
+    "@relate/contrib-web": "*"
   },
   "dependencies": {
     "esbuild": "^0.28.2"
@@ -43,7 +43,7 @@
     "@observablehq/framework": "^1.13.4",
     "@playwright/test": "^1.64.1",
     "@relate/relate-wasm": "*",
-    "@relate/web": "workspace:*",
+    "@relate/contrib-web": "workspace:*",
     "@types/node": "^26.6.6",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

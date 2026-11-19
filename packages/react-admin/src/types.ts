@@ -1,4 +1,4 @@
-import type { Client } from "@relate/web";
+import type { Client } from "@relate/contrib-web";
 
 /**
  * The part of a core client the provider uses: it sends statements and reads the client's failure state, nothing else.

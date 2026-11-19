@@ -1,7 +1,7 @@
 // Finding a graph by name and making its client (spec FR-018 to FR-022; ADR-005 §2.4). Everything about the instance
 // (worker, status, faults, loading) is the core's; this file decides which core client a name gets and who ends it.
-import { createClient, createSiteClient } from "@relate/web";
-import type { Client } from "@relate/web";
+import { createClient, createSiteClient } from "@relate/contrib-web";
+import type { Client } from "@relate/contrib-web";
 import type { Navigation } from "../env.js";
 import type { Catalog } from "../server/catalog.js";
 import { findInline } from "./inline.js";
@@ -115,13 +115,13 @@ export function hold(config: Config, id: string, options: GraphOptions = {}): He
   if (inline) {
     // The server's check of this needs `catalog()` to have run before the page rendered, so it is repeated here, where it always can.
     if (config.catalog.graphs.some((g) => g.id === id)) {
-      throw new Error(`@relate/nextjs: "${id}" is both an inline graph of this page and a registered graph; use one name for one or the other`);
+      throw new Error(`@relate/contrib-nextjs: "${id}" is both an inline graph of this page and a registered graph; use one name for one or the other`);
     }
     const key = `inline\n${profile}\n${id}\n${idOf(inline.element)}`;
     return holdPage(key, () => createClient({ engineUrl: config.engineUrl, graph: { document: inline.document as never, indexes: inline.indexes }, navigation: profile }));
   }
   const entry = config.catalog.graphs.find((g) => g.id === id);
-  if (!entry) throw new Error(`@relate/nextjs: no graph named "${id}" in this page or among the registered graphs (${registeredList(config.catalog)})`);
+  if (!entry) throw new Error(`@relate/contrib-nextjs: no graph named "${id}" in this page or among the registered graphs (${registeredList(config.catalog)})`);
   const descriptor = options.descriptor ?? entry.descriptor;
   if (entry.lifetime === "visit") return { client: visitClient(config, id, descriptor, profile), release() {} };
   // The stored copy is used whenever there is a descriptor, so the next page restores instead of fetching.
@@ -130,14 +130,14 @@ export function hold(config: Config, id: string, options: GraphOptions = {}): He
 
 /** A visit-lifetime registered graph, for code that lives across pages (spec FR-022). */
 export function visitGraph(config: Config | null, id: string, options: GraphOptions = {}): Client {
-  if (!config) throw new Error(`@relate/nextjs: graph("${id}") was called before the provider mounted; ask after RelateProvider has mounted, or from a component with useGraph`);
+  if (!config) throw new Error(`@relate/contrib-nextjs: graph("${id}") was called before the provider mounted; ask after RelateProvider has mounted, or from a component with useGraph`);
   const entry = config.catalog.graphs.find((g) => g.id === id);
   if (!entry) {
-    if (findInline(id)) throw new Error(`@relate/nextjs: "${id}" is an inline graph of a page; ask for it from a component with useGraph`);
-    throw new Error(`@relate/nextjs: no registered graph named "${id}" (registered: ${registeredList(config.catalog)})`);
+    if (findInline(id)) throw new Error(`@relate/contrib-nextjs: "${id}" is an inline graph of a page; ask for it from a component with useGraph`);
+    throw new Error(`@relate/contrib-nextjs: no registered graph named "${id}" (registered: ${registeredList(config.catalog)})`);
   }
   if (entry.lifetime !== "visit") {
-    throw new Error(`@relate/nextjs: "${id}" has the "page" lifetime; ask for it from a component with useGraph, or register it with lifetime "visit"`);
+    throw new Error(`@relate/contrib-nextjs: "${id}" has the "page" lifetime; ask for it from a component with useGraph, or register it with lifetime "visit"`);
   }
   return visitClient(config, id, options.descriptor ?? entry.descriptor, options.navigation ?? config.profile);
 }

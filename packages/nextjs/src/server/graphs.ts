@@ -1,10 +1,10 @@
 // Registered graphs: the declaration check and the per-process evaluation of sources (spec FR-004, FR-012; research D-5).
-import { evaluate } from "@relate/web/build";
-import type { Evaluated } from "@relate/web/build";
-import { validateDescriptor } from "@relate/web/validate";
-import type { GraphDocument, IndexSpec } from "@relate/web/validate";
+import { evaluate } from "@relate/contrib-web/build";
+import type { Evaluated } from "@relate/contrib-web/build";
+import { validateDescriptor } from "@relate/contrib-web/validate";
+import type { GraphDocument, IndexSpec } from "@relate/contrib-web/validate";
 
-export const OWNER = "@relate/nextjs";
+export const OWNER = "@relate/contrib-nextjs";
 
 export type Lifetime = "page" | "visit";
 

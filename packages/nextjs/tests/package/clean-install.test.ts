@@ -28,36 +28,36 @@ const run = (command: string, args: string[], cwd: string, env: Record<string, s
 const tarballIn = (dir: string, prefix: string): string => join(dir, readdirSync(dir).find((f) => f.startsWith(prefix) && f.endsWith(".tgz"))!);
 
 const files: Record<string, string> = {
-  "next.config.mjs": `import { withRelate } from "@relate/nextjs";
+  "next.config.mjs": `import { withRelate } from "@relate/contrib-nextjs";
 export default withRelate({ distDir: process.env.DIST ?? ".next" });
 `,
   "lib/graphs.js": `export const graphs = { things: { source: () => ({ version: 1, nodes: Array.from({ length: 7 }, (_, i) => ({ id: "t" + i, labels: ["Thing"] })), links: [] }), indexes: [{ label: "Thing", property: "id" }] } };
 `,
-  "app/relate/[id]/[file]/route.js": `import { createGraphRoute } from "@relate/nextjs/server";
+  "app/relate/[id]/[file]/route.js": `import { createGraphRoute } from "@relate/contrib-nextjs/server";
 import { graphs } from "../../../../lib/graphs.js";
 export const dynamic = "force-static";
 export const dynamicParams = false;
 export const { GET, generateStaticParams } = createGraphRoute(graphs);
 `,
   "app/providers.jsx": `"use client";
-import { RelateProvider } from "@relate/nextjs/client";
+import { RelateProvider } from "@relate/contrib-nextjs/client";
 const engineUrl = new URL("@relate/relate-wasm/relate_bg.wasm", import.meta.url);
 export function Providers({ catalog, children }) { return <RelateProvider catalog={catalog} engineUrl={engineUrl}>{children}</RelateProvider>; }
 `,
-  "app/layout.jsx": `import { catalog } from "@relate/nextjs/server";
+  "app/layout.jsx": `import { catalog } from "@relate/contrib-nextjs/server";
 import { graphs } from "../lib/graphs.js";
 import { Providers } from "./providers.jsx";
 export default function Layout({ children }) { return <html lang="en"><body><Providers catalog={catalog(graphs)}>{children}</Providers></body></html>; }
 `,
   "app/counts.jsx": `"use client";
-import { useQuery } from "@relate/nextjs/client";
+import { useQuery } from "@relate/contrib-nextjs/client";
 export function Counts() {
   const things = useQuery("things", "MATCH (n:Thing) RETURN count(n) AS c");
   const mini = useQuery("mini", "MATCH (n:Item) RETURN count(n) AS c");
   return <p>Registered: <span data-registered>{things.rows ? String(things.rows[0].c) : "…"}</span> · inline: <span data-inline>{mini.rows ? String(mini.rows[0].c) : "…"}</span></p>;
 }
 `,
-  "app/page.jsx": `import { GraphData } from "@relate/nextjs/server";
+  "app/page.jsx": `import { GraphData } from "@relate/contrib-nextjs/server";
 import { Counts } from "./counts.jsx";
 export default function Page() {
   return <main><title>consumer</title><Counts /><GraphData id="mini" page="/" document={{ version: 1, nodes: [{ id: "x", labels: ["Item"] }, { id: "y", labels: ["Item"] }], links: [] }} /></main>;
@@ -72,13 +72,13 @@ beforeAll(() => {
   run("pnpm", ["run", "build"], pkg);
   run("pnpm", ["pack", "--pack-destination", work], core);
   run("pnpm", ["pack", "--pack-destination", work], pkg);
-  adapterTarball = tarballIn(work, "relate-nextjs-");
+  adapterTarball = tarballIn(work, "relate-contrib-nextjs-");
 
   consumer = join(work, "consumer");
   mkdirSync(consumer, { recursive: true });
   writeFileSync(join(consumer, "package.json"), JSON.stringify({ name: "consumer", private: true, type: "module" }));
   writeFileSync(join(consumer, "pnpm-workspace.yaml"), "allowBuilds:\n  esbuild: true\n  sharp: true\n");
-  run("pnpm", ["add", "--prefer-offline", adapterTarball, tarballIn(work, "relate-web-"), `file:${engine}`, "next@^16.4.5", "react@^19", "react-dom@^19"], consumer);
+  run("pnpm", ["add", "--prefer-offline", adapterTarball, tarballIn(work, "relate-contrib-web-"), `file:${engine}`, "next@^16.4.5", "react@^19", "react-dom@^19"], consumer);
   for (const [path, text] of Object.entries(files)) {
     mkdirSync(join(consumer, path, ".."), { recursive: true });
     writeFileSync(join(consumer, path), text);
@@ -112,9 +112,9 @@ describe("the packed adapter in a clean project", () => {
     const listing = run("tar", ["-tzf", adapterTarball], work).split("\n");
     for (const f of ["dist/index.js", "dist/server/index.js", "dist/server/GraphData.js", "dist/client/index.js", "dist/client/Provider.js"]) expect(listing).toContain(`package/${f}`);
     expect(listing.some((f) => /\b(tests|conformance-site|vendor|node_modules)\//.test(f))).toBe(false);
-    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/nextjs/package.json"), "utf8"));
+    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/contrib-nextjs/package.json"), "utf8"));
     expect(manifest.dependencies).toBeUndefined();
-    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@relate/relate-wasm", "@relate/web", "next", "react"]);
+    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@relate/contrib-web", "@relate/relate-wasm", "next", "react"]);
     expect(JSON.stringify(manifest)).not.toContain(repo);
     // no engine binary inside the package (FR-003)
     expect(listing.some((f) => f.endsWith(".wasm"))).toBe(false);

@@ -1,6 +1,6 @@
 // covers-ra: SC-004, SC-009
 // The recorded measurements (constitution V): each figure carries its method, its environment and a "single run" label, and
-// the statement counts that SC-009 states are the ones recorded. Regenerate SC-009 with `pnpm --filter @relate/react-admin measure`.
+// the statement counts that SC-009 states are the ones recorded. Regenerate SC-009 with `pnpm --filter @relate/contrib-react-admin measure`.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 

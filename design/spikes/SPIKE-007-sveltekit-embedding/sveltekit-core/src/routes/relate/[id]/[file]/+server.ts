@@ -1,5 +1,5 @@
 // A registered graph's descriptor and revision-named data file, published by a prerendered endpoint (the route a SvelteKit adapter would ask the site to add).
-import { descriptorOf, evaluate, type Evaluated } from "@relate/web/build";
+import { descriptorOf, evaluate, type Evaluated } from "@relate/contrib-web/build";
 import { error } from "@sveltejs/kit";
 
 export const prerender = true;

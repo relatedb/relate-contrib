@@ -1,18 +1,18 @@
 // Finding a graph by id and making its client (spec FR-018 to FR-022; ADR-007 §2.4). Everything about the instance (worker, status, faults,
 // loading) is the core's; this file decides which core client an id gets and who ends it. Module state: touched only after mount, in the
 // browser (module state on a server is shared by every request).
-import { createClient, createSiteClient } from "@relate/web";
+import { createClient, createSiteClient } from "@relate/contrib-web";
 import { findInline } from "./inline.js";
 import { descriptorLocation } from "./locations.js";
 
 /**
- * @typedef {import("@relate/web").Client} Client
+ * @typedef {import("@relate/contrib-web").Client} Client
  * @typedef {import("./context.js").Config} Config
  * @typedef {{ navigation?: "client-routing" | "multi-page", descriptor?: string }} GraphOptions
  * @typedef {{ client: Client, release(): void }} Held
  */
 
-const OWNER = "@relate/sveltekit";
+const OWNER = "@relate/contrib-sveltekit";
 
 /** @param {Config} config */
 const registeredList = (config) => (config.catalog.length ? config.catalog.map((g) => g.id).join(", ") : "(none)");

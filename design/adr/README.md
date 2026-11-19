@@ -70,7 +70,9 @@ Use `/adr-review` before moving a draft to `accepted`.
 | [ADR-009](ADR-009-application-graphs-in-the-core.md) | Application Graphs in the Core as a Named Durable Store with Schema Versions | accepted (amended 2026-11-10) | RFC-006, RFC-001 |
 | [ADR-010](ADR-010-graph-catalog-file.md) | A Catalog File Beside the Stores, Ordered by a Web Lock | accepted | RFC-007 |
 | [ADR-011](ADR-011-phaser-path-explorer.md) | The Phaser Path Explorer, a Demo with a Separable Hex Library and a Disclosure Graph | accepted (amended 2026-11-16) | RFC-005, RFC-006 |
-| [ADR-012](ADR-012-relate-phaser-boundary.md) | The Boundary and Public Interface of @relate/relate-phaser | accepted | RFC-008, RFC-005 |
-| [ADR-013](ADR-013-release-process-and-engine-sync.md) | The Release Process for the Packages, and How They Stay in Step with the Engine | proposed | RFC-009 |
+| [ADR-012](ADR-012-relate-phaser-boundary.md) | The Boundary and Public Interface of @relate/contrib-phaser | accepted | RFC-008, RFC-005 |
+| [ADR-013](ADR-013-release-process-and-engine-sync.md) | The Release Process for the Packages, and How They Stay in Step with the Engine | accepted | RFC-009 |
 
-Package names: on 2026-11-05 the core and the Astro adapter were renamed from `related-web-core` and `related-web-astro` to `@relate/web-core` and `@relate/web-astro`, joining `@relate/web-next`. The ADRs use the new names throughout; the decisions are unchanged. On 2026-11-08 the project became `relate-contrib` and the packages `@relate/web`, `@relate/astro` and `@relate/nextjs`; the same holds for the decisions and the text of the ADRs (see `design/notes/2026-11-08-relate-contrib-rename.md`).
+Package names: on 2026-11-05 the core and the Astro adapter were renamed from `related-web-core` and `related-web-astro` to `@relate/web-core` and `@relate/web-astro`, joining `@relate/web-next`. The ADRs use the new names throughout; the decisions are unchanged. On 2026-11-08 the project became `relate-contrib` and the packages `@relate/contrib-web`, `@relate/contrib-astro` and `@relate/contrib-nextjs`; the same holds for the decisions and the text of the ADRs (see `design/notes/2026-11-08-relate-contrib-rename.md`).
+
+On 2026-11-19 every package from this repository took the prefix `@relate/contrib-` (`@relate/web` became `@relate/contrib-web`, `@relate/relate-phaser` became `@relate/contrib-phaser`, and so on; ADR-013 2.9). The ADRs use the new names throughout; the decisions are unchanged. The directories (`packages/web`, `packages/phaser`, ...) did not change.

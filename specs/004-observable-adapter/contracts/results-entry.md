@@ -1,4 +1,4 @@
-# Contract: results entry (`@relate/observable/results`)
+# Contract: results entry (`@relate/contrib-observable/results`)
 
 No browser or Node dependency; the browser entry re-exports it for the opened graph.
 

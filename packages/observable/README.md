@@ -1,28 +1,28 @@
-# @relate/observable
+# @relate/contrib-observable
 
-Implements [ADR-006](../../design/adr/ADR-006-observable-adapter.md). Needs Observable Framework 1.x, `@relate/web` and `@relate/relate-wasm` (all peer dependencies). Static builds and the preview server are supported.
+Implements [ADR-006](../../design/adr/ADR-006-observable-adapter.md). Needs Observable Framework 1.x, `@relate/contrib-web` and `@relate/relate-wasm` (all peer dependencies). Static builds and the preview server are supported.
 
 Framework has no plugin interface, so the package is three entries you call from your own files:
 
-- `@relate/observable/loader`: helpers for **data loaders** (scripts in `docs/data/` that Framework runs and publishes under hashed names). They place the engine's binary and the core's worker and publish a graph's document and descriptor.
-- `@relate/observable`: `open`, which creates the core's client for a graph and ties it to a cell.
-- `@relate/observable/results`: the normalization, the graph shape for a force layout, and the `cypher` tagged template (re-exported by the main entry).
+- `@relate/contrib-observable/loader`: helpers for **data loaders** (scripts in `docs/data/` that Framework runs and publishes under hashed names). They place the engine's binary and the core's worker and publish a graph's document and descriptor.
+- `@relate/contrib-observable`: `open`, which creates the core's client for a graph and ties it to a cell.
+- `@relate/contrib-observable/results`: the normalization, the graph shape for a force layout, and the `cypher` tagged template (re-exported by the main entry).
 
 ## Use, in five steps
 
-**1. Install** `@relate/observable`, `@relate/web` and `@relate/relate-wasm` beside Framework. The package depends only on `esbuild`.
+**1. Install** `@relate/contrib-observable`, `@relate/contrib-web` and `@relate/relate-wasm` beside Framework. The package depends only on `esbuild`.
 
 **2. Add two loaders that place the engine and the worker** (once per site):
 
 ```js
 // docs/data/relate.wasm.js
-import { engine } from "@relate/observable/loader";
+import { engine } from "@relate/contrib-observable/loader";
 await engine();
 ```
 
 ```js
 // docs/data/relate-worker.js.js
-import { worker } from "@relate/observable/loader";
+import { worker } from "@relate/contrib-observable/loader";
 await worker();
 ```
 
@@ -37,14 +37,14 @@ export default () => ({ version: 1, nodes: [/* ... */], links: [/* ... */] });
 
 ```js
 // docs/data/pantry.graph.json.js
-import { document } from "@relate/observable/loader";
+import { document } from "@relate/contrib-observable/loader";
 import source from "../lib/pantry.js";
 await document("pantry", source);
 ```
 
 ```js
 // docs/data/pantry.descriptor.json.js
-import { descriptor } from "@relate/observable/loader";
+import { descriptor } from "@relate/contrib-observable/loader";
 import source from "../lib/pantry.js";
 await descriptor("pantry", source, { indexes: [{ label: "Page", property: "id" }] });
 ```
@@ -63,7 +63,7 @@ In the preview server, after it has started, a source edit takes effect only whe
 
 ````md
 ```js
-import { open } from "@relate/observable";
+import { open } from "@relate/contrib-observable";
 const db = await open({
   engine: FileAttachment("data/relate.wasm"),
   worker: FileAttachment("data/relate-worker.js"),
@@ -98,7 +98,7 @@ The client is destroyed when the cell's `invalidation` resolves and when the pag
 
 ## Workspace sites
 
-A Framework site that installs these packages from a workspace must not link them as plain directories outside the site: the bundler fails with `Could not resolve entry module`. A pnpm injected dependency (`"dependenciesMeta": { "@relate/web": { "injected": true } }`), a copy, or a published package builds. See `conformance-site/` for the injected form and `scripts/refresh-deps.mjs`, which refreshes the copies, since pnpm does not add new built files to one after install.
+A Framework site that installs these packages from a workspace must not link them as plain directories outside the site: the bundler fails with `Could not resolve entry module`. A pnpm injected dependency (`"dependenciesMeta": { "@relate/contrib-web": { "injected": true } }`), a copy, or a published package builds. See `conformance-site/` for the injected form and `scripts/refresh-deps.mjs`, which refreshes the copies, since pnpm does not add new built files to one after install.
 
 ## Not measured
 
@@ -109,7 +109,7 @@ The cold-network cost of the engine (about 6 MB) and the worker bundle (about 45
 ```sh
 pnpm run build:wasm
 pnpm install
-pnpm --filter @relate/observable build
+pnpm --filter @relate/contrib-observable build
 pnpm test:observable             # results against the real engine, loaders, build, freshness, preview server
 pnpm test:observable-browsers    # the adapter's behavior in Chromium, Firefox and WebKit
 pnpm test:observable-conformance # the core's conformance scenarios over conformance-site/

@@ -4,7 +4,7 @@ import { attachment, installPage, stubClient } from "../helpers/stubs.js";
 
 const client = stubClient();
 const createClient = vi.fn((_options: unknown) => client);
-vi.mock("@relate/web", () => ({ createClient: (o: unknown) => createClient(o) }));
+vi.mock("@relate/contrib-web", () => ({ createClient: (o: unknown) => createClient(o) }));
 
 const { open } = await import("../../src/open.js");
 const never = new Promise<void>(() => undefined);

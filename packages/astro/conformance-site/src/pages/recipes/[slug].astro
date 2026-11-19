@@ -1,7 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
-import GraphData from "@relate/astro/graph-data";
+import GraphData from "@relate/contrib-astro/graph-data";
 
 export async function getStaticPaths() {
   return (await getCollection("recipes")).map((entry) => ({ params: { slug: entry.id }, props: { entry } }));

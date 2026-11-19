@@ -1,8 +1,8 @@
 <script lang="ts">
   // For the lifetime pages: a holder of a registered page-lifetime graph, with a log of what happened kept in module state so it
   // survives router navigations. The adapter's own tests read `window.__relLog`.
-  import { useGraph } from "@relate/sveltekit";
-  import type { Client } from "@relate/web";
+  import { useGraph } from "@relate/contrib-sveltekit";
+  import type { Client } from "@relate/contrib-web";
 
   let { name = "small", label = "Item", title }: { name?: string; label?: string; title: string } = $props();
   type Win = { __relLog?: string[]; __relClient?: Client };

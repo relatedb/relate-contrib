@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Client } from "@relate/web";
+import type { Client } from "@relate/contrib-web";
 import { failureInfo } from "./failures.js";
 import { resetDemo } from "./reset.js";
 

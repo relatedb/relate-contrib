@@ -1,4 +1,4 @@
-import { createGraphRoute } from "@relate/nextjs/server";
+import { createGraphRoute } from "@relate/contrib-nextjs/server";
 import { graphs } from "../../../../lib/graphs";
 
 export const dynamic = "force-static";

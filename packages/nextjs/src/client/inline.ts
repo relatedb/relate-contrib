@@ -1,7 +1,7 @@
 // Finding an inline graph in the document (spec FR-018, FR-021; research D-4). A router that keeps a departed page hidden
 // leaves that page's element in the document, so several elements may carry one name: the only one is taken, otherwise the
 // first whose parent element is visible.
-import type { IndexSpec } from "@relate/web/validate";
+import type { IndexSpec } from "@relate/contrib-web/validate";
 
 export interface InlineFound {
   element: Element;

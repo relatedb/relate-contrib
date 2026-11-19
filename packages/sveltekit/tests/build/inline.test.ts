@@ -2,17 +2,17 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { build, type Built } from "../helpers/build-site.js";
 
-const layoutServer = `import { catalog } from "@relate/sveltekit/server";
+const layoutServer = `import { catalog } from "@relate/contrib-sveltekit/server";
 export const load = () => ({ catalog: catalog({ registered: { source: () => ({ version: 1, nodes: [], links: [] }) } }) });
 `;
 const layout = `<script>
-  import { RelateProvider } from "@relate/sveltekit";
+  import { RelateProvider } from "@relate/contrib-sveltekit";
   let { data, children } = $props();
 </script>
 <RelateProvider catalog={data.catalog} engineUrl="/engine.wasm">{@render children()}</RelateProvider>
 `;
 const page = (body: string) => `<script>
-  import { GraphData } from "@relate/sveltekit";
+  import { GraphData } from "@relate/contrib-sveltekit";
   const ok = { version: 1, nodes: [{ id: "a" }], links: [] };
 </script>
 ${body}

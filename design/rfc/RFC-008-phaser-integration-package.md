@@ -53,7 +53,7 @@ The boundary between generic and game-specific is the main design question. Some
 
 ### 5.2 Where it lives
 
-The package is added to this repository's workspace as `@relate/relate-phaser`, in the `packages/phaser` directory, with its own version and release, like the existing packages. It shares the `@relate` scope with the core and the adapters, and its name follows the engine's own WebAssembly package (`@relate/relate-wasm`). Living here is a practical choice: it depends on the core web package, which is developed here, so a change to the core and to the package can land together and be tested together. The test machinery, specification process and design records are here. The first consumer, the demo, is here, and proving the extraction in place costs one change rather than coordinated changes across two repositories.
+The package is added to this repository's workspace as `@relate/contrib-phaser`, in the `packages/phaser` directory (first named `@relate/relate-phaser`, after the engine's own package; RFC-009 5.6 gave every package from this repository the `@relate/contrib-` prefix), with its own version and release, like the existing packages. It shares the `@relate` scope with the core and the adapters, and its name carries the prefix that tells it apart from the engine's own packages (`@relate/relate-wasm`). Living here is a practical choice: it depends on the core web package, which is developed here, so a change to the core and to the package can land together and be tested together. The test machinery, specification process and design records are here. The first consumer, the demo, is here, and proving the extraction in place costs one change rather than coordinated changes across two repositories.
 
 ### 5.3 When it moves out
 

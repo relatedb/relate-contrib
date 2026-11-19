@@ -6,7 +6,7 @@
 
 ## Summary
 
-Replace the two per-graph records of the core (`@relate/web`), the `_RelateApplication` marker node of application graphs and the stored-copy file of content caches, with one catalog file, `relate-web/catalog.json`, read and written under the Web Lock `relate-web:catalog` (ADR-010). Every lifecycle operation writes its intent before data changes and its outcome after. Add `store-lost` as a failure, add three page-callable operations (list, remove, reset the catalog), and amend ADR-009 and ADR-003.
+Replace the two per-graph records of the core (`@relate/contrib-web`), the `_RelateApplication` marker node of application graphs and the stored-copy file of content caches, with one catalog file, `relate-web/catalog.json`, read and written under the Web Lock `relate-web:catalog` (ADR-010). Every lifecycle operation writes its intent before data changes and its outcome after. Add `store-lost` as a failure, add three page-callable operations (list, remove, reset the catalog), and amend ADR-009 and ADR-003.
 
 The technical shape, from [research.md](research.md): the catalog sits behind a small storage seam (an OPFS-and-Web-Locks implementation for the browser, an in-memory one for Node tests) so the lifecycle logic keeps its Node-with-the-real-engine unit tests. The lifecycle functions, synchronous today, become asynchronous where they touch the catalog; the engine calls inside them stay synchronous. The cache open path in `worker.ts` moves from `stored-copy.ts` to the same catalog. The adapters are untouched.
 

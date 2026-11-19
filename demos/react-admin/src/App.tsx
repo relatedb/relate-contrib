@@ -1,4 +1,4 @@
-import type { Client } from "@relate/web";
+import type { Client } from "@relate/contrib-web";
 import { useEffect, useState } from "react";
 import { Admin, Resource, type DataProvider } from "react-admin";
 import { ClientContext } from "./ClientContext.js";

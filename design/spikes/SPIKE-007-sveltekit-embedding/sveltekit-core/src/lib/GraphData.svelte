@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { escapeJson } from "@relate/web/build";
+  import { escapeJson } from "@relate/contrib-web/build";
   let { id, document }: { id: string; document: unknown } = $props();
   const json = $derived(escapeJson(document));
 </script>

@@ -10,7 +10,7 @@ created: 2026-11-08
 
 ## 1. Question
 
-Can the shared core package (`@relate/web`, which runs the graph engine in a Web Worker and loads its WebAssembly binary) be used from a SvelteKit app, and what would a SvelteKit adapter have to do that the Astro and Next adapters do not?
+Can the shared core package (`@relate/contrib-web`, which runs the graph engine in a Web Worker and loads its WebAssembly binary) be used from a SvelteKit app, and what would a SvelteKit adapter have to do that the Astro and Next adapters do not?
 
 Five sub-questions, from the parent RFC:
 

@@ -1,10 +1,10 @@
 "use client";
-// The behavior of the conformance pages, written against `@relate/nextjs/client`. It renders nothing: it updates the
+// The behavior of the conformance pages, written against `@relate/contrib-nextjs/client`. It renders nothing: it updates the
 // `data-rel-*` elements of the static markup, as the core's example pages do. Query parameters: `navigation` (the profile)
 // and `variant` (a, b, mismatch, broken: which descriptor the shared graph uses).
-import { useGraph } from "@relate/nextjs/client";
-import { attachView } from "@relate/web";
-import type { Client, View } from "@relate/web";
+import { useGraph } from "@relate/contrib-nextjs/client";
+import { attachView } from "@relate/contrib-web";
+import type { Client, View } from "@relate/contrib-web";
 import { visible } from "./visible";
 import { useEffect, useState } from "react";
 

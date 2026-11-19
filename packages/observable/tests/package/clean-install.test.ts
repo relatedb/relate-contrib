@@ -31,15 +31,15 @@ const write = (path: string, text: string): void => {
 
 const files: Record<string, string> = {
   "observablehq.config.js": `export default { root: "docs", pages: [], toc: false, footer: "", sidebar: false, header: "", preserveExtension: true, telemetry: false };\n`,
-  "docs/data/relate.wasm.js": `import { engine } from "@relate/observable/loader";\nawait engine();\n`,
-  "docs/data/relate-worker.js.js": `import { worker } from "@relate/observable/loader";\nawait worker();\n`,
+  "docs/data/relate.wasm.js": `import { engine } from "@relate/contrib-observable/loader";\nawait engine();\n`,
+  "docs/data/relate-worker.js.js": `import { worker } from "@relate/contrib-observable/loader";\nawait worker();\n`,
   "docs/lib/things.js": `export default () => ({ version: 1, nodes: Array.from({ length: 7 }, (_, i) => ({ id: "t" + i, labels: ["Thing"], properties: { n: i } })), links: [] });\n`,
-  "docs/data/things.graph.json.js": `import { document } from "@relate/observable/loader";\nimport source from "../lib/things.js";\nawait document("things", source);\n`,
-  "docs/data/things.descriptor.json.js": `import { descriptor } from "@relate/observable/loader";\nimport source from "../lib/things.js";\nawait descriptor("things", source, { indexes: [{ label: "Thing", property: "id" }] });\n`,
+  "docs/data/things.graph.json.js": `import { document } from "@relate/contrib-observable/loader";\nimport source from "../lib/things.js";\nawait document("things", source);\n`,
+  "docs/data/things.descriptor.json.js": `import { descriptor } from "@relate/contrib-observable/loader";\nimport source from "../lib/things.js";\nawait descriptor("things", source, { indexes: [{ label: "Thing", property: "id" }] });\n`,
   "docs/index.md": `# consumer
 
 \`\`\`js
-import { open } from "@relate/observable";
+import { open } from "@relate/contrib-observable";
 const db = await open({
   engine: FileAttachment("data/relate.wasm"),
   worker: FileAttachment("data/relate-worker.js"),
@@ -60,13 +60,13 @@ beforeAll(() => {
   run("pnpm", ["run", "build"], pkg);
   run("pnpm", ["pack", "--pack-destination", work], core);
   run("pnpm", ["pack", "--pack-destination", work], pkg);
-  adapterTarball = tarballIn(work, "relate-observable-");
+  adapterTarball = tarballIn(work, "relate-contrib-observable-");
 
   consumer = join(work, "consumer");
   mkdirSync(consumer, { recursive: true });
   writeFileSync(join(consumer, "package.json"), JSON.stringify({ name: "consumer", private: true, type: "module", scripts: { clean: "rm -rf docs/.observablehq/cache dist" } }));
   writeFileSync(join(consumer, "pnpm-workspace.yaml"), "allowBuilds:\n  esbuild: true\n");
-  run("pnpm", ["add", "--prefer-offline", adapterTarball, tarballIn(work, "relate-web-"), `file:${engine}`, "@observablehq/framework@^1.13.4"], consumer);
+  run("pnpm", ["add", "--prefer-offline", adapterTarball, tarballIn(work, "relate-contrib-web-"), `file:${engine}`, "@observablehq/framework@^1.13.4"], consumer);
   for (const [path, text] of Object.entries(files)) write(path, text);
 }, 600_000);
 
@@ -86,9 +86,9 @@ describe("the packed adapter in a clean project", () => {
     for (const f of ["dist/index.js", "dist/open.js", "dist/loader/index.js", "dist/loader/graph.js", "dist/results/index.js"]) expect(listing).toContain(`package/${f}`);
     expect(listing.some((f) => /\b(tests|conformance-site|vendor|node_modules)\//.test(f))).toBe(false);
     expect(listing.some((f) => f.endsWith(".wasm"))).toBe(false); // the binary is the site's, placed by its loader
-    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/observable/package.json"), "utf8"));
+    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/contrib-observable/package.json"), "utf8"));
     expect(Object.keys(manifest.dependencies)).toEqual(["esbuild"]);
-    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@observablehq/framework", "@relate/relate-wasm", "@relate/web"]);
+    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@observablehq/framework", "@relate/contrib-web", "@relate/relate-wasm"]);
     expect(JSON.stringify(manifest)).not.toContain(repo);
   });
 

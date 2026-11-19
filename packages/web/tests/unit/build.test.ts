@@ -18,7 +18,7 @@ const doc = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-describe("@relate/web/build", () => {
+describe("@relate/contrib-web/build", () => {
   it("canonicalText is the same for another order of keys, nodes and links, and drops a carried revision", () => {
     const reordered = { links: [...doc().links].reverse(), nodes: [...doc().nodes].reverse(), version: 1 };
     expect(canonicalText(reordered as never)).toBe(canonicalText(doc() as never));

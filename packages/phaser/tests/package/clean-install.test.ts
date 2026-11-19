@@ -50,10 +50,10 @@ const client = {
 await client.query("CREATE (:Cell {id: 'a'})");
 
 ${example}
-console.log(JSON.stringify({ result, cells: Object.keys(cache.state.cells).sort(), exports: Object.keys(await import("@relate/relate-phaser")).sort(), version: cache.version > 0, pending: cache.pending }));
+console.log(JSON.stringify({ result, cells: Object.keys(cache.state.cells).sort(), exports: Object.keys(await import("@relate/contrib-phaser")).sort(), version: cache.version > 0, pending: cache.pending }));
 `,
-  "types.ts": `import { Bridge, ReplyCache, StatementError, createThrowawayClient, versionWatch, watchCache, type ActResult, type CacheClient } from "@relate/relate-phaser";
-import type { Client } from "@relate/web";
+  "types.ts": `import { Bridge, ReplyCache, StatementError, createThrowawayClient, versionWatch, watchCache, type ActResult, type CacheClient } from "@relate/contrib-phaser";
+import type { Client } from "@relate/contrib-web";
 
 declare const client: Client;
 const cache = new ReplyCache<{ n: number }>({ client, initial: { n: 0 }, load: async (b: Bridge) => { await b.enqueue("RETURN 1"); return (s) => void (s.n = 1); } });
@@ -74,13 +74,13 @@ beforeAll(() => {
   run("pnpm", ["run", "build"], pkg);
   run("pnpm", ["pack", "--pack-destination", work], core);
   run("pnpm", ["pack", "--pack-destination", work], pkg);
-  tarball = tarballIn(work, "relate-relate-phaser-");
+  tarball = tarballIn(work, "relate-contrib-phaser-");
 
   consumer = join(work, "consumer");
   mkdirSync(consumer, { recursive: true });
   writeFileSync(join(consumer, "package.json"), JSON.stringify({ name: "consumer", private: true, type: "module" }));
   writeFileSync(join(consumer, "pnpm-workspace.yaml"), "allowBuilds:\n  esbuild: true\n");
-  run("pnpm", ["add", "--prefer-offline", tarball, tarballIn(work, "relate-web-"), `file:${engine}`, "phaser@4.2.1", "typescript@^7"], consumer);
+  run("pnpm", ["add", "--prefer-offline", tarball, tarballIn(work, "relate-contrib-web-"), `file:${engine}`, "phaser@4.2.1", "typescript@^7"], consumer);
   for (const [path, text] of Object.entries(files)) writeFileSync(join(consumer, path), text);
 }, 600_000);
 
@@ -93,11 +93,11 @@ describe("the packed package in a clean project", () => {
     const listing = run("tar", ["-tzf", tarball], work).split("\n").filter(Boolean);
     for (const f of ["package/package.json", "package/dist/index.js", "package/dist/index.d.ts", "package/dist/bridge.js", "package/dist/cache.js"]) expect(listing, f).toContain(f);
     expect(listing.some((f) => /\b(tests|src|specs|vendor|node_modules)\//.test(f))).toBe(false);
-    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/relate-phaser/package.json"), "utf8"));
+    const manifest = JSON.parse(readFileSync(join(consumer, "node_modules/@relate/contrib-phaser/package.json"), "utf8"));
     expect(Number(manifest.version.split(".")[0])).toBe(0);
     expect(manifest.dependencies).toBeUndefined();
-    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@relate/web", "phaser"]);
-    const installed = join(consumer, "node_modules/@relate/relate-phaser");
+    expect(Object.keys(manifest.peerDependencies).sort()).toEqual(["@relate/contrib-web", "phaser"]);
+    const installed = join(consumer, "node_modules/@relate/contrib-phaser");
     for (const f of readdirSync(installed, { recursive: true, encoding: "utf8" }).filter((f) => /\.(js|ts|json)$/.test(f))) {
       expect(readFileSync(join(installed, f), "utf8"), f).not.toContain(repo); // nothing points back into this repository
     }

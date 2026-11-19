@@ -1,6 +1,6 @@
 // The world as an application graph (ADR-011, 2.4): the seed document the core loads once on first run, and the
 // reads that bring tiles back out of it. Slice 0 reads every hex; later slices read only what is revealed.
-import type { Client, GraphDocument, Properties } from "@relate/web";
+import type { Client, GraphDocument, Properties } from "@relate/contrib-web";
 import { neighbours, toAxial, type Tile, type Terrain, type Feature } from "../hex/core/index.js";
 import { latticeAsset } from "../hex/assets/index.js";
 import { SIGNPOST_REACH, START_MARKERS, START_STEPS, landDistances, terrainCost } from "./world.js";

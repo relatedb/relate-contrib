@@ -2,7 +2,7 @@
 // The hooks (spec FR-017, FR-023 to FR-025). Both return the same empty values on the server and on the first client
 // render, so the markup matches; the client is asked for in an effect.
 import { useContext, useEffect, useState } from "react";
-import type { Client, Status } from "@relate/web";
+import type { Client, Status } from "@relate/contrib-web";
 import { ConfigContext } from "./Provider.js";
 import { hold } from "./registry.js";
 import type { GraphOptions } from "./registry.js";
@@ -13,7 +13,7 @@ export function useGraph(id: string, options?: GraphOptions): Client | null {
   const navigation = options?.navigation;
   const descriptor = options?.descriptor;
   useEffect(() => {
-    if (!config) throw new Error(`@relate/nextjs: useGraph("${id}") was used outside RelateProvider`);
+    if (!config) throw new Error(`@relate/contrib-nextjs: useGraph("${id}") was used outside RelateProvider`);
     const held = hold(config, id, { navigation, descriptor });
     setClient(held.client);
     return () => {

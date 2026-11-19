@@ -1,6 +1,6 @@
 // A client double with what the cache reads: `query`, `status`, `generation`, `on("status", …)` and `onGeneration`. Tests
 // drive it: set a status, move to a new generation, and make a call reject the way the core does.
-import { GraphError } from "@relate/web";
+import { GraphError } from "@relate/contrib-web";
 import type { Envelope } from "../../src/bridge.js";
 
 export type Status = "loading" | "ready" | "recovering" | "failed";

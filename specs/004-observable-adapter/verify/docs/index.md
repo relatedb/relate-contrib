@@ -1,6 +1,6 @@
 # t
 ```js
-import {createClient} from "@relate/web";
+import {createClient} from "@relate/contrib-web";
 const engineUrl = await FileAttachment("data/relate.wasm").url();
 const workerUrl = await FileAttachment("data/relate-worker.js").url();
 const doc = await FileAttachment("data/g.graph.json").json();

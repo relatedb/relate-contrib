@@ -3,7 +3,7 @@
 A page that opens graphs that need no descriptor: one from an object a cell holds, one from a data file a loader published.
 
 ```js
-import {open} from "@relate/observable";
+import {open} from "@relate/contrib-observable";
 import {engine, smallFile, worker} from "./lib/files.js";
 import {small} from "./lib/example.js";
 const held = await open({engine, worker, graph: {document: small()}, invalidation});

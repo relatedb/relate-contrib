@@ -14,7 +14,7 @@ export async function engine(): Promise<void> {
   try {
     process.stdout.write(readFileSync(resolveFromSite("@relate/relate-wasm/relate_bg.wasm")));
   } catch (e) {
-    fail(`@relate/observable: engine(): the engine's binary was not found (is @relate/relate-wasm installed?): ${e instanceof Error ? e.message : String(e)}`);
+    fail(`@relate/contrib-observable: engine(): the engine's binary was not found (is @relate/relate-wasm installed?): ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 
@@ -27,7 +27,7 @@ export async function worker(): Promise<void> {
   try {
     const enginePackage = dirname(resolveFromSite("@relate/relate-wasm/relate_bg.wasm"));
     const result = await build({
-      entryPoints: [resolveFromSite("@relate/web/worker")],
+      entryPoints: [resolveFromSite("@relate/contrib-web/worker")],
       bundle: true,
       format: "esm",
       platform: "browser",
@@ -37,6 +37,6 @@ export async function worker(): Promise<void> {
     });
     process.stdout.write(result.outputFiles[0]!.text);
   } catch (e) {
-    fail(`@relate/observable: worker(): the worker could not be bundled: ${e instanceof Error ? e.message : String(e)}`);
+    fail(`@relate/contrib-observable: worker(): the worker could not be bundled: ${e instanceof Error ? e.message : String(e)}`);
   }
 }

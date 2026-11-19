@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build `@relate/observable` (`packages/observable`): a loader entry whose helpers place the engine, build and place the core's worker, and publish a graph's document and descriptor from a source module; a browser entry whose `open` call creates the core's client from file attachments and ties it to a cell; and a results entry that carries over SPIKE-001's normalization and tagged template, re-checked against the current engine. Check it with a Framework conformance site and the core's conformance runner in three browsers, with adapter tests, and with a clean-install package test.
+Build `@relate/contrib-observable` (`packages/observable`): a loader entry whose helpers place the engine, build and place the core's worker, and publish a graph's document and descriptor from a source module; a browser entry whose `open` call creates the core's client from file attachments and ties it to a cell; and a results entry that carries over SPIKE-001's normalization and tagged template, re-checked against the current engine. Check it with a Framework conformance site and the core's conformance runner in three browsers, with adapter tests, and with a clean-install package test.
 
 Planning ran the whole path once with stand-ins (V-1 to V-10 in [research.md](research.md)): a binary loader and a bundled-worker loader work, the core's client runs in all three headless browsers from them, a loader's cache is not refreshed by what it reads (the amendment ADR-006 already carries), a loader error stops a build while a cell error does not, and pnpm's injected workspace copy builds where a plain symlink fails. No further ADR amendment is needed; one imprecision in ADR-006's context (which symlinks fail) is narrowed in the research and in the implementation's README.
 
@@ -14,7 +14,7 @@ Planning ran the whole path once with stand-ins (V-1 to V-10 in [research.md](re
 
 **Language/Version**: TypeScript 7 (as the core and the other adapters), Node 24 for loaders, build and tests, ES2022 browser target
 
-**Primary Dependencies**: peers `@observablehq/framework` ^1.13, `@relate/web`, `@relate/relate-wasm`; runtime dependency `esbuild` (the worker loader). Dev: `@playwright/test`, `vitest`, `typescript`, `@observablehq/framework` (for the conformance site).
+**Primary Dependencies**: peers `@observablehq/framework` ^1.13, `@relate/contrib-web`, `@relate/relate-wasm`; runtime dependency `esbuild` (the worker loader). Dev: `@playwright/test`, `vitest`, `typescript`, `@observablehq/framework` (for the conformance site).
 
 **Storage**: none of its own. Descriptor graphs use the core's origin-private store through the core.
 
@@ -37,7 +37,7 @@ Planning ran the whole path once with stand-ins (V-1 to V-10 in [research.md](re
 | Principle | Check | Result |
 |-----------|-------|--------|
 | I. Decisions Before Code | The plan implements ADR-006 (accepted, reviewed and amended 2026-11-08) and builds on ADR-001 to ADR-005. The planning checks found nothing that needs a decision ADR-006 does not make. | Pass |
-| II. Core First, Thin Adapters | The adapter places files, creates the core's client and shapes results; fault handling, status, loading and revisions come from the core (`createClient`, `@relate/web/build`, `@relate/web/validate`). Normalization lives in the adapter because the constitution keeps query results unaltered in the core; ADR-006 §4 records the move to the core as follow-up work. | Pass |
+| II. Core First, Thin Adapters | The adapter places files, creates the core's client and shapes results; fault handling, status, loading and revisions come from the core (`createClient`, `@relate/contrib-web/build`, `@relate/contrib-web/validate`). Normalization lives in the adapter because the constitution keeps query results unaltered in the core; ADR-006 §4 records the move to the core as follow-up work. | Pass |
 | III. The Page Works Without the Graph | Cells do not render on a server, so no first render depends on the instance; a page's text and non-graph cells render while the graph loads or fails (SC-008, tested); `ready` rejects with the core's failure wording instead of leaving a blank region. Framework pages have no client navigation to preserve. | Pass |
 | IV. Faults Are Contained | All instances run in the core's worker, constructed from the bundled worker module; a replaced instance is the core's recovery; the adapter adds no visitor-supplied statements. | Pass |
 | V. Specified Behavior Is Tested and Measured | Every FR and SC gets a tagged test and the trace check; V-1 to V-10 are single runs and say so; the cost of cleaning the cache on every build and of an extra instance is labeled unmeasured. | Pass |
@@ -71,7 +71,7 @@ specs/004-observable-adapter/
 
 ```text
 packages/observable/
-├── package.json                  # @relate/observable; exports ".", "./loader", "./results"
+├── package.json                  # @relate/contrib-observable; exports ".", "./loader", "./results"
 ├── tsconfig.json
 ├── README.md                     # the loaders, the open call, the clean-before-build scripts, the cell rules
 ├── src/
@@ -94,7 +94,7 @@ packages/observable/
 │   ├── package/clean-install.test.ts
 │   └── trace/check-trace.ts
 └── conformance-site/             # unpublished Framework project
-    ├── package.json              # injected @relate/observable and @relate/web; the engine as a direct dependency
+    ├── package.json              # injected @relate/contrib-observable and @relate/contrib-web; the engine as a direct dependency
     ├── observablehq.config.js
     ├── docs/data/                # relate.wasm.js, relate-worker.js.js, example.graph.json.js, example.descriptor.json.js
     ├── docs/lib/example.js       # the graph source (variant a) and a small document for the page graphs

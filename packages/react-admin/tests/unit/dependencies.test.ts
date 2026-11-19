@@ -30,7 +30,7 @@ describe("what the package imports", () => {
     for (const f of files) {
       for (const { from, typeOnly } of imports(text(f))) {
         if (from.startsWith("./")) continue;
-        expect(["react-admin", "@relate/web"], `${f} imports ${from}`).toContain(from);
+        expect(["react-admin", "@relate/contrib-web"], `${f} imports ${from}`).toContain(from);
         expect(typeOnly, `${f}: ${from} must be a type-only import`).toBe(true);
       }
     }
@@ -39,7 +39,7 @@ describe("what the package imports", () => {
   it("imports nothing from the core but its public entry point, and nothing of the engine", () => {
     for (const f of files) {
       const source = text(f);
-      expect(source, f).not.toMatch(/@relate\/web\//);
+      expect(source, f).not.toMatch(/@relate\/contrib-web\//);
       expect(source, f).not.toMatch(/@relate\/relate-wasm|relate_bg|vendor\//);
     }
   });
@@ -64,9 +64,9 @@ describe("what the package imports", () => {
 describe("what the package declares", () => {
   const manifest = JSON.parse(readFileSync(join(pkg, "package.json"), "utf8"));
 
-  it("has react-admin ^5 and @relate/web as peers and no runtime dependency", () => {
+  it("has react-admin ^5 and @relate/contrib-web as peers and no runtime dependency", () => {
     expect(manifest.peerDependencies["react-admin"]).toMatch(/^\^5/);
-    expect(manifest.peerDependencies["@relate/web"]).toBeDefined();
+    expect(manifest.peerDependencies["@relate/contrib-web"]).toBeDefined();
     expect(manifest.dependencies).toBeUndefined();
   });
 

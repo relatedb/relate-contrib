@@ -10,7 +10,7 @@ created: 2026-11-10
 
 ## 1. Context
 
-Phaser is a 2D browser game framework. Its scenes run an `update` function every frame, so game code cannot wait on a database that lives in a Web Worker and answers asynchronously. The engine side is the core package, `@relate/web` (`packages/web`): `createClient` starts the engine in a worker, `query(statement, params)` returns a promise, and an engine error arrives in the result envelope's `error` field and does not throw. One statement is one atomic unit; there is no multi-statement transaction. A client created with the `application` option keeps one named durable graph in the browser, seeded once and carried forward by versioned migrations (ADR-009).
+Phaser is a 2D browser game framework. Its scenes run an `update` function every frame, so game code cannot wait on a database that lives in a Web Worker and answers asynchronously. The engine side is the core package, `@relate/contrib-web` (`packages/web`): `createClient` starts the engine in a worker, `query(statement, params)` returns a promise, and an engine error arrives in the result envelope's `error` field and does not throw. One statement is one atomic unit; there is no multi-statement transaction. A client created with the `application` option keeps one named durable graph in the browser, seeded once and carried forward by versioned migrations (ADR-009).
 
 The visual material is the "Relate by ABK" design system, a design artifact that defines three looks for hex terrain on one lattice (`pixel`, `flat` and `facet`), 16x16 pixel sprites, and a hex graph overlay of round node discs joined by links, elbows and crossings. Its drawing code ships as a React and SVG bundle. A Phaser game needs the same material as textures and draw calls, and a second consumer of the same drawing code (a docs page, a different engine) should not have to take Phaser or the game with it.
 
@@ -22,7 +22,7 @@ RFC-005 asks for runnable local-first demos, which are working reference impleme
 
 ### 2.1 Deliverable and layout
 
-An unpublished demo, `demos/phaser-path-explorer`, a Vite and TypeScript application on Phaser 4 and `@relate/web`. Phaser is pinned to an exact version; its 4.x import form differs from 3.x, and the demo uses the 4.x form. The demo is added to `pnpm-workspace.yaml`, which lists only `packages/*` today (ADR-008 adds `demos/` for the same reason). The engine's `.wasm` file is imported with the bundler's URL import and its URL is passed to `createClient` as `engineUrl`, because bundlers move the file.
+An unpublished demo, `demos/phaser-path-explorer`, a Vite and TypeScript application on Phaser 4 and `@relate/contrib-web`. Phaser is pinned to an exact version; its 4.x import form differs from 3.x, and the demo uses the 4.x form. The demo is added to `pnpm-workspace.yaml`, which lists only `packages/*` today (ADR-008 adds `demos/` for the same reason). The engine's `.wasm` file is imported with the bundler's URL import and its URL is passed to `createClient` as `engineUrl`, because bundlers move the file.
 
 The hex drawing lives in `demos/phaser-path-explorer/src/hex/`, in three layers that import only downward:
 
@@ -452,9 +452,9 @@ roam: they do not chase, and they burn nothing, which the real game's finale doe
 them often. The logic is `fleeStep`, `placeRobots` and `wanderStep` (with its `shy` places) in `src/demo.ts`; the scene
 draws them through `setActors`.
 
-### 2026-11-18: the bridge and the generic cache mechanism move to `@relate/relate-phaser` (ADR-012)
+### 2026-11-18: the bridge and the generic cache mechanism move to `@relate/contrib-phaser` (ADR-012)
 
-The database bridge of 2.6 (the outbox and the single pump) and the generic part of the cache (the version counter, the pending action and the reload after an engine replacement) now live in the package `@relate/relate-phaser` (`packages/phaser`, ADR-012, `specs/009-relate-phaser-package/`). Section 2.6 stands as the behaviour they implement. The demo's `GameState` keeps its game logic (knowledge states, the thread, undo, signposts, scoring) and holds a `ReplyCache` for the rest; the splash's demo world is a throwaway client from the package; and the scene redraws through `versionWatch`. The board is now also rebuilt after the core replaces a failed instance, which the demo did not do before.
+The database bridge of 2.6 (the outbox and the single pump) and the generic part of the cache (the version counter, the pending action and the reload after an engine replacement) now live in the package `@relate/contrib-phaser` (`packages/phaser`, ADR-012, `specs/009-relate-phaser-package/`). Section 2.6 stands as the behaviour they implement. The demo's `GameState` keeps its game logic (knowledge states, the thread, undo, signposts, scoring) and holds a `ReplyCache` for the rest; the splash's demo world is a throwaway client from the package; and the scene redraws through `versionWatch`. The board is now also rebuilt after the core replaces a failed instance, which the demo did not do before.
 
 ### 2026-11-19: actors at twice the resolution, in shaded colour, with no outline
 

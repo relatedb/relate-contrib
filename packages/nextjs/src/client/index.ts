@@ -1,6 +1,6 @@
 "use client";
-// `@relate/nextjs/client` (spec FR-016 to FR-024).
-import type { Client } from "@relate/web";
+// `@relate/contrib-nextjs/client` (spec FR-016 to FR-024).
+import type { Client } from "@relate/contrib-web";
 import { mountedConfig } from "./Provider.js";
 import { visitGraph } from "./registry.js";
 import type { GraphOptions } from "./registry.js";

@@ -8,7 +8,7 @@
 
 **Status**: Implemented
 
-**Input**: User description: "Implement ADR-012 (the boundary and public interface of @relate/relate-phaser, packages/phaser): a workspace package, versioned below 1.0, with a statement queue, a generic reply cache, a throwaway in-memory client and a Phaser scene helper. The demo is changed to consume the package so its existing tests exercise the extraction. Parents: RFC-008, RFC-005."
+**Input**: User description: "Implement ADR-012 (the boundary and public interface of @relate/contrib-phaser, packages/phaser): a workspace package, versioned below 1.0, with a statement queue, a generic reply cache, a throwaway in-memory client and a Phaser scene helper. The demo is changed to consume the package so its existing tests exercise the extraction. Parents: RFC-008, RFC-005."
 
 ## Overview
 
@@ -16,7 +16,7 @@ A Phaser game redraws about sixty times a second and cannot wait for anything. T
 
 This feature builds one package from ADR-012:
 
-- **The package** `@relate/relate-phaser` (`packages/phaser`): a statement queue, a generic reply cache, a throwaway client and a Phaser scene helper, versioned below 1.0 and documented as unstable.
+- **The package** `@relate/contrib-phaser` (`packages/phaser`): a statement queue, a generic reply cache, a throwaway client and a Phaser scene helper, versioned below 1.0 and documented as unstable.
 - **The demo's adoption**: the path explorer is changed to use the package, so its existing tests are the first test of the extraction, and it gains correct behaviour after an engine replacement.
 
 Three kinds of people depend on it:
@@ -131,10 +131,10 @@ A game author installs the package into an empty project with the core and Phase
 
 **Acceptance Scenarios**:
 
-1. **Given** the packed package and a clean project with `@relate/web` and `phaser`, **When** a small page creates a queue and a cache and runs an action, **Then** it works and the build passes.
+1. **Given** the packed package and a clean project with `@relate/contrib-web` and `phaser`, **When** a small page creates a queue and a cache and runs an action, **Then** it works and the build passes.
 2. **Given** the repository, **When** the package's check commands run, **Then** unit, package and trace checks pass and are listed in the project's guidance.
 3. **Given** the requirements below, **When** the trace check runs, **Then** every requirement and success criterion has a passing, tagged test.
-4. **Given** the package's manifest, **When** it is read, **Then** the version is below 1.0, and `@relate/web` and `phaser` are peer dependencies that the package does not bundle.
+4. **Given** the package's manifest, **When** it is read, **Then** the version is below 1.0, and `@relate/contrib-web` and `phaser` are peer dependencies that the package does not bundle.
 
 ---
 
@@ -168,7 +168,7 @@ The README leads with the problem (a frame loop in front of an asynchronous engi
 
 **The package**
 
-- **FR-001**: The package `@relate/relate-phaser` MUST live in `packages/phaser`, MUST be versioned below 1.0, and MUST declare `@relate/web` and `phaser` as peer dependencies without bundling them or the engine's WebAssembly package (ADR-012 2.1).
+- **FR-001**: The package `@relate/contrib-phaser` MUST live in `packages/phaser`, MUST be versioned below 1.0, and MUST declare `@relate/contrib-web` and `phaser` as peer dependencies without bundling them or the engine's WebAssembly package (ADR-012 2.1).
 - **FR-002**: The package MUST ship no statement text, no seeding, no hex drawing and nothing that knows a game's rules (ADR-012 2.6).
 
 **The queue**

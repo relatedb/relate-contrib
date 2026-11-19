@@ -1,8 +1,8 @@
 <script lang="ts">
   // For the pages that carry inline graphs: asks for the graph, counts its nodes and reads one property, and exposes the clients
   // for the adapter's own tests (`window.__relClients`).
-  import { useGraph, useQuery } from "@relate/sveltekit";
-  import type { Client } from "@relate/web";
+  import { useGraph, useQuery } from "@relate/contrib-sveltekit";
+  import type { Client } from "@relate/contrib-web";
 
   let { name, label = "Item" }: { name: string; label?: string } = $props();
   const handle = useGraph(name);

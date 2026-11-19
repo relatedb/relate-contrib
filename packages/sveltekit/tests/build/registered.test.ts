@@ -1,5 +1,5 @@
 // covers: FR-005, FR-006, FR-007, FR-008, FR-009, FR-010, FR-012, FR-030, SC-002, SC-006
-import { canonicalText, revisionOf } from "@relate/web/build";
+import { canonicalText, revisionOf } from "@relate/contrib-web/build";
 import { afterAll, describe, expect, it } from "vitest";
 import { build, serveNode, type Built } from "../helpers/build-site.js";
 
@@ -15,7 +15,7 @@ export const graphs =
   : bad === "malformed" ? { "Bad Name": { source: make } }
   : { example: { source: make, indexes: [{ label: "Item", property: "id" }] } };
 `;
-const route = `import { createGraphRoute } from "@relate/sveltekit/server";
+const route = `import { createGraphRoute } from "@relate/contrib-sveltekit/server";
 import { graphs } from "#lib/graphs.ts";
 export const prerender = true;
 export const { GET, entries } = createGraphRoute(graphs as never);

@@ -2,8 +2,8 @@
 // instance (worker, status, faults, loading) is the core's; this file only decides which core client a name gets
 // and who ends it.
 import engineUrl from "@relate/relate-wasm/relate_bg.wasm?url";
-import { createClient, createSiteClient } from "@relate/web";
-import type { Client } from "@relate/web";
+import { createClient, createSiteClient } from "@relate/contrib-web";
+import type { Client } from "@relate/contrib-web";
 import { graphs, navigation as configured } from "virtual:relate/config";
 
 export type Navigation = "multi-page" | "client-routing";
@@ -69,7 +69,7 @@ export class PageClients {
       this.owned.add(client);
     } else {
       const entry = graphs[name];
-      if (!entry) throw new Error(`@relate/astro: no graph named "${name}" on this page or in the registered graphs (${listNames()})`);
+      if (!entry) throw new Error(`@relate/contrib-astro: no graph named "${name}" on this page or in the registered graphs (${listNames()})`);
       const descriptor = options.descriptor ?? entry.descriptor;
       if (entry.lifetime === "visit") {
         client = visitClient(name, descriptor, profile);
@@ -94,11 +94,11 @@ export class PageClients {
 export function visitGraph(name: string, options: GraphOptions = {}): Client {
   const entry = graphs[name];
   if (!entry) {
-    if (findInline(name)) throw new Error(`@relate/astro: "${name}" is an inline graph of a page; ask for it from the page's setup (onPage)`);
-    throw new Error(`@relate/astro: no registered graph named "${name}" (registered: ${listNames()})`);
+    if (findInline(name)) throw new Error(`@relate/contrib-astro: "${name}" is an inline graph of a page; ask for it from the page's setup (onPage)`);
+    throw new Error(`@relate/contrib-astro: no registered graph named "${name}" (registered: ${listNames()})`);
   }
   if (entry.lifetime !== "visit") {
-    throw new Error(`@relate/astro: "${name}" has the "page" lifetime; ask for it from the page's setup (onPage), or register it with lifetime "visit"`);
+    throw new Error(`@relate/contrib-astro: "${name}" has the "page" lifetime; ask for it from the page's setup (onPage), or register it with lifetime "visit"`);
   }
   return visitClient(name, options.descriptor ?? entry.descriptor, options.navigation ?? configured);
 }

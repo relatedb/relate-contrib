@@ -64,4 +64,4 @@ This is the wording of ADR-012 2.3 in code (apply an optimistic change, queue st
 
 ## R10. Package layout and checks
 
-**Decision**: `packages/phaser`, name `@relate/relate-phaser`, version `0.1.0`, `private: true` until the first release, as the sibling packages are. Scripts `test:phaser`, `test:phaser-package`, `test:phaser-trace` and, for the demo's browser run, `test:phaser-browsers`; each is added to the aggregate scripts and to the commands list in `CLAUDE.md`. Tags are `covers-ph:`.
+**Decision**: `packages/phaser`, name `@relate/contrib-phaser`, version `0.1.0`, `private: true` until the first release, as the sibling packages are. Scripts `test:phaser`, `test:phaser-package`, `test:phaser-trace` and, for the demo's browser run, `test:phaser-browsers`; each is added to the aggregate scripts and to the commands list in `CLAUDE.md`. Tags are `covers-ph:`.
