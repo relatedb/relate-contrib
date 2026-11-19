@@ -108,13 +108,19 @@ jobs:
           pnpm release:check-engine-range
       - name: The package's unit, clean-install package and traceability checks
         shell: bash
+        env:
+          # load-time baselines are per environment; a runner is not the maintainers' machine, so it keeps its own
+          REL_ENV: ci
         run: |
           set -euo pipefail
           names="${{ matrix.package }}"
           for name in $names; do
             for script in $(pnpm exec tsx scripts/release/checks-for.ts "$name"); do
               echo "::group::$name: $script"
-              pnpm --filter "$name" run "$script"
+              case "$script" in
+                root:*) pnpm run "${script#root:}" ;;
+                *) pnpm --filter "$name" run "$script" ;;
+              esac
               echo "::endgroup::"
             done
           done
