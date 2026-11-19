@@ -106,28 +106,25 @@ jobs:
             pnpm release:check-publishable
           fi
           pnpm release:check-engine-range
-      - name: The package's unit, clean-install package and traceability checks
+      # The browser, conformance and traceability checks are not run again here: the gate below asks whether `full` passed on this
+      # exact commit (ADR-013 2.6).
+      - name: The package's unit and clean-install package checks
         shell: bash
-        env:
-          # load-time baselines are per environment; a runner is not the maintainers' machine, so it keeps its own
-          REL_ENV: ci
         run: |
           set -euo pipefail
-          names="${{ matrix.package }}"
-          for name in $names; do
-            for script in $(pnpm exec tsx scripts/release/checks-for.ts "$name"); do
-              echo "::group::$name: $script"
-              case "$script" in
-                root:*) pnpm run "${script#root:}" ;;
-                *) pnpm --filter "$name" run "$script" ;;
-              esac
-              echo "::endgroup::"
-            done
+          name="${{ matrix.package }}"
+          for script in $(pnpm exec tsx scripts/release/checks-for.ts "$name" --phase base); do
+            echo "::group::$name: $script"
+            pnpm --filter "$name" run "$script"
+            echo "::endgroup::"
           done
 
   gate:
     needs: [resolve, checks]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read # to ask whether `full` passed on this commit
     steps:
       - uses: actions/checkout@v4
         with:
@@ -138,6 +135,10 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --filter . --frozen-lockfile
+      - name: The full suite passed on this exact commit
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: pnpm exec tsx scripts/release/verify-full.ts
       - name: The release gate, and the plan
         shell: bash
         run: |

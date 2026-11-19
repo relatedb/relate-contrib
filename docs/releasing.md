@@ -43,7 +43,7 @@ The release workflow refuses any package that is not yet on the registry and say
 
 1. Record the changes (`pnpm changeset`), merge them, and merge the "version packages" change the tooling proposes. That raises each package's version and writes its changelog.
 2. On the main branch, create the tag `<package name>@<version>`, for example `@relate/contrib-web@0.1.1`. Only the main branch's history may carry such a tag (see the settings below).
-3. The **release** workflow resolves the tag, builds, runs the package's unit, clean-install package and traceability checks, runs the gate, and then, if `PUBLISHING_ENABLED` is `true`, publishes the tarball by the registry's trusted publishing with provenance. No token is stored anywhere.
+3. The **release** workflow resolves the tag, builds, runs the package's unit and clean-install package checks, checks that the `full` workflow passed on this exact commit (it runs the browser, conformance and traceability checks, so wait for it on `main` before tagging), runs the gate, and then, if `PUBLISHING_ENABLED` is `true`, publishes the tarball by the registry's trusted publishing with provenance. No token is stored anywhere.
 
 One tag releases one package. If a dependent and the core both change, tag the core first and wait for it to appear on the registry.
 

@@ -1,6 +1,6 @@
 // covers-rel: FR-014
 import { describe, expect, it } from "vitest";
-import { checksFor } from "../checks-for.js";
+import { checksFor, phaseOf } from "../checks-for.js";
 import { repoRoot } from "../lib/workspace.js";
 
 describe("the checks a release runs for a package", () => {
@@ -15,5 +15,11 @@ describe("the checks a release runs for a package", () => {
 
   it("finds nothing for a package that does not exist", () => {
     expect(checksFor(repoRoot(), "@relate/contrib-nothing")).toEqual([]);
+  });
+
+  it("sorts the scripts into the base, browser and trace phases", () => {
+    expect(["test:unit", "test:astro", "test:next-package", "test:package"].map(phaseOf)).toEqual(["base", "base", "base", "base"]);
+    expect(["test:browsers", "test:conformance", "test:astro-browsers", "test:next-conformance", "root:test:phaser-browsers"].map(phaseOf)).toEqual(Array(5).fill("browsers"));
+    expect(["test:trace", "test:phaser-trace"].map(phaseOf)).toEqual(["trace", "trace"]);
   });
 });

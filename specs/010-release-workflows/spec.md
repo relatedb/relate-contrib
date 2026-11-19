@@ -217,7 +217,7 @@ Merges and releases are tested against the supported engine. The engine-release 
 
 **The release workflow (ADR-013 2.6)**
 
-- **FR-014**: A release workflow MUST build every package, run the unit, clean-install package and traceability checks of each package to be released, run the gate (FR-009 to FR-011), and publish in dependency order with a provenance statement tying each published file to the commit and the run, authenticating by the registry's trusted-publishing mechanism, not a stored token.
+- **FR-014**: A release workflow MUST build every package, run the unit and clean-install package checks of each package to be released, verify that the `full` workflow passed on the exact commit (which runs the browser, conformance and traceability checks; ADR-013 2.6, amended), run the gate (FR-009 to FR-011), and publish in dependency order with a provenance statement tying each published file to the commit and the run, authenticating by the registry's trusted-publishing mechanism, not a stored token.
 - **FR-015**: The workflow MUST start a release only from a version tag on a protected branch; the merge of the proposed version change and a passing engine-release run (FR-019) prepare a release and MUST NOT start one.
 - **FR-016**: The workflow MUST have a rehearsal mode that does everything except publish and sign, uses no registry credential, and reports the packages, versions and order it would publish; and MUST NOT publish for real until the maintainers switch publishing on.
 - **FR-017**: When a step fails, the workflow MUST stop and report which packages were and were not published, and MUST NOT publish a version twice.

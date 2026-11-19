@@ -8,7 +8,7 @@ export default defineConfig({
   testMatch: "**/*.spec.ts",
   timeout: 120_000,
   expect: { timeout: 30_000 },
-  workers: 1,
+  workers: process.env.CI ? 3 : 1, // the tests keep no state between them; a runner has cores to use
   fullyParallel: false,
   reporter: [["list"], ["json", { outputFile: process.env.REL_REPORT ?? "reports/playwright.json" }]],
   projects: [

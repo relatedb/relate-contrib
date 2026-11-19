@@ -30,13 +30,21 @@ export function checksFor(root: string, name: string): string[] {
   return out;
 }
 
+/** The phase a check script belongs to: the unit and package runs, the browser and conformance runs, or the traceability check. */
+export function phaseOf(script: string): "base" | "browsers" | "trace" {
+  if (/-trace$|^test:trace$|^root:.*-trace$/.test(script)) return "trace";
+  if (/-(browsers|conformance)$|^(root:)?test:(browsers|conformance)$|^root:.*-browsers$/.test(script)) return "browsers";
+  return "base";
+}
+
 function main(): void {
   const name = process.argv[2];
+  const phase = process.argv.includes("--phase") ? process.argv[process.argv.indexOf("--phase") + 1] : undefined;
   if (!name) {
     console.error("checks-for: a package name is required");
     process.exit(2);
   }
-  for (const s of checksFor(repoRoot(), name)) console.log(s);
+  for (const s of checksFor(repoRoot(), name)) if (!phase || phaseOf(s) === phase) console.log(s);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main();

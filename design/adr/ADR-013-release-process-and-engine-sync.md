@@ -130,3 +130,9 @@ None of these changes a decision above; they fix details the sections left open.
 - **2.5.** Each adapter's canary file checks that the core's file exists and still names the behaviours the adapter relies on; the origin-private store's behaviour is pinned by the application-graph browser tests, since it needs a browser.
 - **2.2.** The gate also refuses a package whose own version is already on the registry (`version-exists`), a package that is not on the registry (`first-release-is-manual`), and any case where the registry cannot be reached, which is never taken for an answer.
 
+### 2026-11-19: a release verifies the full suite instead of running it (specs/010-release-workflows)
+
+Amends 2.6. The release workflow no longer runs a package's browser, conformance and traceability checks. They take most of an hour for a package on a runner, and the `full` workflow already runs every one of them on each push to the main branch and nightly. The release builds and runs each package's unit and clean-install package checks, as before, and its gate gains one step: it asks the repository host whether `full` finished with success on the exact commit being released (a tag's commit is a commit on the protected branch). A missing, running, failed or cancelled run, or a failure to ask, stops the release; a maintainer then waits for the run on the branch or starts it by hand. The step uses the workflow's own read-only token, so no secret is added.
+
+The trade-off: a release is only as proven as the `full` run on its commit, and `full` must be kept passing on the main branch. Rejected: rerunning the suites in the release (the same checks twice, in a job per package and browser to keep it bearable) and dropping the proof (a tag on a commit whose browser tests never ran). The core's browser tests retry once on a runner, because WebKit on Linux is slower than on a developer machine; a test that needed the retry is reported as flaky.
+

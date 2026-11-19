@@ -30,6 +30,9 @@ jobs:
         with:
           engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
       - run: pnpm run test:all
+        env:
+          # load-time baselines are per environment; a runner is not a developer's machine, so it keeps its own
+          REL_ENV: ci
       - uses: actions/upload-artifact@v4
         if: always()
         with:

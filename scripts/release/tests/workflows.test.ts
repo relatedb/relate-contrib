@@ -29,6 +29,17 @@ describe("the release workflow", () => {
     expect(jobs.publish.needs).toEqual(["resolve", "checks", "gate"]);
   });
 
+  it("does not rerun the browser suites, and stops at the gate unless the full suite passed on this commit", () => {
+    const text = readFileSync(join(repoRoot(), ".github/workflows/release.yml"), "utf8");
+    expect(text).toContain("checks-for.ts \"$name\" --phase base");
+    expect(text).not.toContain("playwright");
+    const steps: any[] = wf["jobs"].gate.steps;
+    const names = steps.map((s) => s.name ?? "");
+    expect(names.findIndex((n) => n.includes("full suite passed"))).toBeGreaterThan(-1);
+    expect(names.findIndex((n) => n.includes("full suite passed"))).toBeLessThan(names.findIndex((n) => n.includes("release gate")));
+    expect(wf["jobs"].gate.permissions.actions).toBe("read");
+  });
+
   it("gives the id-token permission and the environment to the publish job only, and runs it only for a real release", () => {
     const jobs = wf["jobs"];
     for (const name of ["resolve", "checks", "gate"]) {
