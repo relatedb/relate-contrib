@@ -2,6 +2,26 @@
   "name": "@relate/contrib-react-admin",
   "version": "0.0.0",
   "description": "A react-admin data provider over a @relate/contrib-web client: lists, filters, sorting, paging, references and writes, translated into parameterised statements from a declared schema.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/relatedb/relate-contrib.git",
+    "directory": "packages/react-admin"
+  },
+  "homepage": "https://github.com/relatedb/relate-contrib/tree/main/packages/react-admin#readme",
+  "bugs": {
+    "url": "https://github.com/relatedb/relate-contrib/issues"
+  },
+  "keywords": [
+    "relate",
+    "relatedb",
+    "react-admin",
+    "data-provider",
+    "graph"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "private": true,
   "type": "module",
   "sideEffects": false,
@@ -23,13 +43,13 @@
     "measure": "tsx scripts/measure.ts"
   },
   "peerDependencies": {
-    "@relate/contrib-web": "*",
+    "@relate/contrib-web": ">=0.0.0 <1.0.0",
     "react-admin": "^5.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
-    "@relate/relate-wasm": "*",
     "@relate/contrib-web": "workspace:*",
+    "@relate/relate-wasm": "*",
     "@tanstack/react-query": "^5.83.0",
     "@types/node": "^26.6.6",
     "@types/react": "^19.2.0",

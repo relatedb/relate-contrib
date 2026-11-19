@@ -6,7 +6,7 @@
 
 **Derived From**: ADR-013 (design/adr/ADR-013-release-process-and-engine-sync.md)
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Implement ADR-013: make the seven packages publishable and put the publishing workflows in place, as far as can be built and proven before the engine is published and before Neo4j grants permission to publish under the @relate scope."
 

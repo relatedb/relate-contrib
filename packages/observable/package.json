@@ -2,6 +2,27 @@
   "name": "@relate/contrib-observable",
   "version": "0.0.0",
   "description": "Observable Framework helpers for @relate/contrib-web: loaders that place the engine and the worker and publish graph data, a call that ties a graph client to a cell, and result shaping for Framework's components.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/relatedb/relate-contrib.git",
+    "directory": "packages/observable"
+  },
+  "homepage": "https://github.com/relatedb/relate-contrib/tree/main/packages/observable#readme",
+  "bugs": {
+    "url": "https://github.com/relatedb/relate-contrib/issues"
+  },
+  "keywords": [
+    "relate",
+    "relatedb",
+    "observable",
+    "observable-framework",
+    "graph",
+    "wasm"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "private": true,
   "type": "module",
   "sideEffects": false,
@@ -33,8 +54,8 @@
   },
   "peerDependencies": {
     "@observablehq/framework": "^1.13.0",
-    "@relate/relate-wasm": "*",
-    "@relate/contrib-web": "*"
+    "@relate/contrib-web": ">=0.0.0 <1.0.0",
+    "@relate/relate-wasm": ">=0.16.1 <=0.16.1"
   },
   "dependencies": {
     "esbuild": "^0.28.2"
@@ -42,8 +63,8 @@
   "devDependencies": {
     "@observablehq/framework": "^1.13.4",
     "@playwright/test": "^1.64.1",
-    "@relate/relate-wasm": "*",
     "@relate/contrib-web": "workspace:*",
+    "@relate/relate-wasm": "catalog:",
     "@types/node": "^26.6.6",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

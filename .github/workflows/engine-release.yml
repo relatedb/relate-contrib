@@ -1,0 +1,204 @@
+# Every engine release is tested (ADR-013 2.3, spec 010). Started by a `repository_dispatch` of type `engine-release` that the engine's own
+# release job sends, with the version in its payload; or, as a fallback, by an hourly look at the registry for engine releases not yet
+# tested. Each release is tested once: its result is recorded as the git tag `engine-tested/<version>`.
+#
+# For each engine release: every package's unit tests (with its engine-assumptions canary tests), conformance checks and the drift check
+# are run against it. If anything fails, an issue is opened or commented on and no range changes. If everything passes, the run waits at
+# the `engine-release-approval` environment (required reviewers); once approved it raises the newest supported engine in each package's
+# range by a recorded change and opens a pull request. It never starts a release: a release starts only from a version tag.
+name: engine-release
+
+on:
+  repository_dispatch:
+    types: [engine-release]
+  schedule:
+    - cron: "7 * * * *" # every hour: the fallback for a missed dispatch
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "An engine release to test (it must be on the registry and not yet tested); empty tests every untested release"
+        required: false
+
+concurrency:
+  group: engine-release
+  cancel-in-progress: false # a run that is testing a release is never cancelled
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.find.outputs.versions }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --filter . --frozen-lockfile
+      - name: Find the engine releases that are not yet tested
+        id: find
+        shell: bash
+        env:
+          WANTED: ${{ github.event.client_payload.version || inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -n "$WANTED" ]; then
+            found=$(pnpm exec tsx scripts/release/engine-releases.ts --version "$WANTED")
+          else
+            found=$(pnpm exec tsx scripts/release/engine-releases.ts)
+          fi
+          json=$(printf '%s\n' "$found" | node -e "const l=require('fs').readFileSync(0,'utf8').split('\n').filter(Boolean);console.log(JSON.stringify(l))")
+          echo "versions=$json" >> "$GITHUB_OUTPUT"
+          echo "Untested engine releases: $json" >> "$GITHUB_STEP_SUMMARY"
+
+  test:
+    needs: discover
+    if: needs.discover.outputs.versions != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      max-parallel: 1 # each release in order
+      matrix:
+        version: ${{ fromJSON(needs.discover.outputs.versions) }}
+    permissions:
+      contents: write # the tag that records the release as tested
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          engine-source: registry
+          engine-version: ${{ matrix.version }}
+      - name: Run every package's checks against this engine release
+        run: pnpm exec tsx scripts/release/engine-run.ts "${{ matrix.version }}" --out engine-results.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: engine-results-${{ matrix.version }}
+          path: engine-results.json
+      - name: Record the release as tested
+        if: always()
+        shell: bash
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git tag "engine-tested/${{ matrix.version }}" || true
+          git push origin "engine-tested/${{ matrix.version }}" || true
+
+  report:
+    needs: [discover, test]
+    if: always() && needs.test.result != 'skipped'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJSON(needs.discover.outputs.versions) }}
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --filter . --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: engine-results-${{ matrix.version }}
+          path: results
+      - name: Build the issue text, if this engine release broke a package
+        id: text
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=$(pnpm exec tsx scripts/release/engine-run-report.ts "${{ matrix.version }}" --results results/engine-results.json)
+          if [ -n "$out" ]; then
+            {
+              echo "title=$(printf '%s' "$out" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).title)")"
+              echo "body<<ENGINE_REPORT_EOF"
+              printf '%s' "$out" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).body)"
+              echo "ENGINE_REPORT_EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+      - name: Open or comment on the issue for this engine release
+        if: steps.text.outputs.title != ''
+        uses: ./.github/actions/report-failure
+        with:
+          title: ${{ steps.text.outputs.title }}
+          label: engine-release
+          description: An engine release that breaks packages
+          body: ${{ steps.text.outputs.body }}
+
+  propose:
+    needs: [discover, test]
+    if: always() && needs.test.result != 'skipped'
+    runs-on: ubuntu-latest
+    environment: engine-release-approval # a person approves before any range is raised
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --filter . --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: engine-results-*
+          path: results
+      - name: Raise the newest supported engine in the packages that passed
+        id: raise
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          raised=""
+          for f in $(ls results/*/engine-results.json | sort -V); do
+            version=$(node -e "console.log(require('./$f').version)")
+            passed=$(node -e "console.log(require('./$f').results.filter(r=>r.passed && r.package.startsWith('@relate/')).map(r=>r.package).join(' '))")
+            failed=$(node -e "console.log(require('./$f').results.filter(r=>!r.passed).length)")
+            if [ "$failed" != "0" ] || [ -z "$passed" ]; then continue; fi
+            pnpm exec tsx scripts/release/raise-engine-range.ts "$version" --passed $passed
+            raised="$raised $version"
+          done
+          echo "raised=$raised" >> "$GITHUB_OUTPUT"
+      - name: Open a pull request with the recorded changes
+        if: steps.raise.outputs.raised != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          branch="engine-release/$(echo "${{ steps.raise.outputs.raised }}" | tr ' ' '-' | sed 's/^-//')"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add -A
+          git commit -m "Support the engine release(s)${{ steps.raise.outputs.raised }}"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "Support the engine release(s)${{ steps.raise.outputs.raised }}" \
+            --body "Every package passed its tests against the engine release(s)${{ steps.raise.outputs.raised }}. This raises the newest supported engine in each engine-loading package's range, with a recorded change for each. It does not start a release: a release starts from a version tag (docs/releasing.md)."

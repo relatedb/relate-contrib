@@ -16,7 +16,7 @@ Rules (FR-006 to FR-008, R2): present in the core and the four adapters, absent 
 
 ## Supported engine (read)
 
-The catalog entry `relate-wasm` in `pnpm-workspace.yaml`. Rules: a full version; equal to the vendored engine package's version when that package is present; inside every declaring package's range.
+The catalog entry `@relate/relate-wasm` in `pnpm-workspace.yaml`. Rules: a full version; equal to the vendored engine package's version when that package is present; inside every declaring package's range.
 
 ## Peer window on the core (read)
 
@@ -24,7 +24,7 @@ The peer range on `@relate/contrib-web` in each dependent: `>=FIRST <1.0.0`, whe
 
 ## Recorded change (read and written)
 
-A file in `.changeset/`: front matter naming packages and a bump (`patch`, `minor`, `major`), then a summary. Written by `raise-engine-range` for each package it raises (`patch`, summary "Supports engine <version>"). Rules (FR-012, FR-013, R4): names only packages that exist; a package whose published files changed in a change has a record; no record takes a package to `1.0.0` or above unless the package is listed in `.changeset/config.json` under the maintainers' allow list.
+A file in `.changeset/`: front matter naming packages and a bump (`patch`, `minor`, `major`), then a summary. Written by `raise-engine-range` for each package it raises (`patch`, summary "Supports engine <version>"). Rules (FR-012, FR-013, R4): names only packages that exist; a package whose published files changed in a change has a record; no record takes a package to `1.0.0` or above unless the package is listed in the maintainers' allow list, `.changeset/allow-1.0.json`.
 
 ## Gate verdict (computed)
 

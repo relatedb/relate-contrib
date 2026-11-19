@@ -2,6 +2,27 @@
   "name": "@relate/contrib-phaser",
   "version": "0.1.0",
   "description": "Building blocks for a Phaser game that keeps its world in the embedded graph: a statement queue, a reply cache the frame loop reads, a throwaway client and a version watcher.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/relatedb/relate-contrib.git",
+    "directory": "packages/phaser"
+  },
+  "homepage": "https://github.com/relatedb/relate-contrib/tree/main/packages/phaser#readme",
+  "bugs": {
+    "url": "https://github.com/relatedb/relate-contrib/issues"
+  },
+  "keywords": [
+    "relate",
+    "relatedb",
+    "phaser",
+    "game",
+    "graph",
+    "wasm"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "private": true,
   "type": "module",
   "sideEffects": false,
@@ -22,7 +43,7 @@
     "test:phaser-trace": "tsx tests/trace/check-trace.ts"
   },
   "peerDependencies": {
-    "@relate/contrib-web": "*",
+    "@relate/contrib-web": ">=0.0.0 <1.0.0",
     "phaser": "^4.0.0"
   },
   "peerDependenciesMeta": {
@@ -31,8 +52,8 @@
     }
   },
   "devDependencies": {
-    "@relate/relate-wasm": "*",
     "@relate/contrib-web": "workspace:*",
+    "@relate/relate-wasm": "*",
     "@types/node": "^26.6.6",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

@@ -1,9 +1,16 @@
 name: Set up relate-contrib
 description: Node, pnpm, the engine submodule and its WebAssembly build, dependencies and Playwright browsers.
 inputs:
+  engine-source:
+    description: Where the engine comes from. `submodule` (the default) builds the pinned engine checkout; `registry` installs a release of @relate/relate-wasm from the registry, named by engine-version.
+    default: submodule
+  engine-version:
+    description: The engine release to install when engine-source is `registry`.
+    default: ""
   engine-token:
-    description: A token with read access to relatedb/relate (the engine submodule is private).
-    required: true
+    description: A token with read access to relatedb/relate (the engine submodule is private). Not needed when engine-source is `registry`.
+    required: false
+    default: ""
   browsers:
     description: Playwright browsers to install, space separated.
     default: chromium firefox webkit
@@ -17,6 +24,7 @@ runs:
         cache: pnpm
 
     - name: Check out the engine submodule
+      if: inputs.engine-source == 'submodule'
       shell: bash
       env:
         ENGINE_TOKEN: ${{ inputs.engine-token }}
@@ -27,6 +35,7 @@ runs:
         echo "ENGINE_SHA=$(git rev-parse HEAD:vendor/relate)" >> "$GITHUB_ENV"
 
     - name: Install Rust (the engine's pinned toolchain) with the WebAssembly target
+      if: inputs.engine-source == 'submodule'
       shell: bash
       run: |
         CHANNEL="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' vendor/relate/rust-toolchain.toml)"
@@ -36,6 +45,7 @@ runs:
         echo "BINDGEN_VERSION=$(bash vendor/relate/scripts/build-wasm.sh --print-bindgen-version)" >> "$GITHUB_ENV"
 
     - name: Restore the engine's WebAssembly package
+      if: inputs.engine-source == 'submodule'
       id: engine-cache
       uses: actions/cache@v4
       with:
@@ -43,7 +53,7 @@ runs:
         key: engine-wasm-${{ runner.os }}-${{ env.ENGINE_SHA }}-${{ hashFiles('scripts/build-wasm.sh') }}
 
     - name: Cache cargo downloads and tools
-      if: steps.engine-cache.outputs.cache-hit != 'true'
+      if: inputs.engine-source == 'submodule' && steps.engine-cache.outputs.cache-hit != 'true'
       uses: actions/cache@v4
       with:
         path: |
@@ -55,7 +65,7 @@ runs:
         restore-keys: cargo-${{ runner.os }}-
 
     - name: Build the engine's WebAssembly package
-      if: steps.engine-cache.outputs.cache-hit != 'true'
+      if: inputs.engine-source == 'submodule' && steps.engine-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
         sudo apt-get update -y && sudo apt-get install -y binaryen
@@ -64,8 +74,22 @@ runs:
         pnpm run build:wasm
 
     - name: Install dependencies
+      if: inputs.engine-source == 'submodule'
       shell: bash
       run: pnpm install --frozen-lockfile
+
+    - name: Install dependencies with the engine release from the registry
+      if: inputs.engine-source == 'registry'
+      shell: bash
+      env:
+        ENGINE_VERSION: ${{ inputs.engine-version }}
+      run: |
+        set -euo pipefail
+        test -n "$ENGINE_VERSION"
+        # the workspace's root tools first, to point the checkout at the engine release (the working tree only); then everything
+        pnpm install --filter . --frozen-lockfile
+        pnpm exec tsx scripts/release/use-engine.ts "$ENGINE_VERSION"
+        pnpm install --no-frozen-lockfile
 
     - name: Install Playwright browsers
       shell: bash

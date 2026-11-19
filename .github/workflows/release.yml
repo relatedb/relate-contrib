@@ -1,0 +1,181 @@
+# Release (ADR-013, spec 010). A release is started only by a version tag on a protected branch, `<package name>@<version>`, such as
+# `@relate/contrib-web@0.1.0`, and one tag releases one package. The first release of each package is made by hand (docs/releasing.md);
+# this workflow refuses a package that is not yet on the registry.
+#
+# Real publishing is off until the repository variable PUBLISHING_ENABLED is `true`. Until then a tag push, like a manual start,
+# is a rehearsal: it builds, runs the checks and the gate, prints the plan, and stops short of publishing. A rehearsal has no
+# `id-token` permission, no environment and no registry credential.
+name: release
+
+on:
+  push:
+    tags:
+      - "@relate/contrib-*@*"
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "A package name such as @relate/contrib-web, or `all` (always a rehearsal)"
+        default: all
+
+concurrency:
+  group: release
+  cancel-in-progress: false # a release that is running is never cancelled; a second waits
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      package: ${{ steps.what.outputs.package }}
+      version: ${{ steps.what.outputs.version }}
+      real: ${{ steps.what.outputs.real }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --filter . --frozen-lockfile
+      - name: Resolve what is to be released
+        id: what
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_PACKAGE: ${{ inputs.package }}
+          PUBLISHING_ENABLED: ${{ vars.PUBLISHING_ENABLED }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "push" ]; then
+            # a version tag: it must name an existing package at its manifest version, on the protected branch's history
+            git fetch origin main --depth=1000 || true
+            out=$(pnpm exec tsx scripts/release/parse-tag.ts "$TAG" --branch origin/main)
+            echo "package=$(echo "$out" | sed -n 1p)" >> "$GITHUB_OUTPUT"
+            echo "version=$(echo "$out" | sed -n 2p)" >> "$GITHUB_OUTPUT"
+            if [ "$PUBLISHING_ENABLED" = "true" ]; then real=true; else real=false; fi
+          else
+            echo "package=$INPUT_PACKAGE" >> "$GITHUB_OUTPUT"
+            echo "version=" >> "$GITHUB_OUTPUT"
+            real=false
+          fi
+          echo "real=$real" >> "$GITHUB_OUTPUT"
+          if [ "$real" != "true" ]; then
+            echo "This run is a rehearsal: nothing will be published." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  checks:
+    needs: resolve
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
+      - name: Build every package
+        run: pnpm -r build
+      - name: The fitness and engine range checks
+        run: |
+          if [ "${{ needs.resolve.outputs.real }}" = "true" ]; then
+            # a package to be released is no longer private: the maintainers remove `private` in the release change
+            pnpm release:check-publishable --release --package "${{ needs.resolve.outputs.package }}"
+          else
+            pnpm release:check-publishable
+          fi
+          pnpm release:check-engine-range
+      - name: The package's unit, clean-install package and traceability checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="${{ needs.resolve.outputs.package }}"
+          if [ "$target" = "all" ]; then
+            names=$(node -e "for (const d of require('fs').readdirSync('packages')) { try { const j=require('./packages/'+d+'/package.json'); if (j.name?.startsWith('@relate/')) console.log(j.name) } catch {} }")
+          else
+            names="$target"
+          fi
+          for name in $names; do
+            for script in $(pnpm exec tsx scripts/release/checks-for.ts "$name"); do
+              echo "::group::$name: $script"
+              pnpm --filter "$name" run "$script"
+              echo "::endgroup::"
+            done
+          done
+
+  gate:
+    needs: [resolve, checks]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --filter . --frozen-lockfile
+      - name: The release gate, and the plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="${{ needs.resolve.outputs.package }}"
+          if [ "$target" = "all" ]; then scope="--all"; else scope="--package $target"; fi
+          # the plan lists what would be published, in dependency order, with each gate verdict
+          pnpm exec tsx scripts/release/plan-release.ts $scope --rehearsal | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "${{ needs.resolve.outputs.real }}" = "true" ]; then
+            pnpm exec tsx scripts/release/release-gate.ts --package "$target" --version "${{ needs.resolve.outputs.version }}"
+          fi
+
+  publish:
+    # Only a real release (a version tag, with PUBLISHING_ENABLED set) runs this job; a rehearsal never does.
+    if: needs.resolve.outputs.real == 'true'
+    needs: [resolve, checks, gate]
+    runs-on: ubuntu-latest
+    environment: npm-publish
+    permissions:
+      contents: read
+      id-token: write # the registry's trusted publishing: no stored token
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --filter . --frozen-lockfile
+      - name: Trusted publishing needs npm 11.5.1 or later
+        shell: bash
+        run: |
+          npm install -g npm@11.15.0
+          have=$(npm --version)
+          if [ "$(printf '%s\n' 11.5.1 "$have" | sort -V | head -1)" != "11.5.1" ]; then
+            echo "npm $have is older than 11.5.1, which trusted publishing needs" >&2
+            exit 1
+          fi
+      - name: Pack and publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="${{ needs.resolve.outputs.package }}"
+          dest="$(mktemp -d)"
+          pnpm --filter "$name" pack --pack-destination "$dest"   # rewrites workspace ranges
+          tarball=$(ls "$dest"/*.tgz)
+          npm publish "$tarball" --access public --provenance
+          echo "Published $name@${{ needs.resolve.outputs.version }} from $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+      - name: Report what was and was not published
+        if: always()
+        shell: bash
+        run: |
+          echo "Release of ${{ needs.resolve.outputs.package }}@${{ needs.resolve.outputs.version }}: job status ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"

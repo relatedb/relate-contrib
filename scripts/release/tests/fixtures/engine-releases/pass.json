@@ -1,0 +1,12 @@
+{
+  "version": "0.17.0",
+  "results": [
+    { "package": "@relate/contrib-web", "passed": true, "failures": [] },
+    { "package": "@relate/contrib-astro", "passed": true, "failures": [] },
+    { "package": "@relate/contrib-nextjs", "passed": true, "failures": [] },
+    { "package": "@relate/contrib-observable", "passed": true, "failures": [] },
+    { "package": "@relate/contrib-sveltekit", "passed": true, "failures": [] },
+    { "package": "@relate/contrib-react-admin", "passed": true, "failures": [] },
+    { "package": "@relate/contrib-phaser", "passed": true, "failures": [] }
+  ]
+}

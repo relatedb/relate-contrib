@@ -1,0 +1,43 @@
+# The fast release checks (ADR-013, spec 010): on every pull request and every push to the main branch. They need no engine, no browsers
+# and no secrets, and take well under the full run's time. A package that is not yet fit to publish, an engine range that disagrees with
+# the supported engine, a recorded change that names a missing package, or a package reaching 1.0 without the maintainers' say, fails here.
+name: release-checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --filter . --frozen-lockfile
+      - name: Fitness to publish
+        run: pnpm release:check-publishable
+      - name: Engine ranges against the supported engine
+        run: pnpm release:check-engine-range
+      - name: Recorded changes
+        run: pnpm release:check-changes --base "origin/${{ github.base_ref || 'main' }}"
+      - name: The scripts' own tests
+        run: pnpm test:release
+      - name: The scripts' traceability
+        if: github.ref == 'refs/heads/main'
+        run: pnpm test:release-trace

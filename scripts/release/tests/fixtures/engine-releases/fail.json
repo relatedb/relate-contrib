@@ -1,0 +1,8 @@
+{
+  "version": "0.17.0",
+  "results": [
+    { "package": "@relate/contrib-web", "passed": false, "failures": ["the engine reports an error in the result and does not throw", "a trapped instance is unusable afterwards"] },
+    { "package": "@relate/contrib-astro", "passed": true, "failures": [] },
+    { "package": "@relate/contrib-react-admin", "passed": false, "failures": ["a uniqueness constraint refuses a duplicate id"] }
+  ]
+}

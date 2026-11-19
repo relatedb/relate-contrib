@@ -6,7 +6,7 @@ What was found in the repository and outside it, and the mechanics settled for t
 
 **Found**: the workspace links the engine from `vendor/relate-wasm/pkg` through a package-manager override (`pnpm-workspace.yaml`), and that package's own manifest says version `0.16.1`. Every adapter and the core declare the engine as a peer at `"*"`; `@relate/contrib-react-admin` and `@relate/contrib-phaser` do not declare it, because they reach it only through the core.
 
-**Decision**: the workspace's shared version table (a pnpm catalog) gets one entry, `relate-wasm`, with the supported engine version (`0.16.1` today). The override that links the vendored build stays while the engine is unpublished, and the range check also compares the catalog's version with the vendored package's own manifest when it is present, so the two cannot drift. When the engine is published, the override is removed and the catalog entry alone names the version (quickstart, "when the engine is published").
+**Decision**: the workspace's shared version table (a pnpm catalog) gets one entry, `@relate/relate-wasm` (the key pnpm looks up for a `catalog:` dependency), with the supported engine version (`0.16.1` today). The override that links the vendored build stays while the engine is unpublished, and the range check also compares the catalog's version with the vendored package's own manifest when it is present, so the two cannot drift. When the engine is published, the override is removed and the catalog entry alone names the version (quickstart, "when the engine is published").
 
 **Rejected**: removing the override now. The engine is not on the registry, so nothing would install.
 
@@ -30,7 +30,7 @@ What was found in the repository and outside it, and the mechanics settled for t
 
 **Found**: the changesets tool bumps a dependent's major version when a package it peers on moves out of the peer range; for a pre-1.0 caret that happens on every core minor. A major bump of a `0.x` package is `1.0.0`, which would be the accidental move to 1.0 that ADR-013 2.7 leaves to the maintainers.
 
-**Decision**: three measures. The peer window of R3 keeps a core minor inside every dependent's range. The tool's option to update peer dependents only when a peer is out of range is turned on. And `check-changes` fails a change that would take any package to `1.0.0` or above unless the maintainers have listed the package as allowed in `.changeset/config.json` (a deliberate step, not a rule about when). Packages that are still private are versioned (the tool's default) and published only once `private` is removed.
+**Decision**: three measures. The peer window of R3 keeps a core minor inside every dependent's range. The tool's option to update peer dependents only when a peer is out of range is turned on. And `check-changes` fails a change that would take any package to `1.0.0` or above unless the maintainers have listed the package as allowed in `.changeset/allow-1.0.json` (the tool's own config refuses keys it does not know) (a deliberate step, not a rule about when). Packages that are still private are versioned (the tool's default) and published only once `private` is removed.
 
 **Rejected**: a hand-written version script. The tool already writes changelogs and updates dependents.
 

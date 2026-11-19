@@ -117,3 +117,16 @@ Nothing is left open in this ADR. The moves to 1.0 are the maintainers' judgemen
 - RFCs: RFC-009
 - RFC-008: when a package moves to its own repository (5.3) is independent of publishing from here
 - RFC-001: how the engine is hosted and consumed by the core
+
+## 6. Amendments
+
+### 2026-11-19: mechanics settled while building it (specs/010-release-workflows)
+
+None of these changes a decision above; they fix details the sections left open.
+
+- **2.1.** Only the packages that load the engine (the core and the four adapters) declare an engine range. The data provider and the Phaser helper reach it through the core and declare none; a check fails if they do. The supported engine is a catalog entry in `pnpm-workspace.yaml`, keyed `@relate/relate-wasm` (the key pnpm looks up for a `catalog:` dependency), equal to the vendored engine package's version while the engine is vendored.yaml`, equal to the vendored engine package's version while the engine is vendored. Each dependent's peer on the core is an explicit window, `>=<first core version> <1.0.0`, not a caret, which would leave range on every pre-1.0 core minor.
+- **2.3.** An engine release tested by the engine-release lane is recorded as the git tag `engine-tested/<version>`, made with the workflow's own token, so nothing is pushed to the protected main branch.
+- **2.6.** A version tag is `<package name>@<version>` and releases one package; the core's tag goes first. The changesets tool is configured to version packages that are still private and to update a peer dependent only when a peer falls out of range. The maintainers' allow list for a move to 1.0 is `.changeset/allow-1.0.json`, because the tool refuses config keys it does not know; the fast checks fail a package at 1.0.0 or above that is not on it, which prevents an accidental move and does not decide a deliberate one.
+- **2.5.** Each adapter's canary file checks that the core's file exists and still names the behaviours the adapter relies on; the origin-private store's behaviour is pinned by the application-graph browser tests, since it needs a browser.
+- **2.2.** The gate also refuses a package whose own version is already on the registry (`version-exists`), a package that is not on the registry (`first-release-is-manual`), and any case where the registry cannot be reached, which is never taken for an answer.
+

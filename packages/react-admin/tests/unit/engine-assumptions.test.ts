@@ -1,4 +1,5 @@
 // covers-ra: FR-032, FR-010, FR-012, FR-014
+// covers-rel: FR-023
 // The engine behaviours ADR-008 assumes, run against the real engine (research R2 to R8, R3). These started as the
 // probes in specs/008-react-admin-provider/probes/ and stay as tests so a change in the engine shows up here, not in a
 // provider statement. A failing case here means a statement form in contracts/statements.md needs its fallback.

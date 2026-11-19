@@ -2,6 +2,28 @@
   "name": "@relate/contrib-web",
   "version": "0.0.0",
   "description": "Hosts an embedded graph database in a web page: a worker client, graph loading, fault containment and navigation profiles.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/relatedb/relate-contrib.git",
+    "directory": "packages/web"
+  },
+  "homepage": "https://github.com/relatedb/relate-contrib/tree/main/packages/web#readme",
+  "bugs": {
+    "url": "https://github.com/relatedb/relate-contrib/issues"
+  },
+  "keywords": [
+    "relate",
+    "relatedb",
+    "graph",
+    "wasm",
+    "webassembly",
+    "worker",
+    "opencypher"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "private": true,
   "type": "module",
   "sideEffects": false,
@@ -47,13 +69,7 @@
     "test:catalog-trace": "tsx tests/catalog/trace/check-trace-catalog.ts"
   },
   "peerDependencies": {
-    "@relate/relate-wasm": "*",
-    "@playwright/test": "*"
-  },
-  "peerDependenciesMeta": {
-    "@playwright/test": {
-      "optional": true
-    }
+    "@relate/relate-wasm": ">=0.16.1 <=0.16.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

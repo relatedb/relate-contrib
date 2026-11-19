@@ -2,6 +2,27 @@
   "name": "@relate/contrib-astro",
   "version": "0.0.0",
   "description": "Astro integration for @relate/contrib-web: serves graphs built from a site's content, carries small graphs in pages, and ties a page's graph clients to the router.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/relatedb/relate-contrib.git",
+    "directory": "packages/astro"
+  },
+  "homepage": "https://github.com/relatedb/relate-contrib/tree/main/packages/astro#readme",
+  "bugs": {
+    "url": "https://github.com/relatedb/relate-contrib/issues"
+  },
+  "keywords": [
+    "relate",
+    "relatedb",
+    "astro",
+    "astro-integration",
+    "graph",
+    "wasm"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "private": true,
   "type": "module",
   "sideEffects": false,
@@ -33,15 +54,15 @@
     "test:astro-trace": "tsx tests/trace/check-trace.ts"
   },
   "peerDependencies": {
-    "@relate/relate-wasm": "*",
-    "astro": "^7.4.0",
-    "@relate/contrib-web": "*"
+    "@relate/contrib-web": ">=0.0.0 <1.0.0",
+    "@relate/relate-wasm": ">=0.16.1 <=0.16.1",
+    "astro": "^7.4.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
+    "@relate/contrib-web": "workspace:*",
     "@types/node": "^26.6.6",
     "astro": "^7.4.5",
-    "@relate/contrib-web": "workspace:*",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",

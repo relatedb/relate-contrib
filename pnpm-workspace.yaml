@@ -4,6 +4,8 @@ packages:
   - "packages/nextjs/conformance-site"
   - "packages/observable/conformance-site"
   - "packages/sveltekit/conformance-site"
+catalog:
+  "@relate/relate-wasm": 0.16.1
 allowBuilds:
   esbuild: true
 overrides:

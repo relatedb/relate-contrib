@@ -49,25 +49,16 @@ jobs:
 
       - name: Report the failure as a GitHub issue
         if: failure()
-        shell: bash
-        run: |
-          set -u
-          body="The nightly drift check failed.
+        uses: ./.github/actions/report-failure
+        with:
+          title: ${{ env.ISSUE_TITLE }}
+          label: ${{ env.ISSUE_LABEL }}
+          description: Nightly drift check failures
+          body: |
+            The nightly drift check failed.
 
-          Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
-          Commit: $GITHUB_SHA
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Commit: ${{ github.sha }}
 
-          See the run's logs and the drift-reports artifact for what broke. This issue is updated by later
-          failing runs; close it once main is green again."
-
-          gh label create "$ISSUE_LABEL" --description "Nightly drift check failures" --color d93f0b --force
-
-          # One open issue at a time: a repeat failure comments on it instead of opening another.
-          issue=$(gh issue list --label "$ISSUE_LABEL" --state open --json number,title \
-            --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" | head -1)
-          if [ -n "$issue" ]; then
-            echo "$body" | gh issue comment "$issue" --body-file -
-            echo "Commented on existing issue #$issue"
-          else
-            echo "$body" | gh issue create --title "$ISSUE_TITLE" --label "$ISSUE_LABEL" --body-file -
-          fi
+            See the run's logs and the drift-reports artifact for what broke. This issue is updated by later
+            failing runs; close it once main is green again.
