@@ -31,6 +31,7 @@ jobs:
       package: ${{ steps.what.outputs.package }}
       version: ${{ steps.what.outputs.version }}
       real: ${{ steps.what.outputs.real }}
+      packages: ${{ steps.what.outputs.packages }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -65,14 +66,27 @@ jobs:
             real=false
           fi
           echo "real=$real" >> "$GITHUB_OUTPUT"
+          # the packages whose checks run, one matrix job each
+          target=$(grep '^package=' "$GITHUB_OUTPUT" | cut -d= -f2-)
+          if [ "$target" = "all" ]; then
+            list=$(node -e "const l=[]; for (const d of require('fs').readdirSync('packages')) { try { const j=require('./packages/'+d+'/package.json'); if (j.name?.startsWith('@relate/')) l.push(j.name) } catch {} } console.log(JSON.stringify(l))")
+          else
+            list="[\"$target\"]"
+          fi
+          echo "packages=$list" >> "$GITHUB_OUTPUT"
           if [ "$real" != "true" ]; then
             echo "This run is a rehearsal: nothing will be published." >> "$GITHUB_STEP_SUMMARY"
           fi
 
   checks:
     needs: resolve
+    name: checks (${{ matrix.package }})
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false # every package reports, so a failure names the package and the others still finish
+      matrix:
+        package: ${{ fromJSON(needs.resolve.outputs.packages) }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -87,7 +101,7 @@ jobs:
         run: |
           if [ "${{ needs.resolve.outputs.real }}" = "true" ]; then
             # a package to be released is no longer private: the maintainers remove `private` in the release change
-            pnpm release:check-publishable --release --package "${{ needs.resolve.outputs.package }}"
+            pnpm release:check-publishable --release --package "${{ matrix.package }}"
           else
             pnpm release:check-publishable
           fi
@@ -96,12 +110,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          target="${{ needs.resolve.outputs.package }}"
-          if [ "$target" = "all" ]; then
-            names=$(node -e "for (const d of require('fs').readdirSync('packages')) { try { const j=require('./packages/'+d+'/package.json'); if (j.name?.startsWith('@relate/')) console.log(j.name) } catch {} }")
-          else
-            names="$target"
-          fi
+          names="${{ matrix.package }}"
           for name in $names; do
             for script in $(pnpm exec tsx scripts/release/checks-for.ts "$name"); do
               echo "::group::$name: $script"
