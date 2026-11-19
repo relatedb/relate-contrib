@@ -20,6 +20,6 @@ for (const build of builds()) {
       await page.goto(origin + path);
       await page.waitForTimeout(800); // long enough for hydration and the first effects
     }
-    expect(problems).toEqual([]);
+    expect(problems.join("\n---\n"), "console messages that look like a hydration problem, in full").toBe("");
   });
 }

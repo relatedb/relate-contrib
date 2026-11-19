@@ -4,6 +4,8 @@ import { expect, type Page } from "@playwright/test";
 export async function openList(page: Page, route = "/#/people"): Promise<void> {
   await page.goto(route);
   await expect(page.locator("tbody tr").first()).toBeVisible({ timeout: 60_000 });
+  // while the first query runs the table shows empty placeholder rows; wait for the records themselves (slower on a runner's WebKit)
+  await expect.poll(async () => (await names(page)).some((n) => n !== ""), { timeout: 60_000 }).toBe(true);
 }
 
 /** The text of each cell of each row of the list on screen. */

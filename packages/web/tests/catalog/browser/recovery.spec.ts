@@ -97,7 +97,8 @@ test("an application stopped during resetApplication continues the reset on the 
   await page.evaluate(() => void window.client!.resetApplication().catch(() => undefined));
   expect(await endWhenState(page, "app-mr", ["resetting"])).toBe("resetting");
 
-  expect(await reopen(page, application)).toBe("ready");
+  const reopened = await reopen(page, application);
+  expect(reopened, `the reopened application's diagnostic: ${JSON.stringify(await diagnostic(page))}; its catalog entry: ${JSON.stringify(await entry(page, "app-mr"))}`).toBe("ready");
   expect(await count(page, "MATCH (v:Visitor) RETURN count(v) AS c")).toBe(0);
   expect(await items(page)).toBe(60_000);
   expect(await entry(page, "app-mr")).toMatchObject({ state: "ready" });
