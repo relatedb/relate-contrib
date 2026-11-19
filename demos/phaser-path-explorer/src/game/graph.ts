@@ -3,7 +3,7 @@
 import type { Client, GraphDocument, Properties } from "@relate/web";
 import { neighbours, toAxial, type Tile, type Terrain, type Feature } from "../hex/core/index.js";
 import { latticeAsset } from "../hex/assets/index.js";
-import { START_MARKERS, START_STEPS, landDistances, terrainCost } from "./world.js";
+import { SIGNPOST_REACH, START_MARKERS, START_STEPS, landDistances, terrainCost } from "./world.js";
 
 export const APPLICATION = { name: "phaser-path-explorer", version: 1 } as const;
 
@@ -65,11 +65,12 @@ export function worldDocument(rows: string[]): GraphDocument {
   const towers: [number, number][] = [];
   rows.forEach((r, row) => [...r].forEach((ch, col) => (ch === "R" || ch === "U") && towers.push([col, row])));
   const [campCol, campRow] = camp.split(",").map(Number) as [number, number];
-  for (const from of [[campCol, campRow] as [number, number], ...towers]) {
+  const campHex = [campCol, campRow] as [number, number]; // the camp points the first way, over a day's walk; a settlement points only to the nearby ones
+  for (const from of [campHex, ...towers]) {
     const dist = landDistances(rows, from);
     for (const to of towers) {
       if (to[0] === from[0] && to[1] === from[1]) continue;
-      if ((dist.get(`${to[0]},${to[1]}`) ?? Infinity) <= START_STEPS)
+      if ((dist.get(`${to[0]},${to[1]}`) ?? Infinity) <= (from === campHex ? START_STEPS : SIGNPOST_REACH))
         links.push({ source: hexId(from[0], from[1]), target: hexId(to[0], to[1]), type: "NEAR" });
     }
   }

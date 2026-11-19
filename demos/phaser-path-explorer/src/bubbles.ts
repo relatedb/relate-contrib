@@ -23,6 +23,7 @@ export function bubbleRows(o: { scores: Scores; canContinue: boolean }): BubbleR
       { text: "On the seventh night they wake and head for the nearest settlement." },
       { text: "Join each settlement to the camp by a secured path before then." },
       { text: "The robots spare settlements that are connected, and destroy the rest." },
+      { text: "Signposts point to nearby, isolated settlements." },
     ],
     middle: [
       { key: "← →", text: "Turn" },

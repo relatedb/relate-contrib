@@ -477,3 +477,7 @@ A thread used to start only from an anchor (the camp, a settlement or a waymarke
 
 Clicking a hex of a secured path with no thread in play is still a step along it, not an extension. A branch flag is an anchor like any other: it counts as a waymarker placed in the score, joins the anchors that one step of travel can link, survives the night with the path it stands on, and is taken back by undo together with the waymarker it spent. The statements are `BRANCH_EXTEND` and `PLACE_FLAG`.
 
+### 2026-11-19: a settlement's signposts reach 8 steps
+
+A settlement's signposts pointed to every unreached settlement within a day's walk (12 steps by cost over land). With the camp near the middle of the island, a settlement near the top then often pointed past the camp to one near the bottom. A settlement's signposts now reach 8 steps (`SIGNPOST_REACH`), so they point to the nearby ones, and a settlement with no other settlement within 8 steps has none. The camp keeps the day's reach (12), so that it still shows the first way to head. The splash says only that signposts point to nearby, isolated settlements. The reach is written into the world's graph when it is seeded (the `NEAR` links), so it applies to a new game; a game already in progress keeps the links it was seeded with.
+

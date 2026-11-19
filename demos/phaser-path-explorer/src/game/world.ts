@@ -8,6 +8,9 @@ export const ROWS = 20;
 
 /** Steps in a day, and waymarkers in the bag (ADR-011, amended 2026-11-16). Towers are reachable within a day. */
 export const START_STEPS = 12;
+
+/** How far, in steps over land, a settlement's signposts reach: to the nearby settlements, not across the map. The camp's reach is the day's (START_STEPS). */
+export const SIGNPOST_REACH = 8;
 export const START_MARKERS = 5;
 
 /** Settlements to save, and days to save them in (ADR-011, amended 2026-11-17: the seven day game). */
