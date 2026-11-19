@@ -12,7 +12,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0, // a runner is slower than a developer machine: one retry; the report still marks a test that needed it as flaky
   fullyParallel: false,
   reporter: [["list"], ["json", { outputFile: process.env.REL_REPORT ?? "reports/playwright.json" }]],
-  use: { baseURL: `http://localhost:${PORT}` },
+  use: { baseURL: `http://localhost:${PORT}`, trace: process.env.CI ? "retain-on-failure" : "off", screenshot: process.env.CI ? "only-on-failure" : "off" }, // a failure on a runner leaves its trace to read
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "firefox", use: { ...devices["Desktop Firefox"] } },

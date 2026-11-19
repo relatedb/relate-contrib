@@ -39,6 +39,7 @@ export default defineConfig({
   workers: process.env.CI ? 3 : 1, // the tests keep no state between them; a runner has cores to use
   fullyParallel: false,
   reporter: [["list"], ["json", { outputFile: process.env.REL_REPORT ?? "reports/playwright.json" }]],
+  use: { trace: process.env.CI ? "retain-on-failure" : "off", screenshot: process.env.CI ? "only-on-failure" : "off" }, // a failure on a runner leaves its trace to read
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "firefox", use: { ...devices["Desktop Firefox"] } },

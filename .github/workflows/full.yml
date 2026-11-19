@@ -1,6 +1,11 @@
-# Everything: the drift check, then every browser suite, every clean-install package test and every traceability
-# check. Slower than the drift check (the browser suites take most of an hour), so it runs on main and nightly, not on
-# every pull request. The same command runs locally: `pnpm test:all`.
+# Everything: the build, type check and unit tests, every browser and conformance suite in every browser, every clean-install package
+# test, and every traceability check. It runs on main and nightly, and a release asks whether it passed on the commit being released
+# (ADR-013 2.6, amended), so it is the proof the release relies on. The core's performance tests are not part of it: they run in the
+# `perf` workflow and nothing waits for them.
+#
+# The work is split into jobs that run side by side: the unit tests, then each package's browser suites once per browser, and each
+# package's clean-install test. Each job keeps its reports; the last job joins them and runs the traceability checks. The same
+# commands run locally, one after another, as `pnpm test:all`.
 name: full
 
 on:
@@ -16,11 +21,46 @@ concurrency:
 
 permissions:
   contents: read
+  issues: write # to report the tests that needed a retry
+
+env:
+  # load-time baselines are per environment; a runner is not a developer's machine, so it keeps its own
+  REL_ENV: ci
 
 jobs:
-  all:
+  units:
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0 # the Next adapter's scope test reads commit ranges
+      - uses: ./.github/actions/setup
+        with:
+          engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
+          browsers: chromium
+      - run: pnpm run build && pnpm run typecheck && pnpm run test:units
+      - name: Keep the reports
+        if: always()
+        shell: bash
+        run: tar czf reports.tgz $(ls -d packages/*/reports demos/*/reports scripts/*/reports 2>/dev/null) 2>/dev/null || tar czf reports.tgz --files-from /dev/null
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reports-units
+          path: reports.tgz
+          retention-days: 7
+
+  browsers:
+    name: browsers (${{ matrix.suite }}, ${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false # every suite reports, so a failure names the suite and the others still finish
+      matrix:
+        suite: [web, astro, next, observable, sveltekit, react-admin, phaser]
+        browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,15 +69,129 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
-      - run: pnpm run test:all
-        env:
-          # load-time baselines are per environment; a runner is not a developer's machine, so it keeps its own
-          REL_ENV: ci
+          browsers: ${{ matrix.browser }}
+      - run: pnpm -r build
+      - name: The browser and conformance suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          suite="${{ matrix.suite }}"
+          browser="${{ matrix.browser }}"
+          case "$suite" in
+            web) scripts="test:browsers test:conformance test:application-browsers test:catalog-browsers" ;;
+            react-admin|phaser) scripts="test:$suite-browsers" ;;
+            *) scripts="test:$suite-browsers test:$suite-conformance" ;;
+          esac
+          for script in $scripts; do
+            echo "::group::$script ($browser)"
+            pnpm run "$script" --project="$browser"
+            echo "::endgroup::"
+            # each suite writes the same report names for every browser, so keep this browser's apart
+            for f in packages/*/reports/*playwright.json packages/*/reports/*conformance.json demos/*/reports/*playwright.json; do
+              [ -f "$f" ] && mv "$f" "${f%.json}.$browser.json"
+            done || true
+          done
+      - name: Keep the reports
+        if: always()
+        shell: bash
+        run: tar czf reports.tgz $(ls -d packages/*/reports demos/*/reports 2>/dev/null) 2>/dev/null || tar czf reports.tgz --files-from /dev/null
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: reports
+          name: reports-browsers-${{ matrix.suite }}-${{ matrix.browser }}
+          path: reports.tgz
+          retention-days: 7
+      - name: Keep the traces and screenshots of failed tests
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: traces-${{ matrix.suite }}-${{ matrix.browser }}
           path: |
-            packages/*/reports
             packages/*/test-results
+            demos/*/test-results
           if-no-files-found: ignore
+          retention-days: 14
+
+  packages:
+    name: clean-install (${{ matrix.suite }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [web, astro, next, observable, sveltekit, react-admin, phaser]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
+          browsers: chromium
+      - run: pnpm -r build
+      - name: The clean-install package test
+        shell: bash
+        run: |
+          set -euo pipefail
+          suite="${{ matrix.suite }}"
+          if [ "$suite" = "web" ]; then script=test:package; else script="test:$suite-package"; fi
+          pnpm run "$script"
+      - name: Keep the reports
+        if: always()
+        shell: bash
+        run: tar czf reports.tgz $(ls -d packages/*/reports demos/*/reports 2>/dev/null) 2>/dev/null || tar czf reports.tgz --files-from /dev/null
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reports-packages-${{ matrix.suite }}
+          path: reports.tgz
+          retention-days: 7
+
+  trace:
+    needs: [units, browsers, packages]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --filter . --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: reports-*
+          path: downloaded
+      - name: Join the reports
+        shell: bash
+        run: |
+          set -euo pipefail
+          for t in downloaded/*/reports.tgz; do tar xzf "$t" 2>/dev/null || true; done
+          pnpm exec tsx scripts/release/merge-reports.ts packages/*/reports demos/*/reports
+      - name: The traceability checks
+        run: pnpm exec tsx scripts/release/run-traces.ts
+      - name: The tests that needed a retry
+        id: flaky
+        if: always()
+        shell: bash
+        run: |
+          out=$(pnpm exec tsx scripts/release/flaky-report.ts $(ls -d packages/*/reports demos/*/reports 2>/dev/null))
+          echo "$out"
+          { echo "### Retries"; echo; echo "$out"; } >> "$GITHUB_STEP_SUMMARY"
+          if echo "$out" | grep -q "needed\|failed and then passed"; then
+            echo "any=true" >> "$GITHUB_OUTPUT"
+            { echo 'body<<EOF'; echo "$out"; echo; echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"; echo "Commit: ${{ github.sha }}"; echo EOF; } >> "$GITHUB_OUTPUT"
+          fi
+      - name: Report them as a GitHub issue
+        if: always() && steps.flaky.outputs.any == 'true' && github.ref == 'refs/heads/main'
+        uses: ./.github/actions/report-failure
+        with:
+          title: "Tests that needed a retry on main"
+          label: flaky
+          color: fbca04
+          description: Tests that failed and then passed on a retry
+          body: ${{ steps.flaky.outputs.body }}
