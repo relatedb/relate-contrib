@@ -31,7 +31,7 @@ The cost of leaving these open is concrete. A game author cannot install the Pha
 - Tie each release to a stated range of engine versions that has been tested, and refuse to release a package that no supported engine can run.
 - Learn of each upstream engine release within hours, with the test results attached, before it reaches a release.
 - Make the release path repeatable: who may publish, what is checked first, and how a published version can be traced to the source it came from.
-- State, per package, the condition for leaving its early, unstable versions.
+- State that each package is unstable until the maintainers decide otherwise.
 - Name the published packages so that they are recognisable as this repository's, apart from the engine's own packages in the same scope.
 
 ## 4. Non-Goals
@@ -45,7 +45,7 @@ The cost of leaving these open is concrete. A game author cannot install the Pha
 
 ### 5.1 What gates the first release
 
-Releases follow the dependency order: the engine, then the core, then everything that peers on the core. Three things must exist before the core can go out: a published engine to depend on, a license, and the right to publish under the package scope. The license is Apache 2.0, as for every project of the organisation. The scope, `@relate`, belongs to Neo4j, and publishing permission under it is being arranged. The other packages are held only by the core, and can follow it in any order.
+Releases follow the dependency order: the engine, then the core, then everything that peers on the core. Three things must exist before the core can go out: a published engine to depend on, a license, and the right to publish under the package scope. The license is Apache 2.0, as for every project of the organisation. The scope, `@relate`, belongs to Neo4j, and its administrators can publish under it. The other packages are held only by the core, and can follow it in any order.
 
 ### 5.2 How versions relate to the engine's
 
@@ -55,18 +55,18 @@ Two shapes are candidates. **Lockstep**: the packages move to a new version when
 
 Four mechanisms work together:
 
-- **Every engine release is tested.** A new engine release starts a run of every package against it. If the run passes, the supported range grows to include the release and a release of the affected packages is proposed; whether it then proceeds on its own or waits for a person's approval is open (7.2). If it fails, an issue names the engine release and the failing tests, the range does not grow, and the packages keep working with the engines already supported.
+- **Every engine release is tested.** A new engine release starts a run of every package against it. If the run passes, the supported range grows to include the release and a release of the affected packages is proposed, and an approval gate holds the proposal until a person approves it. If it fails, an issue names the engine release and the failing tests, the range does not grow, and the packages keep working with the engines already supported.
 - **A supported lane gates the repository.** Merges and releases are tested against the engine version the workspace is built on, so a change here is never held up by an upstream release that has not been adopted.
 - **Canary tests.** Each package pins the engine behaviours it relies on as small tests (the shape of a result, how a trapped instance behaves, support for the stores and constraints it uses). A failure names the engine change that caused it. One package already does this for its own assumptions.
 - **Gaps raised upstream.** When the engine lacks something a package needs, that is recorded here and raised with its maintainers, not patched around.
 
 ### 5.4 Making and proving a release
 
-A release is made by an automated job, not from a developer's machine, whether a person starts it or a passing engine release proposes it. The job builds, runs the unit, package and trace checks, and publishes with a provenance statement that ties the published files to the commit and the job that made them. Which people can trigger a release, and with what credentials, is a decision for the maintainers; the approach prefers short-lived, job-scoped credentials over long-lived ones held by a person.
+A release is made by an automated job, not from a developer's machine, started by a version tag on a protected branch; the first release of each package is made by hand by an administrator of the scope, and later ones use the registry's trusted publishing from the job. A passing engine release proposes a release, behind an approval gate, and does not start one. The job builds, runs the unit, package and trace checks, and publishes with a provenance statement that ties the published files to the commit and the job that made them. Who can create a version tag is governed by a branch protection rule on the repository host; the approach prefers short-lived, job-scoped credentials over long-lived ones held by a person.
 
 ### 5.5 Leaving the early versions
 
-While the engine is before 1.0, each package stays below 1.0 and says in its README that it is unstable. One candidate rule for reaching 1.0 is that a package's interface has been stable across a second consumer and the engine range it needs has stopped moving; whether one rule serves every package is open (7.3). The first package to publish is the core, and it states the unstable status first.
+While the engine is before 1.0, each package stays below 1.0 and says in its README that it is unstable. When a package moves to 1.0 is a judgement the maintainers make for each package. No rule or tool decides it.
 
 ### 5.6 Naming
 
@@ -84,11 +84,7 @@ Packages published from this repository are named `@relate/contrib-<project>`, w
 
 7.1. Lockstep versions with the engine, or independent versions with a stated engine range? The first is simpler to explain, the second avoids re-releasing a package that did not change.
 
-7.2. Who may trigger a release by hand, and may a passing engine release proceed without a person approving it? The `@relate` scope belongs to Neo4j and permission to publish under it is being arranged; what the credentials are, and how they are kept off developers' machines, follows from that.
-
-7.3. When does each package leave 0.x? One rule for all of them, or per package?
-
-7.4. What does a run against a new engine release cost, given the full check takes about 45 minutes, and which subset is enough to catch a break?
+7.2. What does a run against a new engine release cost, given the full check takes about 45 minutes, and which subset is enough to catch a break?
 
 ## 8. ADRs
 

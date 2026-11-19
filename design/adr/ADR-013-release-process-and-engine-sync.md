@@ -3,6 +3,7 @@ id: ADR-013
 title: The release process for the packages, and how they stay in step with the engine
 status: accepted
 rfcs: [RFC-009]
+specs: [specs/010-release-workflows]
 created: 2026-11-19
 ---
 
@@ -19,13 +20,13 @@ Seven packages in this workspace are candidates for the public registry: the cor
 - The engine is before 1.0, so any minor release can break callers. One engine change reaches every package that peers on it, through the core.
 - One package already tests the engine assumptions it relies on: `packages/react-admin/tests/unit/engine-assumptions.test.ts` runs the statements the provider depends on (uniqueness constraints, parameter handling) against the real engine, so an engine change that breaks the provider fails a named test.
 
-RFC-009 poses the problem: how versions relate to the engine's, how a release is made and shown to be sound, and how an upstream change is noticed before a release depends on it. The sections below recommend a decision for each, and take three decisions from the maintainers: the license is Apache 2.0, as for every project of the organisation; the `@relate` scope belongs to Neo4j, which is arranging permission to publish under it; and every engine release is tested and then either triggers a release or reports an issue. Who may release, and the period before 1.0, are left open (2.10).
+RFC-009 poses the problem: how versions relate to the engine's, how a release is made and shown to be sound, and how an upstream change is noticed before a release depends on it. The sections below recommend a decision for each, and record the maintainers' decisions (2.10): the license is Apache 2.0, as for every project of the organisation; the `@relate` scope belongs to Neo4j and its administrators can publish under it; releases start only from a version tag on a protected branch, with the first release of each package by hand; and every engine release is tested and then, behind an approval gate, proposes a release or reports an issue. When a package moves to 1.0 is the maintainers' judgement and is not decided here (2.7).
 
 ## 2. Decision
 
 ### 2.1 Independent versions, and a range that follows the engine
 
-Each package keeps its own version, below 1.0 while the engine is. A package declares the engine versions it supports as its peer range on `@relate/relate-wasm`, never `"*"`, and the peer range is the one place a package states its engine support. The range spans from the oldest engine release the package supports to the newest release that has been tested with it (`>=OLDEST <=NEWEST`), because an ordinary caret range would cover only patch releases of a pre-1.0 engine and would hide a minor release that was never tested.
+Each package keeps its own version, below 1.0 until the maintainers decide otherwise (2.7). A package declares the engine versions it supports as its peer range on `@relate/relate-wasm`, never `"*"`, and the peer range is the one place a package states its engine support. The range spans from the oldest engine release the package supports to the newest release that has been tested with it (`>=OLDEST <=NEWEST`), because an ordinary caret range would cover only patch releases of a pre-1.0 engine and would hide a minor release that was never tested.
 
 The range changes only by the engine-release run (2.3): a passing release moves `NEWEST` up to it, and a failing release is left out, so the range never includes an untested or a failing engine release. Raising `OLDEST` (dropping an old engine) is a reviewed change made by hand.
 
@@ -39,7 +40,7 @@ Releases go in dependency order: the engine (upstream), then `@relate/web`, then
 
 - **The supported lane** runs every package against the catalog's engine version. It gates merges and releases (the existing `full` workflow, with the engine taken from the registry once it is published).
 - **The engine-release lane** runs for every release of the engine, as soon as it is published: a workflow started by the engine repository's own release (a repository dispatch event), with a scheduled poll of the registry as a fallback so a missed event is still found within the hour. It installs that release, runs every package's unit tests, the canary tests (2.5), the conformance checks and the drift check against it, and then:
-  - **If it passes**, the workflow raises `NEWEST` to that release in every package whose tests passed (a changeset for each, 2.6) and triggers the release (2.6). Packages whose range does not move are not released.
+  - **If it passes**, the workflow raises `NEWEST` to that release in every package whose tests passed (a changeset for each, 2.6) and proposes the release (2.6), behind an approval gate: a protected environment with required reviewers holds the step until a person approves it. Packages whose range does not move are not released.
   - **If it fails**, the workflow opens or comments on a GitHub issue, using the mechanism `drift` already has, under its own title and label, naming the engine release and the failing tests. No range changes, so installed packages keep working with the releases already supported.
 
 Until the engine is published, the supported lane builds it from the submodule as today. After that the submodule is kept only to try unreleased engine work, which runs as a manually started lane and never gates or triggers a release.
@@ -54,11 +55,13 @@ Each package that calls the engine through the core has a file, `tests/unit/engi
 
 ### 2.6 How a release is made
 
-A release is made by a workflow, not from a developer's machine. A changeset-style record (a small file per change naming the packages and the kind of bump, kept in the repository) feeds the changelog and the version bump. A tagged release, the merge of the reviewed "version packages" change the changesets tool opens, or a passing engine-release run (2.3) starts the release workflow. It builds, runs each changed package's unit, clean-install package and traceability checks, runs the release gate (2.2), and publishes the changed packages in dependency order with a provenance statement tying the published files to the commit and the workflow run. It authenticates with the registry's trusted-publishing (OpenID Connect) mechanism, so no long-lived token is stored; where that is not available for a package, a short-lived automation token in a protected environment secret stands in.
+A release is made by a workflow, not from a developer's machine. A changeset-style record (a small file per change naming the packages and the kind of bump, kept in the repository) feeds the changelog and the version bump. A release starts only from a version tag on a protected branch, and a branch protection rule on the repository host governs who can create one. The merge of the reviewed "version packages" change the changesets tool opens, and a passing engine-release run (2.3), prepare a release (the version change, and the tag to be made) but do not start one. It builds, runs each changed package's unit, clean-install package and traceability checks, runs the release gate (2.2), and publishes the changed packages in dependency order with a provenance statement tying the published files to the commit and the workflow run. It authenticates with the registry's trusted-publishing (OpenID Connect) mechanism, so no long-lived token is stored.
+
+The first release of each package is made by hand, by an administrator of the `@relate` scope, following a written procedure, because the registry configures a package's trusted publisher on a package that already exists. After that first release the package's trusted publisher is configured for this repository, the release workflow and its environment, and every later release of it goes through the workflow. The workflow refuses to publish a package that is not yet on the registry, and says that its first release is manual.
 
 ### 2.7 Leaving 0.x
 
-A package moves to 1.0 when its interface has been stable across a second consumer and its engine range has not moved for a stated period (the period is an open item, 2.10). Until then its README says it is unstable, as the Phaser helper's does.
+No rule and no tool decides when a package moves to 1.0. It is a judgement the maintainers make for each package. Versions stay below 1.0 until they decide, and each package's README says that it is unstable until then, as the Phaser helper's does. Nothing in the release process checks for or enforces a 1.0.
 
 ### 2.8 Manifest hygiene before the first release
 
@@ -80,14 +83,11 @@ The published packages are named `@relate/contrib-<project>` (RFC-009 5.6), so t
 
 The rename is one mechanical change across the workspace: every manifest, import, script filter and document that names a package. It is made before anything is published, since a name is cheap to change until then and cannot be unpublished and reused afterwards.
 
-### 2.10 Decided by the maintainers, and still open
+### 2.10 Decided by the maintainers
 
-Decided: the package names follow `@relate/contrib-<project>` (2.9); the license is Apache 2.0, so each released package carries the license text and `"license": "Apache-2.0"`; the `@relate` scope belongs to Neo4j; and the engine range follows the engine through the engine-release lane (2.1, 2.3).
+Decided: releases start only from a version tag on a protected branch, governed by a branch protection rule, with the first release of each package made by hand and every later one by the trusted-publisher workflow (2.6); a passing engine release is subject to an approval gate (2.3); the package names follow `@relate/contrib-<project>` (2.9); the license is Apache 2.0, so each released package carries the license text and `"license": "Apache-2.0"`; the `@relate` scope belongs to Neo4j; and the engine range follows the engine through the engine-release lane (2.1, 2.3).
 
-Open:
-
-- Who may trigger a release by hand, with what credentials, and whether a passing engine release may release without a person approving it (a protected environment can hold that approval). Neo4j is arranging permission to publish under the scope.
-- The period an engine range must stay unchanged before a package may move to 1.0.
+Nothing is left open in this ADR. The moves to 1.0 are the maintainers' judgement and are not decided here (2.7).
 
 ## 3. Alternatives Considered
 
@@ -102,12 +102,12 @@ Open:
 ## 4. Consequences
 
 - A package cannot be released until the engine is published, so the engine is the first dependency on the critical path. Until then nothing here can be exercised end to end.
-- A run per engine release costs the check's time (about 45 minutes) for each release and an issue to triage when one fails. RFC-009 leaves open which subset is enough to catch a break (7.5).
-- A passing engine release can release every package whose range moves, so the quality of the canary and conformance tests is what stands between an engine change and a published release. Who approves such a release is open (2.10).
+- A run per engine release costs the check's time (about 45 minutes) for each release and an issue to triage when one fails. RFC-009 leaves open which subset is enough to catch a break (7.2).
+- A passing engine release can release every package whose range moves, so the quality of the canary and conformance tests is what stands between an engine change and a published release. The approval gate (2.3) is what a person controls.
 - The engine's own release job has to send the repository dispatch event, which is a change upstream; until it does, the scheduled poll finds the release within the hour.
 - Declared ranges must be moved on purpose, so each new engine minor costs a reviewed change and, for the packages whose range moves, a release.
 - The catalog entry, the range check and the release gate are new scripts and a workflow to maintain.
-- Provenance and trusted publishing need the registry and the repository host set up for it, which depends on the permission to publish under the `@relate` scope that Neo4j is arranging.
+- Trusted publishing is configured per package, after its first release, and the first releases are manual. The `@relate` scope belongs to Neo4j, and its administrators make those first releases.
 - Canary tests add a file per package that must be kept honest as the packages' use of the engine changes.
 - The rename in 2.9 touches every import, filter and document, and the earlier decisions that name the Phaser helper `@relate/relate-phaser` (RFC-008 and ADR-012) get a dated note when it lands. Until it does, the workspace names and the published names differ.
 - This ADR does not publish anything. Implementing it is a specification of its own, once the open items and the engine's publication are settled.
