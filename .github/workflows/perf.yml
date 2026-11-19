@@ -1,0 +1,56 @@
+# The performance tests (ADR-013 2.6, amended): the core's load-time and restore-time measurements. A time depends on the machine, so
+# nothing waits for these: not a merge, not `full`, not a release. They run nightly and on request; a failure opens a GitHub issue, or
+# comments on the open one. A runner keeps its own baselines (REL_ENV=ci), kept as an artifact so a maintainer can commit them.
+name: perf
+
+on:
+  schedule:
+    - cron: "47 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: perf
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: ./.github/actions/setup
+        with:
+          engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
+      - run: pnpm -r build
+      - run: pnpm run test:perf
+        env:
+          REL_ENV: ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-reports
+          path: |
+            packages/web/reports/perf.json
+            packages/web/tests/baselines
+          if-no-files-found: ignore
+      - name: Report the failure as a GitHub issue
+        if: failure()
+        uses: ./.github/actions/report-failure
+        with:
+          title: "Performance tests failed on main"
+          label: performance
+          description: Nightly performance test failures
+          body: |
+            The performance tests failed.
+
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Commit: ${{ github.sha }}
+
+            A time depends on the machine; check whether the run's machine was slow before suspecting a change. Nothing waits for this
+            check. This issue is updated by later failing runs; close it once the tests pass again.

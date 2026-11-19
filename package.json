@@ -9,6 +9,7 @@
     "test": "pnpm run test:unit && pnpm run test:browsers",
     "test:unit": "pnpm --filter @relate/contrib-web test:unit",
     "test:browsers": "pnpm --filter @relate/contrib-web test:browsers",
+    "test:perf": "pnpm --filter @relate/contrib-web test:perf",
     "test:conformance": "pnpm --filter @relate/contrib-web test:conformance",
     "test:package": "pnpm --filter @relate/contrib-web test:package",
     "test:trace": "pnpm --filter @relate/contrib-web test:trace",

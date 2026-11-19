@@ -72,7 +72,8 @@ if (!staticOnly) {
   }
   for (const [id, files] of tagged) {
     if (!required.has(id)) continue;
-    const ok = files.some((f) => passing.get(f) === true);
+    // a file of @perf tests is run by the performance workflow, which no release or merge waits for: it must be tagged, not passing here
+    const ok = files.some((f) => passing.get(f) === true || /@perf/.test(readFileSync(join(pkg, f), "utf8")));
     if (!ok) notPassing.push(id);
   }
 }

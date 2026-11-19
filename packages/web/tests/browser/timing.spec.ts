@@ -3,7 +3,8 @@ import { expect, test } from "./fixtures.js";
 import { checkBaseline, generateGraph, openHarness, restored, serveGraph, visitSite } from "./helpers.js";
 
 // The page's longest unresponsive interval while a large graph loads is a hard gate; load times are recorded and
-// held to twice their baseline (FR-031). Figures from one run in one environment are labeled as such.
+// held to twice their baseline (FR-031). These tests are tagged @perf: the performance workflow runs them, and neither the full
+// suite nor a release waits for them (ADR-013 2.6, amended). Figures from one run in one environment are labeled as such.
 
 async function loadInPage(page: import("@playwright/test").Page, descriptor: unknown): Promise<{ maxGapMs: number; totalMs: number; restored: boolean }> {
   return page.evaluate(async (d) => {
@@ -27,7 +28,7 @@ async function loadInPage(page: import("@playwright/test").Page, descriptor: unk
 }
 
 for (const pages of [5000, 20000]) {
-  test(`${pages} pages: the page stays responsive and the load time is recorded`, async ({ page }, info) => {
+  test(`@perf ${pages} pages: the page stays responsive and the load time is recorded`, async ({ page }, info) => {
     const graph = generateGraph(pages, { id: `timing-${pages}`, dataUrl: `/data/timing-${pages}.json` });
     await openHarness(page);
     await serveGraph(page, graph);
@@ -39,7 +40,7 @@ for (const pages of [5000, 20000]) {
   });
 }
 
-test("5000 pages: a restore from the store is ready quickly, with no request for the data", async ({ page, context }, info) => {
+test("@perf 5000 pages: a restore from the store is ready quickly, with no request for the data", async ({ page, context }, info) => {
   const first = await visitSite(page, { id: "restore-time", pages: 5000, revision: "r1" });
   expect(first.dataRequests).toHaveLength(1);
   await page.close();
