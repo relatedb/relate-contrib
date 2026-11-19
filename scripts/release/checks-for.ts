@@ -10,10 +10,12 @@ export function checksFor(root: string, name: string): string[] {
   const folder = pkg.folder.replace("packages/", "");
   const scripts = pkg.manifest["scripts"] as Record<string, string> | undefined ?? {};
   const out: string[] = [];
-  for (const kind of ["", "-package", "-trace"]) {
+  // the traceability check reads every report, so the browser and conformance runs come before it; a folder may be named in a
+  // script by a shorter form (`nextjs` is `next`)
+  const names = [folder, folder.replace(/js$/, "")];
+  for (const kind of ["", "-browsers", "-conformance", "-package", "-trace"]) {
     const generic = kind === "" ? "test:unit" : `test${kind.replace("-", ":")}`;
-    const named = `test:${folder}${kind}`;
-    const script = [named, generic].find((s) => scripts[s] !== undefined);
+    const script = [...names.map((n) => `test:${n}${kind}`), generic].find((s) => scripts[s] !== undefined);
     if (script) out.push(script);
   }
   return out;
