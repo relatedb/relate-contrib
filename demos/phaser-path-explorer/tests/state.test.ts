@@ -342,19 +342,78 @@ describe.skipIf(!engineBuilt)("game state, on the engine", () => {
       expect(state.message).toMatch(/bank or abandon/i);
     });
 
-    it("will not start a second thread from the middle of a path", async () => {
+    it("starts a branch from the middle of a path: the hex left gets a flag, which costs a waymarker and a step to leave", async () => {
       await walkToTower();
       const here = state.here()!;
       const all = [...state.tiles.values()];
       const mid = all.find(
         (t) => t.state === "path" && !t.anchor && neighboursOf(here, t) && all.some((n) => inView(n) && neighboursOf(t, n)),
       )!;
+      await freshDay();
       await state.step(mid.id); // walk back one hex along the secured path
       expect(state.player.at).toBe(mid.id);
+      const markers = state.player.markers;
+      const steps = state.player.steps;
+      const sensed = all.find((n) => inView(n) && neighboursOf(mid, n))!;
+      expect(state.canGrowHere()).toBe(true);
+      await state.click(sensed.id);
+      expect(state.player.at).toBe(sensed.id); // the thread went out
+      expect(state.tiles.get(mid.id)!.anchor).toBe(true); // a flag where the path was left
+      expect(state.player.markers).toBe(markers - 1);
+      expect(state.player.steps).toBe(steps - (sensed.cost ?? 1));
+      expect(state.loose()).toEqual([{ from: mid.id, to: sensed.id, kind: "LOOSE" }]);
+      expect(state.message).toMatch(/branches/i);
+      const flags = await bridge.enqueue("MATCH (h:Hex {id: $id}) RETURN h.anchor AS anchor", { id: mid.id });
+      expect(flags[0]!["anchor"]).toBe(true); // in the graph too
+    });
+
+    it("refuses to branch with no waymarker left, and says why", async () => {
+      await walkToTower();
+      const here = state.here()!;
+      const all = [...state.tiles.values()];
+      const mid = all.find(
+        (t) => t.state === "path" && !t.anchor && neighboursOf(here, t) && all.some((n) => inView(n) && neighboursOf(t, n)),
+      )!;
+      await freshDay();
+      await state.step(mid.id);
+      await bridge.enqueue("MATCH (pl:Player) SET pl.markers = 0");
+      state.player = { ...state.player, markers: 0 };
       const sensed = all.find((n) => inView(n) && neighboursOf(mid, n))!;
       await state.click(sensed.id);
-      expect(state.message).toMatch(/from an anchor/i);
-      expect(inView(state.tiles.get(sensed.id)!)).toBe(true); // still only in view
+      expect(state.message).toMatch(/no waymarkers left/i);
+      expect(state.player.at).toBe(mid.id);
+      expect(state.tiles.get(mid.id)!.anchor).toBeFalsy();
+      expect(inView(state.tiles.get(sensed.id)!)).toBe(true);
+    });
+
+    it("drops a flag on a secured path with the waymarker key, for a waymarker and no steps, and undo takes it back", async () => {
+      await walkToTower();
+      const here = state.here()!;
+      const all = [...state.tiles.values()];
+      const mid = all.find((t) => t.state === "path" && !t.anchor && neighboursOf(here, t))!;
+      await freshDay();
+      await state.step(mid.id);
+      const markers = state.player.markers;
+      const steps = state.player.steps;
+      await state.placeWaymarker();
+      expect(state.tiles.get(mid.id)!.anchor).toBe(true);
+      expect(state.player.markers).toBe(markers - 1);
+      expect(state.player.steps).toBe(steps);
+      expect(state.message).toMatch(/flag placed/i);
+      await state.undo();
+      expect(state.tiles.get(mid.id)!.anchor).toBeFalsy();
+      expect(state.player.markers).toBe(markers);
+      const flags = await bridge.enqueue("MATCH (h:Hex {id: $id}) RETURN h.anchor AS anchor", { id: mid.id });
+      expect(flags[0]!["anchor"] ?? null).toBeNull();
+    });
+
+    it("steps along a path when it is clicked, and does not extend from it", async () => {
+      await walkToTower();
+      const here = state.here()!;
+      const all = [...state.tiles.values()];
+      const mid = all.find((t) => t.state === "path" && !t.anchor && neighboursOf(here, t))!;
+      await freshDay();
+      expect(state.intent(mid.id).kind).toBe("step");
     });
   });
 

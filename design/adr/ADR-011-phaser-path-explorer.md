@@ -468,3 +468,12 @@ The sun and the moon are painted on a 32 by 34 pixel grid at half the world's ce
 
 The camp's tent was the design system's red tent, which the red waymarker flags (five of them stand round the camp at the start) hid. It is now the same shape in a cheerful yellow, with a lit side, a shaded side, a brown door and a brown pole (`src/game/camp.ts`). The colours are added to the design system's palette by the game, and the art replaces the design system's tent through `overrideFeatureArt` (`src/hex/core/paint.ts`), which the game registers when it imports `camp.ts`; the port's own golden checks of the pixel look run without it and are unchanged. A recorded deviation, for brand review.
 
+### 2026-11-19: branch flags: a thread can start from any hex of a secured path
+
+A thread used to start only from an anchor (the camp, a settlement or a waymarker) or continue from its own end. An explorer that had jumped to a settlement and then walked along the secured path away from it stood on a path hex that was not an anchor, with no way to start a thread there. Two rules replace that dead end, and both spend a waymarker from the bag of five, which keeps waymarkers the scarce resource:
+
+- **Auto-flag on leaving the path.** Extending from a secured path hex that is not an anchor, with no thread in play, onto ground that is not on a path first makes the hex being left an anchor (a flag is placed there, one waymarker is spent) and then starts the thread from it. With no waymarker left the extension is refused ("No waymarkers left: you cannot branch from here.").
+- **A flag dropped on a path.** The waymarker key (P) on a secured path hex that is not an anchor, with no thread in play, places a flag there and spends one waymarker, without spending steps. A branch can then be planned before any step is spent.
+
+Clicking a hex of a secured path with no thread in play is still a step along it, not an extension. A branch flag is an anchor like any other: it counts as a waymarker placed in the score, joins the anchors that one step of travel can link, survives the night with the path it stands on, and is taken back by undo together with the waymarker it spent. The statements are `BRANCH_EXTEND` and `PLACE_FLAG`.
+

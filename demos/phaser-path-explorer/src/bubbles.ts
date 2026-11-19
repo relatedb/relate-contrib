@@ -29,7 +29,7 @@ export function bubbleRows(o: { scores: Scores; canContinue: boolean }): BubbleR
       { key: "↑", text: "Move ahead. On new ground this lays path." },
       { key: "↓", text: "Move back. Along your path this takes it in." },
       { key: "Shift + ↑ ↓", text: "Step over known ground without laying path" },
-      { key: "P", text: "Place a waymarker here and secure the path" },
+      { key: "P", text: "Place a waymarker here: secure the path, or on a path, drop a flag to branch" },
       { key: "E", text: "End the day" },
       { key: "Backspace, ⌘Z", text: "Undo the last action" },
       { key: "Esc, H, ?", text: "Pause, and see these messages again" },

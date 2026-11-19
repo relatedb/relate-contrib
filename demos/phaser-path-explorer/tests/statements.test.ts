@@ -184,3 +184,60 @@ describe.skipIf(!existsSync(wasm))("statements, in the engine's WebAssembly buil
     expect(hidden.every((r) => r["terrain"] === null && r["feature"] === null && r["anchor"] === false)).toBe(true);
   });
 });
+
+// ADR-011, amended 2026-11-19: branch flags. A flag is placed on a secured path hex, for a waymarker, so a thread can start there.
+describe.skipIf(!existsSync(wasm))("branch flags, in the engine's WebAssembly build", () => {
+  let mod: { initSync(o: { module: Buffer }): void; RelateDb: new () => Db };
+  const fresh = (markers: number): Db => {
+    const db = new mod.RelateDb();
+    const q = (s: string, p?: Record<string, unknown>) => {
+      const res = JSON.parse(db.execute(s, p ? JSON.stringify(p) : null)) as { error: string | null };
+      expect(res.error).toBeNull();
+    };
+    // H (the camp, an anchor) - a (a secured path hex) - b (a secured path hex) ; a - n (sensed ground), b - m (hidden)
+    q(`CREATE (:Hex {id:'H', origin:true, anchor:true, state:'path'}), (:Hex {id:'a', state:'path'}), (:Hex {id:'b', state:'path'}),
+              (:Hex {id:'n', state:'sensed', cost:1}), (:Hex {id:'m', state:'hidden'}),
+              (:Player {id:'player', at:'a', steps:5, markers:${markers}})`);
+    q(`MATCH (h:Hex {id:'H'}),(a:Hex {id:'a'}),(b:Hex {id:'b'}),(n:Hex {id:'n'}),(m:Hex {id:'m'})
+       CREATE (h)-[:ADJ]->(a),(a)-[:ADJ]->(b),(a)-[:ADJ]->(n),(b)-[:ADJ]->(m),(h)-[:SECURED {since:1}]->(a),(a)-[:SECURED {since:1}]->(b)`);
+    return db;
+  };
+  const rows = (db: Db, s: string, p?: Record<string, unknown>) => {
+    const res = JSON.parse(db.execute(s, p ? JSON.stringify(p) : null)) as { error: string | null; rows: Row[] };
+    expect(res.error).toBeNull();
+    return res.rows;
+  };
+
+  beforeAll(async () => {
+    mod = (await import(resolve(pkg, "relate.js"))) as typeof mod;
+    mod.initSync({ module: readFileSync(wasm) });
+  });
+
+  it("extends from a path hex that is not an anchor: the hex left becomes an anchor, a waymarker and a step are spent", () => {
+    const db = fresh(1);
+    expect(rows(db, S.BRANCH_EXTEND, { to: "n", now: 1 })[0]).toMatchObject({ id: "n", anchor: false, steps: 4, markers: 0, branch: "a" });
+    expect(rows(db, "MATCH (h:Hex {id:'a'}) RETURN h.anchor AS anchor")[0]!["anchor"]).toBe(true);
+    expect(rows(db, "MATCH (a:Hex {id:'a'})-[:LOOSE]->(n:Hex {id:'n'}) RETURN count(*) AS n")[0]!["n"]).toBe(1);
+  });
+
+  it("refuses to branch without a waymarker, from an anchor, onto a path, or while a thread is in play", () => {
+    expect(rows(fresh(0), S.BRANCH_EXTEND, { to: "n", now: 1 })).toHaveLength(0);
+    const db = fresh(2);
+    expect(rows(db, S.BRANCH_EXTEND, { to: "b", now: 1 })).toHaveLength(0); // b is on the path: stepping, not extending
+    rows(db, "MATCH (pl:Player) SET pl.at = 'H'");
+    expect(rows(db, S.BRANCH_EXTEND, { to: "a", now: 1 })).toHaveLength(0); // the camp is an anchor: EXTEND is the statement for it
+    rows(db, "MATCH (pl:Player) SET pl.at = 'a'");
+    rows(db, "MATCH (a:Hex {id:'a'}),(n:Hex {id:'n'}) CREATE (a)-[:LOOSE {since:2}]->(n)");
+    expect(rows(db, S.BRANCH_EXTEND, { to: "n", now: 3 })).toHaveLength(0); // a thread is in play
+  });
+
+  it("drops a flag on a path hex for a waymarker and no steps, and refuses on an anchor, with a thread in play or with none left", () => {
+    const db = fresh(1);
+    expect(rows(db, S.PLACE_FLAG)[0]).toMatchObject({ flag: "a", at: "a", steps: 5, markers: 0 });
+    expect(rows(db, S.PLACE_FLAG)).toHaveLength(0); // on an anchor now, and with none left
+    expect(rows(fresh(0), S.PLACE_FLAG)).toHaveLength(0);
+    const busy = fresh(1);
+    rows(busy, "MATCH (a:Hex {id:'a'}),(n:Hex {id:'n'}) CREATE (a)-[:LOOSE {since:2}]->(n)");
+    expect(rows(busy, S.PLACE_FLAG)).toHaveLength(0);
+  });
+});

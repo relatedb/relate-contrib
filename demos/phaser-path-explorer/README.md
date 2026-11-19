@@ -26,6 +26,11 @@ The day ends only when the steps run out or you press **e**; then you return to 
 still loose is abandoned, and everything the secured network does not disclose fogs over. Banked ground survives, with
 its neighbours coming back as sensed. A found cache adds one waymarker.
 
+**Branches.** A thread can start from any hex of a secured path, not only from an anchor. Extending from a path hex that is
+not an anchor onto new ground places a flag on the hex you leave and starts the thread there, and **p** on such a hex drops
+a flag without moving, to plan a branch. Each flag costs one of your five waymarkers (with none left, you cannot branch), and
+clicking a hex of the path itself is still a step along it (ADR-011, amended 2026-11-19).
+
 Keyboard, as in a space shooter: **left and right turn** a sixth of a turn, **up** acts on the hex ahead (the same as a
 click on it), **down** acts on the hex behind, **shift** steps instead of extending, **p** places
 a waymarker, **e** ends the day, **backspace** or **cmd-Z** undoes the last action (one level, the end of a day included). **Esc**, **h** or **?** pause the game and bring back the splash: grey message bubbles drift across the board, which stays in view behind them, telling the premise (top row), the keys (middle row), and your last and best scores (bottom row). Behind the bubbles an explorer wanders a throwaway island with a lantern and runs from the robots that roam it, seen only up close (a demo, never your saved game). **Any key** continues the game, and **n** starts a new one on a random island (the confirmation that abandons the one in progress). A translucent preview shows what the next press would do. The explorer faces the way it

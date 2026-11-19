@@ -22,6 +22,6 @@ describe("splash bubbles", () => {
   it("reads out everything for a screen reader, the result first", () => {
     const text = readerText(bubbleRows({ scores, canContinue: true }), 320);
     expect(text.split("\n")[0]).toBe("The game is over. You scored 320.");
-    expect(text).toContain("P: Place a waymarker here and secure the path");
+    expect(text).toContain("P: Place a waymarker here: secure the path, or on a path, drop a flag to branch");
   });
 });

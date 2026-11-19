@@ -38,6 +38,44 @@ SET n.state = 'sensed'
 RETURN h.id AS id, coalesce(h.anchor, false) AS anchor, pl.steps AS steps, pl.markers AS markers,
        caches AS caches, collect(n.id) AS sensed`;
 
+/**
+ * Extend from a hex of a secured path that is not an anchor, with no thread in play (ADR-011, amended 2026-11-19): the hex
+ * being left first becomes an anchor, one waymarker is spent for the flag, and the thread starts from it. The target must
+ * be ground that is not on a path. Costs one step and one waymarker (the cache found on the entered hex, if any, is
+ * taken as in EXTEND). Matches nothing without a waymarker. Answers with the flag's hex id as `branch`.
+ */
+export const BRANCH_EXTEND = `
+MATCH (pl:Player {id: 'player'}), (p:Hex {id: pl.at})-[:ADJ]-(h:Hex {id: $to})
+WHERE p.state = 'path' AND p.anchor IS NULL AND pl.markers > 0
+  AND NOT EXISTS { (:Hex)-[:LOOSE]->(:Hex) }
+  AND h.state IN ['viewed', 'sensed', 'seen'] AND pl.steps >= coalesce(h.cost, 1)
+SET p.anchor = true
+CREATE (p)-[:LOOSE {since: $now}]->(h)
+SET h.state = 'path', h.mapped = CASE WHEN h.tower = true THEN true ELSE h.mapped END,
+    pl.steps = pl.steps - coalesce(h.cost, 1), pl.markers = pl.markers - 1, pl.at = h.id
+WITH p, h, pl
+OPTIONAL MATCH (t:Thing {kind: 'cache'})-[o:ON]->(h)
+DELETE o
+WITH p, h, pl, count(o) AS caches
+SET pl.markers = pl.markers + caches
+WITH p, h, pl, caches
+OPTIONAL MATCH (h)-[:ADJ]-(n:Hex) WHERE n.state = 'hidden'
+SET n.state = 'sensed'
+RETURN h.id AS id, coalesce(h.anchor, false) AS anchor, pl.steps AS steps, pl.markers AS markers,
+       caches AS caches, collect(n.id) AS sensed, p.id AS branch`;
+
+/**
+ * Drop a flag on the hex of a secured path the explorer stands on, with no thread in play (ADR-011, amended 2026-11-19): the
+ * hex becomes an anchor and one waymarker is spent, so a thread can start here. Costs no steps. Matches nothing on an
+ * anchor, off a path, without a waymarker, or while a thread is in play.
+ */
+export const PLACE_FLAG = `
+MATCH (pl:Player {id: 'player'}), (h:Hex {id: pl.at})
+WHERE pl.markers > 0 AND h.state = 'path' AND h.anchor IS NULL
+  AND NOT EXISTS { (:Hex)-[:LOOSE]->(:Hex) }
+SET h.anchor = true, pl.markers = pl.markers - 1
+RETURN h.id AS flag, pl.at AS at, pl.steps AS steps, pl.markers AS markers`;
+
 /** Secure: at the head of the path on an anchor (a tower, or the camp), every loose edge becomes secured. Matches nothing otherwise. */
 export const SECURE = `
 MATCH (pl:Player {id: 'player'}), (h:Hex {id: pl.at, anchor: true})

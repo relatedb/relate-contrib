@@ -4,7 +4,7 @@
 import { neighbourAt, neighbours, oppositeSide, sideTo, turnSide, type Feature, type Side, type Terrain } from "../hex/core/index.js";
 import { ReplyCache, type Bridge, type CacheClient, type Patch, type Row } from "@relate/relate-phaser";
 import {
-  END_DAY, EXTEND, PLACE_WAYMARKER, READ_BOARD, READ_EDGES, READ_HEXES, READ_PLAYER, REEL_IN, SECURE, STEP, TRAVEL, TOWERS,
+  BRANCH_EXTEND, END_DAY, EXTEND, PLACE_FLAG, PLACE_WAYMARKER, READ_BOARD, READ_EDGES, READ_HEXES, READ_PLAYER, REEL_IN, SECURE, STEP, TRAVEL, TOWERS,
   UNDO_CLEAR_EDGES, UNDO_CLEAR_PARTS, UNDO_HEXES, UNDO_LOOSE, UNDO_PARTS, UNDO_PLAYER, UNDO_SECURED,
   GAME_OVER, MARKERS_USED, READ_PARTS, READ_SIGNPOSTS, READ_TRUTH, VIEW_AROUND,
 } from "./statements.js";
@@ -313,8 +313,14 @@ export class GameState {
   canGrowHere(): boolean {
     const hex = this.here();
     if (!hex) return false;
-    if (this.loose().length === 0) return Boolean(hex.anchor);
+    if (this.loose().length === 0) return Boolean(hex.anchor) || this.canBranchHere();
     return this.predecessor() !== undefined;
+  }
+
+  /** Can a flag go on the hex the explorer stands on: a secured path hex that is not an anchor, with no thread in play, and a waymarker to spend? */
+  canBranchHere(): boolean {
+    const hex = this.here();
+    return Boolean(hex && hex.state === "path" && !hex.anchor && this.loose().length === 0 && this.player.markers > 0);
   }
 
   /** Does the loose thread touch this hex? The thread may not cross itself or return to where it began. */
@@ -388,7 +394,9 @@ export class GameState {
               ? "The day is spent."
               : this.player.steps < cost
                 ? "Too steep: you cannot afford that climb."
-                : "Extend from an anchor, or from the end of your path.",
+                : this.here()?.state === "path" && !this.here()?.anchor && this.loose().length === 0 && this.player.markers <= 0
+                  ? "No waymarkers left: you cannot branch from here."
+                  : "Extend from an anchor, or from the end of your path.",
         };
       }
       return { kind: "none", reason: "You cannot see that far yet." };
@@ -450,19 +458,23 @@ export class GameState {
     if (!this.canExtend(id)) return this.say("The thread will not go there.");
     const from = this.player.at;
     let secured = false;
+    // from a secured path hex that is not an anchor, a flag is placed there first: a branch (ADR-011, amended 2026-11-19)
+    const branching = !this.here()!.anchor && this.loose().length === 0;
     await this.act(id, async () => {
-      const rows = await this.bridge.enqueue(EXTEND, { to: id, now: ++this.moves });
+      const rows = await this.bridge.enqueue(branching ? BRANCH_EXTEND : EXTEND, { to: id, now: ++this.moves });
       const r = rows[0];
       if (!r) {
         this.message = "The thread will not go there.";
         return;
       }
       this.applied = true;
+      if (branching) this.tiles.get(from)!.anchor = true; // the flag is placed on the hex being left
       const hex = this.tiles.get(id)!;
       this.facing = sideTo(this.tiles.get(from)!, hex);
       hex.state = "path";
       this.edges.push({ from, to: id, kind: "LOOSE" });
       this.player = { ...this.player, at: id, steps: r["steps"] as number, markers: r["markers"] as number };
+      if (branching) this.message = "Flag placed: the path branches here.";
       const sensed = (r["sensed"] as string[]) ?? [];
       for (const sid of sensed) {
         const t = this.tiles.get(sid);
@@ -555,11 +567,29 @@ export class GameState {
    * Place a waymarker: the path is banked as secured ground and a new path can grow from here with the steps still
    * remaining. Requires a waymarker to spend, a path to bank, and a hex that is not an anchor already.
    */
+  /** Drop a flag on a secured path hex, so that a thread can start here (ADR-011, amended 2026-11-19). Costs a waymarker and no steps. */
+  private async placeFlag(id: string): Promise<void> {
+    return this.act(id, async () => {
+      const rows = await this.bridge.enqueue(PLACE_FLAG);
+      const r = rows[0];
+      if (!r) {
+        this.message = "A flag will not stand here.";
+        return;
+      }
+      this.applied = true;
+      this.tiles.get(id)!.anchor = true;
+      this.player = { ...this.player, markers: r["markers"] as number };
+      this.message = "Flag placed: a thread can start here.";
+      this.touch();
+    });
+  }
+
   async placeWaymarker(): Promise<void> {
     const here = this.here();
     if (!here) return;
     if (this.player.markers <= 0) return this.say("No waymarkers left in the bag.");
     if (here.anchor) return this.say("You stand on an anchor already.");
+    if (this.loose().length === 0 && here.state === "path") return this.placeFlag(here.id); // a flag on a secured path: a branch
     if (this.loose().length === 0) return this.say("There is no path to bank: extend the path first.");
     return this.act(here.id, async () => {
       const path = this.loose().map((e) => ({ ...e }));
