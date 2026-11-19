@@ -9,6 +9,7 @@ export default defineConfig({
   timeout: 120_000,
   expect: { timeout: 30_000 },
   workers: 1,
+  retries: process.env.CI ? 1 : 0, // a runner is slower than a developer machine: one retry; the report still marks a test that needed it as flaky
   fullyParallel: false,
   reporter: [["list"], ["json", { outputFile: process.env.REL_REPORT ?? "reports/playwright.json" }]],
   use: { baseURL: `http://localhost:${PORT}` },
