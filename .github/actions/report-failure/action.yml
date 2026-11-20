@@ -17,7 +17,7 @@ inputs:
     description: The issue body, or the comment on an existing issue.
     required: true
   github-token:
-    description: A token that may write issues. The workflow's own token needs the `issues: write` permission.
+    description: "A token that may write issues. The workflow's own token needs the `issues: write` permission."
     default: ${{ github.token }}
 runs:
   using: composite

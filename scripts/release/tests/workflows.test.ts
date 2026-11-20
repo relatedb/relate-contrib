@@ -1,5 +1,5 @@
 // covers-rel: FR-014, FR-015, FR-016, FR-017, FR-027, FR-028
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import YAML from "yaml";
@@ -70,5 +70,16 @@ describe("the release workflow", () => {
     const steps = wf["jobs"].publish.steps;
     expect(steps.at(-1).if).toBe("always()");
     expect(wf["jobs"].publish.needs).toContain("gate");
+  });
+});
+
+describe("every workflow and action file", () => {
+  const dir = join(repoRoot(), ".github");
+  const files = [
+    ...readdirSync(join(dir, "workflows")).filter((f) => /\.ya?ml$/.test(f)).map((f) => join("workflows", f)),
+    ...readdirSync(join(dir, "actions")).map((a) => join("actions", a, "action.yml")).filter((f) => existsSync(join(dir, f))),
+  ];
+  it.each(files)("%s parses as YAML (a file the runner cannot load fails the job that uses it)", (file) => {
+    expect(() => YAML.parse(readFileSync(join(dir, file), "utf8"))).not.toThrow();
   });
 });
