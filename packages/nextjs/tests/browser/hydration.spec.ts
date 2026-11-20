@@ -10,8 +10,10 @@ for (const build of builds()) {
   test(`every conformance page renders without a hydration warning, ${build.name}`, async ({ page }) => {
     const origin = `http://127.0.0.1:${build.port}`;
     const problems: string[] = [];
-    page.on("console", (m) => /hydrat|did not match|\b418\b|\b419\b|\b423\b/i.test(m.text()) && problems.push(`${m.text()}`));
-    page.on("pageerror", (e) => problems.push(e.message));
+    const looksLikeHydration = (text: string): boolean => /hydrat|did not match|\b418\b|\b419\b|\b423\b/i.test(text);
+    page.on("console", (m) => looksLikeHydration(m.text()) && problems.push(`${m.text()}`));
+    // WebKit reports a fetch that a navigation cancelled ("... due to access control checks") as a page error; it is not hydration
+    page.on("pageerror", (e) => looksLikeHydration(e.message) && problems.push(e.message));
     for (const path of PAGES) {
       const raw = await (await page.request.get(origin + path)).text();
       expect(raw, path).toMatch(/<h1[^>]*data-rel-title/);

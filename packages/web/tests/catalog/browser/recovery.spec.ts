@@ -1,3 +1,5 @@
+// Two tests here are tagged @engine-wal: they stop the worker while the engine creates a WAL segment and fail when the engine
+// refuses an empty newest segment (relatedb/relate#576). They run in the engine-known workflow, which nothing waits for.
 // covers-cat: FR-007, FR-010, FR-014, SC-004, SC-005, SC-006
 import { endWhenState, entry, putEntry } from "./catalog-file.js";
 import { expect, test } from "./fixtures.js";
@@ -71,7 +73,7 @@ test("an application stopped while migrating resumes from the recorded version a
   expect(await entry(page, "app-mm")).toMatchObject({ state: "ready", version: 3 });
 });
 
-test("an application stopped during an import fails import-interrupted, never seeds over the store, and resetApplication recovers", async ({ page }) => {
+test("@engine-wal an application stopped during an import fails import-interrupted, never seeds over the store, and resetApplication recovers", async ({ page }) => {
   test.setTimeout(240_000);
   const application = { name: "mi", version: 1, seed: itemSeed(20_000) };
   await openReady(page, application);
@@ -89,7 +91,7 @@ test("an application stopped during an import fails import-interrupted, never se
   expect(await entry(page, "app-mi")).toMatchObject({ state: "ready" });
 });
 
-test("an application stopped during resetApplication continues the reset on the next open", async ({ page }) => {
+test("@engine-wal an application stopped during resetApplication continues the reset on the next open", async ({ page }) => {
   test.setTimeout(240_000);
   const application = { name: "mr", version: 1, seed: itemSeed(60_000) };
   await openReady(page, application);

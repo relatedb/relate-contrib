@@ -66,7 +66,8 @@
     "test:application-browsers": "playwright test --config playwright.application.config.ts",
     "test:application-trace": "tsx tests/application/trace/check-trace-application.ts",
     "test:catalog": "vitest run --config vitest.catalog.config.ts --reporter=default --reporter=json --outputFile.json=reports/catalog-vitest.json",
-    "test:catalog-browsers": "playwright test --config playwright.catalog.config.ts",
+    "test:catalog-browsers": "playwright test --config playwright.catalog.config.ts --grep-invert @engine-wal",
+    "test:catalog-known": "REL_REPORT=reports/catalog-known.json playwright test --config playwright.catalog.config.ts --grep @engine-wal",
     "test:catalog-trace": "tsx tests/catalog/trace/check-trace-catalog.ts"
   },
   "peerDependencies": {

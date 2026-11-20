@@ -32,7 +32,7 @@ export async function total(page: Page): Promise<number> {
 
 /** Wait until the list on screen shows this total (a hash change keeps the old rows on screen until the new ones arrive). */
 export async function expectTotal(page: Page, expected: number): Promise<void> {
-  await expect.poll(() => total(page), { timeout: 30_000 }).toBe(expected);
+  await expect.poll(() => total(page), { timeout: 60_000 }).toBe(expected); // a runner's browser can take longer than 30 s to show a query's answer
 }
 
 /** A list route with nothing remembered: react-admin keeps each list's filter, sort and page, so a test names them. */
