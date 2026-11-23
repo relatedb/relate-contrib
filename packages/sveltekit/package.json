@@ -1,6 +1,6 @@
 {
   "name": "@relate/contrib-sveltekit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "SvelteKit integration for @relate/contrib-web: publishes graphs built from a site's content from a prerendered route, carries small graphs in pages, and ties graph clients to Svelte components.",
   "license": "Apache-2.0",
   "repository": {

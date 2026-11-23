@@ -1,6 +1,6 @@
 {
   "name": "@relate/contrib-react-admin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A react-admin data provider over a @relate/contrib-web client: lists, filters, sorting, paging, references and writes, translated into parameterised statements from a declared schema.",
   "license": "Apache-2.0",
   "repository": {

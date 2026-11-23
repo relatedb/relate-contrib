@@ -1,6 +1,6 @@
 {
   "name": "@relate/contrib-phaser",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Building blocks for a Phaser game that keeps its world in the embedded graph: a statement queue, a reply cache the frame loop reads, a throwaway client and a version watcher.",
   "license": "Apache-2.0",
   "repository": {
