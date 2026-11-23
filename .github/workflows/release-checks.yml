@@ -38,6 +38,6 @@ jobs:
         run: pnpm release:check-changes --base "origin/${{ github.base_ref || 'main' }}"
       - name: The scripts' own tests
         run: pnpm test:release
-      - name: The scripts' traceability
+      - name: The scripts' traceability (every id is tagged; the full workflow checks that the tests pass)
         if: github.ref == 'refs/heads/main'
-        run: pnpm test:release-trace
+        run: pnpm test:release-trace --static
