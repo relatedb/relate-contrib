@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import semver from "semver";
-import { formatRange, isRelease, parseEngineRange } from "./lib/ranges.js";
+import { formatRange, includesVersion, isRelease, nextMinor, parseEngineRange } from "./lib/ranges.js";
 import { DEFAULT_REGISTRY, fetchVersions } from "./lib/registry.js";
 import { ENGINE, ENGINE_LOADERS, findPackage, loadPackages, repoRoot } from "./lib/workspace.js";
 
@@ -30,14 +30,17 @@ export function raiseEngineRange(root: string, version: string, passed: string[]
     }
     const parsed = parseEngineRange(pkg.manifest.peerDependencies?.[ENGINE]);
     if (!parsed.ok) throw new Error(`${name}: ${parsed.reason}`);
-    if (semver.lt(version, parsed.value.newest)) throw new Error(`${name}: ${version} is below its newest supported engine ${parsed.value.newest}`);
-    if (semver.eq(version, parsed.value.newest)) {
+    const exclusive = parsed.value.exclusive === true;
+    if (!exclusive && semver.lt(version, parsed.value.newest)) throw new Error(`${name}: ${version} is below its newest supported engine ${parsed.value.newest}`);
+    if (exclusive && semver.lt(version, parsed.value.oldest)) throw new Error(`${name}: ${version} is below its oldest supported engine ${parsed.value.oldest}`);
+    // an exclusive range (<X.Y.0) already supports every release below its boundary: it moves only for a release at or above it
+    if (exclusive ? includesVersion(parsed.value, version) : semver.eq(version, parsed.value.newest)) {
       out.leftAlone.push(name);
       continue;
     }
     const file = join(pkg.dir, "package.json");
     const manifest = JSON.parse(readFileSync(file, "utf8")) as { peerDependencies: Record<string, string> };
-    manifest.peerDependencies[ENGINE] = formatRange({ oldest: parsed.value.oldest, newest: version });
+    manifest.peerDependencies[ENGINE] = formatRange(exclusive ? { oldest: parsed.value.oldest, newest: nextMinor(version), exclusive: true } : { oldest: parsed.value.oldest, newest: version });
     writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`);
     mkdirSync(join(root, ".changeset"), { recursive: true });
     const slug = `${version.replace(/\./g, "-")}-${name.replace("@relate/contrib-", "")}`;

@@ -30,6 +30,8 @@ Each package keeps its own version, below 1.0 until the maintainers decide other
 
 The range changes only by the engine-release run (2.3): a passing release moves `NEWEST` up to it, and a failing release is left out, so the range never includes an untested or a failing engine release. Raising `OLDEST` (dropping an old engine) is a reviewed change made by hand.
 
+Amended 2026-11-23: the range may also end at a minor boundary, `>=OLDEST <NEXT` with `NEXT` of the form `X.Y.0` (for example `>=1.2.0 <1.3.0`), which supports every patch release below the boundary, including ones published after the range was written. The first minor above the boundary stays untested and so excluded, which is the property the rule above protects. A passing engine release below the boundary changes nothing; a passing release at or above it moves the boundary to the next minor above that release. The engine is at 1.x, where a minor release is not expected to break, but the range still records only what was tested, one minor at a time.
+
 One entry in the workspace's catalog (the package manager's shared version table) names the engine version the workspace is built and tested on. A script checks that every package's peer range includes that version and fails the build if one does not. A package is released when its own code changes or when its range moves, and not otherwise.
 
 ### 2.2 Order of release, and the gate

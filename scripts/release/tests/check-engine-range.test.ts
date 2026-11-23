@@ -1,5 +1,5 @@
 // covers-rel: FR-006, FR-007, FR-008, SC-002
-import { mkdirSync, writeFileSync } from "node:fs";
+import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { checkEngineRange } from "../check-engine-range.js";
@@ -30,8 +30,8 @@ describe("the engine range check", () => {
     expect(by(checkEngineRange(fx.root), ASTRO)[0]!.detail).toContain("any version");
   });
 
-  it("fails a range that is not of the form >=OLDEST <=NEWEST, and says what form is expected", () => {
-    for (const bad of ["^0.16.1", ">=0.16.1", ">=0.16.1 <0.17.0", ">=0.17.0 <=0.16.1", ">=0.16.1-rc.1 <=0.16.1"]) {
+  it("fails a range that is not of the form >=OLDEST <=NEWEST or >=OLDEST <X.Y.0, and says what form is expected", () => {
+    for (const bad of ["^0.16.1", ">=0.16.1", ">=0.16.1 <0.17.1", ">=0.17.0 <=0.16.1", ">=0.16.1-rc.1 <=0.16.1"]) {
       fx = makeFixture({ [ASTRO]: { peerDependencies: { "@relate/relate-wasm": bad, [CORE]: ">=0.0.0 <1.0.0" } } });
       const f = by(checkEngineRange(fx.root), ASTRO);
       expect(f.length, bad).toBe(1);
@@ -60,6 +60,22 @@ describe("the engine range check", () => {
     writeFileSync(join(fx.root, "vendor/relate-wasm/pkg/package.json"), JSON.stringify({ name: "@relate/relate-wasm", version: "0.17.0" }));
     const f = checkEngineRange(fx.root);
     expect(f.find((x) => x.rule === "supported-engine")!.detail).toContain("0.17.0");
+  });
+
+  it("accepts a range that ends at a minor boundary, and refuses one that ends at a patch or below its start", () => {
+    fx = makeFixture();
+    writeFileSync(join(fx.root, "pnpm-workspace.yaml"), 'packages:\n  - "packages/*"\ncatalog:\n  \"@relate/relate-wasm\": 0.16.1\n');
+    const set = (r: string) => {
+      const f = join(fx!.root, "packages/web/package.json");
+      const m = JSON.parse(readFileSync(f, "utf8"));
+      m.peerDependencies["@relate/relate-wasm"] = r;
+      writeFileSync(f, JSON.stringify(m, null, 2));
+      return checkEngineRange(fx!.root).filter((x) => x.package === "@relate/contrib-web");
+    };
+    expect(set(">=0.16.1 <0.17.0")).toEqual([]);
+    expect(set(">=0.16.0 <0.16.1")[0]!.detail).toMatch(/does not include|minor boundary/);
+    expect(set(">=0.16.1 <0.16.5")[0]!.detail).toMatch(/minor boundary/);
+    expect(set(">=0.16.1 <0.16.0")[0]!.detail).toMatch(/above/);
   });
 
   it("ignores a leftover vendored build when the workspace takes the engine from the registry", () => {

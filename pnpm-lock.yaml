@@ -134,7 +134,7 @@ importers:
   packages/astro:
     dependencies:
       '@relate/relate-wasm':
-        specifier: '>=1.2.0 <=1.3.0'
+        specifier: '>=1.2.0 <1.3.0'
         version: 1.2.0
     devDependencies:
       '@playwright/test':
@@ -165,7 +165,7 @@ importers:
   packages/nextjs:
     dependencies:
       '@relate/relate-wasm':
-        specifier: '>=1.2.0 <=1.3.0'
+        specifier: '>=1.2.0 <1.3.0'
         version: 1.2.0
     devDependencies:
       '@playwright/test':
@@ -439,7 +439,7 @@ importers:
   packages/web:
     dependencies:
       '@relate/relate-wasm':
-        specifier: '>=1.2.0 <=1.3.0'
+        specifier: '>=1.2.0 <1.3.0'
         version: 1.2.0
     devDependencies:
       '@playwright/test':
@@ -1566,12 +1566,12 @@ packages:
     peerDependencies:
       '@observablehq/framework': ^1.13.0
       '@relate/contrib-web': '>=0.0.0 <1.0.0'
-      '@relate/relate-wasm': '>=1.2.0 <=1.3.0'
+      '@relate/relate-wasm': '>=1.2.0 <1.3.0'
 
   '@relate/contrib-web@file:packages/web':
     resolution: {directory: packages/web, type: directory}
     peerDependencies:
-      '@relate/relate-wasm': '>=1.2.0 <=1.3.0'
+      '@relate/relate-wasm': '>=1.2.0 <1.3.0'
 
   '@relate/relate-wasm@1.2.0':
     resolution: {integrity: sha512-RmJq36laQNR2mgI13x9ZYi9rfPEPallFUYG2lTLi7ERfeMULYf3tpo/aA4cPBEs68s9STX9EtMJvx1NpyPb2nQ==}

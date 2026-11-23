@@ -1,5 +1,5 @@
 // covers-rel: FR-019, FR-012, SC-006
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { raiseEngineRange } from "../raise-engine-range.js";
@@ -39,6 +39,20 @@ describe("raising the newest supported engine", () => {
     raiseEngineRange(fx.root, "0.17.0", [ASTRO], KNOWN);
     const r = raiseEngineRange(fx.root, "0.17.0", [ASTRO, "@relate/contrib-phaser"], KNOWN);
     expect(r).toEqual({ raised: [], leftAlone: [ASTRO], skipped: ["@relate/contrib-phaser"] });
+  });
+
+  it("leaves a range ending at a minor boundary alone for a patch release below it, and moves the boundary for a release at or above it", () => {
+    fx = makeFixture();
+    const file = join(fx.root, "packages/astro/package.json");
+    const manifest = JSON.parse(readFileSync(file, "utf8"));
+    manifest.peerDependencies["@relate/relate-wasm"] = ">=0.16.1 <0.17.0";
+    writeFileSync(file, JSON.stringify(manifest, null, 2));
+    const known = ["0.16.1", "0.16.2", "0.17.0", "0.17.3", "0.18.0"];
+    expect(raiseEngineRange(fx.root, "0.16.2", [ASTRO], known)).toEqual({ raised: [], leftAlone: [ASTRO], skipped: [] });
+    expect(range(fx.root, "packages/astro")).toBe(">=0.16.1 <0.17.0");
+    expect(raiseEngineRange(fx.root, "0.17.0", [ASTRO], known).raised).toEqual([ASTRO]);
+    expect(range(fx.root, "packages/astro")).toBe(">=0.16.1 <0.18.0");
+    expect(() => raiseEngineRange(fx!.root, "0.16.0", [ASTRO], ["0.16.0", ...known])).toThrow(/below/);
   });
 
   it("refuses a prerelease, a version below NEWEST and a version that is not an engine release", () => {

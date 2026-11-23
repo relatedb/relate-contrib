@@ -10,7 +10,7 @@ Rules checked (FR-001 to FR-005): `name` matches `@relate/contrib-<project>`; `l
 
 ## Engine range (read and written)
 
-The peer range on `@relate/relate-wasm` of a package that loads the engine, of the form `>=OLDEST <=NEWEST` with both ends full versions.
+The peer range on `@relate/relate-wasm` of a package that loads the engine, of the form `>=OLDEST <=NEWEST` with both ends full versions, or `>=OLDEST <NEXT` with `NEXT` a minor boundary (`X.Y.0`), which supports every patch release below it (ADR-013 2.1, amended 2026-11-23).
 
 Rules (FR-006 to FR-008, R2): present in the core and the four adapters, absent in the data provider and the Phaser helper; never `*`; `OLDEST <= NEWEST`; includes the supported engine; `NEWEST` is raised only by `raise-engine-range` and never above a tested engine release; a prerelease is never an end.
 
