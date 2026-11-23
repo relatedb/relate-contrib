@@ -170,7 +170,11 @@ jobs:
           node-version: 24
           cache: pnpm
           registry-url: https://registry.npmjs.org
-      - run: pnpm install --filter . --frozen-lockfile
+      - name: Install and build the package and what it depends on in this workspace
+        shell: bash
+        run: |
+          pnpm install --filter . --filter "${{ needs.resolve.outputs.package }}..." --frozen-lockfile   # the root brings the release scripts
+          pnpm --filter "${{ needs.resolve.outputs.package }}..." build
       - name: Trusted publishing needs npm 11.5.1 or later
         shell: bash
         run: |
@@ -188,6 +192,7 @@ jobs:
           dest="$(mktemp -d)"
           pnpm --filter "$name" pack --pack-destination "$dest"   # rewrites workspace ranges
           tarball=$(ls "$dest"/*.tgz)
+          pnpm exec tsx scripts/release/check-tarball.ts "$tarball"   # every entry point the manifest names is in the tarball
           npm publish "$tarball" --access public --provenance
           echo "Published $name@${{ needs.resolve.outputs.version }} from $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
       - name: Report what was and was not published
