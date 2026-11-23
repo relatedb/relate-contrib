@@ -76,18 +76,18 @@ test("loads number arrays: whole as integers, fractional or mixed as floats, str
 
 test("creates only the named indexes", async ({ page }) => {
   await rpc(page, "load", { input: doc("basic.json"), opts: { indexes: [{ label: "Page", property: "id" }] } });
-  const idx = await rows(page, "SHOW INDEXES");
+  const idx = await rows(page, "SHOW INDEXES WHERE type <> 'LOOKUP'");
   expect(idx.map((i) => [i.labelsOrTypes, i.properties])).toEqual([[["Page"], ["id"]]]);
   await rpc(page, "fresh");
   await rpc(page, "load", { input: doc("basic.json") });
-  expect(await rows(page, "SHOW INDEXES")).toEqual([]);
+  expect(await rows(page, "SHOW INDEXES WHERE type <> 'LOOKUP'")).toEqual([]);
 });
 
 test("uses the descriptor's indexes and accepts agreeing data", async ({ page }) => {
   const descriptor = { version: 1, id: "g", revision: "r", data: { url: "g.json", nodes: 2, links: 1 }, indexes: [{ label: "Page", property: "slug" }] };
   const r = await rpc(page, "load", { input: doc("basic.json"), opts: { descriptor, indexes: [{ label: "Ignored", property: "x" }] } });
   expect(r.ok).toBe(true);
-  expect((await rows(page, "SHOW INDEXES")).map((i) => i.properties)).toEqual([["slug"]]);
+  expect((await rows(page, "SHOW INDEXES WHERE type <> 'LOOKUP'")).map((i) => i.properties)).toEqual([["slug"]]);
 });
 
 test("a scoped load adds the scope to every created node, and dropping it removes them", async ({ page }) => {
@@ -115,7 +115,7 @@ test("a rejected document loads nothing and creates no index", async ({ page }) 
   });
   expect(r).toMatchObject({ ok: false, reason: "invalid-document", path: "nodes[1].id" });
   expect(await rows(page, "MATCH (n) RETURN count(n) AS c")).toEqual([{ c: 0 }]);
-  expect(await rows(page, "SHOW INDEXES")).toEqual([]);
+  expect(await rows(page, "SHOW INDEXES WHERE type <> 'LOOKUP'")).toEqual([]);
 });
 
 test("data that disagrees with its descriptor is rejected and nothing is loaded", async ({ page }) => {

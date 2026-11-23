@@ -13,7 +13,12 @@ export function nodeCount(engine: Engine): number {
   return typeof c === "number" ? c : 0;
 }
 
+/** The indexes someone created: the engine's built-in token lookup indexes (type LOOKUP, present in every store since 1.2) are not counted. */
+export function userIndexCount(engine: Engine): number {
+  return run(engine, "SHOW INDEXES").rows.filter((r) => r.type !== "LOOKUP").length;
+}
+
 /** A store holding no node and no index (a new store, or one just reset). */
 export function isEmpty(engine: Engine): boolean {
-  return nodeCount(engine) === 0 && run(engine, "SHOW INDEXES").rows.length === 0;
+  return nodeCount(engine) === 0 && userIndexCount(engine) === 0;
 }

@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 
 const descriptors: Record<string, string | undefined> = { a: undefined, b: "/descriptor-b.json", mismatch: "/descriptor-mismatch.json", broken: "/descriptor-broken.json" };
 const instance = Math.random().toString(36).slice(2, 8);
-const trap = `RETURN ${"(".repeat(1000)}1${")".repeat(1000)} AS x`;
+const trap = `RETURN ${"1+".repeat(200000)}1 AS x`;
 const runaway = "MATCH (a:Page), (b:Page), (c:Page) RETURN count(*) AS c";
 const notes = {
   version: 1 as const,

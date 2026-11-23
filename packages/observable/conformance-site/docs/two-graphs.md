@@ -25,5 +25,5 @@ display(html`<section>
 </section>`);
 watch("one", one, "Item");
 watch("two", two, "Page");
-document.getElementById("trap-one").onclick = () => one.client.query(`RETURN ${"(".repeat(1000)}1${")".repeat(1000)} AS x`).catch(() => undefined);
+document.getElementById("trap-one").onclick = () => one.client.query(`RETURN ${"1+".repeat(200000)}1 AS x`).catch(() => undefined);
 ```

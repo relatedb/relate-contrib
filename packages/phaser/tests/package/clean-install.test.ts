@@ -13,7 +13,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 const pkg = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const repo = resolve(pkg, "../..");
 const core = join(repo, "packages/web");
-const engine = join(repo, "vendor/relate-wasm/pkg");
+// the engine the workspace is built and tested on (the catalog entry), installed from the registry as a consumer would
+const engine = `@relate/relate-wasm@${/"@relate\/relate-wasm":\s*"?([0-9][^"\s]*)"?/.exec(readFileSync(join(repo, "pnpm-workspace.yaml"), "utf8"))![1]}`;
 
 let work = "";
 let consumer = "";
@@ -80,7 +81,7 @@ beforeAll(() => {
   mkdirSync(consumer, { recursive: true });
   writeFileSync(join(consumer, "package.json"), JSON.stringify({ name: "consumer", private: true, type: "module" }));
   writeFileSync(join(consumer, "pnpm-workspace.yaml"), "allowBuilds:\n  esbuild: true\n");
-  run("pnpm", ["add", "--prefer-offline", tarball, tarballIn(work, "relate-contrib-web-"), `file:${engine}`, "phaser@4.2.1", "typescript@^7"], consumer);
+  run("pnpm", ["add", "--prefer-offline", tarball, tarballIn(work, "relate-contrib-web-"), engine, "phaser@4.2.1", "typescript@^7"], consumer);
   for (const [path, text] of Object.entries(files)) writeFileSync(join(consumer, path), text);
 }, 600_000);
 

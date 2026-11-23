@@ -6,7 +6,7 @@ test("a descriptor and its data open as a pair, with only the declared index", a
   await expect(page.locator("[data-rel-status]")).toHaveText("ready", { timeout: 60_000 });
   await expect(page.locator("[data-rel-count]")).toHaveText("300");
   const indexes = await page.evaluate(async () => {
-    const result = await (window as any).__rel.client.query("SHOW INDEXES");
+    const result = await (window as any).__rel.client.query("SHOW INDEXES WHERE type <> 'LOOKUP'");
     return result.rows.map((r: any) => ({ labels: r.labelsOrTypes, properties: r.properties }));
   });
   expect(indexes).toEqual([{ labels: ["Page"], properties: ["id"] }]);

@@ -5,8 +5,7 @@ packages:
   - "packages/observable/conformance-site"
   - "packages/sveltekit/conformance-site"
 catalog:
-  "@relate/relate-wasm": 0.16.1
+  "@relate/relate-wasm": 1.2.0
 allowBuilds:
   esbuild: true
-overrides:
-  "@relate/relate-wasm": "link:vendor/relate-wasm/pkg"
+dedupeInjectedDeps: false # keep the conformance sites' injected copies (a registry engine would otherwise make pnpm link the packages)

@@ -58,13 +58,13 @@ test("(b) how long a second client waits for a store a busy worker held, and whe
 test("(c) indexes persist across a reopen, whether created on first run or by a migration", async ({ page }, info) => {
   await openReady(page, app({ name: "idx" }));
   await rows(page, "MATCH (p:Person {name: 'Ada'}) RETURN p.id AS id");
-  const first = (await rows(page, "SHOW INDEXES")).map((r) => ({ name: r.name, state: r.state, readCount: r.readCount }));
+  const first = (await rows(page, "SHOW INDEXES WHERE type <> 'LOOKUP'")).map((r) => ({ name: r.name, state: r.state, readCount: r.readCount }));
   await page.evaluate(() => window.client!.destroy());
   await page.waitForTimeout(600);
   await openHarness(page);
   await makeClient(page, app({ name: "idx" }));
   await waitStatus(page, "ready");
-  const reopened = (await rows(page, "SHOW INDEXES")).map((r) => ({ name: r.name, state: r.state, readCount: r.readCount }));
+  const reopened = (await rows(page, "SHOW INDEXES WHERE type <> 'LOOKUP'")).map((r) => ({ name: r.name, state: r.state, readCount: r.readCount }));
   expect(reopened.filter((i) => i.name === "Person_name")).toHaveLength(1);
   expect(reopened.find((i) => i.name === "Person_name")!.state).toBe("ONLINE");
   // an index added by a migration
@@ -78,7 +78,7 @@ test("(c) indexes persist across a reopen, whether created on first run or by a 
   await openHarness(page);
   await makeClient(page, app({ name: "idx", version: 2, migrations: { 2: ["CREATE INDEX IF NOT EXISTS FOR (p:Person) ON (p.n)"] } }));
   await waitStatus(page, "ready");
-  const afterMigration = (await rows(page, "SHOW INDEXES")).map((r) => r.name);
+  const afterMigration = (await rows(page, "SHOW INDEXES WHERE type <> 'LOOKUP'")).map((r) => r.name);
   expect(afterMigration).toContain("Person_n");
   record(info, "open-items", "index-persistence", { firstRun: first, reopened, afterMigrationReopen: afterMigration });
 });

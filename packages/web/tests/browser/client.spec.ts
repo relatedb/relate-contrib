@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { expect, test } from "./fixtures.js";
 import { openHarness, walk } from "./helpers.js";
 
-const ENVELOPE_KEYS = ["columns", "columnTypes", "rows", "stats", "plan", "notifications", "elapsed_ms", "parse_ms", "plan_ms", "execute_ms", "error"]; // the phase timings are the engine's ADR-0491
+const ENVELOPE_KEYS = ["columns", "columnTypes", "rows", "stats", "plan", "notifications", "elapsed_ms", "parse_ms", "plan_ms", "execute_ms", "lex_parse_ms", "lower_ms", "rewrite_ms", "result_generation_ms", "plan_cache", "error"]; // the phase timings and the plan cache note are the engine's (ADR-0491; more since 1.2)
 
 const smallDoc = { version: 1, nodes: [{ id: "a", labels: ["Page"] }, { id: "b", labels: ["Page"] }, { id: "c" }], links: [{ source: "a", target: "b", type: "T" }] };
 
@@ -98,7 +98,7 @@ test("a descriptor and its data document load the graph, resolving the data loca
     const descriptor = { version: 1, id: "small", revision: "r1", data: { url: "/data/small.json", nodes: 3, links: 1 }, indexes: [{ label: "Page", property: "id" }] };
     const client = rel.core.createClient({ engineUrl: rel.engineUrl, graph: { descriptor }, navigation: "client-routing" });
     await new Promise<void>((resolve) => client.on("status", (e: { status: string }) => e.status === "ready" && resolve()));
-    return (await client.query("SHOW INDEXES")).rows.map((r: { properties: string[] }) => r.properties);
+    return (await client.query("SHOW INDEXES WHERE type <> 'LOOKUP'")).rows.map((r: { properties: string[] }) => r.properties);
   });
   expect(rows).toEqual([["id"]]);
 });

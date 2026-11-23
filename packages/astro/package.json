@@ -55,7 +55,7 @@
   },
   "peerDependencies": {
     "@relate/contrib-web": ">=0.0.0 <1.0.0",
-    "@relate/relate-wasm": ">=0.16.1 <=0.16.1",
+    "@relate/relate-wasm": ">=1.2.0 <=1.3.0",
     "astro": "^7.4.0"
   },
   "devDependencies": {

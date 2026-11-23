@@ -19,7 +19,7 @@ describe("ensureSchema", () => {
   it("creates no separate index on id: the constraint owns the index (SC-009)", async () => {
     const client = await testClient();
     await ensureSchema(client, schema);
-    const indexes = client.raw("SHOW INDEXES");
+    const indexes = client.raw("SHOW INDEXES").filter((i) => i.type !== "LOOKUP"); // the engine's built-in lookup indexes are not ours
     expect(indexes).toHaveLength(3);
     expect(indexes.every((i) => i.properties.length === 1 && i.properties[0] === "id" && i.owningConstraint !== null)).toBe(true);
   });

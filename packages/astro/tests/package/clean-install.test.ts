@@ -16,7 +16,8 @@ import { spawnDev } from "../helpers/build-site.js";
 const pkg = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const repo = resolve(pkg, "../..");
 const core = join(repo, "packages/web");
-const engine = join(repo, "vendor/relate-wasm/pkg");
+// the engine the workspace is built and tested on (the catalog entry), installed from the registry as a consumer would
+const engine = `@relate/relate-wasm@${/"@relate\/relate-wasm":\s*"?([0-9][^"\s]*)"?/.exec(readFileSync(join(repo, "pnpm-workspace.yaml"), "utf8"))![1]}`;
 
 let work = "";
 let consumer = "";
@@ -60,7 +61,7 @@ beforeAll(() => {
   mkdirSync(join(consumer, "src/pages"), { recursive: true });
   writeFileSync(join(consumer, "package.json"), JSON.stringify({ name: "consumer", private: true, type: "module" }));
   writeFileSync(join(consumer, "pnpm-workspace.yaml"), "allowBuilds:\n  esbuild: true\n  sharp: true\n");
-  run("pnpm", ["add", "--prefer-offline", adapterTarball, tarballIn(work, "relate-contrib-web-"), `file:${engine}`, "astro@^7.4.5"], consumer);
+  run("pnpm", ["add", "--prefer-offline", adapterTarball, tarballIn(work, "relate-contrib-web-"), engine, "astro@^7.4.5"], consumer);
 
   writeFileSync(
     join(consumer, "astro.config.mjs"),

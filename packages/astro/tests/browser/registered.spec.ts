@@ -17,7 +17,7 @@ for (const [profile, base] of Object.entries(sites)) {
     // the index named in the configuration exists, and no other
     const indexes = await page.evaluate(async () => {
       const rel = (window as unknown as { __rel: { client: { query(s: string): Promise<{ rows: Array<{ properties: string[] }> }> } } }).__rel;
-      return (await rel.client.query("SHOW INDEXES")).rows.map((r) => r.properties);
+      return (await rel.client.query("SHOW INDEXES WHERE type <> 'LOOKUP'")).rows.map((r) => r.properties);
     });
     expect(indexes).toEqual([["id"]]);
   });

@@ -35,6 +35,12 @@ export interface Site {
   remove(): void;
 }
 
+// pnpm sets NODE_PATH for its scripts, and with the engine from the registry that path holds the engine too: a loader run "where there is no engine" would find it
+const withoutNodePath = (): NodeJS.ProcessEnv => {
+  const { NODE_PATH: _ignored, ...rest } = process.env;
+  return rest;
+};
+
 const copyPackage = (name: string, source: string, target: string, entries: string[]): void => {
   mkdirSync(join(target, "node_modules/@relate", name), { recursive: true });
   for (const entry of entries) if (existsSync(join(source, entry))) cpSync(join(source, entry), join(target, "node_modules/@relate", name, entry), { recursive: true });
@@ -50,7 +56,8 @@ export function makeSite(name: string, files: Record<string, string>): Site {
   writeFileSync(join(dir, "observablehq.config.js"), baseConfig);
   copyPackage("contrib-web", join(repoRoot, "packages/web"), dir, ["package.json", "dist"]);
   copyPackage("contrib-observable", packageRoot, dir, ["package.json", "dist"]);
-  symlinkSync(realpathSync(join(repoRoot, "vendor/relate-wasm/pkg")), join(dir, "node_modules/@relate/relate-wasm"));
+  // the engine the package is installed with: the registry release, or the vendored build when the workspace links it
+  symlinkSync(dirname(createRequire(join(packageRoot, "package.json")).resolve("@relate/relate-wasm/relate_bg.wasm")), join(dir, "node_modules/@relate/relate-wasm"));
   mkdirSync(join(dir, "node_modules/@observablehq"), { recursive: true });
   symlinkSync(frameworkRoot(), join(dir, "node_modules/@observablehq/framework"));
   symlinkSync(realpathSync(join(packageRoot, "node_modules/esbuild")), join(dir, "node_modules/esbuild"));
@@ -74,7 +81,7 @@ export function makeSite(name: string, files: Record<string, string>): Site {
       });
     },
     loader(path, cwd = dir) {
-      const run = spawnSync(process.execPath, [join(dir, path)], { cwd, maxBuffer: 64 * 1024 * 1024 });
+      const run = spawnSync(process.execPath, [join(dir, path)], { cwd, maxBuffer: 64 * 1024 * 1024, env: withoutNodePath() });
       return { status: run.status, stdout: run.stdout, stderr: run.stderr.toString() };
     },
     async build() {

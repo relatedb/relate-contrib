@@ -7,6 +7,7 @@ import type { MigrationStep } from "../../application/types.js";
 import type { Descriptor, IndexSpec } from "../../data/types.js";
 import type { Engine } from "../engine.js";
 import { LoadError, loadGraph, prepare, run } from "../loader.js";
+import { userIndexCount } from "../sweep.js";
 import { classify, LEGACY_MARKER_LABEL, type Action, type FailureReason, type StoreFacts } from "./classify.js";
 import { migrate, MigrationError } from "./migrate.js";
 
@@ -36,7 +37,7 @@ const count = (engine: Engine, statement: string): number => {
 /** The facts about the store the classifier asks for; none is read for a store whose entry decides on its own. */
 function readFacts(engine: Engine): StoreFacts {
   const nodeCount = count(engine, "MATCH (n) RETURN count(n) AS c");
-  const indexCount = run(engine, "SHOW INDEXES").rows.length;
+  const indexCount = userIndexCount(engine);
   const legacyMarker = nodeCount > 0 && count(engine, `MATCH (n:${LEGACY_MARKER_LABEL}) RETURN count(n) AS c`) > 0;
   return { nodeCount, indexCount, legacyMarker };
 }

@@ -55,11 +55,19 @@ describe("the engine range check", () => {
     fx = makeFixture();
     writeFileSync(join(fx.root, "pnpm-workspace.yaml"), 'packages:\n  - "packages/*"\n');
     expect(checkEngineRange(fx.root).map((x) => x.rule)).toContain("supported-engine");
-    writeFileSync(join(fx.root, "pnpm-workspace.yaml"), 'packages:\n  - "packages/*"\ncatalog:\n  \"@relate/relate-wasm\": 0.16.1\n');
+    writeFileSync(join(fx.root, "pnpm-workspace.yaml"), 'packages:\n  - "packages/*"\ncatalog:\n  \"@relate/relate-wasm\": 0.16.1\noverrides:\n  \"@relate/relate-wasm\": \"link:vendor/relate-wasm/pkg\"\n');
     mkdirSync(join(fx.root, "vendor/relate-wasm/pkg"), { recursive: true });
     writeFileSync(join(fx.root, "vendor/relate-wasm/pkg/package.json"), JSON.stringify({ name: "@relate/relate-wasm", version: "0.17.0" }));
     const f = checkEngineRange(fx.root);
     expect(f.find((x) => x.rule === "supported-engine")!.detail).toContain("0.17.0");
+  });
+
+  it("ignores a leftover vendored build when the workspace takes the engine from the registry", () => {
+    fx = makeFixture();
+    writeFileSync(join(fx.root, "pnpm-workspace.yaml"), 'packages:\n  - "packages/*"\ncatalog:\n  \"@relate/relate-wasm\": 0.16.1\n');
+    mkdirSync(join(fx.root, "vendor/relate-wasm/pkg"), { recursive: true });
+    writeFileSync(join(fx.root, "vendor/relate-wasm/pkg/package.json"), JSON.stringify({ name: "@relate/relate-wasm", version: "0.17.0" }));
+    expect(checkEngineRange(fx.root).find((x) => x.rule === "supported-engine")).toBeUndefined();
   });
 
   it("follows the supported engine: changing it in the catalog reports the packages whose range excludes it", () => {

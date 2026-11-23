@@ -20,7 +20,7 @@ for (const build of builds()) {
 
     test("an index named in `config` is created and none otherwise", async ({ page }) => {
       const indexes = (id: string) =>
-        page.evaluate(async (graph) => (await (window as any).__relClients[graph].query("SHOW INDEXES")).rows.map((r: any) => `${r.labelsOrTypes}.${r.properties}`), id);
+        page.evaluate(async (graph) => (await (window as any).__relClients[graph].query("SHOW INDEXES WHERE type <> 'LOOKUP'")).rows.map((r: any) => `${r.labelsOrTypes}.${r.properties}`), id);
       await page.goto(`${root}/inline-a.html`);
       await expect(page.locator("[data-inline-count]")).toHaveText("20", { timeout: 60_000 });
       expect(await indexes("g")).toEqual(["Item.id"]);

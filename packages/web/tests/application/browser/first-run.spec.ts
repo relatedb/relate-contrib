@@ -27,10 +27,10 @@ for (const navigation of ["client-routing", "multi-page"]) {
 
 test("indexes named in the seed exist after the first run and after a reload, once each", async ({ page }) => {
   await openReady(page, app());
-  const first = await rows(page, "SHOW INDEXES");
+  const first = await rows(page, "SHOW INDEXES WHERE type <> 'LOOKUP'");
   expect(first.filter((r) => r.name === "Person_name")).toHaveLength(1);
   await openReady(page, app());
-  const again = await rows(page, "SHOW INDEXES");
+  const again = await rows(page, "SHOW INDEXES WHERE type <> 'LOOKUP'");
   expect(again.filter((r) => r.name === "Person_name")).toHaveLength(1);
 });
 
@@ -69,6 +69,6 @@ test("a seed given as a descriptor loads its data and its indexes", async ({ pag
   await makeClient(page, { name: "viadesc", version: 1, seed: descriptor });
   await waitStatus(page, "ready");
   expect(await count(page, "MATCH (p:Person) RETURN count(p) AS c")).toBe(3);
-  expect((await rows(page, "SHOW INDEXES")).map((r) => r.name)).toContain("Person_n");
+  expect((await rows(page, "SHOW INDEXES WHERE type <> 'LOOKUP'")).map((r) => r.name)).toContain("Person_n");
   expect(await status(page)).toBe("ready");
 });

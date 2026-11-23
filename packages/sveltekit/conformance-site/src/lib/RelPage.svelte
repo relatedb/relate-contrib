@@ -21,7 +21,7 @@
   const handle = bare ? null : useGraph(graph, { navigation, descriptor: graph === "example" ? descriptors[variant] : undefined });
   const profile = navigation ?? __NAVIGATION__;
 
-  const trap = `RETURN ${"(".repeat(1000)}1${")".repeat(1000)} AS x`;
+  const trap = `RETURN ${"1+".repeat(200000)}1 AS x`;
   const runaway = "MATCH (a:Page), (b:Page), (c:Page) RETURN count(*) AS c";
   const notes = { version: 1 as const, nodes: [{ id: "note-a", labels: ["Note"] }, { id: "note-b", labels: ["Note"] }], links: [{ source: "note-a", target: "note-b", type: "ABOUT" }] };
 

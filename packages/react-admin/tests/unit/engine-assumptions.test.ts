@@ -193,7 +193,9 @@ describe("a uniqueness constraint on id (R3)", () => {
 
   it("owns an index on the property", () => {
     c.raw(constraint);
-    const indexes = c.raw("SHOW INDEXES");
+    // since engine 1.2 every store also lists its two built-in token lookup indexes (type LOOKUP)
+    expect(c.raw("SHOW INDEXES").filter((i) => i.type === "LOOKUP")).toHaveLength(2);
+    const indexes = c.raw("SHOW INDEXES").filter((i) => i.type !== "LOOKUP");
     expect(indexes).toHaveLength(1);
     expect(indexes[0]).toMatchObject({ labelsOrTypes: ["Person"], properties: ["id"], owningConstraint: "rel_Person_id" });
     expect(c.raw("SHOW CONSTRAINTS")[0]).toMatchObject({ name: "rel_Person_id", type: "NODE_PROPERTY_UNIQUENESS" });

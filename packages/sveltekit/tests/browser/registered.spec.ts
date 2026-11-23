@@ -31,7 +31,7 @@ for (const build of builds({ base: true })) {
       await page.goto(`${root}/page-1.html`);
       await expect(page.locator("[data-rel-status]")).toHaveText("ready", { timeout: 60_000 });
       const indexes = await page.evaluate(async () => {
-        const r = await (window as any).__rel.client.query("SHOW INDEXES");
+        const r = await (window as any).__rel.client.query("SHOW INDEXES WHERE type <> 'LOOKUP'");
         return r.rows.map((x: any) => ({ labels: x.labelsOrTypes, properties: x.properties }));
       });
       expect(indexes).toEqual([{ labels: ["Page"], properties: ["id"] }]);

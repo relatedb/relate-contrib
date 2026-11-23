@@ -16,7 +16,7 @@ test("a matching revision restores the graph with no request for the data docume
   expect(visit.dataRequests).toHaveLength(0);
   expect(await restored(second)).toBe(true);
   expect(await query(second, "MATCH (n:Page) RETURN count(n) AS c")).toEqual([{ c: 300 }]);
-  expect(await query(second, "SHOW INDEXES")).toHaveLength(1);
+  expect(await query(second, "SHOW INDEXES WHERE type <> 'LOOKUP'")).toHaveLength(1);
   expect(await query(second, "MATCH ()-[r:LINKS_TO]->() RETURN count(r) AS c")).toEqual([{ c: 1500 }]);
 });
 

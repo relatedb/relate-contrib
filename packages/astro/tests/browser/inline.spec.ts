@@ -2,7 +2,7 @@
 import { expect, test } from "./fixtures.js";
 
 const sites = { "multi-page": "http://127.0.0.1:5180", "client-routing": "http://127.0.0.1:5181" } as const;
-const trap = `RETURN ${"(".repeat(1000)}1${")".repeat(1000)} AS x`;
+const trap = `RETURN ${"1+".repeat(200000)}1 AS x`;
 
 type Win = { __relClients: Record<string, { generation: number; query(s: string): Promise<{ rows: Array<Record<string, unknown>> }> }> };
 
@@ -13,7 +13,7 @@ for (const [profile, base] of Object.entries(sites)) {
     await page.goto(`${base}/inline.html?navigation=${profile}`);
     await expect(page.locator('[data-inline-count="notebook"]')).toHaveText("12");
     expect(requests.filter((p) => p.startsWith("/_relate/"))).toEqual([]); // no descriptor and no data request
-    const indexes = await page.evaluate(async () => (await (window as unknown as Win).__relClients.notebook!.query("SHOW INDEXES")).rows.map((r) => r.properties));
+    const indexes = await page.evaluate(async () => (await (window as unknown as Win).__relClients.notebook!.query("SHOW INDEXES WHERE type <> 'LOOKUP'")).rows.map((r) => r.properties));
     expect(indexes).toEqual([["id"]]);
 
     // an inline graph has no stored copy: loading the page again replays it from the page

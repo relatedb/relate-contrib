@@ -13,7 +13,8 @@ import { chromium } from "@playwright/test";
 
 const pkg = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const repo = resolve(pkg, "../..");
-const engine = join(repo, "vendor/relate-wasm/pkg");
+// the engine the workspace is built and tested on (the catalog entry), installed from the registry as a consumer would
+const engine = `@relate/relate-wasm@${/"@relate\/relate-wasm":\s*"?([0-9][^"\s]*)"?/.exec(readFileSync(join(repo, "pnpm-workspace.yaml"), "utf8"))![1]}`;
 
 let work = "";
 let tarball = "";
@@ -35,7 +36,7 @@ beforeAll(() => {
   mkdirSync(consumer);
   writeFileSync(join(consumer, "package.json"), JSON.stringify({ name: "consumer", private: true, type: "module" }));
   writeFileSync(join(consumer, "pnpm-workspace.yaml"), "allowBuilds:\n  esbuild: true\n");
-  run("pnpm", ["add", "--prefer-offline", tarball, `file:${engine}`, "vite"], consumer);
+  run("pnpm", ["add", "--prefer-offline", tarball, engine, "vite"], consumer);
 
   mkdirSync(join(consumer, "src"));
   writeFileSync(

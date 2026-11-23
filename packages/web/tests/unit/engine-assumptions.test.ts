@@ -68,10 +68,11 @@ describe("the engine behaviours the core relies on", () => {
     expect(existsSync(join(import.meta.dirname, "../application/browser/durability.spec.ts"))).toBe(true);
   });
 
-  // last: it traps the module
-  it("traps on a statement nested about a thousand parentheses deep, recognises the trap, and the instance is unusable afterwards", () => {
+  // last: it traps the module. Since engine 1.2 a deeply nested statement is a syntax error ("maximum nesting depth of 500"),
+  // not a trap; a long flat chain of additions still exhausts the stack.
+  it("traps on a statement of a very long chain of additions, recognises the trap, and the instance is unusable afterwards", () => {
     const db = new wasm.RelateDb();
-    const deep = `RETURN ${"(".repeat(1000)}1${")".repeat(1000)}`;
+    const deep = `RETURN ${"1+".repeat(200000)}1`;
     let first: unknown;
     try {
       db.execute(deep, null);
@@ -86,7 +87,8 @@ describe("the engine behaviours the core relies on", () => {
     } catch (e) {
       second = e;
     }
+    // an overflowing JavaScript stack leaves the instance borrowed, so the next call throws "recursive use of an object":
+    // not classified as a trap by isWasmTrap, which is why the core marks an engine dead on the first trap and never calls it again
     expect(second, "the instance still answered after a trap").toBeDefined();
-    expect(isWasmTrap(second)).toBe(true);
   });
 });

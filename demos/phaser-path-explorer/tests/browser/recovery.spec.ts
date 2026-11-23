@@ -23,7 +23,7 @@ test("a trapped engine is replaced and the board is rebuilt from the restored gr
   const version = await page.evaluate(() => (window as any).__state.version);
   // a statement with about a thousand nested parentheses traps the engine (ADR-001); the core replaces the instance
   await page.evaluate(() => {
-    const trap = `RETURN ${"(".repeat(1000)}1${")".repeat(1000)}`;
+    const trap = `RETURN ${"1+".repeat(200000)}1`;
     return (window as any).__bridge.enqueue(trap).then(() => "ran", (e: Error) => e.name);
   });
   // the board matches the graph once the new instance has answered (a loop in the page: waitForFunction does not wait on a promise)

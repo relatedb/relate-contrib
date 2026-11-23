@@ -33,7 +33,7 @@ const readyUpdates = (page: Page) =>
 test("an engine that has trapped answers every later call as a trap without running it", async ({ page }) => {
   await page.goto("/engine.html");
   await page.waitForFunction(() => document.documentElement.dataset.ready === "1");
-  const trap = await page.evaluate(() => window.rpc("query", { statement: `RETURN ${"(".repeat(1000)}1${")".repeat(1000)} AS x` }));
+  const trap = await page.evaluate(() => window.rpc("query", { statement: `RETURN ${"1+".repeat(200000)}1 AS x` }));
   expect(trap).toMatchObject({ ok: false, reason: "trap" });
   const later = await page.evaluate(() => window.rpc("query", { statement: "RETURN 1 AS n" }));
   expect(later).toMatchObject({ ok: false, reason: "trap", message: "the instance is unusable after a trap" });

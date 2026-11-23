@@ -2,7 +2,7 @@
 // workers the tests create, and from data that cannot be fetched.
 
 /** A statement with about a thousand nested parentheses traps the engine (SPIKE-004; verified against this build at depth 500). */
-export const trapStatement = (depth = 1000): string => `RETURN ${"(".repeat(depth)}1${")".repeat(depth)} AS x`;
+export const trapStatement = (depth = 200000): string => `RETURN ${"1+".repeat(depth)}1 AS x`;
 
 /** A three-way cartesian count over a 1,000-page graph runs far longer than any timeout used in the tests. */
 export const runawayStatement = "MATCH (a:Page), (b:Page), (c:Page) RETURN count(*) AS c";

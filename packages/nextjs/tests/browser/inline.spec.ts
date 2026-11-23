@@ -2,7 +2,7 @@
 import { builds, selected } from "./builds.js";
 import { expect, test } from "./fixtures.js";
 
-const trap = `RETURN ${"(".repeat(1000)}1${")".repeat(1000)} AS x`;
+const trap = `RETURN ${"1+".repeat(200000)}1 AS x`;
 type Win = { __relClients: Record<string, { generation: number; query(s: string): Promise<{ rows: Array<Record<string, unknown>> }> }> };
 
 for (const build of builds({ cache: false })) {
@@ -17,7 +17,7 @@ for (const build of builds({ cache: false })) {
       await expect(page.locator('[data-inline-count="notebook"]:visible')).toHaveText("12");
       expect(requests.filter((p) => p.startsWith("/relate/"))).toEqual([]); // no descriptor and no data request
       await page.waitForFunction(() => !!(window as unknown as Partial<Win>).__relClients?.notebook);
-      const indexes = await page.evaluate(async () => (await (window as unknown as Win).__relClients.notebook!.query("SHOW INDEXES")).rows.map((r) => r.properties));
+      const indexes = await page.evaluate(async () => (await (window as unknown as Win).__relClients.notebook!.query("SHOW INDEXES WHERE type <> 'LOOKUP'")).rows.map((r) => r.properties));
       expect(indexes).toEqual([["id"]]);
       await page.reload();
       await expect(page.locator('[data-inline-count="notebook"]:visible')).toHaveText("12");

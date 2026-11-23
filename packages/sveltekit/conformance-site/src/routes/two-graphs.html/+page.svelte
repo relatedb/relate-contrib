@@ -5,7 +5,7 @@
   import { sized, small } from "#lib/documents.ts";
   const first = small();
   const second = sized(5);
-  const trap = `RETURN ${"(".repeat(1000)}1${")".repeat(1000)} AS x`;
+  const trap = `RETURN ${"1+".repeat(200000)}1 AS x`;
 </script>
 
 <RelPage title="Example site: two graphs" bare>

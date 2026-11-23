@@ -11,6 +11,8 @@ const packages = join(site, "../..");
 for (const [name, folder] of [["contrib-web", "web"], ["contrib-observable", "observable"]]) {
   const source = join(packages, folder);
   const target = realpathSync(join(site, "node_modules/@relate", name));
+  // with the engine from the registry pnpm may link the package itself instead of injecting a copy; there is nothing to refresh, and removing "its" files would remove the package's own build
+  if (target === realpathSync(source)) continue;
   const manifest = JSON.parse(readFileSync(join(source, "package.json"), "utf8"));
   for (const entry of manifest.files ?? ["dist"]) {
     if (!existsSync(join(source, entry))) continue;
