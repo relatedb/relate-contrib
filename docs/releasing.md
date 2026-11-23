@@ -25,6 +25,18 @@ pnpm run test:units && pnpm run test:packages-all && pnpm run test:traces-all
 A rehearsal on the host runs the same: start the **release** workflow by hand from the Actions tab with a package name, or `all`.
 It uses no registry credential and publishes nothing.
 
+## The first release of a new package, by hand
+
+All seven packages were first published by hand, at 0.1.0 on 2026-11-23. The registry configures a package's trusted publisher only on a package that already exists, so any package added later needs the same first step by an administrator of the `@relate` scope:
+
+1. In a release change, remove `"private": true` from the package's manifest, set its version, and make sure `pnpm release:check-publishable --release --package <name>` and the checks above pass. Merge it to the main branch.
+2. Build and pack it: `pnpm -r build`, then `pnpm --filter <name> pack`. Packing rewrites workspace ranges in the tarball. Look inside (`tar -tzf`): only the build output, the README and the LICENSE, real peer ranges, the license `Apache-2.0`.
+3. Publish it with two-factor authentication: `npm publish <tarball> --access public`.
+4. On the registry, add the package's trusted publisher: this repository (`relatedb/relate-contrib`), the workflow file `release.yml`, and the environment `npm-publish`.
+5. Tag the published commit, `<name>@<version>`. The workflow refuses that tag with `version-exists`, which is correct.
+
+The release workflow refuses any package that is not yet on the registry and says that its first release is by hand.
+
 ## Every later release: a version tag
 
 1. Record the changes (`pnpm changeset`), merge them, and merge the "version packages" change the tooling proposes. That raises each package's version and writes its changelog.
@@ -42,7 +54,7 @@ An administrator of the repository sets these on GitHub and on the registry. Not
 - **Environment `npm-publish`**: no secrets; optionally required reviewers. The package's trusted publisher names it.
 - **Environment `engine-release-approval`**: required reviewers (see below).
 - **Repository variable `PUBLISHING_ENABLED`**: `true` once the first releases are done and the maintainers want tag pushes to publish. Unset or any other value makes every run a rehearsal.
-- **Each package's trusted publisher on the registry**: repository `relatedb/relate-contrib`, workflow `release.yml`, environment `npm-publish`. Every package was first published by hand, at 0.1.0 on 2026-11-23, because the registry offers this setting only for a package that exists.
+- **Each package's trusted publisher on the registry**: repository `relatedb/relate-contrib`, workflow `release.yml`, environment `npm-publish`. Added after a package's first release (above).
 
 ## Every engine release is tested
 

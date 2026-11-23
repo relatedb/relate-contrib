@@ -17,7 +17,7 @@ const git = (...args: string[]): string | undefined => {
 
 describe("the written first-release procedure and the tag rule", () => {
   it("gives the first release of a package as steps for an administrator of the scope, ending with the trusted publisher", () => {
-    expect(doc).toMatch(/first release of a package, by hand/i);
+    expect(doc).toMatch(/first release of a new package, by hand/i);
     for (const step of ["remove `\"private\": true`", "pnpm --filter <name> pack", "npm publish <tarball> --access public", "trusted publisher", "release.yml", "npm-publish"]) expect(doc).toContain(step);
     expect(doc).toContain("refuses any package that is not yet on the registry");
   });
