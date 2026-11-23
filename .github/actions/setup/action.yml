@@ -2,10 +2,10 @@ name: Set up relate-contrib
 description: Node, pnpm, the engine submodule and its WebAssembly build, dependencies and Playwright browsers.
 inputs:
   engine-source:
-    description: Where the engine comes from. `submodule` (the default) builds the pinned engine checkout; `registry` installs a release of @relate/relate-wasm from the registry, named by engine-version.
-    default: submodule
+    description: Where the engine comes from. `registry` (the default) installs @relate/relate-wasm from the registry, at the version the workspace catalog names, or at engine-version when that is given; `submodule` builds the pinned engine checkout, for unreleased engine work.
+    default: registry
   engine-version:
-    description: The engine release to install when engine-source is `registry`.
+    description: An engine release to try instead of the catalog's, when engine-source is `registry`. Empty means the catalog's.
     default: ""
   engine-token:
     description: A token with read access to relatedb/relate (the engine submodule is private). Not needed when engine-source is `registry`.
@@ -85,7 +85,10 @@ runs:
         ENGINE_VERSION: ${{ inputs.engine-version }}
       run: |
         set -euo pipefail
-        test -n "$ENGINE_VERSION"
+        if [ -z "$ENGINE_VERSION" ]; then
+          pnpm install --frozen-lockfile
+          exit 0
+        fi
         # the workspace's root tools first, to point the checkout at the engine release (the working tree only); then everything
         pnpm install --filter . --frozen-lockfile
         pnpm exec tsx scripts/release/use-engine.ts "$ENGINE_VERSION"
