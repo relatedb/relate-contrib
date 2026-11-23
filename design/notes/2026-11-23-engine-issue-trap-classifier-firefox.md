@@ -1,6 +1,6 @@
-# DRAFT issue for relatedb/relate: `isWasmTrap` misses Firefox's stack overflow and the error a dead instance throws next
+# Filed as relatedb/relate#717: `isWasmTrap` misses Firefox's stack overflow and the error a dead instance throws next
 
-(Draft only; not filed. Engine examined: `@relate/relate-wasm` 1.2.0 from the registry.)
+(Filed upstream on 2026-11-23: https://github.com/relatedb/relate/issues/717. Engine examined: `@relate/relate-wasm` 1.2.0 from the registry.)
 
 ## Summary
 
