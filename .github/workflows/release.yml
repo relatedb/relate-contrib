@@ -18,8 +18,8 @@ on:
         default: all
 
 concurrency:
-  group: release
-  cancel-in-progress: false # a release that is running is never cancelled; a second waits
+  group: release-${{ github.ref }}
+  cancel-in-progress: false # a release that is running is never cancelled; tags of different packages run side by side
 
 permissions:
   contents: read

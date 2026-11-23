@@ -1,6 +1,6 @@
 {
   "name": "@relate/contrib-nextjs",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Next.js integration for @relate/contrib-web: serves graphs built from a site's content, carries small graphs in pages, and ties graph clients to React components.",
   "license": "Apache-2.0",
   "repository": {
