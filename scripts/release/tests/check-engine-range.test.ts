@@ -51,15 +51,10 @@ describe("the engine range check", () => {
     expect(by(checkEngineRange(fx.root), ASTRO).map((x) => x.rule)).toEqual(["core-window"]);
   });
 
-  it("fails when the catalog has no supported engine, or names one that differs from the vendored engine", () => {
+  it("fails when the catalog has no supported engine", () => {
     fx = makeFixture();
     writeFileSync(join(fx.root, "pnpm-workspace.yaml"), 'packages:\n  - "packages/*"\n');
     expect(checkEngineRange(fx.root).map((x) => x.rule)).toContain("supported-engine");
-    writeFileSync(join(fx.root, "pnpm-workspace.yaml"), 'packages:\n  - "packages/*"\ncatalog:\n  \"@relate/relate-wasm\": 0.16.1\noverrides:\n  \"@relate/relate-wasm\": \"link:vendor/relate-wasm/pkg\"\n');
-    mkdirSync(join(fx.root, "vendor/relate-wasm/pkg"), { recursive: true });
-    writeFileSync(join(fx.root, "vendor/relate-wasm/pkg/package.json"), JSON.stringify({ name: "@relate/relate-wasm", version: "0.17.0" }));
-    const f = checkEngineRange(fx.root);
-    expect(f.find((x) => x.rule === "supported-engine")!.detail).toContain("0.17.0");
   });
 
   it("accepts a range that ends at a minor boundary, and refuses one that ends at a patch or below its start", () => {
@@ -76,14 +71,6 @@ describe("the engine range check", () => {
     expect(set(">=0.16.0 <0.16.1")[0]!.detail).toMatch(/does not include|minor boundary/);
     expect(set(">=0.16.1 <0.16.5")[0]!.detail).toMatch(/minor boundary/);
     expect(set(">=0.16.1 <0.16.0")[0]!.detail).toMatch(/above/);
-  });
-
-  it("ignores a leftover vendored build when the workspace takes the engine from the registry", () => {
-    fx = makeFixture();
-    writeFileSync(join(fx.root, "pnpm-workspace.yaml"), 'packages:\n  - "packages/*"\ncatalog:\n  \"@relate/relate-wasm\": 0.16.1\n');
-    mkdirSync(join(fx.root, "vendor/relate-wasm/pkg"), { recursive: true });
-    writeFileSync(join(fx.root, "vendor/relate-wasm/pkg/package.json"), JSON.stringify({ name: "@relate/relate-wasm", version: "0.17.0" }));
-    expect(checkEngineRange(fx.root).find((x) => x.rule === "supported-engine")).toBeUndefined();
   });
 
   it("follows the supported engine: changing it in the catalog reports the packages whose range excludes it", () => {

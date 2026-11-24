@@ -69,4 +69,4 @@ The run installs that engine release and runs every package's unit tests, its en
 
 The engine's release job should send the dispatch event when it publishes: from the engine repository, `gh api repos/relatedb/relate-contrib/dispatches -f event_type=engine-release -f 'client_payload[version]=<version>'` with a token that may do so. Until it does, the hourly look finds each release within the hour.
 
-When the engine is published, remove the override that links the vendored engine from `pnpm-workspace.yaml`, keep the catalog entry (`@relate/relate-wasm`) that names the supported engine, and stop building the engine from the submodule in the supported lane.
+The workspace builds and tests on the engine release that the catalog entry (`@relate/relate-wasm` in `pnpm-workspace.yaml`) names, installed from the registry. There is no vendored copy: the repository's engine submodule was removed once the engine was published. To try unreleased engine work, build the engine from its own repository and link it into a checkout by hand.

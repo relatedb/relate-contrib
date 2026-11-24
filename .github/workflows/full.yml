@@ -38,7 +38,6 @@ jobs:
           fetch-depth: 0 # the Next adapter's scope test reads commit ranges
       - uses: ./.github/actions/setup
         with:
-          engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
           browsers: chromium
       - run: pnpm run build && pnpm run typecheck && pnpm run test:units
       - name: Keep the reports
@@ -68,7 +67,6 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup
         with:
-          engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
           browsers: ${{ matrix.browser }}
       - run: pnpm -r build
       - name: The browser and conformance suites
@@ -127,7 +125,6 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup
         with:
-          engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
           browsers: chromium
       - run: pnpm -r build
       - name: The clean-install package test

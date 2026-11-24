@@ -22,12 +22,9 @@ The first package, `packages/web` (`@relate/contrib-web`), is implemented from `
 
 ## Commands
 
-Workspace: pnpm. The engine is vendored as a pinned git submodule (`vendor/relate`, read access to
-`relatedb/relate` needed) and built with `pnpm run build:wasm` before `pnpm install`.
+Workspace: pnpm. The database (`@relate/relate-wasm`, the engine) is installed from the npm registry at the version the workspace catalog names (`pnpm-workspace.yaml`); nothing is vendored or built from source.
 
 ```sh
-git submodule update --init vendor/relate
-pnpm run build:wasm            # needs Rust, wasm-bindgen-cli at the engine's pinned version, binaryen
 pnpm install
 pnpm -r build
 pnpm test:unit                 # Vitest (Node)
@@ -88,7 +85,7 @@ module), `tests/`, `conformance-site/` (an unpublished Astro site built once per
 - **Framework-agnostic core first, thin adapters second.** The hard, valuable parts are the content → graph ingestion, embedding generation, snapshot format, and the navigation element. Each framework integration should be an adapter over that core plus a conformance check, not a reimplementation.
 - **One model for both graph uses.** A read-only shared *site graph snapshot* (delivered as data and replayed into the instance; see RFC-001 §7.3) plus an ephemeral per-page overlay graph; page cells query both.
 - **Navigation stays deterministic first.** Natural language → embedding search → graph expansion → focused subgraph view. A generative model is an optional layer, never required. Navigation must still expose real `<a>` links, keyboard access, and a no-JS fallback.
-- **Workspace packages.** The core and each integration are packages in the pnpm workspace. An integration moves out to its own repository, as a git submodule, only when it needs its own release cadence; the engine, relate, is the one submodule, vendored until it is published. The core is a first-class module that adapters depend on, and a shared example site is what every adapter is checked against.
+- **Workspace packages.** The core and each integration are packages in the pnpm workspace. An integration moves out to its own repository, as a git submodule, only when it needs its own release cadence; the engine, relate, is a published package and is no longer vendored. The core is a first-class module that adapters depend on, and a shared example site is what every adapter is checked against.
 
 Each of these is expected to be pinned down by an ADR before implementation; treat them as direction, and check `design/adr/` for what has actually been decided.
 
@@ -141,5 +138,5 @@ ADRs (snapshot format, embedding model and query-time strategy, runtime targets,
 
 ## Conventions
 
-- The repository is a pnpm workspace with the core package (`@relate/contrib-web`) as its first module, independently publishable. Until `@relate/relate-wasm` is published, a pinned build is vendored in and the core declares it a peer dependency.
+- The repository is a pnpm workspace with the core package (`@relate/contrib-web`) as its first module, independently publishable. The core declares `@relate/relate-wasm` as a peer dependency.
 - Keep documents in `design/` written for a newcomer to this repo: name project artifacts on first use rather than assuming the reader has seen sibling documents (the review skills check this).

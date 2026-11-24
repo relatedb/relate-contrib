@@ -17,8 +17,7 @@ format), `ADR-003` (the graph descriptor). The specification and plan are in `sp
 pnpm add @relate/contrib-web @relate/relate-wasm
 ```
 
-`@relate/relate-wasm` is a peer dependency. Until it is published to npm this repository vendors a
-pinned build (see `vendor/README.md`). The package has no other runtime dependency.
+`@relate/relate-wasm` (the Relate database, built for browsers) is a required peer dependency, not bundled. The package has no other runtime dependency.
 
 ## Use
 
@@ -226,7 +225,6 @@ names the broken behavior. Playwright is an optional peer dependency used by the
 ## Develop
 
 ```sh
-pnpm run build:wasm          # build the vendored engine (needs Rust, wasm-bindgen-cli, binaryen)
 pnpm install
 pnpm --filter @relate/contrib-web build
 pnpm --filter @relate/contrib-web test:unit

@@ -1,15 +1,8 @@
 name: Set up relate-contrib
-description: Node, pnpm, the engine submodule and its WebAssembly build, dependencies and Playwright browsers.
+description: Node, pnpm, dependencies (the database from the registry) and Playwright browsers.
 inputs:
-  engine-source:
-    description: Where the engine comes from. `registry` (the default) installs @relate/relate-wasm from the registry, at the version the workspace catalog names, or at engine-version when that is given; `submodule` builds the pinned engine checkout, for unreleased engine work.
-    default: registry
   engine-version:
-    description: An engine release to try instead of the catalog's, when engine-source is `registry`. Empty means the catalog's.
-    default: ""
-  engine-token:
-    description: A token with read access to relatedb/relate (the engine submodule is private). Not needed when engine-source is `registry`.
-    required: false
+    description: A release of the database (@relate/relate-wasm) to try instead of the one the workspace catalog names. Empty means the catalog's.
     default: ""
   browsers:
     description: Playwright browsers to install, space separated.
@@ -23,63 +16,7 @@ runs:
         node-version: 24
         cache: pnpm
 
-    - name: Check out the engine submodule
-      if: inputs.engine-source == 'submodule'
-      shell: bash
-      env:
-        ENGINE_TOKEN: ${{ inputs.engine-token }}
-      run: |
-        # .gitmodules uses an SSH URL; read it over HTTPS with the token instead.
-        git config --global url."https://x-access-token:${ENGINE_TOKEN}@github.com/".insteadOf "git@github.com:"
-        git submodule update --init vendor/relate
-        echo "ENGINE_SHA=$(git rev-parse HEAD:vendor/relate)" >> "$GITHUB_ENV"
-
-    - name: Install Rust (the engine's pinned toolchain) with the WebAssembly target
-      if: inputs.engine-source == 'submodule'
-      shell: bash
-      run: |
-        CHANNEL="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' vendor/relate/rust-toolchain.toml)"
-        rustup toolchain install "$CHANNEL" --profile minimal --target wasm32-unknown-unknown
-        # the engine's build script runs cargo from several directories; make the pinned toolchain the default for all of them
-        rustup default "$CHANNEL"
-        echo "BINDGEN_VERSION=$(bash vendor/relate/scripts/build-wasm.sh --print-bindgen-version)" >> "$GITHUB_ENV"
-
-    - name: Restore the engine's WebAssembly package
-      if: inputs.engine-source == 'submodule'
-      id: engine-cache
-      uses: actions/cache@v4
-      with:
-        path: vendor/relate-wasm/pkg
-        key: engine-wasm-${{ runner.os }}-${{ env.ENGINE_SHA }}-${{ hashFiles('scripts/build-wasm.sh') }}
-
-    - name: Cache cargo downloads and tools
-      if: inputs.engine-source == 'submodule' && steps.engine-cache.outputs.cache-hit != 'true'
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          ~/.cargo/bin/wasm-bindgen
-          vendor/.build
-        key: cargo-${{ runner.os }}-${{ env.ENGINE_SHA }}-${{ env.BINDGEN_VERSION }}
-        restore-keys: cargo-${{ runner.os }}-
-
-    - name: Build the engine's WebAssembly package
-      if: inputs.engine-source == 'submodule' && steps.engine-cache.outputs.cache-hit != 'true'
-      shell: bash
-      run: |
-        sudo apt-get update -y && sudo apt-get install -y binaryen
-        command -v wasm-bindgen >/dev/null && [ "$(wasm-bindgen --version | awk '{print $2}')" = "$BINDGEN_VERSION" ] \
-          || cargo install wasm-bindgen-cli --version "$BINDGEN_VERSION" --locked
-        pnpm run build:wasm
-
-    - name: Install dependencies
-      if: inputs.engine-source == 'submodule'
-      shell: bash
-      run: pnpm install --frozen-lockfile
-
-    - name: Install dependencies with the engine release from the registry
-      if: inputs.engine-source == 'registry'
+    - name: Install dependencies with the database release from the registry
       shell: bash
       env:
         ENGINE_VERSION: ${{ inputs.engine-version }}
@@ -89,7 +26,7 @@ runs:
           pnpm install --frozen-lockfile
           exit 0
         fi
-        # the workspace's root tools first, to point the checkout at the engine release (the working tree only); then everything
+        # the workspace's root tools first, to point the checkout at the database release (the working tree only); then everything
         pnpm install --filter . --frozen-lockfile
         pnpm exec tsx scripts/release/use-engine.ts "$ENGINE_VERSION"
         pnpm install --no-frozen-lockfile

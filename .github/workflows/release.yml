@@ -93,8 +93,6 @@ jobs:
           submodules: false
           fetch-depth: 0
       - uses: ./.github/actions/setup
-        with:
-          engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
       - name: Build every package
         run: pnpm -r build
       - name: The fitness and engine range checks

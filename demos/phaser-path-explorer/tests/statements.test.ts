@@ -1,5 +1,5 @@
 // ADR-011, 2.5 (amended 2026-11-16, the waymarker expedition): every statement against the real engine, in its
-// WebAssembly build, in Node. Skipped when the engine's browser package has not been built (`pnpm run build:wasm`).
+// WebAssembly build, in Node. Skipped when the database's browser package is not installed.
 import { beforeAll, describe, expect, it } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";

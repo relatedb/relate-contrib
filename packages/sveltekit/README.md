@@ -96,7 +96,6 @@ The helpers pass the core's client, status and events through unaltered: recover
 ## Develop
 
 ```sh
-pnpm run build:wasm
 pnpm install
 pnpm --filter @relate/contrib-sveltekit build
 pnpm test:sveltekit              # route builder, registry, inline lookup, build failures, development server

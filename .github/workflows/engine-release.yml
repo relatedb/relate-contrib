@@ -78,7 +78,6 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup
         with:
-          engine-source: registry
           engine-version: ${{ matrix.version }}
       - name: Run every package's checks against this engine release
         run: pnpm exec tsx scripts/release/engine-run.ts "${{ matrix.version }}" --out engine-results.json

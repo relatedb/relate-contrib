@@ -35,8 +35,6 @@ jobs:
           submodules: false
           fetch-depth: 0 # the Next adapter's scope test reads commit ranges
       - uses: ./.github/actions/setup
-        with:
-          engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
       - run: pnpm run test:drift
       - uses: actions/upload-artifact@v4
         if: failure()

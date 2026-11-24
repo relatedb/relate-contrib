@@ -31,7 +31,6 @@ jobs:
           submodules: false
       - uses: ./.github/actions/setup
         with:
-          engine-token: ${{ secrets.ENGINE_READ_TOKEN }}
           browsers: ${{ matrix.browser }}
       - run: pnpm -r build
       - run: pnpm run test:catalog-known --project=${{ matrix.browser }} --repeat-each=3

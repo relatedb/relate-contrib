@@ -1,3 +1,0 @@
-[submodule "vendor/relate"]
-	path = vendor/relate
-	url = git@github.com:relatedb/relate.git

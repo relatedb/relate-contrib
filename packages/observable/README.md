@@ -107,7 +107,6 @@ The cold-network cost of the engine (about 6 MB) and the worker bundle (about 45
 ## Develop
 
 ```sh
-pnpm run build:wasm
 pnpm install
 pnpm --filter @relate/contrib-observable build
 pnpm test:observable             # results against the real engine, loaders, build, freshness, preview server

@@ -12,11 +12,9 @@ that is seeded once. The decisions are in `design/adr/ADR-008` (the provider and
 
 ## Run it
 
-From the repository root, once (the engine's WebAssembly build comes first, see the root `CLAUDE.md`):
+From the repository root:
 
 ```sh
-git submodule update --init vendor/relate
-pnpm run build:wasm
 pnpm install
 pnpm --filter react-admin-demo... run build     # builds the core, the provider and the demo
 pnpm --filter react-admin-demo dev               # http://127.0.0.1:5190

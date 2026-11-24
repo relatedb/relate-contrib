@@ -54,7 +54,7 @@ cross-browser run are deferred (ADR-011, amended 2026-11-16).
 
 ## Run
 
-From the repository root (the engine's browser package must be built once: `pnpm run build:wasm`, see `vendor/README.md`):
+From the repository root:
 
 ```sh
 pnpm install

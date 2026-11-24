@@ -1,7 +1,5 @@
 node_modules/
 dist/
-vendor/relate-wasm/
-vendor/.build/
 test-results/
 playwright-report/
 reports/

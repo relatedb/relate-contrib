@@ -47,6 +47,8 @@ Releases go in dependency order: the engine (upstream), then `@relate/web`, then
 
 Until the engine is published, the supported lane builds it from the submodule as today. After that the submodule is kept only to try unreleased engine work, which runs as a manually started lane and never gates or triggers a release.
 
+*Amended 2026-11-24:* the engine is published and the supported lane installs it from the registry. The submodule (`vendor/relate`), its build script and the setup action's submodule path were removed rather than kept for unreleased engine work; that work is tried by linking a build from the engine's own repository into a checkout.
+
 ### 2.4 No separate bump proposals
 
 The engine-release lane replaces a bot that proposes engine bumps: the supported version in the catalog is the one the workspace builds on, and moving it is an ordinary reviewed change, made when the repository wants to build on a newer engine. A release does not wait for that change. It is driven by the lane's result for each engine release.

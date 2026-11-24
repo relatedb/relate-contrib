@@ -25,13 +25,6 @@ export function checkEngineRange(root: string): Finding[] {
   const engine = supportedEngine(root);
   if (engine === undefined) add("(workspace)", "supported-engine", "pnpm-workspace.yaml has no catalog entry `@relate/relate-wasm` naming the supported engine");
   else if (!isRelease(engine)) add("(workspace)", "supported-engine", `the supported engine "${engine}" is not a full release version`);
-  const vendored = join(root, "vendor/relate-wasm/pkg/package.json");
-  // only a workspace that links the vendored build (the override) is tested on it; a leftover build beside a registry engine says nothing
-  const linksVendored = /link:\s*vendor\/relate-wasm/.test(readFileSync(join(root, "pnpm-workspace.yaml"), "utf8"));
-  if (engine !== undefined && linksVendored && existsSync(vendored)) {
-    const v = (JSON.parse(readFileSync(vendored, "utf8")) as { version?: string }).version;
-    if (v !== engine) add("(workspace)", "supported-engine", `the catalog names engine ${engine} but the vendored engine package is ${v}`);
-  }
   for (const p of loadPackages(root)) {
     const peers = p.manifest.peerDependencies ?? {};
     const range = peers[ENGINE];
