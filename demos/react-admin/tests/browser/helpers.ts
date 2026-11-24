@@ -21,11 +21,13 @@ export async function names(page: Page): Promise<string[]> {
 /** The total of the list on screen, from "1-10 of 50", 0 when the list says there are no results, or -1 before the list has rendered. */
 export async function total(page: Page): Promise<number> {
   const pagination = page.locator(".MuiTablePagination-displayedRows").first();
-  if ((await pagination.count()) === 0) {
-    if ((await page.getByText(/found using the current filters|No results found/i).count()) > 0) return 0;
-    return -1;
-  }
-  const text = (await pagination.textContent()) ?? "";
+  const emptyOrUnrendered = async (): Promise<number> => ((await page.getByText(/found using the current filters|No results found/i).count()) > 0 ? 0 : -1);
+  if ((await pagination.count()) === 0) return emptyOrUnrendered();
+  // The pagination can leave the page between asking whether it is there and reading it (the list re-renders to its empty
+  // message). `textContent` waits for an element that is gone for as long as the test lasts, so it is given a moment and
+  // the poll asks again.
+  const text = await pagination.textContent({ timeout: 2_000 }).catch(() => null);
+  if (text === null) return emptyOrUnrendered();
   const m = /of\s+(\d+)/.exec(text);
   return m ? Number(m[1]) : -1;
 }
