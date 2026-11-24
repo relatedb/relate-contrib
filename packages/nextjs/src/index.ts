@@ -1,6 +1,6 @@
 // The configuration wrapper (spec FR-002, ADR-005 §2.1): makes the base path and the navigation profile available to
 // client code and changes nothing else.
-import { ENV_BASE_PATH, ENV_NAVIGATION, NAVIGATIONS } from "./env.js";
+import { ENV_BASE_PATH, ENV_DIST_DIR, ENV_NAVIGATION, NAVIGATIONS } from "./env.js";
 import type { Navigation } from "./env.js";
 
 export type { Navigation } from "./env.js";
@@ -12,6 +12,7 @@ export interface RelateOptions {
 
 interface NextConfigLike {
   basePath?: string;
+  distDir?: string;
   env?: Record<string, string | undefined>;
   [key: string]: unknown;
 }
@@ -24,6 +25,7 @@ function wrap<T extends NextConfigLike>(nextConfig: T, navigation: Navigation): 
   // The server entry reads these from the process: route handlers and server components may not be bundled with the config's `env`.
   process.env[ENV_BASE_PATH] = basePath;
   process.env[ENV_NAVIGATION] = navigation;
+  process.env[ENV_DIST_DIR] = nextConfig.distDir ?? ".next"; // read by the route at run time, never bundled
   return { ...nextConfig, env: { ...nextConfig.env, [ENV_BASE_PATH]: basePath, [ENV_NAVIGATION]: navigation } };
 }
 

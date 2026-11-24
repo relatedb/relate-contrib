@@ -2,6 +2,7 @@
 import { descriptorOf } from "@relate/contrib-web/build";
 import { Evaluations, OWNER, declare, isDevelopment, registeredNames } from "./graphs.js";
 import type { Graphs } from "./graphs.js";
+import { publishedRevision, recordRevision } from "./revisions.js";
 
 /** Where the files are published, below the site's base path. The route file's folder names must match. */
 export const ROUTE = "/relate";
@@ -28,7 +29,9 @@ export function createGraphRoute(graphs: Graphs) {
     for (const id of registered.keys()) {
       params.push({ id, file: "descriptor.json" });
       try {
-        params.push({ id, file: `graph.${(await evaluations.get(id)).revision}.json` });
+        const { revision } = await evaluations.get(id);
+        recordRevision(id, revision);
+        params.push({ id, file: `graph.${revision}.json` });
       } catch (e) {
         // A build stops at the first problem. The development server keeps running and answers this graph's files with an error.
         if (!isDevelopment()) throw e;
@@ -42,6 +45,12 @@ export function createGraphRoute(graphs: Graphs) {
     const { id, file } = await context.params;
     const graph = registered.get(id);
     if (!graph) return notFound();
+    if (file !== "descriptor.json" && !isDevelopment() && process.env.NEXT_PHASE !== "phase-production-build") {
+      // A file the build did not publish does not exist. Answering it needs no evaluation, which `cacheComponents` refuses on demand.
+      const m = /^graph\.([0-9a-f]{12})\.json$/.exec(file);
+      const published = publishedRevision(id);
+      if (!m || (published !== undefined && m[1] !== published)) return notFound();
+    }
     let evaluated;
     try {
       evaluated = await evaluations.get(id);
