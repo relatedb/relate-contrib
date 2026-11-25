@@ -1,5 +1,11 @@
 # @relate/contrib-astro
 
+## 0.1.3
+
+### Patch Changes
+
+- a8b8052: Supports engine 1.3.0; engine 1.2.0 is no longer supported (its trap classifier and empty-WAL-segment bug are fixed in 1.3.0).
+
 ## 0.1.2
 
 ### Patch Changes

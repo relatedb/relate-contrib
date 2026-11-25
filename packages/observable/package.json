@@ -1,6 +1,6 @@
 {
   "name": "@relate/contrib-observable",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Observable Framework helpers for @relate/contrib-web: loaders that place the engine and the worker and publish graph data, a call that ties a graph client to a cell, and result shaping for Framework's components.",
   "license": "Apache-2.0",
   "repository": {
