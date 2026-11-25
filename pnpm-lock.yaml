@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@relate/relate-wasm':
-      specifier: 1.2.0
-      version: 1.2.0
+      specifier: 1.3.0
+      version: 1.3.0
 
 importers:
 
@@ -134,8 +134,8 @@ importers:
   packages/astro:
     dependencies:
       '@relate/relate-wasm':
-        specifier: '>=1.2.0 <1.3.0'
-        version: 1.2.0
+        specifier: '>=1.3.0 <1.4.0'
+        version: 1.3.0
     devDependencies:
       '@playwright/test':
         specifier: ^1.64.1
@@ -165,8 +165,8 @@ importers:
   packages/nextjs:
     dependencies:
       '@relate/relate-wasm':
-        specifier: '>=1.2.0 <1.3.0'
-        version: 1.2.0
+        specifier: '>=1.3.0 <1.4.0'
+        version: 1.3.0
     devDependencies:
       '@playwright/test':
         specifier: ^1.64.1
@@ -253,7 +253,7 @@ importers:
         version: link:../web
       '@relate/relate-wasm':
         specifier: 'catalog:'
-        version: 1.2.0
+        version: 1.3.0
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6
@@ -370,7 +370,7 @@ importers:
         version: link:../web
       '@relate/relate-wasm':
         specifier: 'catalog:'
-        version: 1.2.0
+        version: 1.3.0
       '@sveltejs/adapter-node':
         specifier: ^6.0.1
         version: 6.0.1(@sveltejs/kit@3.1.1(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3)(vite@8.3.6(@types/node@26.6.6)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)))(svelte@5.57.3)(typescript@7.0.2)(vite@8.3.6(@types/node@26.6.6)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)))
@@ -439,8 +439,8 @@ importers:
   packages/web:
     dependencies:
       '@relate/relate-wasm':
-        specifier: '>=1.2.0 <1.3.0'
-        version: 1.2.0
+        specifier: '>=1.3.0 <1.4.0'
+        version: 1.3.0
     devDependencies:
       '@playwright/test':
         specifier: ^1.64.1
@@ -1566,15 +1566,18 @@ packages:
     peerDependencies:
       '@observablehq/framework': ^1.13.0
       '@relate/contrib-web': '>=0.0.0 <1.0.0'
-      '@relate/relate-wasm': '>=1.2.0 <1.3.0'
+      '@relate/relate-wasm': '>=1.3.0 <1.4.0'
 
   '@relate/contrib-web@file:packages/web':
     resolution: {directory: packages/web, type: directory}
     peerDependencies:
-      '@relate/relate-wasm': '>=1.2.0 <1.3.0'
+      '@relate/relate-wasm': '>=1.3.0 <1.4.0'
 
   '@relate/relate-wasm@1.2.0':
     resolution: {integrity: sha512-RmJq36laQNR2mgI13x9ZYi9rfPEPallFUYG2lTLi7ERfeMULYf3tpo/aA4cPBEs68s9STX9EtMJvx1NpyPb2nQ==}
+
+  '@relate/relate-wasm@1.3.0':
+    resolution: {integrity: sha512-8jjuA1w7WUWF8gTFybsoRiEpzCZIKeI3nlidAgF4uqsiV4KmXEDcFiwznzNCvDa+sV4iSQQx993tOy5AHkbRnQ==}
 
   '@rolldown/binding-android-arm-eabi@1.2.16':
     resolution: {integrity: sha512-ia3DwAs0OsMGS7+IConptSiyk9pEXkOx/AbJ2n/lAGxH3QkWQus1t8d7gnAT38FCU2sQu8lUbeR6AiZFv4JxaA==}
@@ -5275,6 +5278,8 @@ snapshots:
       '@relate/relate-wasm': 1.2.0
 
   '@relate/relate-wasm@1.2.0': {}
+
+  '@relate/relate-wasm@1.3.0': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.16':
     optional: true
