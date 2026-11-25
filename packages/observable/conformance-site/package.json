@@ -10,7 +10,7 @@
   "dependencies": {
     "@observablehq/framework": "^1.13.4",
     "@relate/contrib-observable": "workspace:*",
-    "@relate/relate-wasm": "*",
+    "@relate/relate-wasm": "catalog:",
     "@relate/contrib-web": "workspace:*"
   },
   "dependenciesMeta": {
