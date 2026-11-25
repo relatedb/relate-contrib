@@ -10,7 +10,7 @@
     "dev": "vite dev"
   },
   "dependencies": {
-    "@relate/relate-wasm": "*",
+    "@relate/relate-wasm": "catalog:",
     "@relate/contrib-sveltekit": "workspace:*",
     "@relate/contrib-web": "workspace:*"
   },

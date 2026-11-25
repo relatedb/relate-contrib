@@ -8,7 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@relate/relate-wasm": "*",
+    "@relate/relate-wasm": "catalog:",
     "@relate/contrib-nextjs": "workspace:*",
     "next": "^16.4.5",
     "react": "^19.3.1",

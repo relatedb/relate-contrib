@@ -51,8 +51,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/web
       '@relate/relate-wasm':
-        specifier: '*'
-        version: 1.2.0
+        specifier: 'catalog:'
+        version: 1.3.0
       phaser:
         specifier: 4.2.1
         version: 4.2.1
@@ -104,8 +104,8 @@ importers:
         specifier: ^1.64.1
         version: 1.64.1
       '@relate/relate-wasm':
-        specifier: '*'
-        version: 1.2.0
+        specifier: 'catalog:'
+        version: 1.3.0
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6
@@ -211,8 +211,8 @@ importers:
         specifier: workspace:*
         version: link:../../web
       '@relate/relate-wasm':
-        specifier: '*'
-        version: 1.2.0
+        specifier: 'catalog:'
+        version: 1.3.0
       next:
         specifier: ^16.4.5
         version: 16.4.5(@playwright/test@1.64.1)(@types/node@26.6.6)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -274,13 +274,13 @@ importers:
         version: 1.13.4(@types/markdown-it@14.2.0)
       '@relate/contrib-observable':
         specifier: workspace:*
-        version: file:packages/observable(@observablehq/framework@1.13.4(@types/markdown-it@14.2.0))(@relate/contrib-web@file:packages/web(@relate/relate-wasm@1.2.0))(@relate/relate-wasm@1.2.0)
+        version: file:packages/observable(@observablehq/framework@1.13.4(@types/markdown-it@14.2.0))(@relate/contrib-web@file:packages/web(@relate/relate-wasm@1.3.0))(@relate/relate-wasm@1.3.0)
       '@relate/contrib-web':
         specifier: workspace:*
-        version: file:packages/web(@relate/relate-wasm@1.2.0)
+        version: file:packages/web(@relate/relate-wasm@1.3.0)
       '@relate/relate-wasm':
-        specifier: '*'
-        version: 1.2.0
+        specifier: 'catalog:'
+        version: 1.3.0
     dependenciesMeta:
       '@relate/contrib-observable':
         injected: true
@@ -411,8 +411,8 @@ importers:
         specifier: workspace:*
         version: link:../../web
       '@relate/relate-wasm':
-        specifier: '*'
-        version: 1.2.0
+        specifier: 'catalog:'
+        version: 1.3.0
     devDependencies:
       '@sveltejs/adapter-node':
         specifier: ^6.0.1
@@ -5266,16 +5266,16 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@relate/contrib-observable@file:packages/observable(@observablehq/framework@1.13.4(@types/markdown-it@14.2.0))(@relate/contrib-web@file:packages/web(@relate/relate-wasm@1.2.0))(@relate/relate-wasm@1.2.0)':
+  '@relate/contrib-observable@file:packages/observable(@observablehq/framework@1.13.4(@types/markdown-it@14.2.0))(@relate/contrib-web@file:packages/web(@relate/relate-wasm@1.3.0))(@relate/relate-wasm@1.3.0)':
     dependencies:
       '@observablehq/framework': 1.13.4(@types/markdown-it@14.2.0)
-      '@relate/contrib-web': file:packages/web(@relate/relate-wasm@1.2.0)
-      '@relate/relate-wasm': 1.2.0
+      '@relate/contrib-web': file:packages/web(@relate/relate-wasm@1.3.0)
+      '@relate/relate-wasm': 1.3.0
       esbuild: 0.28.2
 
-  '@relate/contrib-web@file:packages/web(@relate/relate-wasm@1.2.0)':
+  '@relate/contrib-web@file:packages/web(@relate/relate-wasm@1.3.0)':
     dependencies:
-      '@relate/relate-wasm': 1.2.0
+      '@relate/relate-wasm': 1.3.0
 
   '@relate/relate-wasm@1.2.0': {}
 
