@@ -29,7 +29,6 @@ pnpm install
 pnpm -r build
 pnpm test:unit                 # Vitest (Node)
 pnpm test:browsers             # Playwright: Chromium, Firefox, WebKit
-pnpm test:catalog-known       # the two catalog interruption tests tagged @engine-wal (relatedb/relate#576), run by the nightly engine-known workflow; no merge or release waits for them
 pnpm test:perf                 # the core's load-time and restore-time tests (@perf), run by the nightly perf workflow; no merge or release waits for them
 pnpm test:conformance          # the conformance check over the example site, both profiles
 pnpm test:package              # packs the core, installs it in a clean project, bundles and runs a page

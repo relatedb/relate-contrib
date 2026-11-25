@@ -1,21 +1,8 @@
 // Wrapper around the engine's browser build. It keeps the engine's result text unaltered, marks the instance
-// dead at the first trap (the engine's own classifier misses the second error a dead instance throws), and
-// answers every later call as a trap.
+// dead at the first trap and answers every later call as a trap.
 import init, { RelateDb } from "@relate/relate-wasm";
 import { isWasmTrap } from "@relate/relate-wasm/trap.js";
 import { STORE_PREFIX } from "../config.js";
-
-/**
- * Whether an error thrown by a call into the engine means the instance can no longer be used. The engine's own `isWasmTrap`
- * knows a WebAssembly trap and the stack-exhaustion wording of Chromium and WebKit; it misses Firefox's ("too much
- * recursion") and the "recursive use of an object" an instance throws once an earlier call overflowed the stack (the
- * borrow was never released). Both mean the same: replace the instance.
- */
-export function isEngineTrap(err: unknown): boolean {
-  if (isWasmTrap(err)) return true;
-  const message = err instanceof Error ? err.message : String(err);
-  return /too much recursion|recursive use of an object/i.test(message);
-}
 
 export class TrapError extends Error {
   constructor(message = "the instance is unusable after a trap") {
@@ -93,7 +80,7 @@ export class Engine {
     try {
       return call();
     } catch (e) {
-      if (isEngineTrap(e)) {
+      if (isWasmTrap(e)) {
         this.dead = true;
         throw new TrapError(messageOf(e));
       }

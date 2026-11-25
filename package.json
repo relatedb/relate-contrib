@@ -45,7 +45,6 @@
     "test:application-trace": "pnpm --filter @relate/contrib-web test:application-trace",
     "test:catalog": "pnpm --filter @relate/contrib-web test:catalog",
     "test:catalog-browsers": "pnpm --filter @relate/contrib-web test:catalog-browsers",
-    "test:catalog-known": "pnpm --filter @relate/contrib-web test:catalog-known",
     "test:catalog-trace": "pnpm --filter @relate/contrib-web test:catalog-trace",
     "typecheck": "pnpm -r typecheck && tsc -p scripts/release/tsconfig.json",
     "test:units": "pnpm run test:unit && pnpm run test:application && pnpm run test:catalog && pnpm run test:astro && pnpm run test:next && pnpm run test:observable && pnpm run test:sveltekit && pnpm run test:react-admin && pnpm run test:phaser && pnpm run test:release",
