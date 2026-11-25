@@ -1,6 +1,6 @@
 {
   "name": "@relate/contrib-astro",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Astro integration for @relate/contrib-web: serves graphs built from a site's content, carries small graphs in pages, and ties a page's graph clients to the router.",
   "license": "Apache-2.0",
   "repository": {
