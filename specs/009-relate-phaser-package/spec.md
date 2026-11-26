@@ -194,8 +194,8 @@ The README leads with the problem (a frame loop in front of an asynchronous engi
 
 **The demo and the checks**
 
-- **FR-015**: The path explorer MUST use the package's queue and cache, and its throwaway world MUST use `createThrowawayClient`; its own copy of the queue MUST be removed (ADR-012 2.7).
-- **FR-016**: The demo MUST rebuild its board after a new client generation, and every unit test that passed before the change MUST still pass.
+- **FR-015**: The path explorer MUST use the package's queue and cache, and its throwaway world MUST use `createThrowawayClient`; its own copy of the queue MUST be removed (ADR-012 2.7). *(Verified in hextant, `akollegger/hextant`, where the path explorer lives since 2026-11-26; the trace check does not look for a test here.)*
+- **FR-016**: The demo MUST rebuild its board after a new client generation, and every unit test that passed before the change MUST still pass. *(Verified in hextant, `akollegger/hextant`, where the path explorer lives since 2026-11-26; the trace check does not look for a test here.)*
 - **FR-017**: The package MUST have unit tests against the real engine in Node, a package check that installs the packed package in a clean project, and a trace check mapping every requirement and success criterion to a passing, tagged test (tags `covers-ph:`); the commands MUST be added to the project's guidance.
 - **FR-018**: The package's README MUST describe the four pieces, what stays in the game, the partial-read pattern with the demo as reference, and the limits of the first release (ADR-012 2.6, 4).
 
@@ -212,11 +212,11 @@ The README leads with the problem (a frame loop in front of an asynchronous engi
 ### Measurable Outcomes
 
 - **SC-001**: In a run of 1,000 statements pushed without awaiting, 100 % apply in the order pushed.
-- **SC-002**: After a forced engine replacement during play, the board is rebuilt from the restored graph with no reload by the player, and no action is applied twice.
-- **SC-003**: Every unit test of the path explorer that passes before the change passes after it (202 before; the queue's own four have moved to the package), with no copy of the queue left in the demo.
+- **SC-002**: After a forced engine replacement during play, the board is rebuilt from the restored graph with no reload by the player, and no action is applied twice. *(Verified in hextant, `akollegger/hextant`, where the path explorer lives since 2026-11-26; the trace check does not look for a test here.)*
+- **SC-003**: Every unit test of the path explorer that passes before the change passes after it (202 before; the queue's own four have moved to the package), with no copy of the queue left in the demo. *(Verified in hextant, `akollegger/hextant`, where the path explorer lives since 2026-11-26; the trace check does not look for a test here.)*
 - **SC-004**: A game author can go from a clean project to a first action through the cache in under 15 minutes using the README alone.
 - **SC-005**: In a scene driven for 600 updates with commits on 5 of them, the redraw function is called 5 times.
-- **SC-006**: A throwaway graph and an application graph running together keep 100 % of the application graph's data across a reload and none of the throwaway's.
+- **SC-006**: A throwaway graph and an application graph running together keep 100 % of the application graph's data across a reload and none of the throwaway's. *(Verified in hextant, `akollegger/hextant`, where the path explorer lives since 2026-11-26; the trace check does not look for a test here.)*
 - **SC-007**: Every requirement and success criterion has at least one passing, tagged test, checked by the trace command.
 
 ## Assumptions

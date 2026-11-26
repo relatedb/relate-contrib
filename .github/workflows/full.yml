@@ -58,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false # every suite reports, so a failure names the suite and the others still finish
       matrix:
-        suite: [web, astro, next, observable, sveltekit, react-admin, phaser]
+        suite: [web, astro, next, observable, sveltekit, react-admin]
         browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v4
@@ -77,7 +77,7 @@ jobs:
           browser="${{ matrix.browser }}"
           case "$suite" in
             web) scripts="test:browsers test:conformance test:application-browsers test:catalog-browsers" ;;
-            react-admin|phaser) scripts="test:$suite-browsers" ;;
+            react-admin) scripts="test:$suite-browsers" ;;
             *) scripts="test:$suite-browsers test:$suite-conformance" ;;
           esac
           for script in $scripts; do

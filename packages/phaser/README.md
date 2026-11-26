@@ -46,7 +46,7 @@ In a scene, read `cache.state` in `update` and redraw when `cache.version` chang
 ## What stays in your game
 
 - **Statements.** The package ships none. You write your reads and writes against your own graph model.
-- **Partial reads.** Reading only what is needed (the tiles a player has revealed, the dialogue branches already visited) is a property of your statements. The package does not enforce it. The path explorer demo (`demos/phaser-path-explorer`) is the reference: its client never holds the ground truth of a tile the player has not discovered.
+- **Partial reads.** Reading only what is needed (the tiles a player has revealed, the dialogue branches already visited) is a property of your statements. The package does not enforce it. The path explorer, now the project [hextant](https://github.com/akollegger/hextant), is the reference: its client never holds the ground truth of a tile the player has not discovered.
 - **Seeding.** A new world is a graph document given to `createClient` through an application graph (ADR-009).
 - **Drawing, undo and game rules.** The cache has no undo, no snapshot across actions and no knowledge states.
 

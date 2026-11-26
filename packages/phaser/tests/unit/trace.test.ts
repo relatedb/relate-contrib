@@ -42,9 +42,9 @@ describe("the trace check", () => {
     const manifest = JSON.parse(readFileSync(join(pkg, "package.json"), "utf8"));
     expect(manifest.scripts["test:phaser-trace"]).toContain("check-trace");
     const root = JSON.parse(readFileSync(join(repo, "package.json"), "utf8"));
-    for (const name of ["test:phaser", "test:phaser-browsers", "test:phaser-package", "test:phaser-trace"]) expect(root.scripts[name], name).toBeTruthy();
+    for (const name of ["test:phaser", "test:phaser-package", "test:phaser-trace"]) expect(root.scripts[name], name).toBeTruthy();
     expect(root.scripts["test:traces-all"]).toContain("test:phaser-trace");
     const guidance = readFileSync(join(repo, "CLAUDE.md"), "utf8");
-    for (const name of ["test:phaser", "test:phaser-browsers", "test:phaser-package", "test:phaser-trace"]) expect(guidance, name).toContain(`pnpm ${name}`);
+    for (const name of ["test:phaser", "test:phaser-package", "test:phaser-trace"]) expect(guidance, name).toContain(`pnpm ${name}`);
   });
 });

@@ -8,6 +8,8 @@ created: 2026-11-10
 
 # ADR-011: The Phaser Path Explorer, a Demo with a Separable Hex Library and a Disclosure Graph
 
+*Amended 2026-11-26:* the demo graduated to its own project, `akollegger/hextant` (a private repository), where this decision is ADR-001 and the code, tests and design note live with their history. The demo was removed from this repository, along with its handoff note. The decisions below stand; later changes to them are made there.
+
 ## 1. Context
 
 Phaser is a 2D browser game framework. Its scenes run an `update` function every frame, so game code cannot wait on a database that lives in a Web Worker and answers asynchronously. The engine side is the core package, `@relate/contrib-web` (`packages/web`): `createClient` starts the engine in a worker, `query(statement, params)` returns a promise, and an engine error arrives in the result envelope's `error` field and does not throw. One statement is one atomic unit; there is no multi-statement transaction. A client created with the `application` option keeps one named durable graph in the browser, seeded once and carried forward by versioned migrations (ADR-009).
