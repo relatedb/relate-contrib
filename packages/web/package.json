@@ -1,6 +1,6 @@
 {
   "name": "@relate/contrib-web",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Hosts an embedded graph database in a web page: a worker client, graph loading, fault containment and navigation profiles.",
   "license": "Apache-2.0",
   "repository": {
