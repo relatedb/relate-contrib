@@ -1,10 +1,10 @@
 # observable-graph
 
-SPIKE-001 reproduction: the CypherLite WASM build running in an Observable Framework app. See `../SPIKE.md` for the question and findings.
+SPIKE-001 reproduction: the Relate WASM build running in an Observable Framework app. See `../SPIKE.md` for the question and findings.
 
 ## Setup
 
-The WASM package is not published to npm, so it is built from a local CypherLite checkout. The checkout is not modified: build output and the cargo target directory live in `.wasm-build/`.
+The WASM package is not published to npm, so it is built from a local Relate checkout. The checkout is not modified: build output and the cargo target directory live in `.wasm-build/`.
 
 Prerequisites (from the checkout's own `scripts/build-wasm.sh`): `rustup` with the `wasm32-unknown-unknown` target for the checkout's pinned toolchain, `wasm-bindgen-cli` at the version its `Cargo.lock` pins (its `scripts/install-wasm-bindgen.sh` installs it), and `binaryen` 110 or newer.
 
@@ -16,7 +16,7 @@ npm test                                                # real engine in Node
 npm run build                                           # production build into dist/
 ```
 
-Re-run `build:wasm` and `npm install` after any CypherLite change. Set `OBSERVABLE_TELEMETRY_DISABLE=true` to turn off Framework's telemetry.
+Re-run `build:wasm` and `npm install` after any Relate change. Set `OBSERVABLE_TELEMETRY_DISABLE=true` to turn off Framework's telemetry.
 
 ## Layout
 

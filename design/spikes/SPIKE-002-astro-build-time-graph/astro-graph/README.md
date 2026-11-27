@@ -1,6 +1,6 @@
 # astro-graph
 
-SPIKE-002 code. See `../SPIKE.md` for the question, method and findings. It holds the step 1 experiments (`scripts/`) and a small Astro site whose pages and links become a graph at build time and are loaded into a browser CypherLite instance.
+SPIKE-002 code. See `../SPIKE.md` for the question, method and findings. It holds the step 1 experiments (`scripts/`) and a small Astro site whose pages and links become a graph at build time and are loaded into a browser Relate instance.
 
 - `src/content/pages/*.md`: eleven content pages with links between them.
 - `src/pages/graph.json.ts`: the build-time step, a static endpoint that turns the content collection into `{pages, links}`.
@@ -9,7 +9,7 @@ SPIKE-002 code. See `../SPIKE.md` for the question, method and findings. It hold
 
 ## Setup
 
-The WASM package is not on npm, so it is built from a local CypherLite checkout into `.wasm-build/` (the checkout is not modified; the cargo target directory can be redirected with `CARGO_TARGET_DIR`). Prerequisites are the same as SPIKE-001's `observable-graph`: `wasm-bindgen-cli` at the version the checkout's lockfile pins, `binaryen` 110 or newer, and the `wasm32-unknown-unknown` target for the checkout's pinned Rust toolchain.
+The WASM package is not on npm, so it is built from a local Relate checkout into `.wasm-build/` (the checkout is not modified; the cargo target directory can be redirected with `CARGO_TARGET_DIR`). Prerequisites are the same as SPIKE-001's `observable-graph`: `wasm-bindgen-cli` at the version the checkout's lockfile pins, `binaryen` 110 or newer, and the `wasm32-unknown-unknown` target for the checkout's pinned Rust toolchain.
 
 ```bash
 CYPHERLITE_DIR=/path/to/cypherlite npm run build:wasm

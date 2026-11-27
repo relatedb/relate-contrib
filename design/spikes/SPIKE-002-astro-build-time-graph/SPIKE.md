@@ -23,20 +23,20 @@ Out of scope: embeddings, a navigation element, and a graph schema richer than p
 
 ## 2. Method
 
-1. **Establish how the WASM build can take a graph at all, in Node, before involving Astro.** The WASM type declarations expose `execute`, `executeScript`, `reset`, and an OPFS-backed `open`, with no direct snapshot import. So the candidate delivery routes are replaying statements, and placing a snapshot in the browser's origin-private storage and opening it (CypherLite ADR-0145, dedicated worker only). Read that decision for the store layout, then try both:
+1. **Establish how the WASM build can take a graph at all, in Node, before involving Astro.** The WASM type declarations expose `execute`, `executeScript`, `reset`, and an OPFS-backed `open`, with no direct snapshot import. So the candidate delivery routes are replaying statements, and placing a snapshot in the browser's origin-private storage and opening it (Relate ADR-0145, dedicated worker only). Read that decision for the store layout, then try both:
    - Replay: build a small graph, serialize it as a `CREATE` script, and load it into a fresh WASM instance.
-   - Checkpoint: build the same graph with the native Node library (the C library is built from the local CypherLite checkout; the Node package is not on npm), write a JSON checkpoint, and test whether anything in the WASM build can open it. If native is impractical to build, build the graph with the WASM build in Node and record that as the fallback.
+   - Checkpoint: build the same graph with the native Node library (the C library is built from the local Relate checkout; the Node package is not on npm), write a JSON checkpoint, and test whether anything in the WASM build can open it. If native is impractical to build, build the graph with the WASM build in Node and record that as the fallback.
 2. **Astro site.** A handful of content pages with links between them. A build-time step reads the content, extracts pages and links into a graph, and writes the chosen delivery artifact (a script and/or a snapshot) as a static asset.
 3. **Browser island.** A client-side island loads the WASM module and the artifact, and runs a query over the pages-and-links graph. Reuse the SPIKE-001 normalization and tagged-template client where they apply. If both delivery routes work, compare them.
 4. **Measure on a production build.** Artifact size (raw and compressed) for the sample site and for a scaled-up synthetic site (for example 100 and 1,000 pages), load and query time, and module size. Record every bundler step needed to get the `.wasm` file served (§7.7), and how the island behaves under the framework's render modes.
 
 ## 3. Time-box
 
-One working day. If step 1 shows no workable route to a snapshot, stop that thread, take the replay route through steps 2–4, and record the missing capability as a request for the CypherLite maintainers (RFC-001 §7.8).
+One working day. If step 1 shows no workable route to a snapshot, stop that thread, take the replay route through steps 2–4, and record the missing capability as a request for the Relate maintainers (RFC-001 §7.8).
 
 ## 4. Notes
 
-- 2026-11-01: The WASM type declarations (`cypherlite.d.ts`, CypherLite 0.14.0) expose only `execute`, `executeScript`, `reset`, `new CypherliteDb()` and the OPFS-backed `open`. There is no snapshot import call, so "load a snapshot" in the browser means either replaying statements or getting the snapshot into OPFS first. This shaped the method above.
+- 2026-11-01: The WASM type declarations (`cypherlite.d.ts`, Relate 0.14.0) expose only `execute`, `executeScript`, `reset`, `new CypherliteDb()` and the OPFS-backed `open`. There is no snapshot import call, so "load a snapshot" in the browser means either replaying statements or getting the snapshot into OPFS first. This shaped the method above.
 - 2026-11-01, step 1, replay routes (WASM engine in Node, `scripts/delivery.mjs`, synthetic sites with 5 links per page; results in `astro-graph/results/`). Three ways to load the same graph into a fresh instance: **A1** one `CREATE` statement with a variable per page and link; **A2** a script with one `CREATE` per page and one `MATCH … CREATE` per link; **B** two fixed `UNWIND` statements over JSON parameters. With an index on `Page.id`:
 
   | pages | route | payload KB | gzip KB | brotli KB | load ms |
@@ -60,13 +60,13 @@ One working day. If step 1 shows no workable route to a snapshot, stop that thre
   | 5,000 | 2,469.7 | 215.4 | 87.6 | 879.5 | 139.9 | 67.5 |
 
   (The two graphs differ in which pages link where, but have the same node and link counts.)
-- 2026-11-01, step 1, conclusion for §7.8. No public API of the WASM build opens a native checkpoint. The only conceivable route is to write the browser's origin-private store by hand: a catalog file in CypherLite's internal binary format (magic `MDBOPF01`, a CRC, and a path-to-slot map) plus 64 slot files, created from inside a dedicated worker at runtime, because a build step cannot write to a visitor's origin-private storage. That depends on an internal format and was not attempted. The route that works is replay: ship the graph as data and load it with fixed `UNWIND` statements. That also means the build step does not need CypherLite at all (it emits JSON for pages and links), and native is only needed when the graph is built or queried on a server.
+- 2026-11-01, step 1, conclusion for §7.8. No public API of the WASM build opens a native checkpoint. The only conceivable route is to write the browser's origin-private store by hand: a catalog file in Relate's internal binary format (magic `MDBOPF01`, a CRC, and a path-to-slot map) plus 64 slot files, created from inside a dedicated worker at runtime, because a build step cannot write to a visitor's origin-private storage. That depends on an internal format and was not attempted. The route that works is replay: ship the graph as data and load it with fixed `UNWIND` statements. That also means the build step does not need Relate at all (it emits JSON for pages and links), and native is only needed when the graph is built or queried on a server.
 
 ## 5. Findings
 
-Environment: Astro 7.4.4 (Vite-based), Node 24.14.1, CypherLite 0.14.0 built from a local checkout, macOS arm64. Browser measurements are from the production build served by `astro preview` on localhost, with the instance on the main thread.
+Environment: Astro 7.4.4 (Vite-based), Node 24.14.1, Relate 0.14.0 built from a local checkout, macOS arm64. Browser measurements are from the production build served by `astro preview` on localhost, with the instance on the main thread.
 
-**5.1 The build-time step is a static endpoint over the content collection.** `src/pages/graph.json.ts` reads the `pages` collection (`getCollection`), pulls internal links out of each entry's raw Markdown body, and returns `{pages, links}`. Astro writes it to `dist/graph.json` at build time, and the dev server serves it from the same code. For the 11 sample pages it produced 27 links, which matches the links in the Markdown by hand count; the file is 1,237 bytes. The whole site (13 pages including the endpoint) built in about 570 ms. This step uses no CypherLite.
+**5.1 The build-time step is a static endpoint over the content collection.** `src/pages/graph.json.ts` reads the `pages` collection (`getCollection`), pulls internal links out of each entry's raw Markdown body, and returns `{pages, links}`. Astro writes it to `dist/graph.json` at build time, and the dev server serves it from the same code. For the 11 sample pages it produced 27 links, which matches the links in the Markdown by hand count; the file is 1,237 bytes. The whole site (13 pages including the endpoint) built in about 570 ms. This step uses no Relate.
 
 **5.2 Delivery is replay.** The island opens a fresh instance, creates an index on `Page.id`, and runs two fixed `UNWIND` statements over the JSON (the best route from step 1). Everything needed to query the graph is the module binary plus that JSON.
 
@@ -98,8 +98,8 @@ Environment: Astro 7.4.4 (Vite-based), Node 24.14.1, CypherLite 0.14.0 built fro
 
 ## 6. Conclusion
 
-- **§7.3 (how a graph reaches the instance).** For a content site, ship the graph as JSON and load it with fixed `UNWIND` statements. It is small (about 0.9 MB raw and 143 KB gzipped for 5,000 pages), needs no CypherLite at build time, and loads in about 0.2 s for 1,000 pages and 0.5 s for 5,000 on the main thread. The index on the lookup property matters (step 1: without it, 1,000 pages took about 6 s). Whether a worker removes the main-thread block is the next thing to measure.
-- **§7.8 (native checkpoint into WASM).** Not workable through any public API (step 1). The build does not need native CypherLite; native matters only where a graph is built or queried on a server.
+- **§7.3 (how a graph reaches the instance).** For a content site, ship the graph as JSON and load it with fixed `UNWIND` statements. It is small (about 0.9 MB raw and 143 KB gzipped for 5,000 pages), needs no Relate at build time, and loads in about 0.2 s for 1,000 pages and 0.5 s for 5,000 on the main thread. The index on the lookup property matters (step 1: without it, 1,000 pages took about 6 s). Whether a worker removes the main-thread block is the next thing to measure.
+- **§7.8 (native checkpoint into WASM).** Not workable through any public API (step 1). The build does not need native Relate; native matters only where a graph is built or queried on a server.
 - **§7.7 (bundler handling).** In a Vite-based framework the adapter needed nothing beyond importing the package: the default lookup and the explicit URL both work, and an out-of-tree symlink does not break the build. This contrasts with Observable Framework, where the adapter had to place the binary and pass its URL. The core's asset-location input is still worth keeping for frameworks that do not rewrite the lookup. Other Vite-based frameworks are likely similar, but only Astro was tested.
 - **§7.1 (size and start-up).** 5.97 MB uncompressed, 1.46 MB brotli; initialization took 16–37 ms with the binary already local. A cold network fetch was not measured.
 

@@ -10,7 +10,7 @@ created: 2026-11-02
 
 ## 1. Context
 
-The browser build of CypherLite (Neo4j Labs' embedded property-graph database) has no way to import a snapshot. Every graph it holds is built by running statements, so a graph has to arrive as plain data that a loader replays through a fixed set of parameterized statements. Replaying a site's pages and links this way took about 0.16 s at 1,000 pages and 2.2 s at 20,000 on the main thread.
+The browser build of Relate (Neo4j Labs' embedded property-graph database) has no way to import a snapshot. Every graph it holds is built by running statements, so a graph has to arrive as plain data that a loader replays through a fixed set of parameterized statements. Replaying a site's pages and links this way took about 0.16 s at 1,000 pages and 2.2 s at 20,000 on the main thread.
 
 Two kinds of producer write that data, and they share nothing else:
 
@@ -21,7 +21,7 @@ The loader in the shared core package needs one input that serves both. The meas
 
 A property graph has more structure than most JSON graph formats carry: a node has any number of labels, a relationship has exactly one type, and both have named properties. The most widely produced format for graphs in JSON is the node-link form that D3 popularized: a `nodes` array and a `links` array whose entries name their endpoints. It is simple and any tool can emit it. It stores properties flat on the node or link, beside `id`, `source` and `target`, so a reader cannot tell which keys are properties and which are structure without knowing the convention. D3 also overwrites `source` and `target` with node objects, and adds `x`, `y` and velocity keys, when a force simulation runs.
 
-CypherLite's own bulk-write path (ADR-0155 in its repository) already loads nodes from rows holding labels and properties with `UNWIND $rows AS row CREATE (n:$(row.labels))`, so labels can be supplied as data and the loader's statements stay fixed.
+Relate's own bulk-write path (ADR-0155 in its repository) already loads nodes from rows holding labels and properties with `UNWIND $rows AS row CREATE (n:$(row.labels))`, so labels can be supplied as data and the loader's statements stay fixed.
 
 ## 2. Decision
 
@@ -85,7 +85,7 @@ A validator in the core package checks a document against these rules and report
 
 A node becomes one graph node with its labels, the entries of `properties`, and the `id` property. A link becomes one relationship of the given type from the source node to the target node, with the entries of `properties`. Labels and relationship types are applied as data (dynamic labels and types), so the loader's statements do not depend on which labels a document uses.
 
-Link endpoints are resolved through the element ids (the engine's internal identifiers for nodes and relationships) that the engine returns for the node batch, the pattern in CypherLite's own bulk loader (ADR-0155). The loader keeps a map from node `id` to element id for the duration of one load, so no label or index takes part in resolving an endpoint.
+Link endpoints are resolved through the element ids (the engine's internal identifiers for nodes and relationships) that the engine returns for the node batch, the pattern in Relate's own bulk loader (ADR-0155). The loader keeps a map from node `id` to element id for the duration of one load, so no label or index takes part in resolving an endpoint.
 
 The loader creates only the indexes it is told to: those in the descriptor's `indexes` (ADR-003), or those the caller names when the graph has no descriptor. They are created before the nodes are loaded.
 
@@ -102,8 +102,8 @@ The order and size of the loader's batches, chosen at implementation against the
 - **NetworkX node-link form.** Rejected: it also keeps attributes flat beside the structural keys, and its `directed` and `multigraph` flags add nothing here, since links are always directed and may repeat.
 - **JSON Graph Format.** Rejected: it gives each node a single `label`, where a property graph has several labels per node.
 - **Cytoscape elements or graphology's serialization.** Rejected: both are shaped by their visualization libraries and keep properties in tool-specific bags.
-- **CypherLite's bulk-write row shape** (`labels`, `props`, and the engine's element ids for endpoints). Rejected as the document: a producer cannot know element ids before the load, and the shape has no document-level version or revision. The loader converts a document into these rows internally.
-- **A Cypher script (or gram, a text notation for graphs that CypherLite can render results in) as the only input.** Rejected for generated data: a 20,000-page graph becomes a very large script, and a build step that wants to emit nodes and links must format statements. A script remains a possible second way to seed a small, hand-written page graph.
+- **Relate's bulk-write row shape** (`labels`, `props`, and the engine's element ids for endpoints). Rejected as the document: a producer cannot know element ids before the load, and the shape has no document-level version or revision. The loader converts a document into these rows internally.
+- **A Cypher script (or gram, a text notation for graphs that Relate can render results in) as the only input.** Rejected for generated data: a 20,000-page graph becomes a very large script, and a build step that wants to emit nodes and links must format statements. A script remains a possible second way to seed a small, hand-written page graph.
 - **Flat properties with a documented list of reserved keys.** Rejected: the list has to be learned before a document can be read, and a key added to it later would change the meaning of existing data.
 
 ## 4. Consequences
@@ -115,7 +115,7 @@ The order and size of the loader's batches, chosen at implementation against the
 - ADR-001 2.1 describes an index on the lookup property created before the links are loaded, which assumed a known label. Resolving endpoints through element ids removes that need for loading, so indexes serve queries only, and which labels get an `id` index is the descriptor's choice, or the caller's when there is no descriptor. The loader's first test is that this keeps loading near the figures in ADR-001 (0.6 s at 5,000 pages on the main thread, 1.4 s in the worker).
 - Verified in Node against the engine build used in the spikes (single runs, main thread): dynamic labels and relationship types and the element-id lookup, loading 1,000 pages in 156 ms, 5,000 in 604 ms and 20,000 in 2,484 ms.
 - Verified in Chromium, Firefox and WebKit through the core package's tests (single runs, headless, in a worker, the data fetched by the worker): 5,000 pages ready in 632, 730 and 659 ms and 20,000 pages in 2,268, 2,745 and 2,265 ms, with the page's longest unresponsive interval during the 20,000-page load at 4.7, 6.0 and 25 ms.
-- Not verified: the cost of validating a 20,000-node document with embeddings; how CypherLite's vector search expects an embedding to be stored, which the site-graph RFC has to settle.
+- Not verified: the cost of validating a 20,000-node document with embeddings; how Relate's vector search expects an embedding to be stored, which the site-graph RFC has to settle.
 - Follow-up: the site-graph RFC defines its schema as a profile of this format; batch size and order of loading, chosen at implementation once measured; optionally a published JSON Schema for editors and build tools.
 - RFC questions this decision informs: RFC-001 7.3 (the form replay takes as input; it does not answer the replay-cost questions) and RFC-002 7.3 (the form of page graph data; the cookbook's recipe form and whether it should carry the same data stay open).
 
@@ -124,7 +124,7 @@ The order and size of the loader's batches, chosen at implementation against the
 - RFCs: RFC-001, RFC-002
 - ADRs: ADR-001 (the loader runs in its worker host), ADR-003 (the descriptor that carries a graph's revision and index list)
 - Evidence: `design/spikes/SPIKE-002-astro-build-time-graph/SPIKE.md` and `design/spikes/SPIKE-004-worker-hosting-and-faults/SPIKE.md` (replay costs for a fixed pages-and-links shape)
-- In the CypherLite repository: ADR-0155 (bulk writes through batched `UNWIND`)
+- In the Relate repository: ADR-0155 (bulk writes through batched `UNWIND`)
 - Evidence for the amendment: `specs/001-core-package/research.md` (R2 for loading and number arrays)
 
 ## 6. Amendments

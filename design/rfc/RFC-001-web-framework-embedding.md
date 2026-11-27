@@ -1,16 +1,16 @@
 ---
 id: RFC-001
-title: Embedding CypherLite in Web Frameworks
+title: Embedding Relate in Web Frameworks
 status: accepted
 created: 2026-11-01
 adrs: [ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, ADR-009]
 ---
 
-# RFC-001: Embedding CypherLite in Web Frameworks
+# RFC-001: Embedding Relate in Web Frameworks
 
 ## 1. Summary
 
-CypherLite is an embedded property graph database queried with Cypher. In the browser it is available only as a WebAssembly (WASM) module. Outside the browser it is also available as a native library for Node with durable local storage, and it can be served over HTTP. Web frameworks, from static site generators to full-stack frameworks, run code in several different places (at build time, on a server, in the page), and each has its own way of bundling, serving, and hydrating assets. The first frameworks in scope are Observable Framework and Astro (both already measured), followed by Next, Nuxt and SvelteKit. Putting a database into a website therefore raises a hosting question before any feature work starts: where does the database instance live, who loads it, and what data does it start with?
+Relate is an embedded property graph database queried with Cypher. In the browser it is available only as a WebAssembly (WASM) module. Outside the browser it is also available as a native library for Node with durable local storage, and it can be served over HTTP. Web frameworks, from static site generators to full-stack frameworks, run code in several different places (at build time, on a server, in the page), and each has its own way of bundling, serving, and hydrating assets. The first frameworks in scope are Observable Framework and Astro (both already measured), followed by Next, Nuxt and SvelteKit. Putting a database into a website therefore raises a hosting question before any feature work starts: where does the database instance live, who loads it, and what data does it start with?
 
 The organizing claim is that the answer should be settled once, as a shared core, and expressed in each framework as a thin adapter. The alternative, working out hosting separately for every framework, repeats the hardest decisions several times and produces integrations that behave differently from each other.
 
@@ -30,15 +30,15 @@ The facts of the distributions shape every option. Browser constraints come from
 - **A worker removes the page freeze but delays the graph, and a fault costs a full reload of the data.** Replaying a content graph in a dedicated worker left the page's timer undisturbed (largest gap 5–9 ms at 1,000, 5,000 and 20,000 pages), where main-thread replay froze it for 0.16 s, 0.6 s and 2.2 s. The same replay took 1.8–2.8× longer in the worker (about 1.4 s at 5,000 pages and 6.3 s at 20,000). A statement with about a thousand nested parentheses traps the engine, and a runaway query has to be stopped by terminating the worker; replacing the worker and replaying took as long as a first load (0.3 s, 1.5 s and 6.8 s at those sizes).
 - **A stored graph restores faster than a replay, for one tab.** Opening the origin-private store in a dedicated worker restored 5,000 pages in about 0.35 s and 20,000 in 1.3 s, against 1.4 s and 6.3 s to replay in the worker. A second tab could not open a store the first tab held, and a worker terminated mid-query kept the store locked for about 2.3 s.
 - **Server and browser renders can disagree once an instance outlives the page.** A component that read the instance's answer during its first render matched the server output on a full page load and mismatched it (a React text-content error) on the first client-side navigation after the instance was ready. A component that rendered a placeholder first did not mismatch.
-- **The module is large for a content page.** The release WASM module of CypherLite 0.14.0 is 5,973,771 bytes raw, about 2.1 MB gzipped and 1.5 MB brotli-compressed. It initialized in 16–37 ms in a browser with the binary on localhost, which says nothing about a cold fetch over a real network; the preview server used for the measurement did not compress the binary.
+- **The module is large for a content page.** The release WASM module of Relate 0.14.0 is 5,973,771 bytes raw, about 2.1 MB gzipped and 1.5 MB brotli-compressed. It initialized in 16–37 ms in a browser with the binary on localhost, which says nothing about a cold fetch over a real network; the preview server used for the measurement did not compress the binary.
 - **Results need reshaping.** In the same integration the statement result could not be handed to other components as is: row keys arrived alphabetical, not in column order (an open upstream issue); graph entities arrive tagged and paths as alternating node and relationship arrays; and an engine error arrives in-band as a reduced result with no column types. After normalizing those, the results were consumed unchanged by charting, input, table, aggregation and SQL components.
 - **Runtimes differ in what each distribution can do.** A static build step, a Node server, a serverless function, and an edge runtime each constrain module size, startup time, available threads, filesystem access, and whether platform-specific native binaries can be loaded at all. A website built on a framework that spans several of these runtimes cannot assume one environment or one distribution.
 
-The facts about how each distribution behaves are documented in CypherLite's WASM API contract (`docs/api/wasm/spec.md`), its decisions on the browser file store (ADR-0145) and the size-optimized build (ADR-0100), and the description of the Node package (`docs/api/javascript/description.md`). The observed bundler failures, the size figures and the result-shape findings come from an integration with Observable Framework, recorded in SPIKE-001 (`design/spikes/SPIKE-001-observable-framework-wasm/SPIKE.md`). The Vite-based bundler behavior, the absence of a snapshot import, and the replay measurements come from a build-time content graph in an Astro site, recorded in SPIKE-002 (`design/spikes/SPIKE-002-astro-build-time-graph/SPIKE.md`). The lifetime, overlay and hydration measurements come from the same Astro site with client-side routing, recorded in SPIKE-003 (`design/spikes/SPIKE-003-astro-client-side-navigation/SPIKE.md`). The worker, store and fault measurements come from the same site with a dedicated worker, recorded in SPIKE-004 (`design/spikes/SPIKE-004-worker-hosting-and-faults/SPIKE.md`). The survival of the worker client across route changes comes from SPIKE-005 (`design/spikes/SPIKE-005-worker-survival-across-navigation/SPIKE.md`).
+The facts about how each distribution behaves are documented in Relate's WASM API contract (`docs/api/wasm/spec.md`), its decisions on the browser file store (ADR-0145) and the size-optimized build (ADR-0100), and the description of the Node package (`docs/api/javascript/description.md`). The observed bundler failures, the size figures and the result-shape findings come from an integration with Observable Framework, recorded in SPIKE-001 (`design/spikes/SPIKE-001-observable-framework-wasm/SPIKE.md`). The Vite-based bundler behavior, the absence of a snapshot import, and the replay measurements come from a build-time content graph in an Astro site, recorded in SPIKE-002 (`design/spikes/SPIKE-002-astro-build-time-graph/SPIKE.md`). The lifetime, overlay and hydration measurements come from the same Astro site with client-side routing, recorded in SPIKE-003 (`design/spikes/SPIKE-003-astro-client-side-navigation/SPIKE.md`). The worker, store and fault measurements come from the same site with a dedicated worker, recorded in SPIKE-004 (`design/spikes/SPIKE-004-worker-hosting-and-faults/SPIKE.md`). The survival of the worker client across route changes comes from SPIKE-005 (`design/spikes/SPIKE-005-worker-survival-across-navigation/SPIKE.md`).
 
 Each framework layers its own behavior on top. A static site generator has a build step where data can be prepared but no server at request time. A full-stack framework can render on a server and then hydrate in the browser, so the same component may run in two runtimes. Client-side navigation keeps one page alive across route changes, while a multi-page site reloads and re-instantiates everything on each navigation.
 
-The integrations exist to show CypherLite running inside real websites, starting with its own. A design that hides the database behind precomputed data does not meet that purpose, so the browser instance is a requirement, not an optimization.
+The integrations exist to show Relate running inside real websites, starting with its own. A design that hides the database behind precomputed data does not meet that purpose, so the browser instance is a requirement, not an optimization.
 
 Two uses of the database sharpen the problem. Consider a documentation page that embeds a query result drawn from its own content, while a navigation element on the same page needs the whole site's graph. In that scenario the page's own graph wants an instance close to the page, and the site-wide graph, shared by every page and by navigation, wants to be loaded once and reused. If each page instantiates the module and loads the site data independently, a visitor pays startup and download cost on every navigation. If one instance is shared, something has to own its lifetime across pages, and a fault in it affects everything that depends on it.
 
@@ -46,9 +46,9 @@ Without an agreed hosting model, every integration becomes its own investigation
 
 ## 3. Goals
 
-- Identify the independent decisions that make up "hosting CypherLite in a web page" so each can be settled and revisited separately.
+- Identify the independent decisions that make up "hosting Relate in a web page" so each can be settled and revisited separately.
 - Define a shared core that every framework adapter builds on. Every adapter passes the same conformance check, run against a small shared example website that exercises per-page queries, a shared graph, and failure of the database to load, without adding its own decisions about instance lifetime, fault handling, or data delivery.
-- Cover every runtime a framework may execute in (build time, server, and browser, including worker and main-thread variants) and every CypherLite distribution available in each.
+- Cover every runtime a framework may execute in (build time, server, and browser, including worker and main-thread variants) and every Relate distribution available in each.
 - Describe how a per-page graph and a site-wide graph coexist, including who owns instance lifetime across navigation.
 - Make fault containment, page weight, and first-load latency explicit evaluation criteria.
 - Produce a list of empirical questions suitable for time-boxed spikes.
@@ -58,8 +58,8 @@ Without an agreed hosting model, every integration becomes its own investigation
 - Choosing a hosting approach. That is the job of spikes and the decision records that follow them.
 - The structure of the site-wide graph, how page content becomes graph data, and vector embeddings. These are a separate problem that depends on the hosting model but not the reverse.
 - The design of the navigation element and its language interface.
-- Changes to CypherLite itself. Where an integration needs something the database does not provide, the need is recorded and raised with the database's maintainers.
-- Deployments where a page queries a separately hosted CypherLite instance over the network. The scope is the embedded, in-process case; a served instance is considered only as a comparison point and as a possible build-time tool.
+- Changes to Relate itself. Where an integration needs something the database does not provide, the need is recorded and raised with the database's maintainers.
+- Deployments where a page queries a separately hosted Relate instance over the network. The scope is the embedded, in-process case; a served instance is considered only as a comparison point and as a possible build-time tool.
 
 ## 5. Proposed Approach (high-level)
 
@@ -102,10 +102,10 @@ These apply regardless of which axis values are chosen:
 ## 6. Alternatives Considered
 
 - **Per-framework integrations with no shared core.** Rejected: each framework would resolve instance lifetime, fault handling, and data delivery on its own, and the integrations would diverge.
-- **A hosted CypherLite server that pages query over the network.** Rejected for the browser-facing path: it removes the embedded, no-server property that is the reason to showcase the database on a website, and requires infrastructure that static hosting cannot provide. It remains relevant as a comparison point for latency and capability.
+- **A hosted Relate server that pages query over the network.** Rejected for the browser-facing path: it removes the embedded, no-server property that is the reason to showcase the database on a website, and requires infrastructure that static hosting cannot provide. It remains relevant as a comparison point for latency and capability.
 - **WASM everywhere, including build time and server.** Kept as one value of the distribution axis rather than rejected outright. It gives one code path, at the cost of the native library's durable storage and without its size and storage advantages.
 - **Native library at build time and on the server, WASM only in the browser.** Kept as the leading hybrid to evaluate. The two builds cannot exchange checkpoints (7.8), but a build step needs no database to produce data the browser replays, so the native library's role narrows to graphs built or queried on a server.
-- **Embedding the existing CypherLite playground per page.** Kept as a comparison point for the per-page graph, since it is the cheapest way to put a live graph in a page. Likely rejected for the site-wide graph: it offers no way to share an instance or data with the rest of the page or site.
+- **Embedding the existing Relate playground per page.** Kept as a comparison point for the per-page graph, since it is the cheapest way to put a live graph in a page. Likely rejected for the site-wide graph: it offers no way to share an instance or data with the rest of the page or site.
 - **Build-time only, with no browser instance.** Kept as one end of the "where it runs" axis rather than rejected outright. It covers static content well but gives up per-page interactivity and any query driven by the visitor.
 - **Compiling the site's data into plain structures and skipping the database in the browser.** Rejected: it forgoes the demonstration of the database itself, which is the purpose of the integration.
 

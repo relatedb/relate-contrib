@@ -1,14 +1,14 @@
 ---
 id: SPIKE-001
-title: CypherLite WASM in Observable Framework
+title: Relate WASM in Observable Framework
 status: done
 rfcs: [RFC-001]
 created: 2026-11-01
 ---
 
-# SPIKE-001: CypherLite WASM in Observable Framework
+# SPIKE-001: Relate WASM in Observable Framework
 
-The spike was first done in a separate, throwaway local project (`observable-graph`, an Observable Framework app embedding a peer checkout of the then-unreleased CypherLite WASM build). That project is not kept; its own `CLAUDE.md` notes are the source for findings 4.1–4.5. The work was then reproduced in [observable-graph/](observable-graph/), and finding 4.6 records what the reproduction confirmed and added. Anything the sources do not state is marked as not recorded.
+The spike was first done in a separate, throwaway local project (`observable-graph`, an Observable Framework app embedding a peer checkout of the then-unreleased Relate WASM build). That project is not kept; its own `CLAUDE.md` notes are the source for findings 4.1–4.5. The work was then reproduced in [observable-graph/](observable-graph/), and finding 4.6 records what the reproduction confirmed and added. Anything the sources do not state is marked as not recorded.
 
 ## 1. Question
 
@@ -18,9 +18,9 @@ The two open questions are answered together here because they were encountered 
 
 ## 2. Method
 
-**Original run:** not recorded in detail. The source notes establish an Observable Framework app with the CypherLite WASM package built from a peer checkout and copied into the app's dependencies, a small client module, and results shaped for a force-directed graph and Observable's input and table components. Where the instance ran and whether persistence was used: not recorded.
+**Original run:** not recorded in detail. The source notes establish an Observable Framework app with the Relate WASM package built from a peer checkout and copied into the app's dependencies, a small client module, and results shaped for a force-directed graph and Observable's input and table components. Where the instance ran and whether persistence was used: not recorded.
 
-**Reproduction:** `observable-graph/` in this directory. The release WASM package is built from the local CypherLite checkout at version 0.14.0 with output and the cargo target directory kept outside the checkout (the package is not on npm). The app is Observable Framework 1.13.4 on Node 24.14.1 and npm 11.11.1 (macOS, arm64), with a client module that initializes the database on the main thread, a normalization module, a d3 force graph, a demo page with sample queries, and a probe page that prints raw envelopes. Checks: the pages in a browser, seven Node tests running the real engine through the normalization code (`npm test`), a production `observable build`, and three scratch copies of the app varying how the package is installed (finding 4.1).
+**Reproduction:** `observable-graph/` in this directory. The release WASM package is built from the local Relate checkout at version 0.14.0 with output and the cargo target directory kept outside the checkout (the package is not on npm). The app is Observable Framework 1.13.4 on Node 24.14.1 and npm 11.11.1 (macOS, arm64), with a client module that initializes the database on the main thread, a normalization module, a d3 force graph, a demo page with sample queries, and a probe page that prints raw envelopes. Checks: the pages in a browser, seven Node tests running the real engine through the normalization code (`npm test`), a production `observable build`, and three scratch copies of the app varying how the package is installed (finding 4.1).
 
 ## 3. Time-box
 
@@ -44,7 +44,7 @@ Findings 4.1–4.5 are sourced from the original project's `CLAUDE.md` ("Gotchas
 
 **4.5 Visualization convention.** The client flattens results into `{nodes: [{id, label, properties}], links: [{source, target, type}]}`. The graph component copies its input because the layout library mutates it. A result with no nodes or relationships yields an empty graph, deliberately.
 
-**4.6 Reproduction results.** Environment: CypherLite 0.14.0 built from a local checkout, Observable Framework 1.13.4, Node 24.14.1, macOS arm64.
+**4.6 Reproduction results.** Environment: Relate 0.14.0 built from a local checkout, Observable Framework 1.13.4, Node 24.14.1, macOS arm64.
 
 - **Build.** The release build needed `wasm-bindgen-cli` 0.2.128 (the version the checkout's lockfile pins), binaryen (version 133 installed) and the `wasm32-unknown-unknown` target for the checkout's pinned Rust toolchain. With those in place the cargo step took about 37 seconds. Output and the cargo target directory were redirected so the checkout stayed unmodified.
 - **Size.** The release module is 5,973,771 bytes raw, 2,070,478 gzipped and 1,459,013 brotli-compressed. The checkout's build script describes release bundles as "~4.3 MB / ~1.0 MB brotli", so the measured size is larger than its own estimate.
@@ -82,7 +82,7 @@ Findings 4.1–4.5 are sourced from the original project's `CLAUDE.md` ("Gotchas
 
 **Text for the RFC.** Suggested wording for RFC-001's open questions, applied manually:
 
-> 7.1 (partial answer, SPIKE-001): the release WASM module (CypherLite 0.14.0) is 5.97 MB raw, 2.07 MB gzipped and 1.46 MB brotli-compressed; main-thread initialization took 16–34 ms on localhost. Cold-network start-up is unmeasured.
+> 7.1 (partial answer, SPIKE-001): the release WASM module (Relate 0.14.0) is 5.97 MB raw, 2.07 MB gzipped and 1.46 MB brotli-compressed; main-thread initialization took 16–34 ms on localhost. Cold-network start-up is unmeasured.
 >
 > 7.7 (partial answer, SPIKE-001): under Observable Framework the bundler does not emit the `.wasm` file, so the adapter supplied a static-asset URL through the framework's file-attachment mechanism and passed it to the initializer explicitly; the default relative lookup returned a 404. A core input for the asset location is sufficient for this framework; other bundlers remain untested.
 >
