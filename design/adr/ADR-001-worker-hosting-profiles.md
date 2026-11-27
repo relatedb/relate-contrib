@@ -10,7 +10,7 @@ created: 2026-11-01
 
 ## 1. Context
 
-The browser build of CypherLite is an in-memory database that lives as long as the page or worker that created it. A website's graph (pages and the links between them) has to be loaded into it on every start, and that load costs time in proportion to the graph: replaying 1,000, 5,000 and 20,000 pages through two fixed statements took about 0.16 s, 0.6 s and 2.2 s on the main thread, which is synchronous and freezes the page for that long. In a dedicated worker the page stayed responsive (the longest gap in a 4 ms timer was 5–9 ms at every size), but the load took 1.8–2.8× as long (about 1.4 s at 5,000 pages, 6.3 s at 20,000).
+The browser build of Relate is an in-memory database that lives as long as the page or worker that created it. A website's graph (pages and the links between them) has to be loaded into it on every start, and that load costs time in proportion to the graph: replaying 1,000, 5,000 and 20,000 pages through two fixed statements took about 0.16 s, 0.6 s and 2.2 s on the main thread, which is synchronous and freezes the page for that long. In a dedicated worker the page stayed responsive (the longest gap in a 4 ms timer was 5–9 ms at every size), but the load took 1.8–2.8× as long (about 1.4 s at 5,000 pages, 6.3 s at 20,000).
 
 How long an instance can live depends on how the site navigates. With client-side routing one page stays alive across route changes, and a main-thread instance kept in module state served every navigation at about 20 ms. A multi-page site discards the page, and the instance with it, on every navigation. A shared worker did not help a single visitor in one tab: it ended when the old page closed, before the new page connected, so five navigations produced five instances. It also cannot open the origin-private store (the browser's per-origin private file storage, OPFS), which exists only in dedicated workers.
 
@@ -18,7 +18,7 @@ That store restored a 5,000-page graph in about 0.35 s and a 20,000-page graph i
 
 Two faults can end an instance. A statement with about a thousand nested parentheses traps the engine, and so did a cartesian `count(*)` over 5,000 pages; the trapped instance is unusable, and the second error it throws is not classified as a trap by the bundle's own check, `isWasmTrap`. A runaway statement (a three-way cartesian `count(*)`) has no limit of its own and can only be stopped by terminating the worker.
 
-RFC-001 sets out these as independent axes (where the instance runs, what it starts with, how long it lives, how faults are contained). It also proposes a shared core, the package every framework adapter builds on, with a thin adapter per framework that wires the core into that framework's build and rendering. The same instance also serves a different use: a graph that belongs to a single page and has nothing to do with the site's content (a notebook of Cypher examples, a page encoded as a graph, a dashboard driven by data in the page). CypherLite's cookbook already runs page graphs this way: its engine lives in a module worker that starts on the first click of Run, and its Stop control terminates that worker. This decision fixes one hosting model that covers sites with and without client-side routing, and the host and fault handling that page graphs share.
+RFC-001 sets out these as independent axes (where the instance runs, what it starts with, how long it lives, how faults are contained). It also proposes a shared core, the package every framework adapter builds on, with a thin adapter per framework that wires the core into that framework's build and rendering. The same instance also serves a different use: a graph that belongs to a single page and has nothing to do with the site's content (a notebook of Cypher examples, a page encoded as a graph, a dashboard driven by data in the page). Relate's cookbook already runs page graphs this way: its engine lives in a module worker that starts on the first click of Run, and its Stop control terminates that worker. This decision fixes one hosting model that covers sites with and without client-side routing, and the host and fault handling that page graphs share.
 
 ## 2. Decision
 
@@ -106,7 +106,7 @@ Where the `.wasm` binary is served from and how it is handed to the worker, how 
 
 - RFCs: RFC-001
 - Evidence: `design/spikes/SPIKE-003-astro-client-side-navigation/SPIKE.md`, `design/spikes/SPIKE-004-worker-hosting-and-faults/SPIKE.md`, `design/spikes/SPIKE-005-worker-survival-across-navigation/SPIKE.md`
-- Prior art for page graphs, in the CypherLite repository: ADR-0130 (tested recipes with in-page cells run in a module worker), ADR-0151 (graph view with node expansion from the page's database)
+- Prior art for page graphs, in the Relate repository: ADR-0130 (tested recipes with in-page cells run in a module worker), ADR-0151 (graph view with node expansion from the page's database)
 
 ## 6. Amendments
 

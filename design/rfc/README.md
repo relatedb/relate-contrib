@@ -64,7 +64,7 @@ Use `/rfc-review` before moving a draft to `review`/`accepted`.
 
 | RFC | Title | Status | ADRs |
 |---|---|---|---|
-| [RFC-001](RFC-001-web-framework-embedding.md) | Embedding CypherLite in Web Frameworks | accepted | ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, ADR-009 |
+| [RFC-001](RFC-001-web-framework-embedding.md) | Embedding Relate in Web Frameworks | accepted | ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, ADR-009 |
 | [RFC-002](RFC-002-page-graphs.md) | Page Graphs | draft | ADR-002, ADR-004, ADR-005, ADR-006, ADR-007 |
 | [RFC-003](RFC-003-site-graph.md) | The Site Graph | draft | |
 | [RFC-005](RFC-005-community-integrations.md) | Integrations for Community Projects and Hackathons | draft | ADR-008, ADR-011, ADR-012 |

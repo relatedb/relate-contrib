@@ -10,7 +10,7 @@ created: 2026-11-01
 
 ## 1. Question
 
-On an Astro site that uses client-side routing, can one browser CypherLite instance stay alive across page changes, and what does each lifetime option cost and require?
+On an Astro site that uses client-side routing, can one browser Relate instance stay alive across page changes, and what does each lifetime option cost and require?
 
 Parent open questions in RFC-001:
 

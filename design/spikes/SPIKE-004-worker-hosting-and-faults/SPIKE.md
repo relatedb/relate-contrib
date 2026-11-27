@@ -10,7 +10,7 @@ created: 2026-11-01
 
 ## 1. Question
 
-Does hosting the browser CypherLite instance in a dedicated worker remove the main-thread block caused by replaying the site graph, what does each query cost across the message boundary, and how is a trapped or runaway instance replaced without losing the page or the state of components that depend on it?
+Does hosting the browser Relate instance in a dedicated worker remove the main-thread block caused by replaying the site graph, what does each query cost across the message boundary, and how is a trapped or runaway instance replaced without losing the page or the state of components that depend on it?
 
 Parent open questions in RFC-001:
 
@@ -24,7 +24,7 @@ Out of scope: embeddings and the navigation element.
 
 ## 2. Method
 
-0. **Read the guidance first (first hour).** In the local CypherLite checkout, read what it says about workers and traps (`docs/api/wasm/spec.md`, the bundled trap helper, the `examples/wasm-playground` worker) and work out how to provoke a trap on purpose. If no query provokes one, record that and use terminating the worker as the stand-in for a crash.
+0. **Read the guidance first (first hour).** In the local Relate checkout, read what it says about workers and traps (`docs/api/wasm/spec.md`, the bundled trap helper, the `examples/wasm-playground` worker) and work out how to provoke a trap on purpose. If no query provokes one, record that and use terminating the worker as the stand-in for a crash.
 1. **Set up.** Copy SPIKE-003's `astro-nav` into this spike's directory as `astro-worker`. Add a dedicated-worker host with an async query interface, owned by a persisted island or a module-level singleton under client-side routing. The worker fetches the binary and the graph itself (fetch worked in a dedicated worker in SPIKE-003).
 2. **Main thread against worker** at 1,000 pages, 5,000 pages and a larger synthetic graph. Measure main-thread blocking during load (long tasks, and frame gaps while an animation runs), time to first query, and the per-query round trip for small and large results.
 3. **Faults.** Provoke a trap and a runaway query. Measure the time to replace the worker and replay at each graph size, and what a component with registered queries sees (error state, recovery, retries). Design the smallest interface the adapter must expose, for example an instance generation counter and re-running of registered queries. Terminate a runaway query by terminating the worker and measure it.
@@ -37,7 +37,7 @@ One working day. If no query provokes a trap, spend the time on worker terminati
 
 ## 4. Notes
 
-- 2026-11-01, step 0. CypherLite's WASM contract says a Rust panic traps the module, the instance is unusable afterwards, and the remedy is a new worker or a page reload; `isWasmTrap` (shipped as `trap.js`) classifies an error by type and by message. A trap can be provoked on purpose (see 5.3). Probed in Node with `scripts/trap.mjs`.
+- 2026-11-01, step 0. Relate's WASM contract says a Rust panic traps the module, the instance is unusable afterwards, and the remedy is a new worker or a page reload; `isWasmTrap` (shipped as `trap.js`) classifies an error by type and by message. A trap can be provoked on purpose (see 5.3). Probed in Node with `scripts/trap.mjs`.
 - 2026-11-01, setup. The site is a copy of SPIKE-003's `astro-nav` (`astro-worker/`), with a dedicated worker and a client that replaces it after a fault.
 - 2026-11-01, measurement. The embedded browser did not render the page during these runs, so `requestAnimationFrame` never fired and `PerformanceObserver` reported no long tasks. Main-thread blocking was measured with a 4 ms timer heartbeat instead (largest gap between ticks), which does not depend on rendering. The first main-thread run of the session was slower than later ones (1,000-page replay 388 ms against 160 ms), so differences under about 2× in the single runs below are not reliable.
 - 2026-11-01, client-side router swaps stalled in the embedded browser again (as in SPIKE-003), so navigation timing under a loading or recovering worker was not measured (see 5.5).
@@ -75,7 +75,7 @@ The same worker, opening an origin-private store (`CypherliteDb.open("opfs://nam
 - A repeat visit restored every page and link (5,000 and 25,000; 20,000 and 100,000). Opening took 328–333 ms at 5,000 pages and 1,301 ms at 20,000: 4–5× faster than replaying in the worker and about 2× faster than replaying on the main thread, without blocking it (largest gap 9.4 ms).
 - Restoring is not free, and its cost grows with the graph.
 - A stored graph can be stale after a deploy changes the content. Not tested; the page would have to compare a version or content hash.
-- **One tab at a time:** a second tab that opened the same store while the first held it failed with `storage locked: opfs://s5000`, as the CypherLite contract describes. A shared-worker design (SPIKE-003) cannot use it either, since the store opens only in a dedicated worker.
+- **One tab at a time:** a second tab that opened the same store while the first held it failed with `storage locked: opfs://s5000`, as the Relate contract describes. A shared-worker design (SPIKE-003) cannot use it either, since the store opens only in a dedicated worker.
 
 ### 5.3 Provoking a trap (§7.2, §5.2 fault containment)
 
