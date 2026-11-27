@@ -1,5 +1,11 @@
 # @relate/contrib-nextjs
 
+## 0.1.5
+
+### Patch Changes
+
+- f1355d7: Supports engine 1.4.0.
+
 ## 0.1.4
 
 ### Patch Changes
