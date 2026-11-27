@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@relate/relate-wasm':
-      specifier: 1.3.0
-      version: 1.3.0
+      specifier: 1.4.0
+      version: 1.4.0
 
 importers:
 
@@ -71,7 +71,7 @@ importers:
         version: 1.64.1
       '@relate/relate-wasm':
         specifier: 'catalog:'
-        version: 1.3.0
+        version: 1.4.0
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6
@@ -100,8 +100,8 @@ importers:
   packages/astro:
     dependencies:
       '@relate/relate-wasm':
-        specifier: '>=1.3.0 <1.4.0'
-        version: 1.3.0
+        specifier: '>=1.3.0 <1.5.0'
+        version: 1.4.0
     devDependencies:
       '@playwright/test':
         specifier: ^1.64.1
@@ -131,8 +131,8 @@ importers:
   packages/nextjs:
     dependencies:
       '@relate/relate-wasm':
-        specifier: '>=1.3.0 <1.4.0'
-        version: 1.3.0
+        specifier: '>=1.3.0 <1.5.0'
+        version: 1.4.0
     devDependencies:
       '@playwright/test':
         specifier: ^1.64.1
@@ -178,7 +178,7 @@ importers:
         version: link:../../web
       '@relate/relate-wasm':
         specifier: 'catalog:'
-        version: 1.3.0
+        version: 1.4.0
       next:
         specifier: ^16.4.5
         version: 16.4.5(@playwright/test@1.64.1)(@types/node@26.6.6)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -219,7 +219,7 @@ importers:
         version: link:../web
       '@relate/relate-wasm':
         specifier: 'catalog:'
-        version: 1.3.0
+        version: 1.4.0
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6
@@ -240,13 +240,13 @@ importers:
         version: 1.13.4(@types/markdown-it@14.2.0)
       '@relate/contrib-observable':
         specifier: workspace:*
-        version: file:packages/observable(@observablehq/framework@1.13.4(@types/markdown-it@14.2.0))(@relate/contrib-web@file:packages/web(@relate/relate-wasm@1.3.0))(@relate/relate-wasm@1.3.0)
+        version: file:packages/observable(@observablehq/framework@1.13.4(@types/markdown-it@14.2.0))(@relate/contrib-web@file:packages/web(@relate/relate-wasm@1.4.0))(@relate/relate-wasm@1.4.0)
       '@relate/contrib-web':
         specifier: workspace:*
-        version: file:packages/web(@relate/relate-wasm@1.3.0)
+        version: file:packages/web(@relate/relate-wasm@1.4.0)
       '@relate/relate-wasm':
         specifier: 'catalog:'
-        version: 1.3.0
+        version: 1.4.0
     dependenciesMeta:
       '@relate/contrib-observable':
         injected: true
@@ -336,7 +336,7 @@ importers:
         version: link:../web
       '@relate/relate-wasm':
         specifier: 'catalog:'
-        version: 1.3.0
+        version: 1.4.0
       '@sveltejs/adapter-node':
         specifier: ^6.0.1
         version: 6.0.1(@sveltejs/kit@3.1.1(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3)(vite@8.3.6(@types/node@26.6.6)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)))(svelte@5.57.3)(typescript@7.0.2)(vite@8.3.6(@types/node@26.6.6)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)))
@@ -378,7 +378,7 @@ importers:
         version: link:../../web
       '@relate/relate-wasm':
         specifier: 'catalog:'
-        version: 1.3.0
+        version: 1.4.0
     devDependencies:
       '@sveltejs/adapter-node':
         specifier: ^6.0.1
@@ -405,8 +405,8 @@ importers:
   packages/web:
     dependencies:
       '@relate/relate-wasm':
-        specifier: '>=1.3.0 <1.4.0'
-        version: 1.3.0
+        specifier: '>=1.3.0 <1.5.0'
+        version: 1.4.0
     devDependencies:
       '@playwright/test':
         specifier: ^1.64.1
@@ -1529,18 +1529,18 @@ packages:
     peerDependencies:
       '@observablehq/framework': ^1.13.0
       '@relate/contrib-web': '>=0.0.0 <1.0.0'
-      '@relate/relate-wasm': '>=1.3.0 <1.4.0'
+      '@relate/relate-wasm': '>=1.3.0 <1.5.0'
 
   '@relate/contrib-web@file:packages/web':
     resolution: {directory: packages/web, type: directory}
     peerDependencies:
-      '@relate/relate-wasm': '>=1.3.0 <1.4.0'
+      '@relate/relate-wasm': '>=1.3.0 <1.5.0'
 
   '@relate/relate-wasm@1.2.0':
     resolution: {integrity: sha512-RmJq36laQNR2mgI13x9ZYi9rfPEPallFUYG2lTLi7ERfeMULYf3tpo/aA4cPBEs68s9STX9EtMJvx1NpyPb2nQ==}
 
-  '@relate/relate-wasm@1.3.0':
-    resolution: {integrity: sha512-8jjuA1w7WUWF8gTFybsoRiEpzCZIKeI3nlidAgF4uqsiV4KmXEDcFiwznzNCvDa+sV4iSQQx993tOy5AHkbRnQ==}
+  '@relate/relate-wasm@1.4.0':
+    resolution: {integrity: sha512-lpnuS2iPzUaQPXNw8TRU1d53BJ122KiiOx8RTQSPAoWQvbqUqHm1xRxWpFn1tHl79azYOh+Gsje4oDHzIOV9rw==}
 
   '@rolldown/binding-android-arm-eabi@1.2.16':
     resolution: {integrity: sha512-ia3DwAs0OsMGS7+IConptSiyk9pEXkOx/AbJ2n/lAGxH3QkWQus1t8d7gnAT38FCU2sQu8lUbeR6AiZFv4JxaA==}
@@ -5227,20 +5227,20 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@relate/contrib-observable@file:packages/observable(@observablehq/framework@1.13.4(@types/markdown-it@14.2.0))(@relate/contrib-web@file:packages/web(@relate/relate-wasm@1.3.0))(@relate/relate-wasm@1.3.0)':
+  '@relate/contrib-observable@file:packages/observable(@observablehq/framework@1.13.4(@types/markdown-it@14.2.0))(@relate/contrib-web@file:packages/web(@relate/relate-wasm@1.4.0))(@relate/relate-wasm@1.4.0)':
     dependencies:
       '@observablehq/framework': 1.13.4(@types/markdown-it@14.2.0)
-      '@relate/contrib-web': file:packages/web(@relate/relate-wasm@1.3.0)
-      '@relate/relate-wasm': 1.3.0
+      '@relate/contrib-web': file:packages/web(@relate/relate-wasm@1.4.0)
+      '@relate/relate-wasm': 1.4.0
       esbuild: 0.28.2
 
-  '@relate/contrib-web@file:packages/web(@relate/relate-wasm@1.3.0)':
+  '@relate/contrib-web@file:packages/web(@relate/relate-wasm@1.4.0)':
     dependencies:
-      '@relate/relate-wasm': 1.3.0
+      '@relate/relate-wasm': 1.4.0
 
   '@relate/relate-wasm@1.2.0': {}
 
-  '@relate/relate-wasm@1.3.0': {}
+  '@relate/relate-wasm@1.4.0': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.16':
     optional: true

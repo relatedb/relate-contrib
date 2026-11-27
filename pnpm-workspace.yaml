@@ -5,9 +5,9 @@ packages:
   - "packages/observable/conformance-site"
   - "packages/sveltekit/conformance-site"
 catalog:
-  "@relate/relate-wasm": 1.3.0
+  "@relate/relate-wasm": 1.4.0
 allowBuilds:
   esbuild: true
 dedupeInjectedDeps: false # keep the conformance sites' injected copies (a registry engine would otherwise make pnpm link the packages)
 minimumReleaseAgeExclude:
-  - '@relate/relate-wasm@1.3.0'
+  - '@relate/relate-wasm@1.4.0'
