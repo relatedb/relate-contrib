@@ -209,6 +209,26 @@ afford silent loss needs a copy outside the origin (an export, a server record).
 exceeds the browser's quota, the time to migrate a large store, and the cause of the occasional write stalls seen in
 SPIKE-008. The figures in ADR-009 §6 are single runs on one machine.
 
+## Observing a client
+
+A page, a test or a tool can see what a client does and what it is. Nothing here costs anything until it is used, and nothing changes for a client that does not use it.
+
+```ts
+client.on("statement", (s) => console.log(s.origin, s.write, s.ms, s.statement));
+client.on("revision", ({ revision, generation }) => refresh());
+client.info; // { name: "app-notes", kind: "application", readOnly: false, engine: "1.4.0" }, or null before the client is ready
+```
+
+**The `statement` event** fires once for each statement the worker runs: `{ statement, ms, error, stats, write, origin }`. `ms`, `error` and `stats` are what the engine reports for the statement. `origin` says why it ran: `query`, `run`, `subscription` (a re-run of a subscribed statement) or `internal` (the client's own load, seed, migration, import, and scoped add and drop). A listener added after the client became ready sees the statements that complete after it was added; to see the load, add the listener when you create the client.
+
+**What a write is.** `write` is true exactly when some counter in the engine's `stats` is non-zero. It is read from the reply and never guessed from the Cypher text. It is only as complete as the engine's counters: the engine's tests in `tests/unit/engine-assumptions.test.ts` check that creating and deleting nodes and relationships, setting properties, adding and removing labels, and creating and dropping indexes and constraints each move a counter, and a change of some other kind that the engine does not count would not show.
+
+**Parameters** are not in the payload, because they may hold a visitor's data. A listener opts in with `client.on("statement", listener, { params: true })`; its payload then has `params`, the parameters as the JSON text sent to the engine, cut at 4 KiB, with `paramsTruncated: true` when they were cut. A listener that does not opt in never sees them, even when another does.
+
+**The revision.** `client.revision` rises by one on each statement that wrote, the client's own included, and starts again at 0 for each new instance of the engine (each new `generation`); what the client wrote while loading counts as the first of it. The `revision` event, `{ revision, generation }`, fires when it moves: once for each statement you send, and once for each of the client's own jobs (the load, an import, a scoped add or drop). A cache can drop its entries when it moves, and a tool can ask "has anything changed since I looked" by comparing two numbers. A subscription does not re-run on a revision.
+
+**The description.** `client.info` is `null` until the client is ready, then `{ name, kind, readOnly, engine }`: `kind` is `application`, `cache` (a graph with a descriptor that uses the store) or `memory`; `name` is the store's name (`app-<name>`, `rel-<id>`) and `null` for `memory`; `readOnly` is `false`; `engine` is the version of the engine the worker loaded, or `null` if the engine does not say.
+
 ## Supported browsers
 
 Tested, in the package's own suite: current Chromium, Firefox and WebKit on desktop. Mobile and older browsers

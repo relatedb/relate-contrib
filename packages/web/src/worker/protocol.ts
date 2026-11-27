@@ -1,6 +1,7 @@
 // Messages between a client and its worker. Not public API. See specs/001-core-package/contracts/worker-protocol.md.
 import type { ExportEnvelope, LossReport, MigrationStep } from "../application/types.js";
 import type { Descriptor, GraphDocument, IndexSpec } from "../data/types.js";
+import type { StatementRecord } from "../client/statements.js";
 
 /** The application half of an init message (ADR-009); everything in it is plain data. */
 export interface ApplicationInit {
@@ -34,6 +35,14 @@ export interface InitMessage {
   /** Present in application mode, where the descriptor, dataUrl, document and useStore fields are unused. */
   application?: ApplicationInit;
   attempt: number;
+  /** A page listener wants a record of the statements the worker runs itself (specs/011). */
+  observe?: boolean;
+}
+
+/** The page's `statement` listeners appeared or all went away. */
+export interface ObserveMessage {
+  type: "observe";
+  on: boolean;
 }
 
 export interface QueryMessage {
@@ -70,6 +79,7 @@ export interface ImportApplicationMessage {
 
 export type ClientMessage =
   | InitMessage
+  | ObserveMessage
   | QueryMessage
   | ScopedAddMessage
   | ScopedDropMessage
@@ -88,6 +98,18 @@ export interface ReadyMessage {
   type: "ready";
   restored: boolean;
   timings: Timings;
+  /** The version of the engine instance, from the engine itself; null when it does not say. */
+  engine?: string | null;
+}
+
+/**
+ * What the worker ran by itself (load, seed, migration, import, scoped add and drop) since the last such message, sent just
+ * before the message that ends the job. `writes` is always given; `records` only while the page listens.
+ */
+export interface StatementsMessage {
+  type: "statements";
+  writes: number;
+  records: StatementRecord[] | null;
 }
 
 export type InitFailReason =
@@ -158,6 +180,7 @@ export type WorkerMessage =
   | InitFailedMessage
   | StoreRetryMessage
   | StorageMessage
+  | StatementsMessage
   | ApplicationExportedMessage
   | ResultMessage
   | DoneMessage

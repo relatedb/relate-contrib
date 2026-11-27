@@ -37,3 +37,15 @@ Each entry: what was found in the code, the decision, the alternative.
 ## R6. Parameters
 
 **Decision**: with `{ params: true }`, a listener gets the statement's parameters as the JSON text the client already built for the worker (`encodeParams`), cut at 4096 UTF-16 units with `paramsTruncated: true`; an object that cannot be encoded gives `params: null` and `paramsError`. Without the opt-in the fields are absent. Opt-in is per listener, resolved when the payload is built: the payload is built with params if any listener asked.
+
+## R7. Measured cost with no listener (SC-003)
+
+One run on one developer machine (macOS, Node 24, engine 1.4.0, loopback transport, real engine); a figure, not a promise. `tests/observability/unit/cost.test.ts` records it on every run.
+
+- Page: the write rule over the engine's 11 counters took about 230 ns per statement; a statement's round trip through the client took about 74 µs; the added work is about 0.3 %.
+- Worker: loading a generated 5,000-page graph (its node and link batches, each parsed once more to read the counters) took within 1 % of the load without the tap (a 20,000-page load measured 6,812 ms without and 6,828 ms with, 0.2 %).
+
+## R8. Findings that changed the plan
+
+- The first harness (the real worker module in Node) trapped on the first statement because the test replaced the global `self` for good; the engine's glue reads `self`. The harness now sets it only while the worker module loads.
+- The engine reports its version in a row of `CALL dbms.components()` on 1.3.0 and on 1.4.0 (probed in Node on both), and every kind of change the canary lists moves a counter on 1.4.0; the canary pins both. That answers the open item for the kinds listed, not for kinds the engine may add.
