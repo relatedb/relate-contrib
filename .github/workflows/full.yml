@@ -76,7 +76,7 @@ jobs:
           suite="${{ matrix.suite }}"
           browser="${{ matrix.browser }}"
           case "$suite" in
-            web) scripts="test:browsers test:conformance test:application-browsers test:catalog-browsers" ;;
+            web) scripts="test:browsers test:conformance test:application-browsers test:catalog-browsers test:observability-browsers" ;;
             react-admin) scripts="test:$suite-browsers" ;;
             *) scripts="test:$suite-browsers test:$suite-conformance" ;;
           esac

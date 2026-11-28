@@ -21,10 +21,36 @@ export class StorageLockedError extends Error {
 
 const messageOf = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
+/** Called with each statement an engine runs and the engine's reply text (see `Engine.setTap`). */
+export type Tap = (statement: string, replyText: string) => void;
+
 export class Engine {
   private dead = false;
+  private static tap: Tap | null = null;
+  /** The engine instance made most recently: the one a worker uses. */
+  static current: Engine | null = null;
 
-  private constructor(private readonly db: RelateDb) {}
+  private constructor(private readonly db: RelateDb) {
+    Engine.current = this;
+  }
+
+  /** Observe every statement any engine runs, or stop (null). The worker turns it off around the page's own statements. */
+  static setTap(tap: Tap | null): void {
+    Engine.tap = tap;
+  }
+
+  /** The engine's version, asked of the engine itself (it has no version call); null when it does not say. Not tapped. */
+  version(): string | null {
+    try {
+      const text = this.guard(() => this.db.execute("CALL dbms.components() YIELD name, versions RETURN name, versions", null));
+      const rows = (JSON.parse(text) as { rows?: Array<{ name?: unknown; versions?: unknown }> }).rows ?? [];
+      const row = rows.find((r) => r.name === "Relate");
+      const version = Array.isArray(row?.versions) ? row.versions[0] : undefined;
+      return typeof version === "string" ? version : null;
+    } catch {
+      return null;
+    }
+  }
 
   /** Initialise the engine's WebAssembly module from its binary's URL. Call once per worker. */
   static async load(engineUrl: string): Promise<void> {
@@ -56,7 +82,9 @@ export class Engine {
 
   /** Run one statement. Returns the envelope text unaltered. Throws TrapError once the instance has trapped. */
   execute(statement: string, paramsJson: string | null = null): string {
-    return this.guard(() => this.db.execute(statement, paramsJson));
+    const text = this.guard(() => this.db.execute(statement, paramsJson));
+    Engine.tap?.(statement, text);
+    return text;
   }
 
   /** Drop the database; for a store this wipes it and reopens it. */

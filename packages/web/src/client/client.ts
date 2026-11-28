@@ -2,23 +2,26 @@
 // subscriptions (specs contracts/client-api.md). Each client is independent; there is no module-level state.
 import { validateDescriptor } from "../data/descriptor.js";
 import type { Descriptor, Envelope, GraphDocument, IndexSpec } from "../data/types.js";
-import { VISITOR_TIMEOUT_MS } from "../config.js";
+import { APP_STORE_PREFIX, STORE_PREFIX, VISITOR_TIMEOUT_MS } from "../config.js";
 import { GraphError } from "../errors.js";
 import { encodeParams } from "../worker/encode.js";
 import type { ClientMessage, InitFailReason, InitMessage, Timings, WorkerMessage } from "../worker/protocol.js";
 import type { ExportEnvelope, LossReport, StorageStatus } from "../application/types.js";
 import { ApplicationSupport, SeedProblem } from "./application.js";
 import { diagnosticMessage } from "./diagnostic.js";
-import { Emitter, type Events } from "./events.js";
+import { Emitter, type Events, type ListenOptions } from "./events.js";
+import { isWrite, paramFields, recordOf, type Origin, type StatementEvent, type StatementRecord } from "./statements.js";
 import { FailureCounter } from "./failure.js";
 import { StatusMachine, type Status } from "./status.js";
 import { Registry, type Unsubscribe, type Update } from "./subscriptions.js";
-import type { Client, ClientOptions, Diagnostic, Run } from "./types.js";
+import type { Client, ClientInfo, ClientOptions, Diagnostic, Run } from "./types.js";
 
 interface Pending {
   resolve: (value: Envelope) => void;
   reject: (reason: GraphError) => void;
   timer: ReturnType<typeof setTimeout> | undefined;
+  /** What a statement the page sent is, so that its reply can be reported (specs/011). */
+  meta?: { statement: string; origin: Origin; paramsJson: string | null };
 }
 
 /** A start-up problem found on the page before the worker was asked to do anything. */
@@ -56,6 +59,15 @@ class GraphClient implements Client {
   private waiters: Array<{ resolve: () => void; reject: (e: GraphError) => void }> = [];
 
   private readonly application: ApplicationSupport | null;
+
+  // ---- observing (ADR-001 amendment 2026-11-27) ----
+  private revisionCount = 0;
+  /** What the worker was last told about whether a `statement` listener exists. */
+  private workerObserving = false;
+  /** What the worker ran by itself while starting; applied when the instance is ready. */
+  private startup: { writes: number; records: StatementRecord[] } = { writes: 0, records: [] };
+  private infoBase: Pick<ClientInfo, "name" | "kind"> = { name: null, kind: "memory" };
+  private infoValue: ClientInfo | null = null;
 
   constructor(private readonly options: ClientOptions) {
     if (options.application) {
@@ -151,10 +163,18 @@ class GraphClient implements Client {
     return this.machine.generation;
   }
 
+  get revision(): number {
+    return this.revisionCount;
+  }
+
+  get info(): ClientInfo | null {
+    return this.status === "ready" ? this.infoValue : null;
+  }
+
   // ---- queries -----------------------------------------------------------------------------------------------
   async query(statement: string, params: object | null = null, opts: { timeoutMs?: number } = {}): Promise<Envelope> {
     await this.whenReady();
-    return this.execute(statement, params, opts.timeoutMs);
+    return this.execute(statement, params, opts.timeoutMs, "query");
   }
 
   /**
@@ -167,7 +187,7 @@ class GraphClient implements Client {
     const paramsJson = params ? encodeParams(params) : null;
     const result = this.whenReady().then(() => {
       if (call.stopped) throw new GraphError("stopped");
-      const started = this.startRequest((id) => ({ type: "query", id, statement, paramsJson }), timeoutMs);
+      const started = this.startRequest((id) => ({ type: "query", id, statement, paramsJson }), timeoutMs, { statement, origin: "run", paramsJson });
       call.id = started.id;
       return started.promise;
     });
@@ -190,7 +210,7 @@ class GraphClient implements Client {
       params,
       listener,
       { status: this.status, generation: this.generation },
-      (s, p) => this.execute(s, p, undefined),
+      (s, p) => this.execute(s, p, undefined, "subscription"),
     );
   }
 
@@ -198,8 +218,13 @@ class GraphClient implements Client {
     return this.registry.onGeneration(listener);
   }
 
-  on<E extends keyof Events>(event: E, listener: (payload: Events[E]) => void): Unsubscribe {
-    return this.emitter.on(event, listener);
+  on<E extends keyof Events>(event: E, listener: (payload: Events[E]) => void, options?: ListenOptions): Unsubscribe {
+    const off = this.emitter.on(event, listener, options);
+    if (event === "statement") this.syncObserve();
+    return () => {
+      off();
+      if (event === "statement") this.syncObserve();
+    };
   }
 
   async addScoped(document: GraphDocument, scope: string): Promise<void> {
@@ -245,6 +270,7 @@ class GraphClient implements Client {
   private async prepare(): Promise<Omit<InitMessage, "type" | "attempt">> {
     const engineUrl = absolute(this.options.engineUrl, location.href);
     if (this.application) {
+      this.infoBase = { name: `${APP_STORE_PREFIX}${this.application.app.name}`, kind: "application" };
       return {
         engineUrl,
         descriptor: null,
@@ -268,16 +294,19 @@ class GraphClient implements Client {
       const checked = validateDescriptor(value);
       if (!checked.ok) throw new StartFailure("invalid-descriptor", `${checked.path}: ${checked.message}`);
       const descriptor: Descriptor = checked.descriptor;
+      const useStore = this.options.store ?? this.options.navigation === "multi-page";
+      this.infoBase = useStore ? { name: `${STORE_PREFIX}${descriptor.id}`, kind: "cache" } : { name: null, kind: "memory" };
       return {
         engineUrl,
         descriptor,
         dataUrl: absolute(descriptor.data.url, base),
         document: null,
         indexes: [],
-        useStore: this.options.store ?? this.options.navigation === "multi-page",
+        useStore,
       };
     }
     const indexes: IndexSpec[] = graph.indexes ?? [];
+    this.infoBase = { name: null, kind: "memory" };
     return typeof graph.document === "string"
       ? { engineUrl, descriptor: null, dataUrl: absolute(graph.document, location.href), document: null, indexes, useStore: false }
       : { engineUrl, descriptor: null, dataUrl: null, document: graph.document, indexes, useStore: false };
@@ -302,7 +331,9 @@ class GraphClient implements Client {
         if (this.status === "ready") this.fault("worker-error");
         else this.attemptFailed("worker-error", message);
       };
-      worker.postMessage({ type: "init", ...init, attempt } satisfies ClientMessage);
+      this.workerObserving = this.emitter.has("statement");
+      this.startup = { writes: 0, records: [] };
+      worker.postMessage({ type: "init", ...init, attempt, observe: this.workerObserving } satisfies ClientMessage);
     } catch (e) {
       if (e instanceof StartFailure || e instanceof SeedProblem) this.attemptFailed(e.reason, e.message);
       else this.attemptFailed("worker-error", e instanceof Error ? e.message : String(e));
@@ -312,14 +343,16 @@ class GraphClient implements Client {
   private onMessage(msg: WorkerMessage): void {
     switch (msg.type) {
       case "ready":
-        this.onReady(msg.restored, msg.timings);
+        this.onReady(msg.restored, msg.timings, msg.engine ?? null);
         break;
       case "init-failed":
         this.attemptFailed(msg.reason, msg.message);
         break;
       case "result": {
         const entry = this.take(msg.id);
-        entry?.resolve(JSON.parse(msg.envelopeText) as Envelope);
+        const envelope = JSON.parse(msg.envelopeText) as Envelope;
+        if (entry?.meta) this.reportStatement(entry.meta, envelope);
+        entry?.resolve(envelope);
         break;
       }
       case "done": {
@@ -340,6 +373,9 @@ class GraphClient implements Client {
         }
         break;
       }
+      case "statements":
+        this.onStatements(msg.writes, msg.records);
+        break;
       case "store-retry":
         break;
       case "storage":
@@ -353,12 +389,20 @@ class GraphClient implements Client {
     }
   }
 
-  private onReady(restored: boolean, timings: Timings): void {
+  private onReady(restored: boolean, timings: Timings, engine: string | null): void {
     this.application?.confirmed();
     this.failures.ready();
     this.diagnostic = null;
+    // a new instance starts a new revision: what it wrote while starting is the first of it
+    const startup = this.startup;
+    this.startup = { writes: 0, records: [] };
+    this.revisionCount = startup.writes;
+    this.infoValue = { ...this.infoBase, readOnly: false, engine };
     this.machine.markReady();
     const generation = this.generation;
+    for (const record of startup.records) this.reportRecord(record, "internal");
+    if (startup.writes > 0) this.emitter.emit("revision", () => ({ revision: this.revisionCount, generation }));
+    this.syncObserve();
     if (this.replacing) {
       const reason = this.replacing;
       this.replacing = null;
@@ -369,7 +413,7 @@ class GraphClient implements Client {
       if (ms !== undefined) this.emitter.emit("timing", () => ({ phase, ms, restored }));
     }
     this.resolveWaiters();
-    void this.registry.ready(generation, (s, p) => this.execute(s, p, undefined));
+    void this.registry.ready(generation, (s, p) => this.execute(s, p, undefined, "subscription"));
   }
 
   /** The instance that was ready is no longer usable: replace it. Calls in flight are lost. */
@@ -397,6 +441,48 @@ class GraphClient implements Client {
     this.rejectWaiters(new GraphError("failed", message));
   }
 
+  // ---- observing -----------------------------------------------------------------------------------------------
+  /** Tell the worker whether a `statement` listener exists, when it has not been told so already. */
+  private syncObserve(): void {
+    const want = this.emitter.has("statement");
+    // a worker that is still starting is told when it is ready (and its init message carried what was true then)
+    if (want === this.workerObserving || !this.worker || this.status !== "ready") return;
+    this.workerObserving = want;
+    this.worker.postMessage({ type: "observe", on: want } satisfies ClientMessage);
+  }
+
+  /** A statement the page sent has been answered. */
+  private reportStatement(meta: NonNullable<Pending["meta"]>, envelope: Envelope): void {
+    this.emitter.emit(
+      "statement",
+      () => ({ ...recordOf(meta.statement, envelope), origin: meta.origin }) satisfies StatementEvent,
+      () => paramFields(meta.paramsJson),
+    );
+    if (isWrite(envelope.stats)) this.stepRevision(1);
+  }
+
+  /** A statement the worker ran by itself. */
+  private reportRecord(record: StatementRecord, origin: Origin): void {
+    this.emitter.emit("statement", () => ({ ...record, origin }) satisfies StatementEvent);
+  }
+
+  private stepRevision(by: number): void {
+    this.revisionCount += by;
+    const generation = this.generation;
+    this.emitter.emit("revision", () => ({ revision: this.revisionCount, generation }));
+  }
+
+  /** What the worker ran by itself: held while the instance starts, reported at once when it is ready. */
+  private onStatements(writes: number, records: StatementRecord[] | null): void {
+    if (this.status !== "ready") {
+      this.startup.writes += writes;
+      if (records) this.startup.records.push(...records);
+      return;
+    }
+    for (const record of records ?? []) this.reportRecord(record, "internal");
+    if (writes > 0) this.stepRevision(writes);
+  }
+
   // ---- calls -------------------------------------------------------------------------------------------------
   private whenReady(): Promise<void> {
     if (this.status === "ready") return Promise.resolve();
@@ -404,9 +490,9 @@ class GraphClient implements Client {
     return new Promise((resolve, reject) => this.waiters.push({ resolve, reject }));
   }
 
-  private execute(statement: string, params: object | null, timeoutMs: number | undefined): Promise<Envelope> {
+  private execute(statement: string, params: object | null, timeoutMs: number | undefined, origin: Origin): Promise<Envelope> {
     const paramsJson = params ? encodeParams(params) : null;
-    return this.request((id) => ({ type: "query", id, statement, paramsJson }), timeoutMs);
+    return this.startRequest((id) => ({ type: "query", id, statement, paramsJson }), timeoutMs, { statement, origin, paramsJson }).promise;
   }
 
   /** Send one message that is answered by a result or a done message, with an optional timeout. */
@@ -415,12 +501,16 @@ class GraphClient implements Client {
   }
 
   /** As `request`, also giving the call's id so that it can be stopped. */
-  private startRequest(build: (id: number) => ClientMessage, timeoutMs: number | undefined): { id: number | null; promise: Promise<Envelope> } {
+  private startRequest(
+    build: (id: number) => ClientMessage,
+    timeoutMs: number | undefined,
+    meta?: Pending["meta"],
+  ): { id: number | null; promise: Promise<Envelope> } {
     const worker = this.worker;
     if (!worker || this.status !== "ready") return { id: null, promise: Promise.reject(new GraphError("lost", "the instance is not ready")) };
     const id = ++this.nextId;
     const promise = new Promise<Envelope>((resolve, reject) => {
-      const entry: Pending = { resolve, reject, timer: undefined };
+      const entry: Pending = { resolve, reject, timer: undefined, meta };
       if (timeoutMs !== undefined) {
         entry.timer = setTimeout(() => {
           this.take(id)?.reject(new GraphError("timeout"));

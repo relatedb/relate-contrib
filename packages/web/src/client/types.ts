@@ -2,7 +2,7 @@
 import type { Descriptor, Envelope, GraphDocument, IndexSpec } from "../data/types.js";
 import type { ApplicationOptions, ExportEnvelope, LossReport, StorageStatus } from "../application/types.js";
 import type { Reason } from "../errors.js";
-import type { Events } from "./events.js";
+import type { Events, ListenOptions } from "./events.js";
 import type { Status } from "./status.js";
 import type { Unsubscribe, Update } from "./subscriptions.js";
 
@@ -54,8 +54,23 @@ export interface Run {
   stop(): void;
 }
 
+/** What a ready client is (ADR-001 amendment 2026-11-27). */
+export interface ClientInfo {
+  /** The store's name (`app-<name>`, `rel-<id>`); null for a graph that lives in memory only. */
+  name: string | null;
+  kind: "application" | "cache" | "memory";
+  /** False until a read-only open mode exists. */
+  readOnly: boolean;
+  /** The version of the engine instance the worker loaded; null when the engine does not say. */
+  engine: string | null;
+}
+
 export interface Client {
   readonly generation: number;
+  /** Rises by one on each statement that wrote (the engine's change counters say so); restarts at 0 with each generation. */
+  readonly revision: number;
+  /** Null until the status is `ready`. */
+  readonly info: ClientInfo | null;
   readonly status: Status;
   /** Present when status is "failed". */
   readonly diagnostic: Diagnostic | null;
@@ -67,7 +82,8 @@ export interface Client {
   dropScope(scope: string): Promise<void>;
   /** Drop every scope this client added (a page leaving). */
   dropAllScopes(): Promise<void>;
-  on<E extends keyof Events>(event: E, listener: (payload: Events[E]) => void): Unsubscribe;
+  /** `options.params` is honoured for the `statement` event: the payload then carries the parameters (cut at 4 KiB). */
+  on<E extends keyof Events>(event: E, listener: (payload: Events[E]) => void, options?: ListenOptions): Unsubscribe;
   /** What the page can say about whether its data is stored (application mode; otherwise memory-only values). */
   readonly storage: StorageStatus;
   /** Reset the store and seed it again: the only call that discards stored data (application mode). */

@@ -10,12 +10,14 @@ import { initApplication, type ApplicationSession } from "./application/init.js"
 import { MigrationError } from "./application/migrate.js";
 import { SeedError, seedDescriptor } from "./application/seed.js";
 import { ImportRejected, exportApplication, importApplication } from "./application/transfer.js";
+import { recordOf, type StatementRecord } from "../client/statements.js";
 import type {
   ClientMessage,
   ExportApplicationMessage,
   ImportApplicationMessage,
   InitFailedMessage,
   InitMessage,
+  ObserveMessage,
   QueryMessage,
   ScopedAddMessage,
   ScopedDropMessage,
@@ -33,7 +35,35 @@ let engine: Engine | null = null;
 let application: InitMessage["application"] = undefined;
 let session: ApplicationSession | null = null;
 
-const send = (message: WorkerMessage): void => scope.postMessage(message);
+// Statements the worker runs by itself are tallied, and reported just before the message that ends the job (specs/011).
+let observing = false;
+let writes = 0;
+let records: StatementRecord[] = [];
+const tally = (statement: string, replyText: string): void => {
+  let record: StatementRecord;
+  try {
+    record = recordOf(statement, JSON.parse(replyText));
+  } catch {
+    return; // a reply that is not an envelope counts as nothing
+  }
+  if (record.write) writes++;
+  if (observing) records.push(record);
+};
+Engine.setTap(tally);
+const ENDS_A_JOB = new Set<WorkerMessage["type"]>(["ready", "init-failed", "done", "error", "application-exported"]);
+const flush = (): void => {
+  if (writes === 0 && records.length === 0) return;
+  const message: WorkerMessage = { type: "statements", writes, records: observing ? records : null };
+  writes = 0;
+  records = [];
+  scope.postMessage(message);
+};
+
+const send = (message: WorkerMessage): void => {
+  if (ENDS_A_JOB.has(message.type)) flush();
+  if (message.type === "ready") message = { ...message, engine: Engine.current?.version() ?? null };
+  scope.postMessage(message);
+};
 const since = (t0: number): number => Math.round((performance.now() - t0) * 10) / 10;
 const messageOf = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
@@ -47,6 +77,9 @@ function failure(e: unknown): InitFailedMessage {
 
 /** The start-up of contracts/worker-protocol.md: restore from a store when its catalog entry matches, else load. */
 async function init(msg: InitMessage): Promise<void> {
+  observing = msg.observe === true;
+  writes = 0;
+  records = [];
   if (msg.application) {
     application = msg.application;
     try {
@@ -119,11 +152,15 @@ async function init(msg: InitMessage): Promise<void> {
 }
 
 function query(msg: QueryMessage): void {
+  // the page reports its own statements from the reply, so the tap is off for them
+  Engine.setTap(null);
   try {
     if (!engine) throw new TrapError("no instance");
     send({ type: "result", id: msg.id, envelopeText: engine.execute(msg.statement, msg.paramsJson) });
   } catch (e) {
     send({ type: "error", id: msg.id, reason: "trap", message: messageOf(e) });
+  } finally {
+    Engine.setTap(tally);
   }
 }
 
@@ -191,6 +228,7 @@ const serially = (job: () => void | Promise<void>): void => {
 scope.onmessage = (e) => {
   const msg = e.data;
   if (msg.type === "init") void init(msg);
+  else if (msg.type === "observe") observing = (msg as ObserveMessage).on;
   else if (msg.type === "query") serially(() => query(msg));
   else if (msg.type === "scoped-add") serially(() => scopedAdd(msg));
   else if (msg.type === "scoped-drop") serially(() => scopedDrop(msg));

@@ -62,6 +62,37 @@ describe("the engine behaviours the core relies on", () => {
     expect(run(b, "MATCH (n:Only) RETURN count(n) AS n").rows).toEqual([{ n: 0 }]);
   });
 
+  it("names its version in a Relate row of CALL dbms.components(), which is how the client says which engine runs it", () => {
+    const r = run(new wasm.RelateDb(), "CALL dbms.components() YIELD name, versions RETURN name, versions");
+    expect(r.error).toBeNull();
+    const row = r.rows.find((x) => x.name === "Relate") as { versions: string[] } | undefined;
+    expect(row, "no row named Relate").toBeDefined();
+    expect(row!.versions[0]).toMatch(/^\d+\.\d+\.\d+/);
+  });
+
+  it("moves a stats counter for each kind of change the client counts as a write, and none for a read", () => {
+    const db = new wasm.RelateDb();
+    const moved = (statement: string): string[] =>
+      Object.entries(run(db, statement).stats)
+        .filter(([, v]) => typeof v === "number" && v !== 0)
+        .map(([k]) => k);
+    // the statement that makes each kind of change, in an order that leaves something for the next to change
+    const changes: Array<[string, string]> = [
+      ["CREATE (:A {x: 1})-[:R]->(:A {x: 2})", "nodes_created"],
+      ["MATCH (n:A {x: 1}) SET n.y = 5", "properties_set"],
+      ["MATCH (n:A {x: 1}) SET n:B", "labels_added"],
+      ["MATCH (n:A {x: 1}) REMOVE n:B", "labels_removed"],
+      ["MATCH (a:A {x: 1}), (b:A {x: 2}) CREATE (a)-[:S]->(b)", "relationships_created"],
+      ["MATCH ()-[r:S]->() DELETE r", "relationships_deleted"],
+      ["CREATE INDEX obs_idx IF NOT EXISTS FOR (n:A) ON (n.x)", "indexes_added"],
+      ["DROP INDEX obs_idx", "indexes_removed"],
+      ["CREATE CONSTRAINT obs_c IF NOT EXISTS FOR (n:A) REQUIRE n.x IS UNIQUE", "constraints_added"],
+      ["MATCH (n:A) DETACH DELETE n", "nodes_deleted"],
+    ];
+    for (const [statement, counter] of changes) expect(moved(statement), `${statement} moved no ${counter}`).toContain(counter);
+    expect(moved("MATCH (n) RETURN count(n) AS c")).toEqual([]);
+  });
+
   it("pins the origin-private store's behaviour in the application-graph browser tests", () => {
     // OPFS stores need a dedicated worker in a browser, so they are checked by the browser suite (pnpm test:application-browsers), which
     // the engine-release lane runs. This title names that dependence; the file must exist for it to hold.
